@@ -287,11 +287,13 @@ function initializeCanvas() {
     });
     canvas.add(pageRect);
 
+    // --- FIX: Resize canvas BEFORE centering the page ---
     resizeCanvas();
     canvas.centerObject(pageRect);
+    // --- End of FIX ---
 
     canvas.sendToBack(pageRect);
-    centerAndFitPage();
+    
     drawGrid();
     new ResizeObserver(resizeCanvas).observe(canvasWrapper);
 
