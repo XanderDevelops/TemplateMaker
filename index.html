@@ -149,6 +149,12 @@
         </button>
     </div>
     <div class="toolbar" style="margin-left: auto;">
+        <!-- === NEW/MODIFIED: Save/Load Template Buttons === -->
+        <button id="saveTemplateBtn" class="btn ghost">Save Template</button>
+        <label for="loadTemplateInput" class="btn ghost">Load Template</label>
+        <input id="loadTemplateInput" type="file" accept=".json" style="display:none;"/>
+        <!-- === END NEW/MODIFIED === -->
+
         <label for="csvInput" class="btn ghost">Load Data</label>
         <input id="csvInput" type="file" accept=".csv,.xlsx,.xls" style="display:none;"/>
         <span id="fileName" class="muted" style="max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">No file selected</span>
@@ -232,7 +238,7 @@ const canvas = new fabric.Canvas('c', {
     selection: true,
 });
 let pageRect; // This will represent our white page
-const bindings = new Map();
+let bindings = new Map(); // === MODIFIED: Use `let` to allow reassignment on load
 let workbook, worksheet, headers = [], dataRows = [], selectedColumn;
 let gridEnabled = true, snapEnabled = true;
 const gridCellSize = 20;
@@ -281,10 +287,8 @@ function initializeCanvas() {
     });
     canvas.add(pageRect);
 
-    // --- FIX: Resize canvas BEFORE centering the page ---
     resizeCanvas();
     canvas.centerObject(pageRect);
-    // --- End of FIX ---
 
     canvas.sendToBack(pageRect);
     centerAndFitPage();
@@ -309,6 +313,7 @@ const setPageDimensions = debounce(() => {
     pageRect.setCoords(); // Update controls
     drawGrid(); // Redraw grid to match new page size
     canvas.renderAll();
+    saveState(); // Also save state on page dimension change
 }, 300);
 
 $('#pageWidth').addEventListener('input', setPageDimensions);
@@ -387,7 +392,6 @@ canvas.on('mouse:up', function(opt) {
   }
 });
 
-
 // --- CSV/XLSX HANDLING ---
 $('#csvInput').addEventListener('change', async (e) => {
     const file = e.target.files?.[0];
@@ -408,7 +412,6 @@ $('#csvInput').addEventListener('change', async (e) => {
         $('#fileName').textContent = 'No file selected';
     }
 });
-
 
 // --- COMPONENT ADDITION & DRAG-DROP VISUALS ---
 const adders = {
@@ -467,38 +470,27 @@ document.querySelectorAll('.shape-chip').forEach(chip => {
     });
 });
 
-// --- drop target: use Fabric's canvas, not the wrapper ---
 const dropTarget = canvas.upperCanvasEl;
-
-// helpful if your layout resizes:
 canvas.calcOffset();
-
-// make drag-over allow dropping
 dropTarget.addEventListener('dragover', (e) => {
   e.preventDefault();
   e.dataTransfer.dropEffect = 'copy';
 });
-
 dropTarget.addEventListener('drop', (e) => {
   e.preventDefault();
-
-  // ✅ respect zoom/pan; no "true" here
   const { x, y } = canvas.getPointer(e); 
-
   const type = e.dataTransfer.getData('text/plain');
   if (type && adders[type]) {
     adders[type](x, y);
     return;
   }
-
   const file = e.dataTransfer.files && e.dataTransfer.files[0];
   if (file && file.type.startsWith('image/')) {
     const reader = new FileReader();
     reader.onload = (ev) => adders.image(x, y, ev.target.result);
-    reader.readAsDataURL(file); // ← fix
+    reader.readAsDataURL(file);
   }
 });
-
 
 // --- SNAPPING TO GRID ---
 canvas.on('object:moving', (options) => {
@@ -511,11 +503,9 @@ canvas.on('object:moving', (options) => {
   target.set({ left: snapLeft, top: snapTop }).setCoords();
 });
 
-
 // --- INSPECTOR (LOGIC UNCHANGED) ---
 const inspector = $('#inspector');
 const multiInspector = $('#multiSelectInspector');
-
 canvas.on('selection:created', refreshInspector);
 canvas.on('selection:updated', refreshInspector);
 canvas.on('selection:cleared', () => {
@@ -523,19 +513,6 @@ canvas.on('selection:cleared', () => {
   inspector.style.display='none';
   multiInspector.style.display='none';
 });
-
-// --- KEYBOARD SHORTCUTS & FINAL SETUP ---
-window.addEventListener('keydown', e => {
-  if (e.key === 'Delete' || e.key === 'Backspace') {
-      if(document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA') return;
-    const activeObjects = canvas.getActiveObjects();
-    if (activeObjects.length) {
-      activeObjects.forEach(obj => canvas.remove(obj));
-      canvas.discardActiveObject().renderAll();
-    }
-  }
-});
-
 function refreshInspector(e) {
   const target = e.target || canvas.getActiveObject();
   if (!target) return;
@@ -560,7 +537,7 @@ function renderMultiSelectInspector(selection) {
     buttons.forEach(({label, action}) => {
       const btn = document.createElement('button'); btn.className = 'btn ghost';
       btn.textContent = label;
-      btn.onclick = () => { action(selection); canvas.renderAll(); };
+      btn.onclick = () => { action(selection); canvas.renderAll(); saveState(); };
       btnGroup.appendChild(btn);
     });
     el.appendChild(btnGroup);
@@ -593,16 +570,15 @@ function renderSingleObjectInspector(o) {
     inputRow('Dimensions', `${Math.round(o.getScaledWidth())}x${Math.round(o.getScaledHeight())}`, v => { const d=parseDims(v); if(d){o.scaleToWidth(d.w);o.scaleToHeight(d.h);} }),
     colorInputRow('Stroke Color', o.stroke ?? '', v => o.set({stroke: v})),
     inputRow('Opacity', o.opacity ?? 1, v => o.set({opacity: parseFloat(v)})),
-    inputRow('Stroke Color', o.stroke ?? '', v => o.set({stroke: v})),
     inputRow('Stroke Width', o.strokeWidth ?? 0, v => o.set({strokeWidth: parseFloat(v)})),
     inputRow('Corner Radius', o.rx ?? 0, v => { if('rx' in o) o.set({rx: parseFloat(v), ry: parseFloat(v)}); }),
   ]));
   if (['rect','triangle','circle','polygon','path'].includes(o.type)) {
     inspector.appendChild(section('Fill', [
-      inputRow('Color', o.fill, v => o.set({fill: v})),
+      colorInputRow('Color', o.fill, v => o.set({fill: v})),
       buttonRow('Fill with Image', () => {
           const url = prompt('Enter image URL'); if(!url) return;
-          fabric.Image.fromURL(url, img => { o.set('fill', new fabric.Pattern({source: img.getElement()})); canvas.renderAll(); }, {crossOrigin:'anonymous'});
+          fabric.Image.fromURL(url, img => { o.set('fill', new fabric.Pattern({source: img.getElement()})); canvas.renderAll(); saveState(); }, {crossOrigin:'anonymous'});
       })
     ]));
   }
@@ -628,7 +604,9 @@ function section(title, rows){ const w=document.createElement('div'); w.classNam
 function inputRow(label, value, onChange, type='text'){
     const w = document.createElement('div'); w.className='stack'; w.innerHTML = `<label>${label}</label>`;
     const i = document.createElement(type === 'textarea' ? 'textarea' : 'input');
-    i.type=type; i.value=value??''; i.oninput=e=> { onChange(e.target.value); canvas.renderAll(); };
+    i.type=type; i.value=value??''; 
+    const debouncedOnChange = debounce(() => { onChange(i.value); canvas.renderAll(); }, 250);
+    i.oninput = debouncedOnChange;
     if(type==='textarea') i.rows=3;
     w.appendChild(i);
     return w;
@@ -686,53 +664,34 @@ function renderColumnList(){
 async function exportAllRows({ asZip, asSinglePdf }) {
     const startOffset = Math.max(0, parseInt(($('#startCell').value.match(/\d+$/) || [2])[0], 10) - 2);
     let rows = dataRows.slice(startOffset);
-
-    if (!rows.length) {
-        rows = [null]; // Generate one empty template if no data
-    }
-
+    if (!rows.length) { rows = [null]; }
     const title = ($('#titleInput').value || 'Untitled_Template').trim();
     const pageW = pageRect.width;
     const pageH = pageRect.height;
-
     const pdf = asSinglePdf ? new jsPDF({ unit: 'px', format: [pageW, pageH] }) : null;
     const zipFile = asZip ? new JSZip() : null;
     let firstPage = true;
-
-    // Get all objects that have data bindings
     const objectsWithBindings = canvas.getObjects().filter(obj => getBindingsFor(obj).length > 0);
-
     for (let i = 0; i < rows.length; i++) {
         const row = rows[i];
-        const originalStates = new Map(); // Store original values to revert back to
-
-        // 1. APPLY BINDINGS and store original state
+        const originalStates = new Map();
         if (row) {
             objectsWithBindings.forEach(obj => {
                 const bindings = getBindingsFor(obj);
                 bindings.forEach(binding => {
                     const value = row[binding.column];
                     if (value != null) {
-                        // Store the original state before changing it
                         if (!originalStates.has(obj.oid)) originalStates.set(obj.oid, {});
                         const originalProps = originalStates.get(obj.oid);
-
-                        // A simple way to store original values based on property
                         if (binding.property === 'Text Content' && originalProps.text === undefined) originalProps.text = obj.text;
                         if (binding.property.includes('Color') && originalProps.fill === undefined) originalProps.fill = obj.fill;
-                        // Add other properties as needed...
-
                         applyBinding(obj, binding.property, value);
                     }
                 });
             });
-            canvas.renderAll(); // Wait for bindings to apply visually
+            canvas.renderAll();
         }
-
-        // 2. GENERATE THE CROPPED IMAGE
         const dataURL = generateCanvasForRow(row);
-
-        // 3. EXPORT (PDF/ZIP logic is unchanged)
         if (asSinglePdf) {
             if (!firstPage) pdf.addPage([pageW, pageH]);
             pdf.addImage(dataURL, 'PNG', 0, 0, pageW, pageH);
@@ -743,8 +702,6 @@ async function exportAllRows({ asZip, asSinglePdf }) {
             pagePdf.addImage(dataURL, 'PNG', 0, 0, pageW, pageH);
             zipFile.file(`${title}_${i + 1}.pdf`, await pagePdf.output('blob'));
         }
-
-        // 4. REVERT BINDINGS
         if (row) {
              originalStates.forEach((props, oid) => {
                 const obj = canvas.getObjects().find(o => o.oid === oid);
@@ -755,30 +712,22 @@ async function exportAllRows({ asZip, asSinglePdf }) {
             canvas.renderAll();
         }
     }
-
     if (asSinglePdf) saveAs(pdf.output('blob'), `${title}.pdf`);
     if (asZip) saveAs(await zipFile.generateAsync({ type: 'blob' }), `${title}.zip`);
 }
-
 function generateCanvasForRow(row) {
     const multiplier = 2;
-
-    // Hide grid lines temporarily
     const gridLines = canvas.getObjects('line');
     gridLines.forEach(l => l.set({ visible: false }));
     canvas.renderAll();
-
     const { left: pageLeft, top: pageTop, width: pageW, height: pageH } = pageRect;
-
-    // Temporary export canvas
     const tmpEl = document.createElement('canvas');
     tmpEl.width = pageW * multiplier;
     tmpEl.height = pageH * multiplier;
     const tmpCanvas = new fabric.StaticCanvas(tmpEl, { backgroundColor: 'white' });
-
     canvas.getObjects().forEach(obj => {
+        if(obj.oid === 'pageRect') return;
         const objBounds = obj.getBoundingRect(true, true);
-        // Only clone objects that intersect the page
         if (
             objBounds.left + objBounds.width >= pageLeft &&
             objBounds.left <= pageLeft + pageW &&
@@ -786,11 +735,9 @@ function generateCanvasForRow(row) {
             objBounds.top <= pageTop + pageH
         ) {
             obj.clone(clone => {
-                // Compute center relative to page
                 const center = obj.getCenterPoint();
                 const relX = (center.x - pageLeft) * multiplier;
                 const relY = (center.y - pageTop) * multiplier;
-
                 clone.set({
                     left: relX,
                     top: relY,
@@ -803,16 +750,11 @@ function generateCanvasForRow(row) {
             });
         }
     });
-
     tmpCanvas.renderAll();
-
-    // Restore grid lines
     gridLines.forEach(l => l.set({ visible: true }));
     canvas.renderAll();
-
     return tmpCanvas.toDataURL({ format: 'png', quality: 1.0 });
 }
-
 function parseDims(s){ const m = String(s).match(/^(\d+)[xX](\d+)$/i); return m ? {w:+m[1], h:+m[2]} : null; }
 function applyBinding(o, prop, val){
   val = String(val).trim(); const numVal = parseFloat(val);
@@ -835,7 +777,8 @@ function colorInputRow(label, value, onChange) {
     const wrap = document.createElement('div'); wrap.className = 'color-picker-wrapper';
     const textInput = document.createElement('input'); textInput.type = 'text'; textInput.value = value;
     const colorInput = document.createElement('input'); colorInput.type = 'color'; colorInput.value = value;
-    textInput.oninput = () => { colorInput.value = textInput.value; onChange(textInput.value); };
+    const debouncedOnChange = debounce(() => { colorInput.value = textInput.value; onChange(textInput.value); }, 250);
+    textInput.oninput = debouncedOnChange;
     colorInput.oninput = () => { textInput.value = colorInput.value; onChange(colorInput.value); };
     wrap.append(textInput, colorInput);
     w.appendChild(wrap);
@@ -844,14 +787,11 @@ function colorInputRow(label, value, onChange) {
 function saveState() {
     if (historyLocked) return;
     historyStack.splice(historyIndex + 1);
-
-    // Save all objects including pageRect
     const json = canvas.toJSON(['oid']);
     historyStack.push(json);
     historyIndex = historyStack.length - 1;
     updateHistoryButtons();
 }
-
 function undo() {
     if (historyIndex > 0) {
         historyLocked = true;
@@ -859,14 +799,11 @@ function undo() {
         canvas.loadFromJSON(historyStack[historyIndex], () => {
             canvas.renderAll();
             historyLocked = false;
-
-            // Ensure pageRect reference is restored
             pageRect = canvas.getObjects().find(o => o.oid === 'pageRect');
         });
         updateHistoryButtons();
     }
 }
-
 function redo() {
     if (historyIndex < historyStack.length - 1) {
         historyLocked = true;
@@ -874,21 +811,17 @@ function redo() {
         canvas.loadFromJSON(historyStack[historyIndex], () => {
             canvas.renderAll();
             historyLocked = false;
-
-            // Ensure pageRect reference is restored
             pageRect = canvas.getObjects().find(o => o.oid === 'pageRect');
         });
         updateHistoryButtons();
     }
 }
-
 function updateHistoryButtons() {
     $('#undoBtn').disabled = historyIndex <= 0;
     $('#redoBtn').disabled = historyIndex >= historyStack.length - 1;
 }
 $('#undoBtn').onclick = undo;
 $('#redoBtn').onclick = redo;
-
 
 // --- COPY / CUT / PASTE ---
 function copy() {
@@ -915,41 +848,31 @@ function paste() {
 
 // --- VIEWPORT CONTROLS ---
 function centerAndFitPage() {
+    if(!pageRect) return;
     const { width: wrapperW, height: wrapperH } = canvasWrapper.getBoundingClientRect();
     const pageW = pageRect.width;
     const pageH = pageRect.height;
-
-    // Compute the max zoom that fits the page fully inside the wrapper
     const zoomX = wrapperW / pageW;
     const zoomY = wrapperH / pageH;
-    const zoom = Math.min(zoomX, zoomY);
-
+    const zoom = Math.min(zoomX, zoomY) * 0.95; // Add a little padding
     canvas.setZoom(zoom);
-
-    // Center the page in the viewport
     const center = pageRect.getCenterPoint();
     const viewportTransform = [zoom, 0, 0, zoom, (wrapperW / 2) - center.x * zoom, (wrapperH / 2) - center.y * zoom];
     canvas.setViewportTransform(viewportTransform);
-
     $('#zoomLevel').textContent = `Zoom: ${Math.round(zoom * 100)}%`;
     canvas.renderAll();
 }
-
 $('#centerViewBtn').onclick = centerAndFitPage;
-
 
 // --- KEYBOARD SHORTCUTS ---
 window.addEventListener('keydown', e => {
   if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-
   const isCtrl = e.ctrlKey || e.metaKey;
-
   if (isCtrl && e.key === 'z') { e.preventDefault(); undo(); }
   if (isCtrl && e.key === 'y') { e.preventDefault(); redo(); }
   if (isCtrl && e.key === 'c') { e.preventDefault(); copy(); }
   if (isCtrl && e.key === 'x') { e.preventDefault(); cut(); }
   if (isCtrl && e.key === 'v') { e.preventDefault(); paste(); }
-
   if (e.key === 'Delete' || e.key === 'Backspace') {
     const activeObjects = canvas.getActiveObjects();
     if (activeObjects.length) {
@@ -962,8 +885,95 @@ window.addEventListener('keydown', e => {
 $('#exportZipBtn').addEventListener('click', () => exportAllRows({asZip:true}));
 $('#exportSinglePdfBtn').addEventListener('click', () => exportAllRows({asSinglePdf:true}));
 
+
+// === NEW: SAVE/LOAD TEMPLATE LOGIC ===
+function saveTemplate() {
+    try {
+        const templateData = {
+            canvas: canvas.toJSON(['oid']),
+            page: {
+                title: $('#titleInput').value,
+                width: $('#pageWidth').value,
+                height: $('#pageHeight').value,
+            },
+            // Convert Map to a serializable Array
+            bindings: Array.from(bindings.entries()),
+        };
+
+        const jsonString = JSON.stringify(templateData, null, 2);
+        const blob = new Blob([jsonString], { type: 'application/json' });
+        const filename = ($('#titleInput').value || 'template').replace(/[^a-z0-9]/gi, '_').toLowerCase();
+        
+        saveAs(blob, `${filename}.json`);
+
+    } catch (error) {
+        console.error("Error saving template:", error);
+        alert("Could not save the template. See console for details.");
+    }
+}
+
+function loadTemplate(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+        try {
+            const data = JSON.parse(event.target.result);
+
+            // 1. Validate data structure
+            if (!data.canvas || !data.page || !data.bindings) {
+                throw new Error("Invalid template file format.");
+            }
+            
+            // 2. Load page settings
+            $('#titleInput').value = data.page.title || 'Untitled_Template';
+            $('#pageWidth').value = data.page.width || 800;
+            $('#pageHeight').value = data.page.height || 1200;
+
+            // 3. Load bindings by converting array back to a Map
+            bindings = new Map(data.bindings);
+            
+            // 4. Load canvas objects
+            historyLocked = true; // Prevent load from creating a history state
+            canvas.loadFromJSON(data.canvas, () => {
+                // Find the pageRect reference again after loading
+                pageRect = canvas.getObjects().find(o => o.oid === 'pageRect');
+                if (!pageRect) {
+                    throw new Error("Template file is missing the page object.");
+                }
+                
+                // Re-render and fit
+                canvas.renderAll();
+                centerAndFitPage();
+                drawGrid();
+                
+                // 5. Reset history with the loaded state as the new beginning
+                historyLocked = false;
+                historyStack = [];
+                historyIndex = -1;
+                saveState();
+                
+                alert(`Template "${file.name}" loaded successfully.`);
+            });
+
+        } catch (error) {
+            console.error("Error loading template:", error);
+            alert(`Could not load the template. Error: ${error.message}`);
+        } finally {
+            // Clear the input value to allow loading the same file again
+            e.target.value = null;
+        }
+    };
+    reader.readAsText(file);
+}
+
+$('#saveTemplateBtn').addEventListener('click', saveTemplate);
+$('#loadTemplateInput').addEventListener('change', loadTemplate);
+// === END NEW LOGIC ===
+
+
 // --- INITIALIZE ---
-drawGrid();
 initializeCanvas();
 </script>
 </body>
