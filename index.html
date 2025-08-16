@@ -736,7 +736,7 @@ function generateCanvasForRow(row) {
 
     // 2. Calculate the multiplier to counteract the current zoom level
     const zoom = canvas.getZoom();
-    const multiplier = 4 / zoom;
+    const multiplier = 1 / zoom;
 
     // Get the exact dimensions and position of the page rectangle
     const { left, top, width, height } = pageRect;
