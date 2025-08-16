@@ -140,6 +140,14 @@
             <input id="pageHeight" type="number" value="1024" min="100" max="10000" style="width:90px;"/>
         </div>
     </div>
+      <div class="toolbar-group">
+        <button id="undoBtn" class="btn ghost" title="Undo (Ctrl+Z)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3l3 2.7"/></svg>
+        </button>
+        <button id="redoBtn" class="btn ghost" title="Redo (Ctrl+Y)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l-3 2.7"/></svg>
+        </button>
+    </div>
     <div class="toolbar" style="margin-left: auto;">
         <label for="csvInput" class="btn ghost">Load Data</label>
         <input id="csvInput" type="file" accept=".csv,.xlsx,.xls" style="display:none;"/>
@@ -183,16 +191,7 @@
 <footer>
     <div class="toolbar-group">
       <button id="exportZipBtn" class="btn">Export as ZIP</button>
-      <button id="exportSinglePdfBtn" class="btn ghost">Export Single PDF</button>
-    </div>
-
-    <div class="toolbar-group">
-        <button id="undoBtn" class="btn ghost" title="Undo (Ctrl+Z)">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3l3 2.7"/></svg>
-        </button>
-        <button id="redoBtn" class="btn ghost" title="Redo (Ctrl+Y)">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l-3 2.7"/></svg>
-        </button>
+      <button id="exportSinglePdfBtn" class="btn">Export Single PDF</button>
     </div>
 
     <div class="toolbar">
@@ -264,13 +263,21 @@ function initializeCanvas() {
     };
 
     pageRect = new fabric.Rect({
-        fill: '#ffffff',
-        width: 768,
-        height: 1024,
+        left: 0,
+        top: 0,
+        width: 800,
+        height: 1200,
+        fill: '#fff',
         selectable: false,
         evented: false,
-        excludeFromExport: true,
-        shadow: 'rgba(0,0,0,0.2) 0px 5px 15px',
+        hasControls: false,
+        hasBorders: false,
+        lockMovementX: true, 
+        lockMovementY: true,
+        lockScalingX: true,
+        lockScalingY: true,
+        lockRotation: true,
+        oid: 'pageRect',
     });
     canvas.add(pageRect);
 
@@ -280,7 +287,7 @@ function initializeCanvas() {
     // --- End of FIX ---
 
     canvas.sendToBack(pageRect);
-
+    centerAndFitPage();
     drawGrid();
     new ResizeObserver(resizeCanvas).observe(canvasWrapper);
 
@@ -435,6 +442,7 @@ const adders = {
 };
 
 document.querySelectorAll('.shape-chip').forEach(chip => {
+    const type = chip.getAttribute('data-add');
     chip.addEventListener('dragstart', e => {
         e.dataTransfer.setData('text/plain', chip.getAttribute('data-add'));
         const icon = chip.querySelector('svg').cloneNode(true);
@@ -447,24 +455,47 @@ document.querySelectorAll('.shape-chip').forEach(chip => {
         e.dataTransfer.setDragImage(icon, 24, 24); // Center of the icon
         setTimeout(() => document.body.removeChild(icon), 0);
     });
+
+    chip.addEventListener('click', () => {
+      if (!adders[type]) return;
+      const vpt = canvas.viewportTransform;
+      const center = {
+        x: (canvas.width / 2 - vpt[4]) / vpt[0],
+        y: (canvas.height / 2 - vpt[5]) / vpt[3],
+      };
+      adders[type](center.x, center.y);
+    });
 });
 
-canvasWrapper.addEventListener('dragover', e => e.preventDefault());
-canvasWrapper.addEventListener('drop', e => {
+// --- drop target: use Fabric's canvas, not the wrapper ---
+const dropTarget = canvas.upperCanvasEl;
+
+// helpful if your layout resizes:
+canvas.calcOffset();
+
+// make drag-over allow dropping
+dropTarget.addEventListener('dragover', (e) => {
   e.preventDefault();
+  e.dataTransfer.dropEffect = 'copy';
+});
+
+dropTarget.addEventListener('drop', (e) => {
+  e.preventDefault();
+
+  // ✅ respect zoom/pan; no "true" here
+  const { x, y } = canvas.getPointer(e); 
+
   const type = e.dataTransfer.getData('text/plain');
-  const pointer = canvas.getPointer(e, true);
+  if (type && adders[type]) {
+    adders[type](x, y);
+    return;
+  }
 
-    if (type && adders[type]) {
-        adders[type](pointer.x, pointer.y);
-        return;
-    }
-
-  const file = e.dataTransfer.files?.[0];
+  const file = e.dataTransfer.files && e.dataTransfer.files[0];
   if (file && file.type.startsWith('image/')) {
     const reader = new FileReader();
-    reader.onload = (ev) => adders.image(pointer.x, pointer.y, ev.target.result);
-    reader.readDataURL(file);
+    reader.onload = (ev) => adders.image(x, y, ev.target.result);
+    reader.readAsDataURL(file); // ← fix
   }
 });
 
@@ -730,34 +761,56 @@ async function exportAllRows({ asZip, asSinglePdf }) {
 }
 
 function generateCanvasForRow(row) {
-    // 1. Temporarily hide grid lines for the export
+    const multiplier = 2;
+
+    // Hide grid lines temporarily
     const gridLines = canvas.getObjects('line');
-    gridLines.forEach(line => line.set({ visible: false }));
+    gridLines.forEach(l => l.set({ visible: false }));
+    canvas.renderAll();
 
-    // 2. Calculate the multiplier to counteract the current zoom level
-    const zoom = canvas.getZoom();
-    const multiplier = 1 / zoom;
+    const { left: pageLeft, top: pageTop, width: pageW, height: pageH } = pageRect;
 
-    // Get the exact dimensions and position of the page rectangle
-    const { left, top, width, height } = pageRect;
+    // Temporary export canvas
+    const tmpEl = document.createElement('canvas');
+    tmpEl.width = pageW * multiplier;
+    tmpEl.height = pageH * multiplier;
+    const tmpCanvas = new fabric.StaticCanvas(tmpEl, { backgroundColor: 'white' });
 
-    // Use fabric's built-in cropping with the multiplier
-    // to capture a full-resolution image of only the page area.
-    const dataURL = canvas.toDataURL({
-        format: 'png',
-        quality: 1.0,
-        left: left,
-        top: top,
-        width: width,
-        height: height,
-        multiplier: multiplier
+    canvas.getObjects().forEach(obj => {
+        const objBounds = obj.getBoundingRect(true, true);
+        // Only clone objects that intersect the page
+        if (
+            objBounds.left + objBounds.width >= pageLeft &&
+            objBounds.left <= pageLeft + pageW &&
+            objBounds.top + objBounds.height >= pageTop &&
+            objBounds.top <= pageTop + pageH
+        ) {
+            obj.clone(clone => {
+                // Compute center relative to page
+                const center = obj.getCenterPoint();
+                const relX = (center.x - pageLeft) * multiplier;
+                const relY = (center.y - pageTop) * multiplier;
+
+                clone.set({
+                    left: relX,
+                    top: relY,
+                    originX: 'center',
+                    originY: 'center',
+                    scaleX: clone.scaleX * multiplier,
+                    scaleY: clone.scaleY * multiplier,
+                });
+                tmpCanvas.add(clone);
+            });
+        }
     });
 
-    // 3. Make the grid lines visible again
-    gridLines.forEach(line => line.set({ visible: true }));
-    canvas.renderAll(); // Re-render the canvas to show the grid again for the user
+    tmpCanvas.renderAll();
 
-    return dataURL;
+    // Restore grid lines
+    gridLines.forEach(l => l.set({ visible: true }));
+    canvas.renderAll();
+
+    return tmpCanvas.toDataURL({ format: 'png', quality: 1.0 });
 }
 
 function parseDims(s){ const m = String(s).match(/^(\d+)[xX](\d+)$/i); return m ? {w:+m[1], h:+m[2]} : null; }
@@ -788,14 +841,17 @@ function colorInputRow(label, value, onChange) {
     w.appendChild(wrap);
     return w;
 }
-
 function saveState() {
     if (historyLocked) return;
     historyStack.splice(historyIndex + 1);
-    historyStack.push(canvas.toJSON(['oid']));
+
+    // Save all objects including pageRect
+    const json = canvas.toJSON(['oid']);
+    historyStack.push(json);
     historyIndex = historyStack.length - 1;
     updateHistoryButtons();
 }
+
 function undo() {
     if (historyIndex > 0) {
         historyLocked = true;
@@ -803,10 +859,14 @@ function undo() {
         canvas.loadFromJSON(historyStack[historyIndex], () => {
             canvas.renderAll();
             historyLocked = false;
+
+            // Ensure pageRect reference is restored
+            pageRect = canvas.getObjects().find(o => o.oid === 'pageRect');
         });
         updateHistoryButtons();
     }
 }
+
 function redo() {
     if (historyIndex < historyStack.length - 1) {
         historyLocked = true;
@@ -814,10 +874,14 @@ function redo() {
         canvas.loadFromJSON(historyStack[historyIndex], () => {
             canvas.renderAll();
             historyLocked = false;
+
+            // Ensure pageRect reference is restored
+            pageRect = canvas.getObjects().find(o => o.oid === 'pageRect');
         });
         updateHistoryButtons();
     }
 }
+
 function updateHistoryButtons() {
     $('#undoBtn').disabled = historyIndex <= 0;
     $('#redoBtn').disabled = historyIndex >= historyStack.length - 1;
@@ -850,20 +914,29 @@ function paste() {
 }
 
 // --- VIEWPORT CONTROLS ---
-function centerAndResetZoom() {
-    const { width, height } = canvasWrapper.getBoundingClientRect();
-    canvas.setZoom(1);
+function centerAndFitPage() {
+    const { width: wrapperW, height: wrapperH } = canvasWrapper.getBoundingClientRect();
+    const pageW = pageRect.width;
+    const pageH = pageRect.height;
 
-    // Explicitly get the center of the page, not all objects
+    // Compute the max zoom that fits the page fully inside the wrapper
+    const zoomX = wrapperW / pageW;
+    const zoomY = wrapperH / pageH;
+    const zoom = Math.min(zoomX, zoomY);
+
+    canvas.setZoom(zoom);
+
+    // Center the page in the viewport
     const center = pageRect.getCenterPoint();
+    const viewportTransform = [zoom, 0, 0, zoom, (wrapperW / 2) - center.x * zoom, (wrapperH / 2) - center.y * zoom];
+    canvas.setViewportTransform(viewportTransform);
 
-    // The calculation is correct, but now uses the reliable center of the page
-    const newViewport = [1, 0, 0, 1, (width/2) - center.x, (height/2) - center.y];
-    canvas.setViewportTransform(newViewport);
-    $('#zoomLevel').textContent = 'Zoom: 100%';
-    canvas.renderAll(); // It's good practice to re-render after a transform
+    $('#zoomLevel').textContent = `Zoom: ${Math.round(zoom * 100)}%`;
+    canvas.renderAll();
 }
-$('#centerViewBtn').onclick = centerAndResetZoom;
+
+$('#centerViewBtn').onclick = centerAndFitPage;
+
 
 // --- KEYBOARD SHORTCUTS ---
 window.addEventListener('keydown', e => {
