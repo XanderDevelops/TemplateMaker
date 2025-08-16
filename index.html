@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Template Maker</title>
+<!-- Fabric.js -->
+<script src="https://cdn.jsdelivr.net/npm/fabric@5.3.0/dist/fabric.min.js"></script>
+<!-- SheetJS -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<!-- JSZip & FileSaver -->
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+<!-- jsPDF -->
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<style>
+  :root{
+    --bg:#111; --fg:#fff; --muted:#888; --panel:#1a1a1a; --panel-2:#222;
+    --border:#333; --accent:#fff;
+  }
+  *{ box-sizing: border-box; }
+  html,body{ height:100%; margin:0; background:var(--bg); color:var(--fg); font: 14px/1.4 system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif; overflow:hidden; }
+  .app{ display:grid; grid-template-rows:auto 1fr auto; height:100%; }
+  header{ display:flex; gap:16px; align-items:center; padding:12px 16px; background:var(--panel); border-bottom:1px solid var(--border); flex-wrap:wrap; }
+  .title{ font-weight:700; font-size:16px; margin-right: auto; }
+  input[type="text"], input[type="number"], select {
+    background:var(--panel-2); color:var(--fg); border:1px solid var(--border);
+    padding:8px 10px; border-radius:8px; outline:none; transition: border-color .2s;
+  }
+  input[type="text"]:focus, input[type="number"]:focus, select:focus { border-color: #555; }
+  .btn{ background:var(--accent); color:#000; border:none; padding:9px 16px; border-radius:8px; cursor:pointer; font-weight:600; display:inline-flex; align-items:center; gap: 8px; transition: background .2s; }
+  .btn:hover{ background: #ccc; }
+  .btn:disabled{ opacity:.4; cursor:not-allowed; }
+  .btn.ghost{ background:transparent; color:var(--fg); border:1px solid var(--border); }
+  .btn.ghost:hover{ background: var(--panel-2); }
+  .toolbar{ display:flex; gap:12px; align-items:center; }
+  .main{ display:grid; grid-template-columns: 260px 1fr 320px; gap:12px; padding:12px; min-height:0; }
+  .panel{ background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:12px; min-height:0; display:flex; flex-direction:column; position:relative; }
+
+  /* Canvas and Page Styling */
+  .canvas-container-wrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    border-radius: 12px;
+  }
+  .canvas-wrap{
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    background-color: #2a2a2a;
+    background-image: radial-gradient(#444 1px, transparent 0);
+    background-size: 20px 20px;
+    cursor: grab;
+  }
+  .canvas-wrap:active { cursor: grabbing; }
+
+  .right{ gap:12px; }
+  .stack{ display:grid; gap:8px; }
+  .row{ display:flex; gap:8px; align-items:center; }
+  h3{ margin:0 0 8px; font-size:13px; color:#ddd; text-transform:uppercase; letter-spacing:.1em; }
+  label{ font-size:12px; color:var(--muted); }
+
+  /* Custom Scrollbar Styling */
+  #inspectorWrap, .left-panel-content {
+    overflow-y:auto; flex:1; min-height:0; padding-right: 8px;
+  }
+  ::-webkit-scrollbar { width: 8px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.3); }
+
+  #inspector{ display:grid; gap:16px; }
+  #noSelection{ color:var(--muted); text-align:center; padding:20px 8px; border:1px dashed var(--border); border-radius:12px; }
+  footer{ display:flex; justify-content:space-between; align-items:center; padding:12px 16px; background:var(--panel); border-top:1px solid var(--border); }
+  .toolbar-group { display: flex; align-items: center; gap: 8px; padding: 4px 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel-2); }
+
+  /* Components Grid */
+  .components-grid { display:grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .shape-chip { background: var(--panel-2); border:1px solid var(--border); border-radius: 8px; padding: 12px; cursor:grab; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; transition: border-color .2s; user-select:none; }
+  .shape-chip:hover { border-color:#555; }
+  .shape-chip svg { width: 32px; height: 32px; stroke: #fff; stroke-width: 1.5px; fill: transparent; }
+  .shape-chip span { font-size: 12px; color: var(--muted); }
+
+  /* Modal */
+  .modal-backdrop{ position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,.6); z-index:50; }
+  .modal{ width:720px; max-width:95vw; background:var(--panel); border:1px solid var(--border); border-radius:16px; padding:16px; }
+  .col-list{ max-height:46vh; overflow:auto; display:grid; gap:8px; margin-top:8px; }
+  .col-item{ border:1px solid var(--border); border-radius:12px; padding:8px; cursor:pointer; }
+  .col-item[aria-selected="true"]{ border-color:#444; background:#121212; }
+
+  .toolbar-group .btn.active {
+    background: var(--accent);
+    color: var(--bg);
+}
+
+.color-picker-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding-right: 8px;
+}
+.color-picker-wrapper input[type="text"] {
+    border: none;
+    flex-grow: 1;
+}
+.color-picker-wrapper input[type="color"] {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    width: 28px;
+    height: 28px;
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+}
+.color-picker-wrapper input[type="color"]::-webkit-color-swatch {
+    border-radius: 6px;
+    border: 1px solid var(--border);
+}
+.color-picker-wrapper input[type="color"]::-moz-color-swatch {
+    border-radius: 6px;
+    border: 1px solid var(--border);
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="title">Template Maker</div>
+    <div class="toolbar">
+      <input id="titleInput" type="text" placeholder="Untitled_Template" value="Untitled_Template" style="min-width: 200px;"/>
+      <div class="row" title="Page Dimensions (W x H)">
+            <input id="pageWidth" type="number" value="768" min="100" max="10000" style="width:90px;"/>
+            <span class="muted">x</span>
+            <input id="pageHeight" type="number" value="1024" min="100" max="10000" style="width:90px;"/>
+        </div>
+    </div>
+    <div class="toolbar" style="margin-left: auto;">
+        <label for="csvInput" class="btn ghost">Load Data</label>
+        <input id="csvInput" type="file" accept=".csv,.xlsx,.xls" style="display:none;"/>
+        <span id="fileName" class="muted" style="max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">No file selected</span>
+        <input id="startCell" type="text" placeholder="Starting cell" value="A1" style="width: 100px;"/>
+    </div>
+  </header>
+
+  <main class="main">
+    <div class="panel left">
+      <div class="left-panel-content">
+        <h3>Components</h3>
+        <div class="components-grid">
+            <div class="shape-chip" draggable="true" data-add="text"><svg viewBox="0 0 24 24"><path d="M5 4h14M12 4v16M8 20h8" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg><span>Text</span></div>
+            <div class="shape-chip" draggable="true" data-add="image"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><path d="M21 15l-5-5L5 21" fill="none"></path></svg><span>Image</span></div>
+            <div class="shape-chip" draggable="true" data-add="square"><svg viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="1"></rect></svg><span>Square</span></div>
+            <div class="shape-chip" draggable="true" data-add="circle"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"></circle></svg><span>Circle</span></div>
+            <div class="shape-chip" draggable="true" data-add="triangle"><svg viewBox="0 0 24 24"><path d="M12 2L2 22h20L12 2z"></path></svg><span>Triangle</span></div>
+            <div class="shape-chip" draggable="true" data-add="star"><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg><span>Star</span></div>
+            <div class="shape-chip" draggable="true" data-add="arrow"><svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7" fill="none"></path></svg><span>Arrow</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="canvas-container-wrapper">
+      <div class="canvas-wrap">
+        <canvas id="c"></canvas>
+      </div>
+    </div>
+
+    <div class="panel right">
+      <div id="inspectorWrap">
+        <h3>Inspector</h3>
+        <div id="noSelection">Select an element to edit its properties.</div>
+        <div id="inspector"></div>
+        <div id="multiSelectInspector" style="display:none;"></div>
+      </div>
+    </div>
+  </main>
+
+<footer>
+    <div class="toolbar-group">
+      <button id="exportZipBtn" class="btn">Export as ZIP</button>
+      <button id="exportSinglePdfBtn" class="btn ghost">Export Single PDF</button>
+    </div>
+
+    <div class="toolbar-group">
+        <button id="undoBtn" class="btn ghost" title="Undo (Ctrl+Z)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3l3 2.7"/></svg>
+        </button>
+        <button id="redoBtn" class="btn ghost" title="Redo (Ctrl+Y)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l-3 2.7"/></svg>
+        </button>
+    </div>
+
+    <div class="toolbar">
+        <button id="centerViewBtn" class="btn ghost" title="Reset View">
+             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+        </button>
+        <div id="zoomLevel" class="muted">Zoom: 100%</div>
+    </div>
+    
+    <div class="toolbar-group">
+      <button id="toggleGridBtn" class="btn ghost active">Toggle Grid</button>
+      <button id="toggleSnapBtn" class="btn ghost active">Toggle Snap</button>
+    </div>
+</footer>
+</div>
+
+<!-- Modal (no changes) -->
+<div id="modalBackdrop" class="modal-backdrop">
+  <div class="modal">
+    <div class="row" style="justify-content:space-between;align-items:center;gap:12px;"><h3>Link to Column</h3><button id="closeModal" class="btn ghost">Close</button></div>
+    <div class="row" style="gap:8px; margin-top:8px;"><input id="columnSearch" type="text" placeholder="Search columns..." style="flex:1"/>
+      <label class="row" style="gap:8px; align-items:center;"><span class="muted">Start at</span><input id="modalStartCell" type="text" value="A1" style="width:88px;"/></label>
+    </div>
+    <div id="colList" class="col-list"></div>
+    <div class="row" style="margin-top:12px; justify-content:flex-end;"><button id="confirmColumn" class="btn">Use Selected Column</button></div>
+  </div>
+</div>
+
+<script>
+// --- UTILITIES & SETUP ---
+const $ = (sel) => document.querySelector(sel);
+const { jsPDF } = window.jspdf;
+
+// --- STATE ---
+const canvasWrapper = $('.canvas-wrap');
+const canvas = new fabric.Canvas('c', {
+    backgroundColor: 'transparent',
+    selection: true,
+});
+let pageRect; // This will represent our white page
+const bindings = new Map();
+let workbook, worksheet, headers = [], dataRows = [], selectedColumn;
+let gridEnabled = true, snapEnabled = true;
+const gridCellSize = 20;
+
+let historyStack = [];
+let historyIndex = -1;
+let historyLocked = false;
+let _clipboard = null;
+
+const FONT_LIST = ["Arial", "Helvetica", "Times New Roman", "Georgia", "Courier New", "Verdana", "Impact", "Comic Sans MS"];
+
+// --- DEBOUNCE UTILITY ---
+function debounce(func, delay = 250) {
+    let timeout;
+    return (...args) => {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => { func.apply(this, args); }, delay);
+    };
+}
+
+// --- CANVAS & PAGE SETUP ---
+function initializeCanvas() {
+    const resizeCanvas = () => {
+        const { width, height } = canvasWrapper.getBoundingClientRect();
+        canvas.setWidth(width);
+        canvas.setHeight(height);
+        canvas.renderAll();
+    };
+
+    pageRect = new fabric.Rect({
+        fill: '#ffffff',
+        width: 768,
+        height: 1024,
+        selectable: false,
+        evented: false,
+        excludeFromExport: true,
+        shadow: 'rgba(0,0,0,0.2) 0px 5px 15px',
+    });
+    canvas.add(pageRect);
+
+    // --- FIX: Resize canvas BEFORE centering the page ---
+    resizeCanvas();
+    canvas.centerObject(pageRect);
+    // --- End of FIX ---
+
+    canvas.sendToBack(pageRect);
+
+    drawGrid();
+    new ResizeObserver(resizeCanvas).observe(canvasWrapper);
+
+    canvas.on({
+        'object:added': saveState,
+        'object:removed': saveState,
+        'object:modified': saveState,
+    });
+
+    saveState(); // Initial state
+}
+
+const setPageDimensions = debounce(() => {
+    if (!pageRect) return;
+    const w = parseInt($('#pageWidth').value, 10) || 1000;
+    const h = parseInt($('#pageHeight').value, 10) || 600;
+    pageRect.set({ width: w, height: h });
+    canvas.centerObject(pageRect);
+    pageRect.setCoords(); // Update controls
+    drawGrid(); // Redraw grid to match new page size
+    canvas.renderAll();
+}, 300);
+
+$('#pageWidth').addEventListener('input', setPageDimensions);
+$('#pageHeight').addEventListener('input', setPageDimensions);
+
+function drawGrid() {
+    canvas.remove(...canvas.getObjects('line')); // Clear old grid lines
+    if (!gridEnabled || !pageRect) { canvas.renderAll(); return; }
+
+    const { width, height, left, top } = pageRect;
+    const gridLines = [];
+    const lineOption = { stroke: '#eee', selectable: false, evented: false, excludeFromExport: true };
+
+    for (let i = 1; i < (width / gridCellSize); i++) {
+        gridLines.push(new fabric.Line([left + i * gridCellSize, top, left + i * gridCellSize, top + height], lineOption));
+    }
+    for (let i = 1; i < (height / gridCellSize); i++) {
+        gridLines.push(new fabric.Line([left, top + i * gridCellSize, left + width, top + i * gridCellSize], lineOption));
+    }
+    canvas.add(...gridLines);
+    gridLines.forEach(line => canvas.sendToBack(line));
+    canvas.sendToBack(pageRect);
+    canvas.renderAll();
+}
+
+$('#toggleGridBtn').addEventListener('click', () => { 
+    gridEnabled = !gridEnabled; 
+    $('#toggleGridBtn').classList.toggle('active', gridEnabled);
+    drawGrid(); 
+});
+$('#toggleSnapBtn').addEventListener('click', () => { 
+    snapEnabled = !snapEnabled;
+    $('#toggleSnapBtn').classList.toggle('active', snapEnabled);
+});
+
+
+// --- CANVAS PANNING & ZOOM ---
+canvas.on('mouse:wheel', function(opt) {
+  const delta = opt.e.deltaY;
+  let zoom = canvas.getZoom();
+  zoom *= 0.999 ** delta;
+  if (zoom > 20) zoom = 20;
+  if (zoom < 0.05) zoom = 0.05;
+  canvas.zoomToPoint({ x: opt.e.offsetX, y: opt.e.offsetY }, zoom);
+  $('#zoomLevel').textContent = `Zoom: ${Math.round(zoom*100)}%`;
+  opt.e.preventDefault();
+  opt.e.stopPropagation();
+});
+
+let isPanning = false;
+let lastPosX, lastPosY;
+canvas.on('mouse:down', function(opt) {
+  if (opt.e.altKey || opt.target == null) {
+    isPanning = true;
+    canvas.selection = false;
+    lastPosX = opt.e.clientX;
+    lastPosY = opt.e.clientY;
+  }
+});
+canvas.on('mouse:move', function(opt) {
+  if (isPanning) {
+    const e = opt.e;
+    const vpt = this.viewportTransform;
+    vpt[4] += e.clientX - lastPosX;
+    vpt[5] += e.clientY - lastPosY;
+    this.requestRenderAll();
+    lastPosX = e.clientX;
+    lastPosY = e.clientY;
+  }
+});
+canvas.on('mouse:up', function(opt) {
+  if (isPanning) {
+    this.setViewportTransform(this.viewportTransform);
+    isPanning = false;
+    canvas.selection = true;
+  }
+});
+
+
+// --- CSV/XLSX HANDLING ---
+$('#csvInput').addEventListener('change', async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) { $('#fileName').textContent = 'No file selected'; return; }
+    $('#fileName').textContent = file.name;
+    const data = await file.arrayBuffer();
+    try {
+        workbook = XLSX.read(data, { type: 'array' });
+        const sheetName = workbook.SheetNames[0];
+        worksheet = workbook.Sheets[sheetName];
+        const json = XLSX.utils.sheet_to_json(worksheet, { defval: '', raw: false });
+        if (!json.length) { alert('No data found in the sheet.'); return; }
+        headers = Object.keys(json[0]);
+        dataRows = json;
+        alert(`Loaded "${sheetName}" with ${dataRows.length} rows.`);
+    } catch (err) {
+        alert('Error reading file. Please use a valid CSV or Excel file.');
+        $('#fileName').textContent = 'No file selected';
+    }
+});
+
+
+// --- COMPONENT ADDITION & DRAG-DROP VISUALS ---
+const adders = {
+  text: (x, y) => canvas.add(new fabric.Textbox('Sample Text', { left: x, top: y, fontSize: 28, fill: '#000', fontFamily: 'Arial', originX: 'center', originY: 'center' })).setActiveObject(canvas.getObjects().pop()),
+  rect: ({x, y, asSquare=true}={}) => canvas.add(new fabric.Rect({ left: x, top: y, width: asSquare?150:220, height: 150, fill: '#f0f0f0', stroke: '#333', strokeWidth: 2, originX: 'center', originY: 'center' })).setActiveObject(canvas.getObjects().pop()),
+  circle: (x, y) => canvas.add(new fabric.Circle({ left: x, top: y, radius: 75, fill: '#f0f0f0', stroke: '#333', strokeWidth: 2, originX: 'center', originY: 'center' })).setActiveObject(canvas.getObjects().pop()),
+  triangle: (x, y) => canvas.add(new fabric.Triangle({ left: x, top: y, width: 150, height: 130, fill: '#f0f0f0', stroke: '#333', strokeWidth: 2, originX: 'center', originY: 'center' })).setActiveObject(canvas.getObjects().pop()),
+  star: (x, y) => {
+      const starPoints = (n, outerR, innerR) => {
+          const pts = []; let angle = -Math.PI / 2; const step = (Math.PI * 2) / n;
+          for (let i = 0; i < n; i++) {
+              pts.push({ x: outerR * Math.cos(angle), y: outerR * Math.sin(angle) });
+              angle += step / 2;
+              pts.push({ x: innerR * Math.cos(angle), y: innerR * Math.sin(angle) });
+              angle += step / 2;
+          }
+          return pts;
+      };
+      canvas.add(new fabric.Polygon(starPoints(5, 75, 35), { left: x, top: y, fill: '#f0f0f0', stroke: '#333', strokeWidth: 2, originX: 'center', originY: 'center' })).setActiveObject(canvas.getObjects().pop());
+  },
+  square: (x, y) => adders.rect({x, y, asSquare: true}),
+  arrow: (x, y) => canvas.add(new fabric.Path('M 0 20 L 60 20 L 60 0 L 100 30 L 60 60 L 60 40 L 0 40 Z', { left: x, top: y, fill: '#f0f0f0', stroke: '#333', strokeWidth: 2, originX: 'center', originY: 'center' })).setActiveObject(canvas.getObjects().pop()),
+  image: (x, y, url=null) => {
+    const imageUrl = url || prompt('Enter image URL');
+    if (!imageUrl) return;
+    fabric.Image.fromURL(imageUrl, (img) => {
+      img.set({ left: x, top: y, scaleX: 0.5, scaleY: 0.5, originX: 'center', originY: 'center' });
+      canvas.add(img).setActiveObject(img);
+    }, { crossOrigin: 'anonymous' });
+  }
+};
+
+document.querySelectorAll('.shape-chip').forEach(chip => {
+    chip.addEventListener('dragstart', e => {
+        e.dataTransfer.setData('text/plain', chip.getAttribute('data-add'));
+        const icon = chip.querySelector('svg').cloneNode(true);
+        icon.style.position = 'absolute';
+        icon.style.top = '-1000px';
+        icon.style.width = '48px';
+        icon.style.height = '48px';
+        icon.style.opacity = '0.7';
+        document.body.appendChild(icon);
+        e.dataTransfer.setDragImage(icon, 24, 24); // Center of the icon
+        setTimeout(() => document.body.removeChild(icon), 0);
+    });
+});
+
+canvasWrapper.addEventListener('dragover', e => e.preventDefault());
+canvasWrapper.addEventListener('drop', e => {
+  e.preventDefault();
+  const type = e.dataTransfer.getData('text/plain');
+  const pointer = canvas.getPointer(e, true);
+
+    if (type && adders[type]) {
+        adders[type](pointer.x, pointer.y);
+        return;
+    }
+
+  const file = e.dataTransfer.files?.[0];
+  if (file && file.type.startsWith('image/')) {
+    const reader = new FileReader();
+    reader.onload = (ev) => adders.image(pointer.x, pointer.y, ev.target.result);
+    reader.readDataURL(file);
+  }
+});
+
+
+// --- SNAPPING TO GRID ---
+canvas.on('object:moving', (options) => {
+  if (!snapEnabled || !pageRect) return;
+  const target = options.target;
+  const pageLeft = pageRect.left;
+  const pageTop = pageRect.top;
+  const snapLeft = Math.round((target.left - pageLeft) / gridCellSize) * gridCellSize + pageLeft;
+  const snapTop = Math.round((target.top - pageTop) / gridCellSize) * gridCellSize + pageTop;
+  target.set({ left: snapLeft, top: snapTop }).setCoords();
+});
+
+
+// --- INSPECTOR (LOGIC UNCHANGED) ---
+const inspector = $('#inspector');
+const multiInspector = $('#multiSelectInspector');
+
+canvas.on('selection:created', refreshInspector);
+canvas.on('selection:updated', refreshInspector);
+canvas.on('selection:cleared', () => {
+  $('#noSelection').style.display='block';
+  inspector.style.display='none';
+  multiInspector.style.display='none';
+});
+
+// --- KEYBOARD SHORTCUTS & FINAL SETUP ---
+window.addEventListener('keydown', e => {
+  if (e.key === 'Delete' || e.key === 'Backspace') {
+      if(document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA') return;
+    const activeObjects = canvas.getActiveObjects();
+    if (activeObjects.length) {
+      activeObjects.forEach(obj => canvas.remove(obj));
+      canvas.discardActiveObject().renderAll();
+    }
+  }
+});
+
+function refreshInspector(e) {
+  const target = e.target || canvas.getActiveObject();
+  if (!target) return;
+  if (target.type === 'activeSelection') {
+    inspector.style.display = 'none';
+    multiInspector.style.display = 'grid';
+    $('#noSelection').style.display = 'none';
+    renderMultiSelectInspector(target);
+  } else {
+    multiInspector.style.display = 'none';
+    inspector.style.display = 'grid';
+    $('#noSelection').style.display = 'none';
+    renderSingleObjectInspector(target);
+  }
+}
+function renderMultiSelectInspector(selection) {
+  multiInspector.innerHTML = '';
+  const alignSection = (title, buttons) => {
+    const el = document.createElement('div'); el.className = 'stack';
+    el.innerHTML = `<h3>${title}</h3>`;
+    const btnGroup = document.createElement('div'); btnGroup.className = 'btn-group';
+    buttons.forEach(({label, action}) => {
+      const btn = document.createElement('button'); btn.className = 'btn ghost';
+      btn.textContent = label;
+      btn.onclick = () => { action(selection); canvas.renderAll(); };
+      btnGroup.appendChild(btn);
+    });
+    el.appendChild(btnGroup);
+    return el;
+  };
+  multiInspector.appendChild(alignSection('Align', [
+    {label: 'Left', action: s => s.forEachObject(o => o.set({left: s.left}))},
+    {label: 'Center', action: s => s.forEachObject(o => o.set({left: s.left + s.width/2 - o.getScaledWidth()/2}))},
+    {label: 'Right', action: s => s.forEachObject(o => o.set({left: s.left + s.width - o.getScaledWidth()}))},
+    {label: 'Top', action: s => s.forEachObject(o => o.set({top: s.top}))},
+    {label: 'Middle', action: s => s.forEachObject(o => o.set({top: s.top + s.height/2 - o.getScaledHeight()/2}))},
+    {label: 'Bottom', action: s => s.forEachObject(o => o.set({top: s.top + s.height - o.getScaledHeight()}))},
+  ]));
+}
+function renderSingleObjectInspector(o) {
+  inspector.innerHTML = '';
+    const actions = document.createElement('div'); actions.className = 'row';
+  actions.innerHTML = `
+    <button id="copyBtn" class="btn ghost">Copy</button>
+    <button id="cutBtn" class="btn ghost">Cut</button>
+    <button id="removeBtn" class="btn ghost" style="margin-left:auto; background-color: #bd0000;">Remove</button>
+  `;
+  inspector.appendChild(actions);
+  actions.querySelector('#copyBtn').onclick = copy;
+  actions.querySelector('#cutBtn').onclick = cut;
+  actions.querySelector('#removeBtn').onclick = () => canvas.remove(canvas.getActiveObject());
+  
+  inspector.appendChild(section('Common', [
+    inputRow('Position', `${Math.round(o.left)}x${Math.round(o.top)}`, v => { const p=parseDims(v); if(p) o.set({left:p.w, top:p.h}); }),
+    inputRow('Dimensions', `${Math.round(o.getScaledWidth())}x${Math.round(o.getScaledHeight())}`, v => { const d=parseDims(v); if(d){o.scaleToWidth(d.w);o.scaleToHeight(d.h);} }),
+    colorInputRow('Stroke Color', o.stroke ?? '', v => o.set({stroke: v})),
+    inputRow('Opacity', o.opacity ?? 1, v => o.set({opacity: parseFloat(v)})),
+    inputRow('Stroke Color', o.stroke ?? '', v => o.set({stroke: v})),
+    inputRow('Stroke Width', o.strokeWidth ?? 0, v => o.set({strokeWidth: parseFloat(v)})),
+    inputRow('Corner Radius', o.rx ?? 0, v => { if('rx' in o) o.set({rx: parseFloat(v), ry: parseFloat(v)}); }),
+  ]));
+  if (['rect','triangle','circle','polygon','path'].includes(o.type)) {
+    inspector.appendChild(section('Fill', [
+      inputRow('Color', o.fill, v => o.set({fill: v})),
+      buttonRow('Fill with Image', () => {
+          const url = prompt('Enter image URL'); if(!url) return;
+          fabric.Image.fromURL(url, img => { o.set('fill', new fabric.Pattern({source: img.getElement()})); canvas.renderAll(); }, {crossOrigin:'anonymous'});
+      })
+    ]));
+  }
+  if (o.type === 'textbox') {
+    inspector.appendChild(section('Text', [
+      inputRow('Content', o.text, v => o.set({text:v}), 'textarea'),
+      inputRow('Font Size', o.fontSize, v => o.set({fontSize:parseFloat(v)})),
+      selectRow('Font Family', FONT_LIST, o.fontFamily, v => o.set({fontFamily:v})),
+      colorInputRow('Fill Color', o.fill, v => o.set({fill:v})),
+      selectRow('Alignment', ['left','center','right','justify'], o.textAlign, v => o.set({textAlign:v})),
+    ]));
+  }
+  const linkSection = document.createElement('div'); linkSection.className = 'stack';
+  const addBtn = document.createElement('button'); addBtn.className = 'btn'; addBtn.textContent = 'Add Data Link';
+  addBtn.onclick = () => { const b={column:'', property:defaultPropertyFor(o)}; saveBinding(o,b); refreshInspector({target:o}); };
+  const headerRow = document.createElement('div'); headerRow.style.display='flex'; headerRow.style.justifyContent='space-between'; headerRow.style.alignItems = 'center';
+  headerRow.innerHTML = '<h3>Data Links</h3>'; headerRow.appendChild(addBtn);
+  linkSection.appendChild(headerRow);
+  getBindingsFor(o).forEach(b => linkSection.appendChild(bindingEditorRow(o,b)));
+  inspector.appendChild(linkSection);
+}
+function section(title, rows){ const w=document.createElement('div'); w.className='stack'; w.innerHTML=`<h3>${title}</h3>`; rows.forEach(r => w.appendChild(r)); return w; }
+function inputRow(label, value, onChange, type='text'){
+    const w = document.createElement('div'); w.className='stack'; w.innerHTML = `<label>${label}</label>`;
+    const i = document.createElement(type === 'textarea' ? 'textarea' : 'input');
+    i.type=type; i.value=value??''; i.oninput=e=> { onChange(e.target.value); canvas.renderAll(); };
+    if(type==='textarea') i.rows=3;
+    w.appendChild(i);
+    return w;
+}
+function selectRow(label, opts, val, onChange) {
+    const w = document.createElement('div'); w.className='stack'; w.innerHTML = `<label>${label}</label>`;
+    const s = document.createElement('select');
+    opts.forEach(opt => s.innerHTML += `<option value="${opt}" ${opt==val?'selected':''}>${opt}</option>`);
+    s.onchange = e => { onChange(e.target.value); canvas.renderAll(); };
+    w.appendChild(s);
+    return w;
+}
+function buttonRow(label, onClick) { const btn = document.createElement('button');btn.className='btn ghost'; btn.textContent=label; btn.onclick=onClick; btn.style.width='100%'; return btn; }
+function bindingEditorRow(o, b) {
+    const box = document.createElement('div'); box.className='stack'; box.style.cssText='border:1px solid var(--border);padding:8px;border-radius:8px;';
+    box.appendChild(selectRow('Property', propertyOptionsFor(o), b.property, v => b.property=v));
+    const info = document.createElement('div'); info.className = 'muted'; info.textContent = `Linked to: ${b.column||'—'}`;
+    const linkBtn = document.createElement('button'); linkBtn.className='btn'; linkBtn.textContent = 'Link Column';
+    linkBtn.onclick = () => { selectedColumn = { object:o, binding:b }; openModal(); };
+    const delBtn = document.createElement('button'); delBtn.className='btn ghost'; delBtn.textContent = 'Remove';
+    delBtn.onclick = () => { removeBinding(o, b); refreshInspector({target:o}); };
+    const btnGroup = document.createElement('div'); btnGroup.className='row'; btnGroup.append(linkBtn, delBtn);
+    box.append(info, btnGroup);
+    return box;
+}
+function propertyOptionsFor(o){ const common = ['Opacity','Dimensions','Stroke Color','Stroke Width','Corner Radius']; if (o.type === 'textbox') return ['Text Content','Font Family','Font Size','Fill Color', ...common]; if (['rect','circle','triangle','polygon','path'].includes(o.type)) return ['Color', 'Image Fill URL', ...common]; return common; }
+function defaultPropertyFor(o){ return o.type==='textbox' ? 'Text Content' : 'Color'; }
+function getBindingsFor(o){ const id=ensureId(o); if(!bindings.has(id)) bindings.set(id,[]); return bindings.get(id); }
+function saveBinding(o,b){ const arr=getBindingsFor(o); if(!arr.includes(b)) arr.push(b); }
+function removeBinding(o,b){ const arr=getBindingsFor(o); const i=arr.indexOf(b); if(i>-1) arr.splice(i,1); }
+function ensureId(o){ if(!o.oid) o.oid=`obj_${Date.now()}_${Math.random()}`; return o.oid; }
+canvas.on('object:added', (e) => ensureId(e.target));
+const modal = $('#modalBackdrop');
+function openModal(){ if(!workbook){ alert('Load a data file first.'); return; } modal.style.display='flex'; renderColumnList(); }
+function closeModal(){ modal.style.display='none'; }
+$('#closeModal').addEventListener('click', closeModal);
+$('#columnSearch').addEventListener('input', renderColumnList);
+$('#confirmColumn').addEventListener('click', () => {
+  const sel = $('.col-item[aria-selected="true"]'); if(!sel) return alert('Select a column.');
+  const col = sel.dataset.name;
+  $('#startCell').value = $('#modalStartCell').value;
+  if (selectedColumn) { selectedColumn.binding.column = col; refreshInspector({target: selectedColumn.object}); }
+  closeModal();
+});
+function renderColumnList(){
+  const list = $('#colList'); list.innerHTML=''; const q = ($('#columnSearch').value||'').toLowerCase();
+  headers.filter(h=>h.toLowerCase().includes(q)).forEach(h=>{
+    const item = document.createElement('div'); item.className='col-item'; item.dataset.name=h;
+    const samples = dataRows.slice(0,5).map(r=>r[h]).filter(Boolean).slice(0,3).join(' · ');
+    item.innerHTML = `<b>${h}</b><div class="muted">Samples: ${samples || '—'}</div>`;
+    item.onclick = () => { document.querySelectorAll('.col-item').forEach(x=>x.removeAttribute('aria-selected')); item.setAttribute('aria-selected','true'); };
+    list.appendChild(item);
+  });
+}
+async function exportAllRows({ asZip, asSinglePdf }) {
+    const startOffset = Math.max(0, parseInt(($('#startCell').value.match(/\d+$/) || [2])[0], 10) - 2);
+    let rows = dataRows.slice(startOffset);
+
+    if (!rows.length) {
+        rows = [null]; // Generate one empty template if no data
+    }
+
+    const title = ($('#titleInput').value || 'Untitled_Template').trim();
+    const pageW = pageRect.width;
+    const pageH = pageRect.height;
+
+    const pdf = asSinglePdf ? new jsPDF({ unit: 'px', format: [pageW, pageH] }) : null;
+    const zipFile = asZip ? new JSZip() : null;
+    let firstPage = true;
+
+    // Get all objects that have data bindings
+    const objectsWithBindings = canvas.getObjects().filter(obj => getBindingsFor(obj).length > 0);
+
+    for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+        const originalStates = new Map(); // Store original values to revert back to
+
+        // 1. APPLY BINDINGS and store original state
+        if (row) {
+            objectsWithBindings.forEach(obj => {
+                const bindings = getBindingsFor(obj);
+                bindings.forEach(binding => {
+                    const value = row[binding.column];
+                    if (value != null) {
+                        // Store the original state before changing it
+                        if (!originalStates.has(obj.oid)) originalStates.set(obj.oid, {});
+                        const originalProps = originalStates.get(obj.oid);
+
+                        // A simple way to store original values based on property
+                        if (binding.property === 'Text Content' && originalProps.text === undefined) originalProps.text = obj.text;
+                        if (binding.property.includes('Color') && originalProps.fill === undefined) originalProps.fill = obj.fill;
+                        // Add other properties as needed...
+
+                        applyBinding(obj, binding.property, value);
+                    }
+                });
+            });
+            canvas.renderAll(); // Wait for bindings to apply visually
+        }
+
+        // 2. GENERATE THE CROPPED IMAGE
+        const dataURL = generateCanvasForRow(row);
+
+        // 3. EXPORT (PDF/ZIP logic is unchanged)
+        if (asSinglePdf) {
+            if (!firstPage) pdf.addPage([pageW, pageH]);
+            pdf.addImage(dataURL, 'PNG', 0, 0, pageW, pageH);
+            firstPage = false;
+        }
+        if (asZip) {
+            const pagePdf = new jsPDF({ unit: 'px', format: [pageW, pageH] });
+            pagePdf.addImage(dataURL, 'PNG', 0, 0, pageW, pageH);
+            zipFile.file(`${title}_${i + 1}.pdf`, await pagePdf.output('blob'));
+        }
+
+        // 4. REVERT BINDINGS
+        if (row) {
+             originalStates.forEach((props, oid) => {
+                const obj = canvas.getObjects().find(o => o.oid === oid);
+                if (obj) {
+                    obj.set(props);
+                }
+            });
+            canvas.renderAll();
+        }
+    }
+
+    if (asSinglePdf) saveAs(pdf.output('blob'), `${title}.pdf`);
+    if (asZip) saveAs(await zipFile.generateAsync({ type: 'blob' }), `${title}.zip`);
+}
+
+function generateCanvasForRow(row) {
+    // 1. Temporarily hide grid lines for the export
+    const gridLines = canvas.getObjects('line');
+    gridLines.forEach(line => line.set({ visible: false }));
+
+    // 2. Calculate the multiplier to counteract the current zoom level
+    const zoom = canvas.getZoom();
+    const multiplier = 4 / zoom;
+
+    // Get the exact dimensions and position of the page rectangle
+    const { left, top, width, height } = pageRect;
+
+    // Use fabric's built-in cropping with the multiplier
+    // to capture a full-resolution image of only the page area.
+    const dataURL = canvas.toDataURL({
+        format: 'png',
+        quality: 1.0,
+        left: left,
+        top: top,
+        width: width,
+        height: height,
+        multiplier: multiplier
+    });
+
+    // 3. Make the grid lines visible again
+    gridLines.forEach(line => line.set({ visible: true }));
+    canvas.renderAll(); // Re-render the canvas to show the grid again for the user
+
+    return dataURL;
+}
+
+function parseDims(s){ const m = String(s).match(/^(\d+)[xX](\d+)$/i); return m ? {w:+m[1], h:+m[2]} : null; }
+function applyBinding(o, prop, val){
+  val = String(val).trim(); const numVal = parseFloat(val);
+  switch(prop) {
+    case 'Text Content': if(o.type==='textbox') o.set({text:val}); break;
+    case 'Font Family': if(o.type==='textbox') o.set({fontFamily:val}); break;
+    case 'Font Size': if(o.type==='textbox') o.set({fontSize:numVal}); break;
+    case 'Fill Color': case 'Color': o.set({fill:val}); break;
+    case 'Opacity': o.set({opacity:numVal}); break;
+    case 'Dimensions': { const d=parseDims(val); if(d){o.scaleToWidth(d.w);o.scaleToHeight(d.h);} break; }
+    case 'Stroke Color': o.set({stroke:val}); break;
+    case 'Stroke Width': o.set({strokeWidth:numVal}); break;
+    case 'Corner Radius': if('rx' in o) o.set({rx:numVal,ry:numVal}); break;
+    case 'Image Fill URL': fabric.Image.fromURL(val, img=>o.set('fill',new fabric.Pattern({source:img.getElement()})),{crossOrigin:'anonymous'}); break;
+  }
+}
+function colorInputRow(label, value, onChange) {
+    const w = document.createElement('div'); w.className = 'stack';
+    w.innerHTML = `<label>${label}</label>`;
+    const wrap = document.createElement('div'); wrap.className = 'color-picker-wrapper';
+    const textInput = document.createElement('input'); textInput.type = 'text'; textInput.value = value;
+    const colorInput = document.createElement('input'); colorInput.type = 'color'; colorInput.value = value;
+    textInput.oninput = () => { colorInput.value = textInput.value; onChange(textInput.value); };
+    colorInput.oninput = () => { textInput.value = colorInput.value; onChange(colorInput.value); };
+    wrap.append(textInput, colorInput);
+    w.appendChild(wrap);
+    return w;
+}
+
+function saveState() {
+    if (historyLocked) return;
+    historyStack.splice(historyIndex + 1);
+    historyStack.push(canvas.toJSON(['oid']));
+    historyIndex = historyStack.length - 1;
+    updateHistoryButtons();
+}
+function undo() {
+    if (historyIndex > 0) {
+        historyLocked = true;
+        historyIndex--;
+        canvas.loadFromJSON(historyStack[historyIndex], () => {
+            canvas.renderAll();
+            historyLocked = false;
+        });
+        updateHistoryButtons();
+    }
+}
+function redo() {
+    if (historyIndex < historyStack.length - 1) {
+        historyLocked = true;
+        historyIndex++;
+        canvas.loadFromJSON(historyStack[historyIndex], () => {
+            canvas.renderAll();
+            historyLocked = false;
+        });
+        updateHistoryButtons();
+    }
+}
+function updateHistoryButtons() {
+    $('#undoBtn').disabled = historyIndex <= 0;
+    $('#redoBtn').disabled = historyIndex >= historyStack.length - 1;
+}
+$('#undoBtn').onclick = undo;
+$('#redoBtn').onclick = redo;
+
+
+// --- COPY / CUT / PASTE ---
+function copy() {
+    canvas.getActiveObject().clone(cloned => _clipboard = cloned);
+}
+function cut() {
+    copy();
+    canvas.remove(canvas.getActiveObject());
+}
+function paste() {
+    if (!_clipboard) return;
+    _clipboard.clone(clonedObj => {
+        canvas.discardActiveObject();
+        clonedObj.set({
+            left: clonedObj.left + 20,
+            top: clonedObj.top + 20,
+            evented: true,
+        });
+        clonedObj.setCoords();
+        canvas.add(clonedObj).setActiveObject(clonedObj);
+        canvas.requestRenderAll();
+    });
+}
+
+// --- VIEWPORT CONTROLS ---
+function centerAndResetZoom() {
+    const { width, height } = canvasWrapper.getBoundingClientRect();
+    canvas.setZoom(1);
+
+    // Explicitly get the center of the page, not all objects
+    const center = pageRect.getCenterPoint();
+
+    // The calculation is correct, but now uses the reliable center of the page
+    const newViewport = [1, 0, 0, 1, (width/2) - center.x, (height/2) - center.y];
+    canvas.setViewportTransform(newViewport);
+    $('#zoomLevel').textContent = 'Zoom: 100%';
+    canvas.renderAll(); // It's good practice to re-render after a transform
+}
+$('#centerViewBtn').onclick = centerAndResetZoom;
+
+// --- KEYBOARD SHORTCUTS ---
+window.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+  const isCtrl = e.ctrlKey || e.metaKey;
+
+  if (isCtrl && e.key === 'z') { e.preventDefault(); undo(); }
+  if (isCtrl && e.key === 'y') { e.preventDefault(); redo(); }
+  if (isCtrl && e.key === 'c') { e.preventDefault(); copy(); }
+  if (isCtrl && e.key === 'x') { e.preventDefault(); cut(); }
+  if (isCtrl && e.key === 'v') { e.preventDefault(); paste(); }
+
+  if (e.key === 'Delete' || e.key === 'Backspace') {
+    const activeObjects = canvas.getActiveObjects();
+    if (activeObjects.length) {
+      activeObjects.forEach(obj => canvas.remove(obj));
+      canvas.discardActiveObject().renderAll();
+    }
+  }
+});
+
+$('#exportZipBtn').addEventListener('click', () => exportAllRows({asZip:true}));
+$('#exportSinglePdfBtn').addEventListener('click', () => exportAllRows({asSinglePdf:true}));
+
+// --- INITIALIZE ---
+drawGrid();
+initializeCanvas();
+</script>
+</body>
+</html>
