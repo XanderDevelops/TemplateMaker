@@ -293,6 +293,7 @@ function initializeCanvas() {
     // --- End of FIX ---
 
     canvas.sendToBack(pageRect);
+    centerAndFitPage();
     
     drawGrid();
     new ResizeObserver(resizeCanvas).observe(canvasWrapper);
@@ -921,6 +922,7 @@ function loadTemplate(e) {
     const reader = new FileReader();
     reader.onload = (event) => {
         try {
+            initializeCanvas();
             const data = JSON.parse(event.target.result);
 
             // 1. Validate data structure
