@@ -922,37 +922,47 @@ function loadTemplate(e) {
     const reader = new FileReader();
     reader.onload = (event) => {
         try {
-            initializeCanvas();
             const data = JSON.parse(event.target.result);
 
-            // 1. Validate data structure
             if (!data.canvas || !data.page || !data.bindings) {
                 throw new Error("Invalid template file format.");
             }
             
-            // 2. Load page settings
             $('#titleInput').value = data.page.title || 'Untitled_Template';
             $('#pageWidth').value = data.page.width || 800;
             $('#pageHeight').value = data.page.height || 1200;
 
-            // 3. Load bindings by converting array back to a Map
             bindings = new Map(data.bindings);
             
-            // 4. Load canvas objects
-            historyLocked = true; // Prevent load from creating a history state
+            historyLocked = true;
             canvas.loadFromJSON(data.canvas, () => {
-                // Find the pageRect reference again after loading
                 pageRect = canvas.getObjects().find(o => o.oid === 'pageRect');
                 if (!pageRect) {
                     throw new Error("Template file is missing the page object.");
                 }
                 
-                // Re-render and fit
+                // === FIX STARTS HERE ===
+                // Re-apply the essential non-interactive properties to the page rectangle
+                // after it has been loaded from the template.
+                pageRect.set({
+                    selectable: false,
+                    evented: false,
+                    hasControls: false,
+                    hasBorders: false,
+                    lockMovementX: true,
+                    lockMovementY: true,
+                    lockScalingX: true,
+                    lockScalingY: true,
+                    lockRotation: true,
+                });
+                // Ensure it's always the background layer
+                canvas.sendToBack(pageRect);
+                // === FIX ENDS HERE ===
+
                 canvas.renderAll();
                 centerAndFitPage();
                 drawGrid();
                 
-                // 5. Reset history with the loaded state as the new beginning
                 historyLocked = false;
                 historyStack = [];
                 historyIndex = -1;
@@ -965,7 +975,6 @@ function loadTemplate(e) {
             console.error("Error loading template:", error);
             alert(`Could not load the template. Error: ${error.message}`);
         } finally {
-            // Clear the input value to allow loading the same file again
             e.target.value = null;
         }
     };
