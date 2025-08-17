@@ -458,11 +458,43 @@ canvas.on('mouse:wheel', function(opt) {
   $('#zoomLevel').textContent = `Zoom: ${Math.round(zoom*100)}%`;
   opt.e.preventDefault(); opt.e.stopPropagation();
 });
-let isPanning = false; let lastPosX, lastPosY;
-canvas.on('mouse:down', function(opt) { if (opt.e.altKey || opt.target == null) { isPanning = true; canvas.selection = false; lastPosX = opt.e.clientX; lastPosY = opt.e.clientY; } });
-canvas.on('mouse:move', function(opt) { if (isPanning) { const e = opt.e; const vpt = this.viewportTransform; vpt[4] += e.clientX - lastPosX; vpt[5] += e.clientY - lastPosY; this.requestRenderAll(); lastPosX = e.clientX; lastPosY = e.clientY; } });
-canvas.on('mouse:up', function(opt) { if (isPanning) { this.setViewportTransform(this.viewportTransform); isPanning = false; canvas.selection = true; } });
 
+let isPanning = false;
+let lastPosX, lastPosY;
+
+canvas.on('mouse:down', function(opt) {
+  // Panning is now ONLY triggered by holding the Alt key.
+  // Clicking on an empty canvas area without Alt will now
+  // correctly start a marquee selection.
+  if (opt.e.altKey === true) {
+    isPanning = true;
+    this.selection = false; // Disable selection while panning
+    lastPosX = opt.e.clientX;
+    lastPosY = opt.e.clientY;
+  }
+});
+
+canvas.on('mouse:move', function(opt) {
+  // This logic only runs if isPanning was set to true in mouse:down
+  if (isPanning) {
+    const e = opt.e;
+    const vpt = this.viewportTransform;
+    vpt[4] += e.clientX - lastPosX;
+    vpt[5] += e.clientY - lastPosY;
+    this.requestRenderAll();
+    lastPosX = e.clientX;
+    lastPosY = e.clientY;
+  }
+});
+
+canvas.on('mouse:up', function(opt) {
+  // If we were panning, we stop and re-enable selection.
+  if (isPanning) {
+    this.setViewportTransform(this.viewportTransform);
+    isPanning = false;
+    this.selection = true; // Re-enable selection
+  }
+});
 // --- DATA HANDLING ---
 $('#csvInput').addEventListener('change', async (e) => {
     const file = e.target.files?.[0]; if (!file) { $('#fileName').textContent = 'No file selected'; return; }
@@ -981,7 +1013,7 @@ $('#exportSinglePdfBtn').addEventListener('click',()=>exportAllRows({asSinglePdf
 
 // --- SAVE/LOAD TEMPLATE LOGIC ---
 function saveTemplate(){ try{ const templateData={canvas:canvas.toJSON(['oid','isTable','rows','cols']),page:{title:$('#titleInput').value,width:$('#pageWidth').value,height:$('#pageHeight').value,},bindings:Array.from(bindings.entries()),}; const jsonString=JSON.stringify(templateData,null,2); const blob=new Blob([jsonString],{type:'application/json'}); const filename=($('#titleInput').value||'template').replace(/[^a-z0-9]/gi,'_').toLowerCase(); saveAs(blob,`${filename}.json`); }catch(error){ console.error("Error saving template:",error); alert("Could not save the template."); } }
-function loadTemplate(e) { const file = e.target.files?.[0]; if (!file) return; const reader = new FileReader(); reader.onload = (event) => { try { const data = JSON.parse(event.target.result); if (!data.canvas || !data.page || !data.bindings) { throw new Error("Invalid template file format."); } $('#titleInput').value = data.page.title || 'Untitled_Template'; $('#pageWidth').value = data.page.width || 800; $('#pageHeight').value = data.page.height || 1200; bindings = new Map(data.bindings); historyLocked = true; canvas.loadFromJSON(data.canvas, () => { pageRect = canvas.getObjects().find(o => o.oid === 'pageRect'); if (!pageRect) { throw new Error("Template file is missing the page object."); } pageRect.set({ selectable: false, evented: false, hasControls: false, hasBorders: false, lockMovementX: true, lockMovementY: true, lockScalingX: true, lockScalingY: true, lockRotation: true, }); canvas.sendToBack(pageRect); canvas.renderAll(); centerAndFitPage(); drawGrid(); renderLayers(); historyLocked = false; historyStack = []; historyIndex = -1; saveState(); alert(`Template "${file.name}" loaded successfully.`); }); } catch (error) { console.error("Error loading template:", error); alert(`Could not load the template. Error: ${error.message}`); } finally { e.target.value = null; } }; reader.readAsText(file); }
+function loadTemplate(e) { const file = e.target.files?.[0]; if (!file) return; const reader = new FileReader(); reader.onload = (event) => { try { const data = JSON.parse(event.target.result); if (!data.canvas || !data.page || !data.bindings) { throw new Error("Invalid template file format."); } $('#titleInput').value = data.page.title || 'Untitled_Template'; $('#pageWidth').value = data.page.width || 800; $('#pageHeight').value = data.page.height || 1200; bindings = new Map(data.bindings); historyLocked = true; canvas.loadFromJSON(data.canvas, () => { pageRect = canvas.getObjects().find(o => o.oid === 'pageRect'); if (!pageRect) { throw new Error("Template file is missing the page object."); } pageRect.set({ selectable: false, evented: false, hasControls: false, hasBorders: false, lockMovementX: true, lockMovementY: true, lockScalingX: true, lockScalingY: true, lockRotation: true, }); canvas.sendToBack(pageRect); canvas.renderAll(); centerAndFitPage(); drawGrid(); renderLayers(); historyLocked = false; historyStack = []; historyIndex = -1; saveState(); }); } catch (error) { console.error("Error loading template:", error); alert(`Could not load the template. Error: ${error.message}`); } finally { e.target.value = null; } }; reader.readAsText(file); }
 $('#saveTemplateBtn').addEventListener('click',saveTemplate); $('#loadTemplateInput').addEventListener('change',loadTemplate);
 
 // --- INITIALIZE ---
