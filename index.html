@@ -72,9 +72,22 @@
   ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 4px; }
   ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.3); }
 
-  #inspector{ display:grid; gap:16px; }
-  #noSelection{ border:1px dashed var(--border); border-radius:12px; padding:12px; }
-  #noSelection h4 { margin:0 0 12px; font-size:14px; }
+  #inspector, #multiSelectInspector{ display:grid; gap:16px; }
+  .inspector-panel {
+  display: grid;
+  gap: 16px; /* The consistent vertical spacing you want */
+  align-content: start; /* Prevents items from stretching vertically */
+}
+  #noSelection { 
+  border: 1px dashed var(--border); 
+  border-radius: 12px; 
+  padding: 24px; /* Increased padding */
+  text-align: center; /* Center the content for a cleaner look */
+}
+#noSelection h4 { 
+  margin: 0 0 12px; 
+  font-size: 14px; 
+}
   footer{ display:flex; justify-content:space-between; align-items:center; padding:12px 16px; background:var(--panel); border-top:1px solid var(--border); }
   .toolbar-group { display: flex; align-items: center; gap: 8px; padding: 4px 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel-2); }
 
@@ -108,7 +121,7 @@
   .action-buttons { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
   .align-buttons { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; }
   .align-buttons .btn { padding: 8px; }
-  #multiSelectInspector .btn-group { display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 8px; }
+  #multiSelectInspector .btn-group { display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 16px; }
 
   .layers-list .layer-item { display: flex; align-items: center; gap: 8px; padding: 8px; border-radius: 6px; border: 1px solid var(--border); background: var(--panel-2); font-size: 12px; cursor: pointer; }
   .layers-list .layer-item.active { border-color: var(--accent); background: #2a2a2a; }
@@ -215,6 +228,8 @@
             <div class="shape-chip" draggable="true" data-add="star"><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg><span>Star</span></div>
             <div class="shape-chip" draggable="true" data-add="arrow"><svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7" fill="none"></path></svg><span>Arrow</span></div>
             <div class="shape-chip" draggable="true" data-add="table"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="3" y1="15" x2="21" y2="15"></line><line x1="9" y1="3" x2="9" y2="21"></line><line x1="15" y1="3" x2="15" y2="21"></line></svg><span>Table</span></div>
+            <div class="shape-chip" draggable="true" data-add="line"><svg viewBox="0 0 24 24"> <path d="M4 12h16" fill="none"></path> </svg> <span>Line</span>
+          </div>
         </div>
          <!-- === Layers Panel === -->
         <div class="stack" style="margin-top: 16px;">
@@ -457,15 +472,13 @@ canvas.on('mouse:wheel', function(opt) {
   canvas.zoomToPoint({ x: opt.e.offsetX, y: opt.e.offsetY }, zoom);
   $('#zoomLevel').textContent = `Zoom: ${Math.round(zoom*100)}%`;
   opt.e.preventDefault(); opt.e.stopPropagation();
+  
 });
 
 let isPanning = false;
 let lastPosX, lastPosY;
 
 canvas.on('mouse:down', function(opt) {
-  // Panning is now ONLY triggered by holding the Alt key.
-  // Clicking on an empty canvas area without Alt will now
-  // correctly start a marquee selection.
   if (opt.e.altKey === true) {
     isPanning = true;
     this.selection = false; // Disable selection while panning
@@ -514,6 +527,7 @@ const adders = {
   rect: ({x, y, asSquare=true}={}) => canvas.add(new fabric.Rect({ left: x, top: y, width: asSquare?150:220, height: 150, fill: '#f0f0f0', stroke: '#333', strokeWidth: 2, originX: 'center', originY: 'center' })).setActiveObject(canvas.getObjects().pop()),
   circle: (x, y) => canvas.add(new fabric.Circle({ left: x, top: y, radius: 75, fill: '#f0f0f0', stroke: '#333', strokeWidth: 2, originX: 'center', originY: 'center' })).setActiveObject(canvas.getObjects().pop()),
   triangle: (x, y) => canvas.add(new fabric.Triangle({ left: x, top: y, width: 150, height: 130, fill: '#f0f0f0', stroke: '#333', strokeWidth: 2, originX: 'center', originY: 'center' })).setActiveObject(canvas.getObjects().pop()),
+  line: (x, y) => canvas.add(new fabric.Line([-75, 0, 75, 0], { left: x, top: y, stroke: '#333', strokeWidth: 2, originX: 'center', originY: 'center' })).setActiveObject(canvas.getObjects().pop()),
   star: (x, y) => { const pts = (n, oR, iR) => { const p=[]; let a=-Math.PI/2; const s=(Math.PI*2)/n; for(let i=0;i<n;i++){p.push({x:oR*Math.cos(a),y:oR*Math.sin(a)});a+=s/2;p.push({x:iR*Math.cos(a),y:iR*Math.sin(a)});a+=s/2;} return p;}; canvas.add(new fabric.Polygon(pts(5, 75, 35), { left: x, top: y, fill: '#f0f0f0', stroke: '#333', strokeWidth: 2, originX: 'center', originY: 'center' })).setActiveObject(canvas.getObjects().pop()); },
   square: (x, y) => adders.rect({x, y, asSquare: true}),
   arrow: (x, y) => canvas.add(new fabric.Path('M 0 20 L 60 20 L 60 0 L 100 30 L 60 60 L 60 40 L 0 40 Z', { left: x, top: y, fill: '#f0f0f0', stroke: '#333', strokeWidth: 2, originX: 'center', originY: 'center' })).setActiveObject(canvas.getObjects().pop()),
@@ -548,21 +562,29 @@ document.getElementById('imageUpload').addEventListener('change', e => {
     }
     reader.readAsDataURL(e.target.files[0]);
 });
-
 document.querySelectorAll('.shape-chip').forEach(chip => {
     const type = chip.getAttribute('data-add');
     chip.addEventListener('dragstart', e => { e.dataTransfer.setData('text/plain', type); });
     chip.addEventListener('click', () => {
       if (!adders[type]) return;
       if (type === 'image') { $('#imageUpload').click(); return; }
-      const center = canvas.getCenter();
-      adders[type](center.left, center.top);
+
+      // Get the center of the viewport in canvas coordinates directly
+      const center = canvas.getVpCenter();
+
+      // Add the shape at the calculated center point
+      adders[type](center.x, center.y);
     });
 });
-const dropTarget = canvas.upperCanvasEl; canvas.calcOffset();
+
+// The rest of your drag-and-drop code remains the same as it is correct.
+const dropTarget = canvas.upperCanvasEl;
+canvas.calcOffset();
 dropTarget.addEventListener('dragover', (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; });
 dropTarget.addEventListener('drop', (e) => {
-  e.preventDefault(); const { x, y } = canvas.getPointer(e); const type = e.dataTransfer.getData('text/plain');
+  e.preventDefault();
+  const { x, y } = canvas.getPointer(e);
+  const type = e.dataTransfer.getData('text/plain');
   if (type && adders[type]) {
     if (type === 'image') {
         const file = e.dataTransfer.files && e.dataTransfer.files[0];
@@ -572,10 +594,8 @@ dropTarget.addEventListener('drop', (e) => {
             reader.readAsDataURL(file);
         } else { $('#imageUpload').click(); }
     } else { adders[type](x, y); }
-    return;
   }
 });
-
 // --- SNAPPING TO GRID ---
 canvas.on('object:moving', (options) => {
   if (!snapEnabled || !pageRect) return;
@@ -602,19 +622,99 @@ function refreshInspector(e) {
   }
 }
 
+function getCommonPropertyValue(objects, property) {
+  const firstValue = objects[0][property];
+  for (let i = 1; i < objects.length; i++) {
+    if (objects[i][property] !== firstValue) {
+      return ''; // Return empty string if values are not the same
+    }
+  }
+  return firstValue;
+}
+
+function setCommonPropertyValue(objects, property, value) {
+  objects.forEach(obj => {
+    obj.set(property, value);
+  });
+  canvas.renderAll();
+  saveState();
+}
+
 function renderMultiSelectInspector(selection) {
+  // --- CORRECTED ---
+  // Clear the correct (multi-select) inspector
   multiInspector.innerHTML = '';
-  const createSection = (title, content) => {
-    const el = document.createElement('div'); el.className = 'stack';
-    el.innerHTML = `<h3>${title}</h3>`; el.appendChild(content); return el;
+  const objects = selection.getObjects();
+
+  // Action buttons
+  const actions = document.createElement('div');
+  actions.className = 'action-buttons';
+  actions.innerHTML = `
+    <button id="copyBtn" class="btn ghost">Copy</button>
+    <button id="cutBtn" class="btn ghost">Cut</button>
+    <button id="pasteBtn" class="btn ghost">Paste</button>
+  `;
+  // --- CORRECTED ---
+  multiInspector.appendChild(actions);
+
+  const removeBtn = document.createElement('button');
+  removeBtn.className = 'btn ghost';
+  removeBtn.style.backgroundColor = '#ad0000';
+  removeBtn.textContent = 'Remove';
+  // --- CORRECTED ---
+  multiInspector.appendChild(removeBtn);
+
+  // --- Note: The querySelectors below are fine as they are scoped to the 'actions' element ---
+  actions.querySelector('#copyBtn').onclick = copy;
+  actions.querySelector('#cutBtn').onclick = cut;
+  actions.querySelector('#pasteBtn').onclick = paste;
+  $('#pasteBtn').disabled = !_clipboard;
+  removeBtn.onclick = () => {
+    objects.forEach(obj => canvas.remove(obj));
+    canvas.discardActiveObject().renderAll();
+    // After removing, we should clear the inspector
+    canvas.fire('selection:cleared');
   };
-  const alignButtons = document.createElement('div'); alignButtons.className = 'btn-group';
-  [{label: 'Left', action: s => s.forEachObject(o => o.set({left: s.left}))}, {label: 'Center', action: s => s.forEachObject(o => o.set({left: s.left + s.width/2 - o.getScaledWidth()/2}))}, {label: 'Right', action: s => s.forEachObject(o => o.set({left: s.left + s.width - o.getScaledWidth()}))}, {label: 'Top', action: s => s.forEachObject(o => o.set({top: s.top}))}, {label: 'Middle', action: s => s.forEachObject(o => o.set({top: s.top + s.height/2 - o.getScaledHeight()/2}))}, {label: 'Bottom', action: s => s.forEachObject(o => o.set({top: s.top + s.height - o.getScaledHeight()}))}].forEach(({label, action}) => { const btn = document.createElement('button'); btn.className = 'btn ghost'; btn.textContent = label; btn.onclick = () => { action(selection); canvas.renderAll(); saveState(); }; alignButtons.appendChild(btn); });
-  multiInspector.appendChild(createSection('Align Objects', alignButtons));
-  const distributeButtons = document.createElement('div'); distributeButtons.className = 'btn-group';
-  [{label: 'Dist. Horiz', action: s => distributeObjects(s, 'horizontal')}, {label: 'Dist. Vert', action: s => distributeObjects(s, 'vertical')}].forEach(({label, action}) => { const btn = document.createElement('button'); btn.className = 'btn ghost'; btn.textContent = label; btn.onclick = () => { action(selection); canvas.renderAll(); saveState(); }; distributeButtons.appendChild(btn); });
-  multiInspector.appendChild(createSection('Distribute Spacing', distributeButtons));
-  multiInspector.appendChild(section('Align to Page', [alignToPageButtons()]));
+
+  // --- COMMON PROPERTIES ---
+  const commonProps = [];
+
+  // Common properties for all object types
+  commonProps.push(sliderRow('Opacity', getCommonPropertyValue(objects, 'opacity') ?? 1, (v) => setCommonPropertyValue(objects, 'opacity', v), { min: 0, max: 1, step: 0.01 }));
+  commonProps.push(colorInputRow('Stroke Color', getCommonPropertyValue(objects, 'stroke') ?? '', v => setCommonPropertyValue(objects, 'stroke', v)));
+  commonProps.push(sliderRow('Stroke Width', getCommonPropertyValue(objects, 'strokeWidth') ?? 0, (v) => setCommonPropertyValue(objects, 'strokeWidth', v), { min: 0, max: 50, step: 1 }));
+
+  // --- CORRECTED ---
+  multiInspector.appendChild(section('Common', commonProps));
+
+
+  // --- SHAPE PROPERTIES ---
+  const shapeObjects = objects.filter(o => ['rect', 'circle', 'triangle', 'polygon', 'path'].includes(o.type));
+  // Only show the section if ALL selected objects are shapes
+  if (shapeObjects.length === objects.length && shapeObjects.length > 0) {
+    const shapeProps = [];
+    shapeProps.push(colorInputRow('Fill', getCommonPropertyValue(shapeObjects, 'fill'), v => setCommonPropertyValue(shapeObjects, 'fill', v)));
+    // --- CORRECTED ---
+    multiInspector.appendChild(section('Shape Properties', shapeProps));
+  }
+
+
+  // --- TEXT PROPERTIES ---
+  const textObjects = objects.filter(o => o.type === 'textbox');
+  // Only show the section if ALL selected objects are textboxes
+  if (textObjects.length === objects.length && textObjects.length > 0) {
+    // --- CORRECTED ---
+    multiInspector.appendChild(section('Text', [
+      inputRow('Font Size', getCommonPropertyValue(textObjects, 'fontSize'), v => setCommonPropertyValue(textObjects, 'fontSize', parseFloat(v))),
+      selectRow('Font Family', FONT_LIST, getCommonPropertyValue(textObjects, 'fontFamily'), v => setCommonPropertyValue(textObjects, 'fontFamily', v)),
+      colorInputRow('Fill Color', getCommonPropertyValue(textObjects, 'fill'), v => setCommonPropertyValue(textObjects, 'fill', v)),
+      selectRow('Alignment', ['left','center','right','justify'], getCommonPropertyValue(textObjects, 'textAlign'), v => setCommonPropertyValue(textObjects, 'textAlign', v))
+    ]));
+  }
+
+  // Align section
+  // --- CORRECTED ---
+  multiInspector.appendChild(section('Align', [alignToPageButtons()]));
 }
 
 function renderSingleObjectInspector(o) {
@@ -632,7 +732,7 @@ function renderSingleObjectInspector(o) {
 
   const removeBtn = document.createElement('button'); 
   removeBtn.className = 'btn ghost'; 
-  removeBtn.style.backgroundColor = '##b74e4e'; 
+  removeBtn.style.backgroundColor = '#ad0000'; 
   removeBtn.textContent = 'Remove';
   inspector.appendChild(removeBtn);
 
@@ -734,7 +834,44 @@ function buttonRow(label, onClick) { const w=document.createElement('div');w.cla
 function colorInputRow(label, value, onChange) { const w=document.createElement('div'); w.className='stack full-width'; w.innerHTML=`<label>${label}</label>`; const r=document.createElement('div'); r.className='color-picker-wrapper'; const t=document.createElement('input'); t.type='text'; t.value=value; const c=document.createElement('input'); c.type='color'; c.value=value; const d=debounce(()=>{c.value=t.value;onChange(t.value);canvas.renderAll();},250); t.oninput=d; c.oninput=()=>{t.value=c.value;onChange(c.value);canvas.renderAll();}; r.append(t, c); w.appendChild(r); return w; }
 
 // --- ALIGNMENT & DISTRIBUTION ---
-function alignToPageButtons() { const container = document.createElement('div'); container.className = 'align-buttons full-width'; const icons = {left: '<svg viewBox="0 0 24 24"><path d="M18 21V3h2v18h-2zm-4 0V3h2v18h-2zM4 21h6V3H4v18z" fill="currentColor"/></svg>' , h_center: '<svg viewBox="0 0 24 24"><path d="M4 21V3h2v18H4zm14 0V3h2v18h-2zM9 21V3h6v18H9z" fill="currentColor"/></svg>', right: '<svg viewBox="0 0 24 24"><path d="M4 21V3h2v18H4zm4 0V3h2v18H8zm12 0h-6V3h6v18z" fill="currentColor"/></svg>', top: '<svg viewBox="0 0 24 24" transform="rotate(90)"><path d="M18 21V3h2v18h-2zm-4 0V3h2v18h-2zM4 21h6V3H4v18z" fill="currentColor"/></svg>', v_center: '<svg viewBox="0 0 24 24" transform="rotate(90)"><path d="M4 21V3h2v18H4zm14 0V3h2v18h-2zM9 21V3h6v18H9z" fill="currentColor"/></svg>', bottom: '<svg viewBox="0 0 24 24" transform="rotate(90)"><path d="M4 21V3h2v18H4zm4 0V3h2v18H8zm12 0h-6V3h6v18z" fill="currentColor"/></svg>' }; const actions = { left: o => o.set({left: pageRect.left}), h_center: o => o.set({left: pageRect.left + pageRect.width / 2 - o.getScaledWidth() / 2}), right: o => o.set({left: pageRect.left + pageRect.width - o.getScaledWidth()}), top: o => o.set({top: pageRect.top}), v_center: o => o.set({top: pageRect.top + pageRect.height / 2 - o.getScaledHeight() / 2}), bottom: o => o.set({top: pageRect.top + pageRect.height - o.getScaledHeight()}) }; Object.keys(icons).forEach(key => { const btn = document.createElement('button'); btn.className = 'btn ghost'; btn.innerHTML = icons[key]; btn.onclick = () => { const active = canvas.getActiveObject(); if(active) { actions[key](active); active.setCoords(); canvas.renderAll(); saveState(); }}; container.appendChild(btn); }); return container; }
+function alignToPageButtons() {
+    const container = document.createElement('div');
+    container.className = 'align-buttons full-width';
+    const icons = {
+        left: '<svg viewBox="0 0 24 24"><path d="M18 21V3h2v18h-2zm-4 0V3h2v18h-2zM4 21h6V3H4v18z" fill="currentColor"/></svg>',
+        h_center: '<svg viewBox="0 0 24 24"><path d="M4 21V3h2v18H4zm14 0V3h2v18h-2zM9 21V3h6v18H9z" fill="currentColor"/></svg>',
+        right: '<svg viewBox="0 0 24 24"><path d="M4 21V3h2v18H4zm4 0V3h2v18H8zm12 0h-6V3h6v18z" fill="currentColor"/></svg>',
+        top: '<svg viewBox="0 0 24 24" transform="rotate(90)"><path d="M18 21V3h2v18h-2zm-4 0V3h2v18h-2zM4 21h6V3H4v18z" fill="currentColor"/></svg>',
+        v_center: '<svg viewBox="0 0 24 24" transform="rotate(90)"><path d="M4 21V3h2v18H4zm14 0V3h2v18h-2zM9 21V3h6v18H9z" fill="currentColor"/></svg>',
+        bottom: '<svg viewBox="0 0 24 24" transform="rotate(90)"><path d="M4 21V3h2v18H4zm4 0V3h2v18H8zm12 0h-6V3h6v18z" fill="currentColor"/></svg>'
+    };
+
+    const actions = {
+        left: o => o.set({ left: pageRect.left }),
+        h_center: o => o.set({ originX: 'center', left: pageRect.left + pageRect.width / 2 }),
+        right: o => o.set({ left: pageRect.left + pageRect.width}),
+        top: o => o.set({ top: pageRect.top }),
+        v_center: o => o.set({ originY: 'center', top: pageRect.top + pageRect.height / 2 }),
+        bottom: o => o.set({ top: pageRect.top + pageRect.height})
+    };
+
+    Object.keys(icons).forEach(key => {
+        const btn = document.createElement('button');
+        btn.className = 'btn ghost';
+        btn.innerHTML = icons[key];
+        btn.onclick = () => {
+            const active = canvas.getActiveObject();
+            if (active) {
+                actions[key](active);
+                active.setCoords();
+                canvas.renderAll();
+                saveState();
+            }
+        };
+        container.appendChild(btn);
+    });
+    return container;
+}
 function distributeObjects(selection, direction) { const objects = selection.getObjects(); if (objects.length < 3) return; const prop = direction === 'horizontal' ? 'left' : 'top'; const dim = direction === 'horizontal' ? 'getScaledWidth' : 'getScaledHeight'; objects.sort((a, b) => a[prop] - b[prop]); const first = objects[0]; const last = objects[objects.length - 1]; const totalObjectSize = objects.reduce((sum, obj) => sum + obj[dim](), 0); const totalRange = (last[prop] + last[dim]()) - first[prop]; const spacing = (totalRange - totalObjectSize) / (objects.length - 1); let currentPos = first[prop] + first[dim](); for (let i = 1; i < objects.length - 1; i++) { const obj = objects[i]; obj.set(prop, currentPos + spacing); obj.setCoords(); currentPos += spacing + obj[dim](); } }
 
 // --- DATA BINDING & EXPORT ---
