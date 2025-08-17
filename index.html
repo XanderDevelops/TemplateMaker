@@ -969,10 +969,67 @@ function restoreCanvasStateAfterLoad() {
 }
 
 // --- COPY / CUT / PASTE ---
-function updatePasteButton() { const pasteBtn = $('#pasteBtn'); if (pasteBtn) pasteBtn.disabled = !_clipboard; }
-function copy(){ canvas.getActiveObject().clone(cloned=>_clipboard=cloned); updatePasteButton(); }
-function cut(){ copy(); canvas.remove(canvas.getActiveObject()); }
-function paste(){ if(!_clipboard)return; _clipboard.clone(clonedObj=>{ canvas.discardActiveObject(); clonedObj.set({left:clonedObj.left+20,top:clonedObj.top+20,evented:true,}); clonedObj.setCoords(); canvas.add(clonedObj).setActiveObject(clonedObj); canvas.requestRenderAll(); }); }
+function updatePasteButton() {
+    const pasteBtn = $('#pasteBtn');
+    if (pasteBtn) pasteBtn.disabled = !_clipboard;
+}
+
+function copy() {
+    const activeObject = canvas.getActiveObject();
+    if (!activeObject) return;
+
+    // The clone method works for both single objects and activeSelections (groups).
+    activeObject.clone(cloned => {
+        _clipboard = cloned;
+        updatePasteButton();
+    }, ['oid']); // Include our custom 'oid' property in the clone
+}
+
+function cut() {
+    copy(); // Use our new copy function
+    const activeObjects = canvas.getActiveObjects();
+    if (activeObjects.length) {
+        activeObjects.forEach(obj => canvas.remove(obj));
+        canvas.discardActiveObject().renderAll();
+    }
+}
+
+function paste() {
+    if (!_clipboard) return;
+
+    _clipboard.clone(clonedObj => {
+        canvas.discardActiveObject(); // Deselect anything currently selected
+
+        // Add a small offset to the pasted object(s) to avoid pasting directly on top.
+        clonedObj.set({
+            left: clonedObj.left + 20,
+            top: clonedObj.top + 20,
+            evented: true,
+        });
+
+        // Check if the clipboard object is a group (an activeSelection).
+        if (clonedObj.type === 'activeSelection') {
+            // It's a group of objects. We need to add each one to the canvas.
+            clonedObj.canvas = canvas;
+            clonedObj.forEachObject(obj => {
+                // Give each pasted object a new unique ID
+                obj.oid = `obj_${Date.now()}_${Math.random()}`;
+                canvas.add(obj);
+            });
+            // After adding, select all the newly pasted objects.
+            clonedObj.setCoords();
+        } else {
+            // It's a single object.
+            // Give the pasted object a new unique ID
+            clonedObj.oid = `obj_${Date.now()}_${Math.random()}`;
+            canvas.add(clonedObj);
+        }
+        
+        canvas.setActiveObject(clonedObj);
+        canvas.requestRenderAll();
+        saveState();
+    }, ['oid']);
+}
 
 // --- NEW: Layers Panel Logic ---
 function renderLayers() {
@@ -1013,7 +1070,58 @@ $('#exportSinglePdfBtn').addEventListener('click',()=>exportAllRows({asSinglePdf
 
 // --- SAVE/LOAD TEMPLATE LOGIC ---
 function saveTemplate(){ try{ const templateData={canvas:canvas.toJSON(['oid','isTable','rows','cols']),page:{title:$('#titleInput').value,width:$('#pageWidth').value,height:$('#pageHeight').value,},bindings:Array.from(bindings.entries()),}; const jsonString=JSON.stringify(templateData,null,2); const blob=new Blob([jsonString],{type:'application/json'}); const filename=($('#titleInput').value||'template').replace(/[^a-z0-9]/gi,'_').toLowerCase(); saveAs(blob,`${filename}.json`); }catch(error){ console.error("Error saving template:",error); alert("Could not save the template."); } }
-function loadTemplate(e) { const file = e.target.files?.[0]; if (!file) return; const reader = new FileReader(); reader.onload = (event) => { try { const data = JSON.parse(event.target.result); if (!data.canvas || !data.page || !data.bindings) { throw new Error("Invalid template file format."); } $('#titleInput').value = data.page.title || 'Untitled_Template'; $('#pageWidth').value = data.page.width || 800; $('#pageHeight').value = data.page.height || 1200; bindings = new Map(data.bindings); historyLocked = true; canvas.loadFromJSON(data.canvas, () => { pageRect = canvas.getObjects().find(o => o.oid === 'pageRect'); if (!pageRect) { throw new Error("Template file is missing the page object."); } pageRect.set({ selectable: false, evented: false, hasControls: false, hasBorders: false, lockMovementX: true, lockMovementY: true, lockScalingX: true, lockScalingY: true, lockRotation: true, }); canvas.sendToBack(pageRect); canvas.renderAll(); centerAndFitPage(); drawGrid(); renderLayers(); historyLocked = false; historyStack = []; historyIndex = -1; saveState(); }); } catch (error) { console.error("Error loading template:", error); alert(`Could not load the template. Error: ${error.message}`); } finally { e.target.value = null; } }; reader.readAsText(file); }
+function loadTemplate(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+        try {
+            const data = JSON.parse(event.target.result);
+
+            if (!data.canvas || !data.page || !data.bindings) {
+                throw new Error("Invalid template file format.");
+            }
+            
+            $('#titleInput').value = data.page.title || 'Untitled_Template';
+            $('#pageWidth').value = data.page.width || 800;
+            $('#pageHeight').value = data.page.height || 1200;
+
+            bindings = new Map(data.bindings);
+            historyLocked = true;
+
+            // This is the new reviver function. It will be called for every object in the JSON.
+            const reviver = (json, object) => {
+                // If the object has a 'fill' that is a pattern, we need to revive it.
+                if (json.fill && json.fill.source) {
+                    fabric.Image.fromURL(json.fill.source, img => {
+                        object.set('fill', new fabric.Pattern({
+                            source: img.getElement(),
+                            repeat: 'repeat' // Or whatever repeat setting you prefer
+                        }));
+                        canvas.renderAll();
+                    }, { crossOrigin: 'anonymous' });
+                }
+            };
+            
+            // We now pass the reviver as the second argument to loadFromJSON.
+            canvas.loadFromJSON(data.canvas, () => {
+                restoreCanvasStateAfterLoad(); // This helper already handles grid, layers, etc.
+                historyLocked = false;
+                historyStack = [];
+                historyIndex = -1;
+                saveState();
+            }, reviver);
+
+        } catch (error) {
+            console.error("Error loading template:", error);
+            alert(`Could not load the template. Error: ${error.message}`);
+        } finally {
+            e.target.value = null; // Clear the input for re-loading
+        }
+    };
+    reader.readAsText(file);
+}
 $('#saveTemplateBtn').addEventListener('click',saveTemplate); $('#loadTemplateInput').addEventListener('change',loadTemplate);
 
 // --- INITIALIZE ---
