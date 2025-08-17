@@ -847,12 +847,33 @@ function alignToPageButtons() {
     };
 
     const actions = {
-        left: o => o.set({ left: pageRect.left }),
-        h_center: o => o.set({ originX: 'center', left: pageRect.left + pageRect.width / 2 }),
-        right: o => o.set({ left: pageRect.left + pageRect.width}),
-        top: o => o.set({ top: pageRect.top }),
-        v_center: o => o.set({ originY: 'center', top: pageRect.top + pageRect.height / 2 }),
-        bottom: o => o.set({ top: pageRect.top + pageRect.height})
+        // --- HORIZONTAL ALIGNMENT ---
+        left: o => o.set({
+            originX: 'left', // Reset origin for consistency
+            left: pageRect.left
+        }),
+        h_center: o => o.set({
+            originX: 'center',
+            left: pageRect.left + pageRect.width / 2
+        }),
+        right: o => o.set({
+            originX: 'left', // Use 'left' origin for this calculation
+            left: pageRect.left + pageRect.width - o.getScaledWidth() // Subtract object width
+        }),
+
+        // --- VERTICAL ALIGNMENT ---
+        top: o => o.set({
+            originY: 'top', // Reset origin for consistency
+            top: pageRect.top
+        }),
+        v_center: o => o.set({
+            originY: 'center',
+            top: pageRect.top + pageRect.height / 2
+        }),
+        bottom: o => o.set({
+            originY: 'top', // Use 'top' origin for this calculation
+            top: pageRect.top + pageRect.height - o.getScaledHeight() // Subtract object height
+        })
     };
 
     Object.keys(icons).forEach(key => {
@@ -863,7 +884,7 @@ function alignToPageButtons() {
             const active = canvas.getActiveObject();
             if (active) {
                 actions[key](active);
-                active.setCoords();
+                active.setCoords(); // Important: Recalculates controls' positions
                 canvas.renderAll();
                 saveState();
             }
