@@ -1016,20 +1016,6 @@ function updatePreview() {
     imageFillPreviewCanvas.renderAll();
 }
 
-// Override the sliderRow function to allow custom IDs
-function sliderRow(label, value, onChange, {min=0, max=100, step=1}, idPrefix = null) {
-    const w = document.createElement('div'); w.className = 'stack full-width';
-    w.innerHTML = `<label>${label}</label>`;
-    const r = document.createElement('div'); r.className = 'slider-wrapper';
-    const s = document.createElement('input'); s.type = 'range'; s.min = min; s.max = max; s.step = step; s.value = value;
-    const n = document.createElement('input'); n.type = 'number'; n.min = min; n.max = max; n.step = step; n.value = value;
-    const idBase = idPrefix || 'inspector-' + label.toLowerCase().replace(/\s+/g, '-');
-    s.id = idBase + '-slider'; n.id = idBase + '-input';
-    s.oninput = () => { n.value = s.value; onChange(); };
-    n.oninput = () => { s.value = n.value; onChange(); };
-    r.append(s, n); w.appendChild(r); return w;
-}
-
 // --- ALIGNMENT & DISTRIBUTION ---
 function alignToPageButtons() { const container = document.createElement('div'); container.className = 'align-buttons full-width'; const icons = { left: '<svg viewBox="0 0 24 24"><path d="M18 21V3h2v18h-2zm-4 0V3h2v18h-2zM4 21h6V3H4v18z" fill="currentColor"/></svg>', h_center: '<svg viewBox="0 0 24 24"><path d="M4 21V3h2v18H4zm14 0V3h2v18h-2zM9 21V3h6v18H9z" fill="currentColor"/></svg>', right: '<svg viewBox="0 0 24 24"><path d="M4 21V3h2v18H4zm4 0V3h2v18H8zm12 0h-6V3h6v18z" fill="currentColor"/></svg>', top: '<svg viewBox="0 0 24 24" transform="rotate(90)"><path d="M18 21V3h2v18h-2zm-4 0V3h2v18h-2zM4 21h6V3H4v18z" fill="currentColor"/></svg>', v_center: '<svg viewBox="0 0 24 24" transform="rotate(90)"><path d="M4 21V3h2v18H4zm14 0V3h2v18h-2zM9 21V3h6v18H9z" fill="currentColor"/></svg>', bottom: '<svg viewBox="0 0 24 24" transform="rotate(90)"><path d="M4 21V3h2v18H4zm4 0V3h2v18H8zm12 0h-6V3h6v18z" fill="currentColor"/></svg>' }; const actions = { left: o => o.set({ originX: 'left', left: pageRect.left }), h_center: o => o.set({ originX: 'center', left: pageRect.left + pageRect.width / 2 }), right: o => o.set({ originX: 'left', left: pageRect.left + pageRect.width - o.getScaledWidth() }), top: o => o.set({ originY: 'top', top: pageRect.top }), v_center: o => o.set({ originY: 'center', top: pageRect.top + pageRect.height / 2 }), bottom: o => o.set({ originY: 'top', top: pageRect.top + pageRect.height - o.getScaledHeight() }) }; Object.keys(icons).forEach(key => { const btn = document.createElement('button'); btn.className = 'btn ghost'; btn.innerHTML = icons[key]; btn.onclick = () => { const active = canvas.getActiveObject(); if (active && pageRect) { actions[key](active); active.setCoords(); canvas.renderAll(); saveState(); } }; container.appendChild(btn); }); return container; }
 
