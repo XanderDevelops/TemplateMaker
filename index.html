@@ -393,6 +393,27 @@
     </div>
 </div>
 
+<div id="imageFillEditorModal" class="modal-backdrop">
+    <div class="modal" style="width: 480px;">
+        <div class="row" style="justify-content:space-between;align-items:center;gap:12px;">
+            <h3>Edit Image Fill</h3>
+            <button id="closeImageFillEditor" class="btn ghost">&times;</button>
+        </div>
+        <div class="main-content" style="display: grid; grid-template-columns: 200px 1fr; gap: 16px; margin-top: 16px;">
+            <div class="preview-container" style="border: 1px solid var(--border); border-radius: 8px; background-color: var(--panel-2); overflow: hidden;">
+                <canvas id="imageFillPreviewCanvas"></canvas>
+            </div>
+            <div id="imageFillControls" class="stack" style="gap: 16px;">
+                <!-- Controls will be added here by JS -->
+            </div>
+        </div>
+        <div class="row" style="margin-top: 24px; justify-content:flex-end; gap: 8px;">
+            <button id="resetFillTransform" class="btn ghost">Reset</button>
+            <button id="cancelFillEdit" class="btn ghost">Cancel</button>
+            <button id="confirmFillEdit" class="btn">Done</button>
+        </div>
+    </div>
+</div>
 
 <!-- AI Assistant Modal -->
 <div id="aiModalBackdrop" class="modal-backdrop">
@@ -438,6 +459,10 @@ let historyIndex = -1;
 let historyLocked = false;
 let _clipboard = null;
 const FONT_LIST = ["Arial", "Helvetica", "Times New Roman", "Georgia", "Courier New", "Verdana", "Impact", "Comic Sans MS"];
+let editingFillObject = null;
+let originalPatternState = null;
+let imageFillPreviewCanvas = null;
+const PREVIEW_SIZE = 200;
 
 // --- DEBOUNCE UTILITY ---
 function debounce(func, delay = 250) {
@@ -670,10 +695,49 @@ function renderSingleObjectInspector(o) {
         if (['rect', 'image'].includes(o.type)) shapeProps.push(sliderRow('Corner Radius', o.rx ?? 0, (v) => o.set({rx: v, ry: v}), {min: 0, max: Math.min(o.width, o.height)/2, step: 1}));
         inspector.appendChild(section('Shape Properties', shapeProps));
     }
-    if (['rect','triangle','circle','polygon','path'].includes(o.type)) {
-        inspector.appendChild(section('Fill', [ colorInputRow('Color', o.fill, v => o.set({fill: v})), buttonRow('Fill with Image', () => $('#imageFillUpload').click()) ]));
-        $('#imageFillUpload').onchange = e => { if(!e.target.files?.[0]) return; const reader = new FileReader(); reader.onload = ev => { fabric.Image.fromURL(ev.target.result, img => { o.set('fill', new fabric.Pattern({source: img.getElement()})); canvas.renderAll(); saveState(); }, {crossOrigin:'anonymous'}); }; reader.readAsDataURL(e.target.files[0]); e.target.value = ''; };
+    if (['rect', 'triangle', 'circle', 'polygon', 'path'].includes(o.type)) {
+    const fillProps = [];
+    
+    // If the fill is an image pattern, show the "Edit Fill" button
+    if (o.fill instanceof fabric.Pattern && o.fill.source) {
+        fillProps.push(buttonRow('Edit Image Fill', () => openImageFillEditor(o)));
+        fillProps.push(buttonRow('Replace Image', () => $('#imageFillUpload').click()));
+        fillProps.push(buttonRow('Remove Image Fill', () => {
+            o.set({ fill: '#f0f0f0' }); // Reset to a default color
+            canvas.renderAll();
+            saveState();
+            refreshInspector({ target: o }); // Refresh inspector to show color input again
+        }));
+    } else {
+        // Otherwise, show the standard color and image fill buttons
+        fillProps.push(colorInputRow('Color', o.fill, v => o.set({ fill: v })));
+        fillProps.push(buttonRow('Fill with Image', () => $('#imageFillUpload').click()));
     }
+
+    inspector.appendChild(section('Fill', fillProps));
+
+    // This onchange logic should be defined once
+    $('#imageFillUpload').onchange = e => {
+        if (!e.target.files?.[0]) return;
+        const reader = new FileReader();
+        reader.onload = ev => {
+            fabric.Image.fromURL(ev.target.result, img => {
+                const pattern = new fabric.Pattern({
+                    source: img.getElement(),
+                    repeat: 'no-repeat',
+                });
+                o.set('fill', pattern);
+                // Initialize the transform matrix for the new pattern
+                pattern.patternTransform = [1, 0, 0, 1, 0, 0];
+                canvas.renderAll();
+                saveState();
+                refreshInspector({ target: o }); // Refresh to show the "Edit" button
+            }, { crossOrigin: 'anonymous' });
+        };
+        reader.readAsDataURL(e.target.files[0]);
+        e.target.value = ''; // Clear input for next use
+    };
+}
     if (o.isTable) inspector.appendChild(section('Table', [ colorInputRow('Stroke Color', o.getObjects()[0].stroke, v => o.forEachObject(cell => cell.set({stroke:v}))), sliderRow('Stroke Width', o.getObjects()[0].strokeWidth, v => o.forEachObject(cell => cell.set({strokeWidth:v})), {min:0, max: 20, step: 0.5}), sliderRow('Stroke Opacity', o.getObjects()[0].opacity, v => o.forEachObject(cell => cell.set({opacity:v})), {min:0, max: 1, step: 0.01}), buttonRow('Remove Strokes', () => o.forEachObject(cell => cell.set({strokeWidth:0}))) ]));
     if (o.type === 'textbox') inspector.appendChild(section('Text', [ inputRow('Content', o.text, v => o.set({text:v}), 'textarea'), inputRow('Font Size', o.fontSize, v => o.set({fontSize:parseFloat(v)})), selectRow('Font Family', FONT_LIST, o.fontFamily, v => o.set({fontFamily:v})), colorInputRow('Fill Color', o.fill, v => o.set({fill:v})), selectRow('Alignment', ['left','center','right','justify'], o.textAlign, v => o.set({textAlign:v})) ]));
     inspector.appendChild(section('Common', [ xyInputRow('Position', {x: o.left, y: o.top}, (p) => o.set({left: p.x, top: p.y})), xyInputRow('Dimensions', {w: o.getScaledWidth(), h: o.getScaledHeight()}, (d) => {o.scaleToWidth(d.w); o.scaleToHeight(d.h);}), sliderRow('Opacity', o.opacity ?? 1, (v) => o.set({opacity: v}), {min: 0, max: 1, step: 0.01}), colorInputRow('Stroke Color', o.stroke ?? '', v => o.set({stroke: v})), sliderRow('Stroke Width', o.strokeWidth ?? 0, (v) => o.set({strokeWidth: v}), {min: 0, max: 50, step: 1}), ]));
@@ -726,24 +790,29 @@ function xyInputRow(label, values, onChange) {
     return w;
 }
 
-function sliderRow(label, value, onChange, {min=0, max=100, step=1}) {
+function sliderRow(label, value, onChange, {min=0, max=100, step=1}, idPrefix = null) {
     const w = document.createElement('div'); w.className = 'stack full-width';
     w.innerHTML = `<label>${label}</label>`;
     const r = document.createElement('div'); r.className = 'slider-wrapper';
     const s = document.createElement('input'); s.type = 'range'; s.min = min; s.max = max; s.step = step; s.value = value;
     const n = document.createElement('input'); n.type = 'number'; n.min = min; n.max = max; n.step = step; n.value = value;
-    const idBase = 'inspector-' + label.toLowerCase().replace(/\s+/g, '-');
+    // Use the prefix if provided, otherwise generate one from the label
+    const idBase = idPrefix || 'inspector-' + label.toLowerCase().replace(/\s+/g, '-');
     s.id = idBase + '-slider'; n.id = idBase + '-input';
 
     const update = (val) => {
-        onChange(val);
+        onChange(val); // In the new editor, this will just be a function reference
         canvas.requestRenderAll();
     };
 
     s.oninput = () => { n.value = s.value; update(parseFloat(s.value)); };
     n.oninput = () => { s.value = n.value; update(parseFloat(n.value)); };
-    s.onchange = () => saveState();
-    n.onchange = () => saveState();
+    
+    // For the main inspector, we still want to save state on change
+    if (!idPrefix) {
+        s.onchange = () => saveState();
+        n.onchange = () => saveState();
+    }
 
     r.append(s, n);
     w.appendChild(r);
@@ -788,6 +857,116 @@ function colorInputRow(label, value, onChange) {
     return w;
 }
 
+// --- IMAGE FILL EDITOR LOGIC ---
+function initializeImageFillEditor() {
+    imageFillPreviewCanvas = new fabric.StaticCanvas('imageFillPreviewCanvas', {
+        width: PREVIEW_SIZE,
+        height: PREVIEW_SIZE,
+    });
+
+    $('#confirmFillEdit').addEventListener('click', () => {
+        if (!editingFillObject) return;
+        saveState(); // Save the final state
+        closeImageFillEditor();
+    });
+
+    $('#cancelFillEdit').addEventListener('click', () => {
+        if (!editingFillObject || !originalPatternState) return;
+        // Restore the original state
+        editingFillObject.fill.patternTransform = originalPatternState;
+        canvas.renderAll();
+        closeImageFillEditor();
+    });
+    
+    $('#resetFillTransform').addEventListener('click', () => {
+        const controls = $('#imageFillControls');
+        controls.querySelector('#fill-scale-input').value = 1;
+        controls.querySelector('#fill-offset-x-input').value = 0;
+        controls.querySelector('#fill-offset-y-input').value = 0;
+        // Manually trigger an input event to apply the reset
+        controls.querySelector('#fill-scale-input').dispatchEvent(new Event('input'));
+    });
+
+    $('#closeImageFillEditor').addEventListener('click', closeImageFillEditor);
+}
+
+function openImageFillEditor(object) {
+    editingFillObject = object;
+    const pattern = object.fill;
+    // Store the original state in case of cancellation
+    originalPatternState = [...pattern.patternTransform || [1, 0, 0, 1, 0, 0]];
+    
+    const controlsContainer = $('#imageFillControls');
+    controlsContainer.innerHTML = ''; // Clear previous controls
+
+    // Get current values from the transform matrix [scaleX, skewY, skewX, scaleY, offsetX, offsetY]
+    const [scaleX, , , , offsetX, offsetY] = originalPatternState;
+
+    // Create and append controls
+    controlsContainer.appendChild(sliderRow('Scale', scaleX, updateFillTransform, { min: 0.1, max: 5, step: 0.05 }, 'fill-scale'));
+    controlsContainer.appendChild(sliderRow('Offset X', offsetX, updateFillTransform, { min: -object.width, max: object.width, step: 1 }, 'fill-offset-x'));
+    controlsContainer.appendChild(sliderRow('Offset Y', offsetY, updateFillTransform, { min: -object.height, max: object.height, step: 1 }, 'fill-offset-y'));
+    
+    // Update the preview
+    updatePreview();
+
+    $('#imageFillEditorModal').style.display = 'flex';
+}
+
+function closeImageFillEditor() {
+    $('#imageFillEditorModal').style.display = 'none';
+    editingFillObject = null;
+    originalPatternState = null;
+}
+
+function updateFillTransform() {
+    if (!editingFillObject) return;
+    
+    const scale = parseFloat($('#fill-scale-input').value);
+    const offsetX = parseFloat($('#fill-offset-x-input').value);
+    const offsetY = parseFloat($('#fill-offset-y-input').value);
+    
+    // Create the new transformation matrix
+    editingFillObject.fill.patternTransform = [scale, 0, 0, scale, offsetX, offsetY];
+    
+    // Update the main canvas in real-time
+    canvas.renderAll();
+    
+    // Update the preview canvas
+    updatePreview();
+}
+
+function updatePreview() {
+    if (!editingFillObject) return;
+    
+    const previewObject = new fabric.Rect({
+        width: PREVIEW_SIZE,
+        height: PREVIEW_SIZE,
+        fill: editingFillObject.fill, // Use the exact same pattern object
+        originX: 'center',
+        originY: 'center',
+        left: PREVIEW_SIZE / 2,
+        top: PREVIEW_SIZE / 2,
+    });
+
+    imageFillPreviewCanvas.clear();
+    imageFillPreviewCanvas.add(previewObject);
+    imageFillPreviewCanvas.renderAll();
+}
+
+// Override the sliderRow function to allow custom IDs
+function sliderRow(label, value, onChange, {min=0, max=100, step=1}, idPrefix = null) {
+    const w = document.createElement('div'); w.className = 'stack full-width';
+    w.innerHTML = `<label>${label}</label>`;
+    const r = document.createElement('div'); r.className = 'slider-wrapper';
+    const s = document.createElement('input'); s.type = 'range'; s.min = min; s.max = max; s.step = step; s.value = value;
+    const n = document.createElement('input'); n.type = 'number'; n.min = min; n.max = max; n.step = step; n.value = value;
+    const idBase = idPrefix || 'inspector-' + label.toLowerCase().replace(/\s+/g, '-');
+    s.id = idBase + '-slider'; n.id = idBase + '-input';
+    s.oninput = () => { n.value = s.value; onChange(); };
+    n.oninput = () => { s.value = n.value; onChange(); };
+    r.append(s, n); w.appendChild(r); return w;
+}
 
 // --- ALIGNMENT & DISTRIBUTION ---
 function alignToPageButtons() { const container = document.createElement('div'); container.className = 'align-buttons full-width'; const icons = { left: '<svg viewBox="0 0 24 24"><path d="M18 21V3h2v18h-2zm-4 0V3h2v18h-2zM4 21h6V3H4v18z" fill="currentColor"/></svg>', h_center: '<svg viewBox="0 0 24 24"><path d="M4 21V3h2v18H4zm14 0V3h2v18h-2zM9 21V3h6v18H9z" fill="currentColor"/></svg>', right: '<svg viewBox="0 0 24 24"><path d="M4 21V3h2v18H4zm4 0V3h2v18H8zm12 0h-6V3h6v18z" fill="currentColor"/></svg>', top: '<svg viewBox="0 0 24 24" transform="rotate(90)"><path d="M18 21V3h2v18h-2zm-4 0V3h2v18h-2zM4 21h6V3H4v18z" fill="currentColor"/></svg>', v_center: '<svg viewBox="0 0 24 24" transform="rotate(90)"><path d="M4 21V3h2v18H4zm14 0V3h2v18h-2zM9 21V3h6v18H9z" fill="currentColor"/></svg>', bottom: '<svg viewBox="0 0 24 24" transform="rotate(90)"><path d="M4 21V3h2v18H4zm4 0V3h2v18H8zm12 0h-6V3h6v18z" fill="currentColor"/></svg>' }; const actions = { left: o => o.set({ originX: 'left', left: pageRect.left }), h_center: o => o.set({ originX: 'center', left: pageRect.left + pageRect.width / 2 }), right: o => o.set({ originX: 'left', left: pageRect.left + pageRect.width - o.getScaledWidth() }), top: o => o.set({ originY: 'top', top: pageRect.top }), v_center: o => o.set({ originY: 'center', top: pageRect.top + pageRect.height / 2 }), bottom: o => o.set({ originY: 'top', top: pageRect.top + pageRect.height - o.getScaledHeight() }) }; Object.keys(icons).forEach(key => { const btn = document.createElement('button'); btn.className = 'btn ghost'; btn.innerHTML = icons[key]; btn.onclick = () => { const active = canvas.getActiveObject(); if (active && pageRect) { actions[key](active); active.setCoords(); canvas.renderAll(); saveState(); } }; container.appendChild(btn); }); return container; }
@@ -1218,6 +1397,7 @@ try {
 
 // --- INITIALIZE ---
 initializeCanvas();
+initializeImageFillEditor();
 renderPageInspector();
 </script>
 </body>
