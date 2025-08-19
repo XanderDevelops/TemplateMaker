@@ -559,17 +559,135 @@ gridSizeInput.value = gridCellSize;
 gridSizeInput.addEventListener('input', (e) => { const newSize = Math.max(12, Math.min(64, parseInt(e.target.value, 10))); if (!isNaN(newSize) && gridCellSize !== newSize) { gridCellSize = newSize; drawGrid(); } });
 
 // --- CANVAS PANNING & ZOOM ---
+let isPanning = false;
+let lastPosX, lastPosY;
+
+// For double click/tap
+let lastClickTime = 0;
+let doubleClickActive = false;
+
+// For pinch zoom
+let lastTouchDistance = null;
+
 canvas.on('mouse:wheel', function(opt) {
-  const delta = opt.e.deltaY; let zoom = canvas.getZoom();
-  zoom *= 0.999 ** delta; if (zoom > 20) zoom = 20; if (zoom < 0.05) zoom = 0.05;
+  const delta = opt.e.deltaY;
+  let zoom = canvas.getZoom();
+  zoom *= 0.999 ** delta;
+  if (zoom > 20) zoom = 20;
+  if (zoom < 0.05) zoom = 0.05;
+
   canvas.zoomToPoint({ x: opt.e.offsetX, y: opt.e.offsetY }, zoom);
-  $('#zoomLevel').textContent = `Zoom: ${Math.round(zoom*100)}%`;
-  opt.e.preventDefault(); opt.e.stopPropagation();
+  document.getElementById('zoomLevel').textContent =
+    `Zoom: ${Math.round(zoom * 100)}%`;
+
+  opt.e.preventDefault();
+  opt.e.stopPropagation();
 });
-let isPanning = false; let lastPosX, lastPosY;
-canvas.on('mouse:down', function(opt) { if (opt.e.altKey === true) { isPanning = true; this.selection = false; lastPosX = opt.e.clientX; lastPosY = opt.e.clientY; } });
-canvas.on('mouse:move', function(opt) { if (isPanning) { const e = opt.e; const vpt = this.viewportTransform; vpt[4] += e.clientX - lastPosX; vpt[5] += e.clientY - lastPosY; this.requestRenderAll(); lastPosX = e.clientX; lastPosY = e.clientY; } });
-canvas.on('mouse:up', function(opt) { if (isPanning) { this.setViewportTransform(this.viewportTransform); isPanning = false; this.selection = true; } });
+
+canvas.on('mouse:down', function(opt) {
+  const e = opt.e;
+  const now = Date.now();
+
+  // Detect double click (mouse or tap)
+  if (now - lastClickTime < 300 && e.button === 0) {
+    doubleClickActive = true;
+  } else {
+    doubleClickActive = false;
+  }
+  lastClickTime = now;
+
+  if (e.button === 1) e.preventDefault(); // middle click block auto-scroll
+
+  if (e.button === 1 || doubleClickActive || e.altKey) {
+    isPanning = true;
+    this.selection = false;
+    lastPosX = e.clientX;
+    lastPosY = e.clientY;
+  }
+});
+
+// Handle touch start
+canvas.upperCanvasEl.addEventListener('touchstart', function(e) {
+  if (e.touches.length === 1) {
+    // one finger pan
+    isPanning = true;
+    lastPosX = e.touches[0].clientX;
+    lastPosY = e.touches[0].clientY;
+  } else if (e.touches.length === 2) {
+    // pinch zoom
+    lastTouchDistance = getTouchDistance(e.touches);
+  }
+}, { passive: false });
+
+// Handle touch move
+canvas.upperCanvasEl.addEventListener('touchmove', function(e) {
+  if (isPanning && e.touches.length === 1) {
+    const vpt = canvas.viewportTransform;
+    const touch = e.touches[0];
+    vpt[4] += touch.clientX - lastPosX;
+    vpt[5] += touch.clientY - lastPosY;
+    canvas.requestRenderAll();
+    lastPosX = touch.clientX;
+    lastPosY = touch.clientY;
+    e.preventDefault();
+  } else if (e.touches.length === 2) {
+    const newDist = getTouchDistance(e.touches);
+    if (lastTouchDistance) {
+      let zoom = canvas.getZoom() * (newDist / lastTouchDistance);
+      if (zoom > 20) zoom = 20;
+      if (zoom < 0.05) zoom = 0.05;
+
+      const center = getTouchCenter(e.touches);
+      canvas.zoomToPoint(center, zoom);
+      document.getElementById('zoomLevel').textContent =
+        `Zoom: ${Math.round(zoom * 100)}%`;
+    }
+    lastTouchDistance = newDist;
+    e.preventDefault();
+  }
+}, { passive: false });
+
+// Handle touch end
+canvas.upperCanvasEl.addEventListener('touchend', function(e) {
+  isPanning = false;
+  lastTouchDistance = null;
+  canvas.setViewportTransform(canvas.viewportTransform);
+}, { passive: false });
+
+canvas.on('mouse:move', function(opt) {
+  if (isPanning) {
+    const e = opt.e;
+    const vpt = this.viewportTransform;
+    vpt[4] += e.clientX - lastPosX;
+    vpt[5] += e.clientY - lastPosY;
+    this.requestRenderAll();
+    lastPosX = e.clientX;
+    lastPosY = e.clientY;
+  }
+});
+
+canvas.on('mouse:up', function() {
+  if (isPanning) {
+    this.setViewportTransform(this.viewportTransform);
+    isPanning = false;
+    this.selection = true;
+    doubleClickActive = false;
+  }
+});
+
+// --- Helpers ---
+function getTouchDistance(touches) {
+  const dx = touches[0].clientX - touches[1].clientX;
+  const dy = touches[0].clientY - touches[1].clientY;
+  return Math.sqrt(dx * dx + dy * dy);
+}
+
+function getTouchCenter(touches) {
+  return {
+    x: (touches[0].clientX + touches[1].clientX) / 2,
+    y: (touches[0].clientY + touches[1].clientY) / 2
+  };
+}
 
 // --- DATA HANDLING ---
 $('#csvInput').addEventListener('change', async (e) => {
