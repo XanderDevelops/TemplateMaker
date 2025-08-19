@@ -836,14 +836,72 @@ async function exportAllRows({asZip, asSinglePdf}) {
     for (let i = 0; i < rows.length; i++) {
         const row = rows[i]; const originalStates = new Map();
         if (row) { objectsWithBindings.forEach(obj => { const bindings = getBindingsFor(obj); bindings.forEach(binding => { const value = row[binding.column]; if (value != null) { if (!originalStates.has(obj.oid)) originalStates.set(obj.oid, {}); const originalProps = originalStates.get(obj.oid); if (binding.property === 'Text Content' && originalProps.text === undefined) originalProps.text = obj.text; if (binding.property.includes('Color') && originalProps.fill === undefined) originalProps.fill = obj.fill; applyBinding(obj, binding.property, value); } }); }); canvas.renderAll(); }
-        const dataURL = generateCanvasForRow(row);
+        const dataURL = await generateCanvasForRow(row);
         if (asSinglePdf) { if (!firstPage) pdf.addPage([pageW, pageH]); pdf.addImage(dataURL, 'JPEG', 0, 0, pageW, pageH); firstPage = false; }
         if (asZip) { const pagePdf = new jsPDF({unit:'px', format:[pageW, pageH]}); pagePdf.addImage(dataURL, 'JPEG', 0, 0, pageW, pageH); zipFile.file(`${title}_${i + 1}.pdf`, await pagePdf.output('blob')); }
         if (row) { originalStates.forEach((props, oid) => { const obj = canvas.getObjects().find(o => o.oid === oid); if (obj) obj.set(props); }); canvas.renderAll(); }
     }
     if (asSinglePdf) saveAs(pdf.output('blob'), `${title}.pdf`); if (asZip) saveAs(await zipFile.generateAsync({type:'blob'}), `${title}.zip`);
 }
-function generateCanvasForRow(row) { const { left: pageLeft, top: pageTop, width: pageW, height: pageH } = pageRect || { left: 0, top: 0, width: 768, height: 1024 }; const multiplier = 2; const gridLines = canvas.getObjects('line').filter(o => o.excludeFromExport); gridLines.forEach(l => l.set({visible:false})); canvas.renderAll(); const tmpEl = document.createElement('canvas'); tmpEl.width = pageW * multiplier; tmpEl.height = pageH * multiplier; const tmpCanvas = new fabric.StaticCanvas(tmpEl, {backgroundColor: pageRect.fill}); canvas.getObjects().forEach(obj => { if (obj.oid === 'pageRect' || obj.excludeFromExport) return; const objBounds = obj.getBoundingRect(true, true); if (objBounds.left + objBounds.width >= pageLeft && objBounds.left <= pageLeft + pageW && objBounds.top + objBounds.height >= pageTop && objBounds.top <= pageTop + pageH) { obj.clone(clone => { const center = obj.getCenterPoint(); const relX = (center.x - pageLeft) * multiplier; const relY = (center.y - pageTop) * multiplier; clone.set({ left: relX, top: relY, originX: 'center', originY: 'center', scaleX: clone.scaleX * multiplier, scaleY: clone.scaleY * multiplier }); tmpCanvas.add(clone); }); } }); tmpCanvas.renderAll(); gridLines.forEach(l => l.set({visible:true})); canvas.renderAll(); return tmpCanvas.toDataURL({format:'jpeg', quality:0.9}); }
+async function generateCanvasForRow(row) {
+    const { left: pageLeft, top: pageTop, width: pageW, height: pageH } = pageRect || { left: 0, top: 0, width: 768, height: 1024 };
+    const multiplier = 2;
+    const gridLines = canvas.getObjects('line').filter(o => o.excludeFromExport);
+    
+    // Temporarily hide gridlines on the main canvas for a clean state
+    gridLines.forEach(l => l.set({ visible: false }));
+    canvas.renderAll();
+
+    const tmpEl = document.createElement('canvas');
+    tmpEl.width = pageW * multiplier;
+    tmpEl.height = pageH * multiplier;
+    const tmpCanvas = new fabric.StaticCanvas(tmpEl, { backgroundColor: pageRect.fill });
+
+    // Create a list of promises for cloning all objects
+    const clonePromises = canvas.getObjects().map(obj => {
+        return new Promise(resolve => {
+            if (obj.oid === 'pageRect' || obj.excludeFromExport) {
+                resolve(null); // Resolve with null for objects we're skipping
+                return;
+            }
+            // Use the asynchronous clone method
+            obj.clone(clone => {
+                 const center = obj.getCenterPoint();
+                 const relX = (center.x - pageLeft) * multiplier;
+                 const relY = (center.y - pageTop) * multiplier;
+                 clone.set({
+                     left: relX,
+                     top: relY,
+                     originX: 'center',
+                     originY: 'center',
+                     scaleX: (clone.scaleX || 1) * multiplier,
+                     scaleY: (clone.scaleY || 1) * multiplier
+                 });
+                 resolve(clone);
+            }, ['oid', 'isTable', 'rows', 'cols']); // Pass properties to clone
+        });
+    });
+
+    // Wait for all cloning operations to complete
+    const clonedObjects = await Promise.all(clonePromises);
+
+    // Add the successfully cloned objects to the temporary canvas
+    clonedObjects.forEach(clone => {
+        if (clone) {
+            tmpCanvas.add(clone);
+        }
+    });
+
+    // Render the temporary canvas and get the data URL
+    tmpCanvas.renderAll();
+    const dataURL = tmpCanvas.toDataURL({ format: 'jpeg', quality: 0.9 });
+
+    // Restore the gridlines on the main canvas
+    gridLines.forEach(l => l.set({ visible: true }));
+    canvas.renderAll();
+
+    return dataURL;
+}
 function parseDims(s){ const m=String(s).match(/^(\d+)[xX](\d+)$/i); return m?{w:+m[1],h:+m[2]}:null; }
 function applyBinding(o,prop,val){ val=String(val).trim(); const numVal=parseFloat(val); switch(prop){ case'Text Content':if(o.type==='textbox')o.set({text:val});break; case'Font Family':if(o.type==='textbox')o.set({fontFamily:val});break; case'Font Size':if(o.type==='textbox')o.set({fontSize:numVal});break; case'Fill Color':case'Color':o.set({fill:val});break; case'Opacity':o.set({opacity:numVal});break; case'Dimensions':{const d=parseDims(val);if(d){o.scaleToWidth(d.w);o.scaleToHeight(d.h);}break;} case'Stroke Color':o.set({stroke:val});break; case'Stroke Width':o.set({strokeWidth:numVal});break; case'Corner Radius':if('rx'in o)o.set({rx:numVal,ry:numVal});break; case'Image Fill URL':fabric.Image.fromURL(val,img=>o.set('fill',new fabric.Pattern({source:img.getElement()})),{crossOrigin:'anonymous'});break; } }
 // --- HISTORY (UNDO/REDO) ---
