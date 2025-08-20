@@ -1,1452 +1,277 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Template Maker</title>
-<!-- Fabric.js -->
-<script src="https://cdn.jsdelivr.net/npm/fabric@5.3.0/dist/fabric.min.js"></script>
-<!-- SheetJS -->
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-<!-- JSZip & FileSaver -->
-<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
-<!-- jsPDF -->
-<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-<style>
-  :root{
-    --bg:#111; --fg:#fff; --muted:#888; --panel:#1a1a1a; --panel-2:#222;
-    --border:#333; --accent:#fff;
-  }
-  *{ box-sizing: border-box; }
-  html,body{ height:100%; margin:0; background:var(--bg); color:var(--fg); font: 14px/1.4 system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif; overflow:hidden; }
-  .app{ display:grid; grid-template-rows:auto 1fr auto; height:100%; }
-  header{ display:flex; gap:16px; align-items:center; padding:12px 16px; background:var(--panel); border-bottom:1px solid var(--border); flex-wrap:wrap; }
-  .title{ font-weight:700; font-size:16px; margin-right: auto; }
-  input[type="text"], input[type="number"], input[type="password"], select, textarea {
-    background:var(--panel-2); color:var(--fg); border:1px solid var(--border);
-    padding:8px 10px; border-radius:8px; outline:none; transition: border-color .2s;
-    width: 100%; font-family: inherit;
-  }
-  textarea { resize: vertical; }
-  input[type="text"]:focus, input[type="number"]:focus, input[type="password"]:focus, select:focus, textarea:focus { border-color: #555; }
-  .btn{ background:var(--accent); color:#000; border:none; padding:9px 16px; border-radius:8px; cursor:pointer; font-weight:600; display:inline-flex; align-items:center; justify-content:center; gap: 8px; transition: background .2s; }
-  .btn:hover{ background: #ccc; }
-  .btn:disabled{ opacity:.4; cursor:not-allowed; }
-  .btn.ghost{ background:transparent; color:var(--fg); border:1px solid var(--border); }
-  .btn.ghost:hover{ background: var(--panel-2); }
-  .toolbar{ display:flex; gap:12px; align-items:center; }
-  .main{ display:grid; grid-template-columns: 260px 1fr 320px; gap:12px; padding:12px; min-height:0; }
-  .panel{ background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:12px; min-height:0; display:flex; flex-direction:column; position:relative; }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Template Maker - Home</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+    <style>
+        /* General Body Styles */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            background-color: #121212;
+            color: #fff;
+            overflow-x: hidden;
+        }
 
-  /* Canvas and Page Styling */
-  .canvas-container-wrapper {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-    border-radius: 12px;
-  }
-  .canvas-wrap{
-    position: absolute;
-    inset: 0;
-    overflow: hidden;
-    background-color: #2a2a2a;
-    background-image: radial-gradient(#444 1px, transparent 0);
-    background-size: 16px 16px;
-    cursor: grab;
-  }
-  .canvas-wrap:active { cursor: grabbing; }
+        /* Navigation */
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+            background-color: rgba(18, 18, 18, 0.8);
+            backdrop-filter: blur(10px);
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            box-sizing: border-box;
+        }
 
-  .right{ gap:12px; }
-  .stack{ display:grid; gap:8px; }
-  .row{ display:flex; gap:8px; align-items:center; }
-  h3{ margin:0 0 8px; font-size:13px; color:#ddd; text-transform:uppercase; letter-spacing:.1em; }
-  label{ font-size:12px; color:var(--muted); }
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-decoration: none;
+            color: #fff;
+        }
 
-  /* Custom Scrollbar Styling */
-  #inspectorWrap, .left-panel-content {
-    overflow-y:auto; flex:1; min-height:0; padding-right: 8px;
-  }
-  ::-webkit-scrollbar { width: 8px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 4px; }
-  ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.3); }
+        /* Hero Section */
+        .hero {
+            text-align: center;
+            padding: 150px 20px 100px;
+            background: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%);
+        }
+        .hero h1 {
+            font-size: 3.5rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(90deg, #4facfe, #00f2fe);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .hero p {
+            font-size: 1.2rem;
+            color: #aaa;
+            max-width: 600px;
+            margin: 0 auto 2rem;
+        }
+        .btn {
+            background-color: #4facfe;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(79, 172, 254, 0.3);
+        }
 
-  #inspector, #multiSelectInspector{ display:grid; gap:16px; }
-  .inspector-panel {
-  display: grid;
-  gap: 16px; /* The consistent vertical spacing you want */
-  align-content: start; /* Prevents items from stretching vertically */
-}
-  #noSelection {
-  border: 1px dashed var(--border);
-  border-radius: 12px;
-  padding: 24px; /* Increased padding */
-  text-align: center; /* Center the content for a cleaner look */
-}
-#noSelection h4 {
-  margin: 0 0 12px;
-  font-size: 14px;
-}
-  footer{ display:flex; justify-content:space-between; align-items:center; padding:12px 16px; background:var(--panel); border-top:1px solid var(--border); }
-  .toolbar-group { display: flex; align-items: center; gap: 8px; padding: 4px 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel-2); }
+        /* Feature Sections General Style */
+        .feature-section {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4rem;
+            padding: 6rem 2rem;
+            opacity: 0;
+            transform: translateY(50px);
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+        }
 
-  /* Components Grid */
-  .components-grid { display:grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  .shape-chip { background: var(--panel-2); border:1px solid var(--border); border-radius: 8px; padding: 12px; cursor:grab; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; transition: border-color .2s; user-select:none; }
-  .shape-chip:hover { border-color:#555; }
-  .shape-chip svg { width: 32px; height: 32px; stroke: #fff; stroke-width: 1.5px; fill: transparent; }
-  .shape-chip span { font-size: 12px; color: var(--muted); }
+        .feature-section.is-visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
 
-  /* Modal */
-  .modal-backdrop{ position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,.6); z-index:50; }
-  .modal{ width:720px; max-width:95vw; background:var(--panel); border:1px solid var(--border); border-radius:16px; padding:16px; display:flex; flex-direction:column; }
-  .col-list{ max-height:46vh; overflow:auto; display:grid; gap:8px; margin-top:8px; }
-  .col-item{ border:1px solid var(--border); border-radius:12px; padding:8px; cursor:pointer; }
-  .col-item[aria-selected="true"]{ border-color:#444; background:#121212; }
+        /* Alternating layout for feature sections */
+        .feature-section:nth-child(even) {
+            flex-direction: row-reverse;
+        }
+        
+        .feature-content {
+            max-width: 500px;
+        }
+        
+        .feature-content h2 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .feature-content p, .feature-content li {
+            font-size: 1.1rem;
+            color: #bbb;
+            line-height: 1.6;
+        }
+        
+        .feature-image img {
+            max-width: 500px;
+            border-radius: 12px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+        }
 
-  .toolbar-group .btn.active { background: var(--accent); color: var(--bg); }
-  .color-picker-wrapper { display: flex; align-items: center; gap: 8px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; padding-right: 8px; }
-  .color-picker-wrapper input[type="text"] { border: none; flex-grow: 1; }
-  .color-picker-wrapper input[type="color"] { -webkit-appearance: none; -moz-appearance: none; appearance: none; width: 28px; height: 28px; background-color: transparent; border: none; cursor: pointer; }
-  .color-picker-wrapper input[type="color"]::-webkit-color-swatch { border-radius: 6px; border: 1px solid var(--border); }
-  .color-picker-wrapper input[type="color"]::-moz-color-swatch { border-radius: 6px; border: 1px solid var(--border); }
+        /* Bulk Generation Specifics */
+        .bulk-steps {
+            list-style: none;
+            padding: 0;
+            margin-top: 1.5rem;
+        }
+        .bulk-steps li {
+            padding: 0.8rem 0;
+            border-bottom: 1px solid #333;
+            display: flex;
+            align-items: center;
+        }
+        .bulk-steps li:first-child {
+            border-top: 1px solid #333;
+        }
+        .bulk-steps li::before {
+            content: '✓';
+            color: #4facfe;
+            font-size: 1.5rem;
+            margin-right: 1rem;
+        }
+        .bulk-steps strong {
+            color: #fff;
+        }
+        .that-simple {
+            font-weight: bold;
+            font-size: 1.2rem;
+            margin-top: 1rem;
+            text-align: center;
+        }
 
-  /* === NEW/MODIFIED: Inspector & Layer Styles === */
-  .prop-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  .prop-grid .full-width { grid-column: 1 / -1; }
-  .slider-wrapper { display: flex; align-items: center; gap: 8px; }
-  .slider-wrapper input[type="range"] { flex-grow: 1; }
-  .slider-wrapper input[type="number"] { width: 60px; text-align: right; }
-  .action-buttons { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-  .align-buttons { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; }
-  .align-buttons .btn { padding: 8px; }
-  #multiSelectInspector .btn-group { display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 16px; }
+        /* Template Gallery Section */
+        .templates-section {
+            text-align: center;
+            padding: 6rem 2rem;
+            background-color: #1a1a1a;
+            opacity: 0;
+            transform: translateY(50px);
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+        }
 
-  .layers-list .layer-item { display: flex; align-items: center; gap: 8px; padding: 8px; border-radius: 6px; border: 1px solid var(--border); background: var(--panel-2); font-size: 12px; cursor: pointer; }
-  .layers-list .layer-item.active { border-color: var(--accent); background: #2a2a2a; }
-  .layers-list .layer-item span { flex-grow: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .layers-list .layer-item .layer-actions { display: flex; gap: 4px; }
-  .layers-list .layer-item .layer-actions button { padding: 4px; line-height: 0; }
+        .templates-section.is-visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
 
-.data-links-object-item {
-    padding: 8px 12px;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 13px;
-    transition: background .2s, border-color .2s;
-    height: 72px;           /* Sets a consistent fixed height. */
-    display: flex;          /* Enables flexbox for easy alignment. */
-    flex-direction: column; /* Stacks the text lines vertically. */
-    justify-content: flex-start; /* MODIFIED: Aligns content to the top. */
-}
+        .templates-section h2 {
+            font-size: 2.5rem;
+            margin-bottom: 2rem;
+        }
 
-.data-links-object-item:hover {
-    background: var(--panel-2);
-}
-.data-links-object-item[aria-selected="true"] {
-    background: #2a2a2a;
-    border-color: var(--accent);
-}
-.data-links-object-item .muted {
-    font-size: 11px;
-}
+        .template-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        
+        .template-card {
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .template-card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 15px 30px rgba(79, 172, 254, 0.3);
+        }
+        
+        .template-card img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
 
-.bindings-editor-container {
-    display: flex; /* Establishes a flexbox layout */
-    flex-direction: column;
-}
-
-#dataLinksEditorContent {
-    display: flex;
-    flex-direction: column;
-    flex-grow: 1; /* Allows this element to fill all available vertical space */
-    min-height: 0; /* Prevents flexbox overflow issues */
-}
-
-.links-list-wrapper {
-    flex-grow: 1; /* This part will grow and fill the space */
-    overflow-y: auto; /* The list of links will scroll if it gets too long */
-    padding-right: 8px; /* Adds space for the scrollbar */
-}
-
-.add-link-button-wrapper {
-    flex-shrink: 0; /* Prevents the button area from shrinking */
-    padding-top: 12px;
-    margin-top: 8px;
-    /* Adds a subtle line to visually separate the button from the content */
-    border-top: 1px solid var(--border);
-}
-
-/* AI Assistant Bubble */
-.ai-bubble {
-  position: absolute;
-  bottom: 24px;
-  right: 24px;
-  width: 56px;
-  height: 56px;
-  background: var(--accent);
-  color: var(--bg);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  box-shadow: 0 4px 12px rgba(0,0,0,.3);
-  z-index: 20;
-  transition: transform .2s ease-in-out;
-}
-.ai-bubble:hover {
-  transform: scale(1.1);
-}
-
-/* AI Loading Animation */
-#aiLoadingSpinner {
-    display: inline-flex;
-    align-items: flex-end;
-    gap: 2px;
-}
-#aiLoadingSpinner span {
-    animation: blink 1.2s infinite;
-    font-size: 24px;
-    line-height: 1;
-}
-#aiLoadingSpinner span:nth-child(2) {
-    animation-delay: 0.2s;
-}
-#aiLoadingSpinner span:nth-child(3) {
-    animation-delay: 0.4s;
-}
-@keyframes blink {
-    0%, 100% { opacity: 0.2; }
-    50% { opacity: 1; }
-}
-
-
-</style>
+    </style>
 </head>
 <body>
-<!-- === NEW: Hidden file inputs for image loading === -->
-<input type="file" id="imageUpload" accept="image/*" style="display:none;" />
-<input type="file" id="imageFillUpload" accept="image/*" style="display:none;" />
-
-<div class="app">
-  <header>
-    <div class="title">Template Maker</div>
-    <div class="toolbar">
-      <input id="titleInput" type="text" placeholder="Untitled_Template" value="Untitled_Template" style="min-width: 200px;"/>
-      <div class="row" title="Page Dimensions (W x H)">
-            <input id="pageWidth" type="number" value="768" min="100" max="10000" style="width:90px;"/>
-            <span class="muted">x</span>
-            <input id="pageHeight" type="number" value="1024" min="100" max="10000" style="width:90px;"/>
+    <nav>
+        <a href="/" class="logo">TemplateMaker</a>
+        <div class="nav-links" id="nav-links">
+            <!-- Auth links will be injected here by JS -->
         </div>
-    </div>
-      <div class="toolbar-group">
-        <button id="undoBtn" class="btn ghost" title="Undo (Ctrl+Z)">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3l3 2.7"/></svg>
-        </button>
-        <button id="redoBtn" class="btn ghost" title="Redo (Ctrl+Y)">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l-3 2.7"/></svg>
-        </button>
-    </div>
-    <div class="toolbar" style="margin-left: auto;">
-        <button id="saveTemplateBtn" class="btn ghost">Save Template</button>
-        <input id="loadTemplateInput" type="file" accept=".json" style="display:none;"/>
-        <label for="loadTemplateInput" class="btn ghost">Load Template</label>
-        <label for="csvInput" class="btn ghost">Load Data</label>
-        <input id="csvInput" type="file" accept=".csv,.xlsx,.xls" style="display:none;"/>
-        <span id="fileName" class="muted" style="max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">No file selected</span>
-        <input id="startCell" type="text" placeholder="Starting cell" value="A1" style="width: 100px;"/>
-    </div>
-  </header>
+    </nav>
 
-  <main class="main">
-    <div class="panel left">
-      <div class="left-panel-content">
-        <h3>Components</h3>
-        <div class="components-grid">
-            <div class="shape-chip" draggable="true" data-add="text"><svg viewBox="0 0 24 24"><path d="M5 4h14M12 4v16M8 20h8" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg><span>Text</span></div>
-            <div class="shape-chip" draggable="true" data-add="image"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><path d="M21 15l-5-5L5 21" fill="none"></path></svg><span>Image</span></div>
-            <div class="shape-chip" draggable="true" data-add="square"><svg viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="1"></rect></svg><span>Square</span></div>
-            <div class="shape-chip" draggable="true" data-add="circle"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"></circle></svg><span>Circle</span></div>
-            <div class="shape-chip" draggable="true" data-add="triangle"><svg viewBox="0 0 24 24"><path d="M12 2L2 22h20L12 2z"></path></svg><span>Triangle</span></div>
-            <div class="shape-chip" draggable="true" data-add="star"><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg><span>Star</span></div>
-            <div class="shape-chip" draggable="true" data-add="arrow"><svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7" fill="none"></path></svg><span>Arrow</span></div>
-            <div class="shape-chip" draggable="true" data-add="table"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="3" y1="15" x2="21" y2="15"></line><line x1="9" y1="3" x2="9" y2="21"></line><line x1="15" y1="3" x2="15" y2="21"></line></svg><span>Table</span></div>
-            <div class="shape-chip" draggable="true" data-add="line"><svg viewBox="0 0 24 24"> <path d="M4 12h16" fill="none"></path> </svg> <span>Line</span>
-          </div>
-        </div>
-         <!-- === Layers Panel === -->
-        <div class="stack" style="margin-top: 16px;">
-          <h3>Layers</h3>
-          <div id="layersList" class="layers-list stack"></div>
-        </div>
-      </div>
-    </div>
+    <main class="container">
+        <section class="hero">
+            <h1>Create Stunning Documents Effortlessly</h1>
+            <p>Our intuitive drag-and-drop editor allows you to design, customize, and export professional templates in minutes.</p>
+            <a href="/tool.html" class="btn">Go to the Tool</a>
+        </section>
 
-    <div class="canvas-container-wrapper">
-      <div class="canvas-wrap">
-        <canvas id="c"></canvas>
-      </div>
-      <button id="openDataLinksManagerBtn" class="btn" style="position: absolute; top: 16px; right: 16px; z-index: 10; box-shadow: 0 4px 12px rgba(0,0,0,.3);">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.72"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.72-1.72"></path></svg>
-        <span>Data Links</span>
-      </button>
-      <!-- AI Assistant Bubble -->
-      <div id="ai-bubble" class="ai-bubble" title="AI Template Assistant">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sparkles"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/></svg>
-      </div>
-    </div>
-
-    <div class="panel right">
-      <div id="inspectorWrap">
-        <h3>Inspector</h3>
-        <div id="noSelection">
-            <h4>Page Properties</h4>
-            <div class="stack" id="pageInspector">
-                <p class="muted" style="margin:0 0 12px; font-size:13px; text-align:center;">Select an element to edit its properties or modify the page below.</p>
+        <!-- Section 1: AI Design -->
+        <section class="feature-section animated-section">
+            <div class="feature-content">
+                <h2>Let AI design your documents for you</h2>
+                <p>Say goodbye to tedious formatting. Just tell our AI exactly what you are looking for, and it will generate a beautiful, professional document in seconds. Focus on your content, and let us handle the design.</p>
             </div>
-            <button id="loadTemplateBtnPage" class="btn ghost" style="width:100%; margin-top:12px;">Load Template</button>
-        </div>
-        <div id="inspector" style="display:none;"></div>
-        <div id="multiSelectInspector" style="display:none;"></div>
-      </div>
-    </div>
-  </main>
-
-  <footer>
-      <div class="toolbar-group">
-        <button id="exportZipBtn" class="btn">Export as ZIP</button>
-        <button id="exportSinglePdfBtn" class="btn">Export Single PDF</button>
-      </div>
-      <div class="toolbar">
-          <button id="centerViewBtn" class="btn ghost" title="Reset View">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
-          </button>
-          <div id="zoomLevel" class="muted">Zoom: 100%</div>
-      </div>
-      <div class="toolbar-group">
-        <label for="gridSizeInput" class="muted" style="font-size:12px; margin-left:8px;">Size:</label>
-        <input type="number" id="gridSizeInput" min="12" max="64" style="width: 60px; padding: 4px 8px;">
-        <button id="toggleGridBtn" class="btn ghost">Toggle Grid</button>
-        <button id="toggleSnapBtn" class="btn ghost">Toggle Snap</button>
-      </div>
-  </footer>
-</div>
-
-<!-- Data Links Manager Modal -->
-<div id="dataLinksManagerModal" class="modal-backdrop">
-    <div class="modal" style="width: 800px; max-width: 90vw; height: 70vh; max-height: 600px; display: flex; flex-direction: column;">
-        <div class="row" style="justify-content:space-between;align-items:center;gap:12px; flex-shrink: 0;">
-            <h3>Data Links Manager</h3>
-            <button id="closeDataLinksManagerModal" class="btn ghost">Close</button>
-        </div>
-        <div class="main-content" style="display: grid; grid-template-columns: 250px 1fr; gap: 16px; margin-top: 16px; flex-grow: 1; min-height: 0;">
-            <div class="objects-list-container stack" style="border: 1px solid var(--border); border-radius: 12px; padding: 8px; overflow-y: auto;">
-                <h4 style="padding: 0 8px;">Canvas Objects</h4>
-                <div id="dataLinksObjectsList" class="stack"></div>
+            <div class="feature-image">
+                <img src="https://placehold.co/500x350/1e1e1e/4facfe?text=AI+Generating+Design" alt="AI designing a document interface">
             </div>
-            <div class="bindings-editor-container" style="border: 1px solid var(--border); border-radius: 12px; padding: 12px; overflow-y: auto;">
-                <div id="dataLinksEditorContent" class="stack">
-                    <p class="muted" style="text-align:center; padding-top: 24px;">Select an object from the left to manage its data links.</p>
+        </section>
+
+        <!-- Section 2: Bulk Generation -->
+        <section class="feature-section animated-section">
+            <div class="feature-content">
+                <h2>Generate documents in bulk</h2>
+                <p>Effortlessly create hundreds of personalized documents from a single template and your data file. Perfect for invoices, reports, and plans.</p>
+                <ul class="bulk-steps">
+                    <li><strong>1. Input your data:</strong> Upload a .csv or .xlsx file with all your information.</li>
+                    <li><strong>2. Link your data:</strong> Map your data fields to the template placeholders.</li>
+                    <li><strong>3. Export it!</strong> Generate and download all your documents in a single click.</li>
+                </ul>
+                <p class="that-simple">That simple.</p>
+            </div>
+            <div class="feature-image">
+                <img src="https://placehold.co/500x400/1e1e1e/00f2fe?text=Data+Linking+UI" alt="Bulk document generation workflow">
+            </div>
+        </section>
+
+        <!-- Section 3: Template Gallery -->
+        <section class="templates-section animated-section">
+            <h2>Find the perfect template for your needs</h2>
+            <p style="color: #aaa; max-width: 600px; margin: 0 auto 2rem;">Browse our library of professionally designed templates for any occasion.</p>
+            <div class="template-gallery">
+                <div class="template-card">
+                    <img src="https://placehold.co/400x300/2a2a2a/ffffff?text=Invoice+Template" alt="Invoice Template">
+                </div>
+                <div class="template-card">
+                    <img src="https://placehold.co/400x300/2a2a2a/ffffff?text=Report+Template" alt="Business Report Template">
+                </div>
+                <div class="template-card">
+                    <img src="https://placehold.co/400x300/2a2a2a/ffffff?text=Resume+Template" alt="Resume Template">
                 </div>
             </div>
-        </div>
-    </div>
-</div>
+        </section>
 
-<!-- Column Link Modal -->
-<div id="modalBackdrop" class="modal-backdrop">
-  <div class="modal">
-    <div class="row" style="justify-content:space-between;align-items:center;gap:12px;"><h3>Link to Column</h3><button id="closeModal" class="btn ghost">Close</button></div>
-    <div class="row" style="gap:8px; margin-top:8px;"><input id="columnSearch" type="text" placeholder="Search columns..." style="flex:1"/>
-      <label class="row" style="gap:8px; align-items:center;"><span class="muted">Start at</span><input id="modalStartCell" type="text" value="A1" style="width:88px;"/></label>
-    </div>
-    <div id="colList" class="col-list"></div>
-    <div class="row" style="margin-top:12px; justify-content:flex-end;"><button id="confirmColumn" class="btn">Use Selected Column</button></div>
-  </div>
-</div>
+    </main>
 
-<!-- Table Creator Modal -->
-<div id="tableCreatorModal" class="modal-backdrop">
-    <div class="modal" style="width: 360px;">
-        <div class="row" style="justify-content:space-between;align-items:center;gap:12px;">
-            <h3>Create Table</h3>
-            <button id="closeTableCreator" class="btn ghost">&times;</button>
-        </div>
-        <div class="stack" style="margin-top: 16px; gap: 12px;">
-            <div class="stack">
-                <label for="tableRows">Rows</label>
-                <input type="number" id="tableRows" value="3" min="1" max="100">
-            </div>
-            <div class="stack">
-                <label for="tableCols">Columns</label>
-                <input type="number" id="tableCols" value="3" min="1" max="100">
-            </div>
-        </div>
-        <div class="row" style="margin-top: 24px; justify-content:flex-end; gap: 8px;">
-            <button id="cancelTableCreate" class="btn ghost">Cancel</button>
-            <button id="confirmTableCreate" class="btn">Create Table</button>
-        </div>
-    </div>
-</div>
+    <script type="module" src="assets/js/auth.js"></script>
+    <script>
+        // JavaScript for "cool effects" on scroll
+        const animatedSections = document.querySelectorAll('.animated-section');
 
-<div id="imageFillEditorModal" class="modal-backdrop">
-    <div class="modal" style="width: 480px;">
-        <div class="row" style="justify-content:space-between;align-items:center;gap:12px;">
-            <h3>Edit Image Fill</h3>
-            <button id="closeImageFillEditor" class="btn ghost">&times;</button>
-        </div>
-        <div class="main-content" style="display: grid; grid-template-columns: 200px 1fr; gap: 16px; margin-top: 16px;">
-            <div class="preview-container" style="border: 1px solid var(--border); border-radius: 8px; background-color: var(--panel-2); overflow: hidden;">
-                <canvas id="imageFillPreviewCanvas"></canvas>
-            </div>
-            <div id="imageFillControls" class="stack" style="gap: 16px;">
-                <!-- Controls will be added here by JS -->
-            </div>
-        </div>
-        <div class="row" style="margin-top: 24px; justify-content:flex-end; gap: 8px;">
-            <button id="resetFillTransform" class="btn ghost">Reset</button>
-            <button id="cancelFillEdit" class="btn ghost">Cancel</button>
-            <button id="confirmFillEdit" class="btn">Done</button>
-        </div>
-    </div>
-</div>
-
-<!-- AI Assistant Modal -->
-<div id="aiModalBackdrop" class="modal-backdrop">
-  <div class="modal" style="width: 500px;">
-    <div class="row" style="justify-content:space-between;align-items:center;gap:12px;">
-      <h3>AI Template Assistant</h3>
-      <button id="aiCloseModal" class="btn ghost" style="padding: 4px 8px; line-height: 1;">&times;</button>
-    </div>
-    <div class="stack" style="margin-top: 16px; gap: 12px;">
-       <div class="stack">
-          <label for="aiApiKey">Google AI Studio API Key</label>
-          <input type="password" id="aiApiKey" placeholder="Enter your API key">
-      </div>
-      <div class="stack">
-        <label for="aiPrompt">Request</label>
-        <textarea id="aiPrompt" rows="4" placeholder="e.g., 'Create an invoice template with fields for item, quantity, price, and total.'"></textarea>
-      </div>
-    </div>
-    <div class="row" style="margin-top:16px; justify-content:flex-end;">
-      <button id="aiSendBtn" class="btn">
-        <span id="aiSendBtnText">Send Request</span>
-        <span id="aiLoadingSpinner" style="display: none;"><span>.</span><span>.</span><span>.</span></span>
-      </button>
-    </div>
-  </div>
-</div>
-
-<script>
-// --- UTILITIES & SETUP ---
-const $ = (sel) => document.querySelector(sel);
-const { jsPDF } = window.jspdf;
-
-// --- STATE ---
-const canvasWrapper = $('.canvas-wrap');
-const canvas = new fabric.Canvas('c', { backgroundColor: 'transparent', selection: true });
-let pageRect;
-let bindings = new Map();
-let workbook, worksheet, headers = [], dataRows = [], selectedColumn;
-let gridEnabled = false, snapEnabled = false;
-let gridCellSize = 32;
-let historyStack = [];
-let historyIndex = -1;
-let historyLocked = false;
-let _clipboard = null;
-const FONT_LIST = ["Arial", "Helvetica", "Times New Roman", "Georgia", "Courier New", "Verdana", "Impact", "Comic Sans MS"];
-let editingFillObject = null;
-let originalPatternState = null;
-let imageFillPreviewCanvas = null;
-const PREVIEW_SIZE = 200;
-
-// --- DEBOUNCE UTILITY ---
-function debounce(func, delay = 250) {
-    let timeout;
-    return (...args) => { clearTimeout(timeout); timeout = setTimeout(() => { func.apply(this, args); }, delay); };
-}
-
-// --- CANVAS & PAGE SETUP ---
-function initializeCanvas() {
-    const resizeCanvas = () => {
-        const { width, height } = canvasWrapper.getBoundingClientRect();
-        canvas.setWidth(width); canvas.setHeight(height); canvas.renderAll();
-    };
-    pageRect = new fabric.Rect({
-        left: 0, top: 0, width: 768, height: 1024, fill: '#fff', stroke: 'transparent', strokeWidth: 0,
-        selectable: false, evented: false, hasControls: false, hasBorders: false,
-        lockMovementX: true, lockMovementY: true, lockScalingX: true, lockScalingY: true, lockRotation: true,
-        oid: 'pageRect',
-    });
-    canvas.add(pageRect);
-    resizeCanvas();
-    canvas.centerObject(pageRect);
-    canvas.sendToBack(pageRect);
-    centerAndFitPage();
-    drawGrid();
-    new ResizeObserver(resizeCanvas).observe(canvasWrapper);
-
-    canvas.on({
-        'object:added': () => {
-            saveState(); renderLayers();
-            if (dataLinksManagerModal.style.display === 'flex') renderDataLinksManager();
-        },
-        'object:removed': () => {
-            saveState(); renderLayers();
-            if (dataLinksManagerModal.style.display === 'flex') renderDataLinksManager();
-        },
-        'object:modified': (e) => { // This fires on mouse-up after a transform.
-             saveState();
-             // Also refresh the inspector in case properties were constrained (e.g. lock scaling)
-             if (e.target) {
-                refreshInspector({target: e.target});
-             }
-        },
-        'object:moving': updateLiveInspector,
-        'object:scaling': updateLiveInspector,
-        'object:rotating': updateLiveInspector,
-    });
-    saveState();
-    renderLayers();
-}
-
-const setPageDimensions = debounce(() => {
-    if (!pageRect) return;
-    const w = parseInt($('#pageWidth').value, 10) || 768;
-    const h = parseInt($('#pageHeight').value, 10) || 1024;
-    pageRect.set({ width: w, height: h });
-    canvas.centerObject(pageRect);
-    pageRect.setCoords();
-    drawGrid();
-    canvas.renderAll();
-    saveState();
-}, 300);
-
-$('#pageWidth').addEventListener('input', setPageDimensions);
-$('#pageHeight').addEventListener('input', setPageDimensions);
-
-function drawGrid() {
-    canvas.remove(...canvas.getObjects('line').filter(o => o.excludeFromExport));
-    if (!gridEnabled || !pageRect) {
-        canvas.renderAll();
-        return;
-    }
-
-    const { width, height, left, top } = pageRect;
-    const gridLines = [];
-
-    const lineOption = { stroke: 'rgba(0,0,0,0.1)', selectable: false, evented: false, excludeFromExport: true };
-    const step = gridCellSize;
-    for (let i = 1; i < (width / step); i++) gridLines.push(new fabric.Line([left + i * step, top, left + i * step, top + height], lineOption));
-    for (let i = 1; i < (height / step); i++) gridLines.push(new fabric.Line([left, top + i * step, left + width, top + i * step], lineOption));
-
-    canvas.add(...gridLines);
-    gridLines.forEach(line => canvas.sendToBack(line));
-    canvas.sendToBack(pageRect);
-    canvas.renderAll();
-}
-
-
-$('#toggleGridBtn').addEventListener('click', () => { gridEnabled = !gridEnabled; $('#toggleGridBtn').classList.toggle('active', gridEnabled); drawGrid(); });
-$('#toggleSnapBtn').addEventListener('click', () => { snapEnabled = !snapEnabled; $('#toggleSnapBtn').classList.toggle('active', snapEnabled); });
-
-const gridSizeInput = $('#gridSizeInput');
-gridSizeInput.value = gridCellSize;
-gridSizeInput.addEventListener('input', (e) => { const newSize = Math.max(12, Math.min(64, parseInt(e.target.value, 10))); if (!isNaN(newSize) && gridCellSize !== newSize) { gridCellSize = newSize; drawGrid(); } });
-
-// --- CANVAS PANNING & ZOOM ---
-// Detect if running on a touch device
-const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-
-let isPanning = false;
-let lastPosX, lastPosY;
-
-// Track double click state
-let lastClickTime = 0;
-let doubleClickActive = false;
-
-// --- Zoom (works everywhere with wheel) ---
-canvas.on('mouse:wheel', function(opt) {
-  const delta = opt.e.deltaY;
-  let zoom = canvas.getZoom();
-  zoom *= 0.999 ** delta;
-  if (zoom > 20) zoom = 20;
-  if (zoom < 0.05) zoom = 0.05;
-
-  canvas.zoomToPoint({ x: opt.e.offsetX, y: opt.e.offsetY }, zoom);
-  document.getElementById('zoomLevel').textContent =
-    `Zoom: ${Math.round(zoom * 100)}%`;
-
-  opt.e.preventDefault();
-  opt.e.stopPropagation();
-});
-
-// --- Panning only on non-touch devices ---
-if (!isTouchDevice) {
-  canvas.on('mouse:down', function(opt) {
-    const e = opt.e;
-    const now = Date.now();
-
-    // Detect double click on left button (desktop only)
-    if (now - lastClickTime < 300 && e.button === 0) {
-      doubleClickActive = true;
-    } else {
-      doubleClickActive = false;
-    }
-    lastClickTime = now;
-
-    // Prevent middle mouse auto-scroll
-    if (e.button === 1) e.preventDefault();
-
-    // Middle button, double left click, or Alt+drag → start panning
-    if (e.button === 1 || doubleClickActive || e.altKey) {
-      isPanning = true;
-      this.selection = false;
-      lastPosX = e.clientX;
-      lastPosY = e.clientY;
-    }
-  });
-
-  canvas.on('mouse:move', function(opt) {
-    if (isPanning) {
-      const e = opt.e;
-      const vpt = this.viewportTransform;
-      vpt[4] += e.clientX - lastPosX;
-      vpt[5] += e.clientY - lastPosY;
-      this.requestRenderAll();
-      lastPosX = e.clientX;
-      lastPosY = e.clientY;
-    }
-  });
-
-  canvas.on('mouse:up', function() {
-    if (isPanning) {
-      this.setViewportTransform(this.viewportTransform);
-      isPanning = false;
-      this.selection = true;
-      doubleClickActive = false;
-    }
-  });
-}
-
-// --- DATA HANDLING ---
-$('#csvInput').addEventListener('change', async (e) => {
-    const file = e.target.files?.[0]; if (!file) { $('#fileName').textContent = 'No file selected'; return; }
-    $('#fileName').textContent = file.name; const data = await file.arrayBuffer();
-    try {
-        workbook = XLSX.read(data, { type: 'array' }); const sheetName = workbook.SheetNames[0]; worksheet = workbook.Sheets[sheetName];
-        const json = XLSX.utils.sheet_to_json(worksheet, { defval: '', raw: false });
-        if (!json.length) { alert('No data found in the sheet.'); return; }
-        headers = Object.keys(json[0]); dataRows = json;
-        alert(`Loaded "${sheetName}" with ${dataRows.length} rows.`);
-    } catch (err) { alert('Error reading file.'); $('#fileName').textContent = 'No file selected'; }
-});
-
-// --- COMPONENT ADDITION ---
-const tableCreatorModal = $('#tableCreatorModal');
-const adders = {
-  text: (x, y) => canvas.add(new fabric.Textbox('Sample Text', { left: x, top: y, fontSize: 28, fill: '#000', fontFamily: 'Arial', originX: 'center', originY: 'center', styles: [] })).setActiveObject(canvas.getObjects().pop()),
-  rect: ({x, y, asSquare=true}={}) => canvas.add(new fabric.Rect({ left: x, top: y, width: asSquare?150:220, height: 150, fill: '#f0f0f0', stroke: '#333', strokeWidth: 2, originX: 'center', originY: 'center' })).setActiveObject(canvas.getObjects().pop()),
-  circle: (x, y) => canvas.add(new fabric.Circle({ left: x, top: y, radius: 75, fill: '#f0f0f0', stroke: '#333', strokeWidth: 2, originX: 'center', originY: 'center' })).setActiveObject(canvas.getObjects().pop()),
-  triangle: (x, y) => canvas.add(new fabric.Triangle({ left: x, top: y, width: 150, height: 130, fill: '#f0f0f0', stroke: '#333', strokeWidth: 2, originX: 'center', originY: 'center' })).setActiveObject(canvas.getObjects().pop()),
-  line: (x, y) => canvas.add(new fabric.Line([-75, 0, 75, 0], { left: x, top: y, stroke: '#333', strokeWidth: 2, originX: 'center', originY: 'center' })).setActiveObject(canvas.getObjects().pop()),
-  star: (x, y) => { const pts = (n, oR, iR) => { const p=[]; let a=-Math.PI/2; const s=(Math.PI*2)/n; for(let i=0;i<n;i++){p.push({x:oR*Math.cos(a),y:oR*Math.sin(a)});a+=s/2;p.push({x:iR*Math.cos(a),y:iR*Math.sin(a)});a+=s/2;} return p;}; canvas.add(new fabric.Polygon(pts(5, 75, 35), { left: x, top: y, fill: '#f0f0f0', stroke: '#333', strokeWidth: 2, originX: 'center', originY: 'center' })).setActiveObject(canvas.getObjects().pop()); },
-  square: (x, y) => adders.rect({x, y, asSquare: true}),
-  arrow: (x, y) => canvas.add(new fabric.Path('M 0 20 L 60 20 L 60 0 L 100 30 L 60 60 L 60 40 L 0 40 Z', { left: x, top: y, fill: '#f0f0f0', stroke: '#333', strokeWidth: 2, originX: 'center', originY: 'center' })).setActiveObject(canvas.getObjects().pop()),
-  image: (x, y, url) => { fabric.Image.fromURL(url, (img) => { img.set({ left: x, top: y, scaleX: 0.5, scaleY: 0.5, originX: 'center', originY: 'center' }); canvas.add(img).setActiveObject(img); }, { crossOrigin: 'anonymous' }); },
-  table: (x, y) => {
-    tableCreatorModal.style.display = 'flex';
-    const createHandler = () => {
-        const rows = parseInt($('#tableRows').value, 10) || 3;
-        const cols = parseInt($('#tableCols').value, 10) || 3;
-        if (rows > 0 && cols > 0) {
-            const cellWidth = 100, cellHeight = 40;
-            const tableItems = [];
-            for (let r = 0; r < rows; r++) {
-                for (let c = 0; c < cols; c++) {
-                    const cell = new fabric.Rect({
-                        left: c * cellWidth, top: r * cellHeight,
-                        width: cellWidth, height: cellHeight,
-                        fill: 'transparent', stroke: '#333', strokeWidth: 1
-                    });
-                    tableItems.push(cell);
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('is-visible');
+                    observer.unobserve(entry.target);
                 }
-            }
-            const table = new fabric.Group(tableItems, { left: x, top: y, originX: 'center', originY: 'center', isTable: true, rows, cols });
-            canvas.add(table).setActiveObject(table);
-        }
-        closeTableModal();
-    };
-    const closeTableModal = () => {
-        tableCreatorModal.style.display = 'none';
-        $('#confirmTableCreate').removeEventListener('click', createHandler);
-        $('#cancelTableCreate').removeEventListener('click', closeTableModal);
-        $('#closeTableCreator').removeEventListener('click', closeTableModal);
-    };
-    $('#confirmTableCreate').addEventListener('click', createHandler, { once: true });
-    $('#cancelTableCreate').addEventListener('click', closeTableModal, { once: true });
-    $('#closeTableCreator').addEventListener('click', closeTableModal, { once: true });
-  }
-};
-
-document.getElementById('imageUpload').addEventListener('change', e => {
-    if (!e.target.files || !e.target.files[0]) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => { const {x, y} = canvas.getVpCenter(); adders.image(x, y, ev.target.result); e.target.value = ''; }
-    reader.readAsDataURL(e.target.files[0]);
-});
-document.querySelectorAll('.shape-chip').forEach(chip => {
-    const type = chip.getAttribute('data-add');
-    chip.addEventListener('dragstart', e => { e.dataTransfer.setData('text/plain', type); });
-    chip.addEventListener('click', () => { if (!adders[type]) return; if (type === 'image') { $('#imageUpload').click(); return; } const center = canvas.getVpCenter(); adders[type](center.x, center.y); });
-});
-const dropTarget = canvas.upperCanvasEl; canvas.calcOffset();
-dropTarget.addEventListener('dragover', (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; });
-dropTarget.addEventListener('drop', (e) => {
-  e.preventDefault(); const { x, y } = canvas.getPointer(e); const type = e.dataTransfer.getData('text/plain');
-  if (type && adders[type]) {
-    if (type === 'image') {
-        const file = e.dataTransfer.files && e.dataTransfer.files[0];
-        if (file && file.type.startsWith('image/')) { const reader = new FileReader(); reader.onload = (ev) => adders.image(x, y, ev.target.result); reader.readAsDataURL(file); } else { $('#imageUpload').click(); }
-    } else { adders[type](x, y); }
-  }
-});
-
-// --- SNAPPING TO GRID ---
-canvas.on('object:moving', (options) => { if (!snapEnabled || !pageRect) return; const target = options.target; const pageLeft = pageRect.left; const pageTop = pageRect.top; const snapLeft = Math.round((target.left - pageLeft) / gridCellSize) * gridCellSize + pageLeft; const snapTop = Math.round((target.top - pageTop) / gridCellSize) * gridCellSize + pageTop; target.set({ left: snapLeft, top: snapTop }).setCoords(); });
-
-// --- INSPECTOR ---
-const inspector = $('#inspector'); const multiInspector = $('#multiSelectInspector');
-canvas.on('selection:created', (e) => { refreshInspector(e); renderLayers(); });
-canvas.on('selection:updated', (e) => { refreshInspector(e); renderLayers(); });
-canvas.on('selection:cleared', () => { $('#noSelection').style.display='block'; inspector.style.display='none'; multiInspector.style.display='none'; renderPageInspector(); renderLayers(); });
-function updateLiveInspector(options) { const target = options.target; if (!target || target.type === 'activeSelection') return; const updateValue = (id, value) => { const el = document.getElementById(id); if (el) el.value = value; }; updateValue('inspector-pos-x', Math.round(target.left)); updateValue('inspector-pos-y', Math.round(target.top)); updateValue('inspector-dim-w', Math.round(target.getScaledWidth())); updateValue('inspector-dim-h', Math.round(target.getScaledHeight())); updateValue('inspector-opacity-slider', target.opacity); updateValue('inspector-opacity-input', target.opacity); updateValue('inspector-stroke-width-slider', target.strokeWidth); updateValue('inspector-stroke-width-input', target.strokeWidth); if (target.rx !== undefined) { updateValue('inspector-corner-radius-slider', target.rx); updateValue('inspector-corner-radius-input', target.rx); } }
-function refreshInspector(e) { const target = e.target || canvas.getActiveObject(); if (!target) return; if (target.type === 'activeSelection') { inspector.style.display = 'none'; multiInspector.style.display = 'grid'; $('#noSelection').style.display = 'none'; renderMultiSelectInspector(target); } else { multiInspector.style.display = 'none'; inspector.style.display = 'grid'; $('#noSelection').style.display = 'none'; renderSingleObjectInspector(target); } }
-function getCommonPropertyValue(objects, property) { const firstValue = objects[0][property]; for (let i = 1; i < objects.length; i++) { if (objects[i][property] !== firstValue) return ''; } return firstValue; }
-function setCommonPropertyValue(objects, property, value) { objects.forEach(obj => obj.set(property, value)); canvas.renderAll(); saveState(); }
-function renderMultiSelectInspector(selection) {
-    multiInspector.innerHTML = ''; const objects = selection.getObjects();
-    const actions = document.createElement('div'); actions.className = 'action-buttons';
-    actions.innerHTML = `<button id="copyBtn" class="btn ghost">Copy</button><button id="cutBtn" class="btn ghost">Cut</button><button id="pasteBtn" class="btn ghost">Paste</button>`;
-    multiInspector.appendChild(actions);
-    const removeBtn = document.createElement('button'); removeBtn.className = 'btn ghost'; removeBtn.style.backgroundColor = '#ad0000'; removeBtn.textContent = 'Remove'; multiInspector.appendChild(removeBtn);
-    actions.querySelector('#copyBtn').onclick = copy; actions.querySelector('#cutBtn').onclick = cut; actions.querySelector('#pasteBtn').onclick = paste; $('#pasteBtn').disabled = !_clipboard;
-    removeBtn.onclick = () => { objects.forEach(obj => canvas.remove(obj)); canvas.discardActiveObject().renderAll(); canvas.fire('selection:cleared'); };
-    const commonProps = [ sliderRow('Opacity', getCommonPropertyValue(objects, 'opacity') ?? 1, (v) => setCommonPropertyValue(objects, 'opacity', v), { min: 0, max: 1, step: 0.01 }), colorInputRow('Stroke Color', getCommonPropertyValue(objects, 'stroke') ?? '', v => setCommonPropertyValue(objects, 'stroke', v)), sliderRow('Stroke Width', getCommonPropertyValue(objects, 'strokeWidth') ?? 0, (v) => setCommonPropertyValue(objects, 'strokeWidth', v), { min: 0, max: 50, step: 1 }) ];
-    multiInspector.appendChild(section('Common', commonProps));
-    const shapeObjects = objects.filter(o => ['rect', 'circle', 'triangle', 'polygon', 'path'].includes(o.type));
-    if (shapeObjects.length === objects.length && shapeObjects.length > 0) multiInspector.appendChild(section('Shape Properties', [ colorInputRow('Fill', getCommonPropertyValue(shapeObjects, 'fill'), v => setCommonPropertyValue(shapeObjects, 'fill', v)) ]));
-    const textObjects = objects.filter(o => o.type === 'textbox');
-    if (textObjects.length === objects.length && textObjects.length > 0) multiInspector.appendChild(section('Text', [ inputRow('Font Size', getCommonPropertyValue(textObjects, 'fontSize'), v => setCommonPropertyValue(textObjects, 'fontSize', parseFloat(v))), selectRow('Font Family', FONT_LIST, getCommonPropertyValue(textObjects, 'fontFamily'), v => setCommonPropertyValue(textObjects, 'fontFamily', v)), colorInputRow('Fill Color', getCommonPropertyValue(textObjects, 'fill'), v => setCommonPropertyValue(textObjects, 'fill', v)), selectRow('Alignment', ['left','center','right','justify'], getCommonPropertyValue(textObjects, 'textAlign'), v => setCommonPropertyValue(textObjects, 'textAlign', v)) ]));
-    multiInspector.appendChild(section('Align', [alignToPageButtons()]));
-}
-function renderSingleObjectInspector(o) {
-    inspector.innerHTML = ''; const actions = document.createElement('div'); actions.className = 'action-buttons';
-    actions.innerHTML = `<button id="copyBtn" class="btn ghost">Copy</button><button id="cutBtn" class="btn ghost">Cut</button><button id="pasteBtn" class="btn ghost">Paste</button>`;
-    inspector.appendChild(actions);
-    const removeBtn = document.createElement('button'); removeBtn.className = 'btn ghost'; removeBtn.style.backgroundColor = '#ad0000'; removeBtn.textContent = 'Remove'; inspector.appendChild(removeBtn);
-    inspector.appendChild(section('Data Links', [ buttonRow(`Manage Links (${getBindingsFor(o).length})`, () => { selectedObjectForManager = o; openDataLinksManager(); }) ]));
-    actions.querySelector('#copyBtn').onclick = copy; actions.querySelector('#cutBtn').onclick = cut; actions.querySelector('#pasteBtn').onclick = paste; $('#pasteBtn').disabled = !_clipboard;
-    removeBtn.onclick = () => canvas.remove(canvas.getActiveObject());
-    if (['rect', 'image', 'circle', 'triangle', 'polygon', 'path'].includes(o.type)) {
-        const shapeProps = [];
-        if (['rect', 'image'].includes(o.type)) shapeProps.push(sliderRow('Corner Radius', o.rx ?? 0, (v) => o.set({rx: v, ry: v}), {min: 0, max: Math.min(o.width, o.height)/2, step: 1}));
-        inspector.appendChild(section('Shape Properties', shapeProps));
-    }
-    if (['rect', 'triangle', 'circle', 'polygon', 'path'].includes(o.type)) {
-    const fillProps = [];
-    
-    // If the fill is an image pattern, show the "Edit Fill" button
-    if (o.fill instanceof fabric.Pattern && o.fill.source) {
-        fillProps.push(buttonRow('Edit Image Fill', () => openImageFillEditor(o)));
-        fillProps.push(buttonRow('Replace Image', () => $('#imageFillUpload').click()));
-        fillProps.push(buttonRow('Remove Image Fill', () => {
-            o.set({ fill: '#f0f0f0' }); // Reset to a default color
-            canvas.renderAll();
-            saveState();
-            refreshInspector({ target: o }); // Refresh inspector to show color input again
-        }));
-    } else {
-        // Otherwise, show the standard color and image fill buttons
-        fillProps.push(colorInputRow('Color', o.fill, v => o.set({ fill: v })));
-        fillProps.push(buttonRow('Fill with Image', () => $('#imageFillUpload').click()));
-    }
-
-    inspector.appendChild(section('Fill', fillProps));
-
-    // This onchange logic should be defined once
-    $('#imageFillUpload').onchange = e => {
-        if (!e.target.files?.[0]) return;
-        const reader = new FileReader();
-        reader.onload = ev => {
-            fabric.Image.fromURL(ev.target.result, img => {
-                const pattern = new fabric.Pattern({
-                    source: img.getElement(),
-                    repeat: 'no-repeat',
-                });
-                o.set('fill', pattern);
-                // Initialize the transform matrix for the new pattern
-                pattern.patternTransform = [1, 0, 0, 1, 0, 0];
-                canvas.renderAll();
-                saveState();
-                refreshInspector({ target: o }); // Refresh to show the "Edit" button
-            }, { crossOrigin: 'anonymous' });
-        };
-        reader.readAsDataURL(e.target.files[0]);
-        e.target.value = ''; // Clear input for next use
-    };
-}
-    if (o.isTable) inspector.appendChild(section('Table', [ colorInputRow('Stroke Color', o.getObjects()[0].stroke, v => o.forEachObject(cell => cell.set({stroke:v}))), sliderRow('Stroke Width', o.getObjects()[0].strokeWidth, v => o.forEachObject(cell => cell.set({strokeWidth:v})), {min:0, max: 20, step: 0.5}), sliderRow('Stroke Opacity', o.getObjects()[0].opacity, v => o.forEachObject(cell => cell.set({opacity:v})), {min:0, max: 1, step: 0.01}), buttonRow('Remove Strokes', () => o.forEachObject(cell => cell.set({strokeWidth:0}))) ]));
-    if (o.type === 'textbox') inspector.appendChild(section('Text', [ inputRow('Content', o.text, v => o.set({text:v}), 'textarea'), inputRow('Font Size', o.fontSize, v => o.set({fontSize:parseFloat(v)})), selectRow('Font Family', FONT_LIST, o.fontFamily, v => o.set({fontFamily:v})), colorInputRow('Fill Color', o.fill, v => o.set({fill:v})), selectRow('Alignment', ['left','center','right','justify'], o.textAlign, v => o.set({textAlign:v})) ]));
-    inspector.appendChild(section('Common', [ xyInputRow('Position', {x: o.left, y: o.top}, (p) => o.set({left: p.x, top: p.y})), xyInputRow('Dimensions', {w: o.getScaledWidth(), h: o.getScaledHeight()}, (d) => {o.scaleToWidth(d.w); o.scaleToHeight(d.h);}), sliderRow('Opacity', o.opacity ?? 1, (v) => o.set({opacity: v}), {min: 0, max: 1, step: 0.01}), colorInputRow('Stroke Color', o.stroke ?? '', v => o.set({stroke: v})), sliderRow('Stroke Width', o.strokeWidth ?? 0, (v) => o.set({strokeWidth: v}), {min: 0, max: 50, step: 1}), ]));
-    inspector.appendChild(section('Align to Page', [alignToPageButtons()]));
-}
-function renderPageInspector() { if (!pageRect) pageRect = canvas.getObjects().find(o => o.oid === 'pageRect'); if (!pageRect) return; const container = $('#pageInspector'); container.innerHTML = ''; const pageProps = section('Page Style', [ colorInputRow('Background Color', pageRect.fill, v => pageRect.set({fill: v})), buttonRow('Set Background Image', () => $('#imageFillUpload').click()) ]); $('#imageFillUpload').onchange = e => { if(!e.target.files?.[0]) return; const reader = new FileReader(); reader.onload = ev => { fabric.Image.fromURL(ev.target.result, img => { pageRect.set('fill', new fabric.Pattern({source:img.getElement(), repeat: 'repeat'})); canvas.renderAll(); saveState(); }, {crossOrigin:'anonymous'}); }; reader.readAsDataURL(e.target.files[0]); e.target.value = ''; }; container.appendChild(pageProps); }
-$('#loadTemplateBtnPage').onclick = () => $('#loadTemplateInput').click();
-
-// --- INSPECTOR HELPER FUNCTIONS ---
-function section(title, rows){ const w=document.createElement('div'); w.className='stack'; w.innerHTML=`<h3>${title}</h3>`; const g=document.createElement('div'); g.className='prop-grid'; rows.forEach(r => g.appendChild(r)); w.appendChild(g); return w; }
-
-function inputRow(label, value, onChange, type='text'){
-    const w=document.createElement('div'); w.className='stack full-width';
-    w.innerHTML=`<label>${label}</label>`;
-    const i=document.createElement(type==='textarea'?'textarea':'input');
-    i.type=type; i.value=value??'';
-    i.oninput = () => { onChange(i.value); canvas.requestRenderAll(); };
-    i.onchange = () => { saveState(); }; // Save history on blur/enter
-    if(type==='textarea')i.rows=3;
-    w.appendChild(i);
-    return w;
-}
-
-function xyInputRow(label, values, onChange) {
-    const w = document.createElement('div'); w.className = 'stack full-width';
-    w.innerHTML = `<label>${label}</label>`;
-    const r = document.createElement('div'); r.className = 'row';
-    const x = document.createElement('input'); x.type = 'number'; x.value = Math.round(values.x ?? values.w ?? 0);
-    const y = document.createElement('input'); y.type = 'number'; y.value = Math.round(values.y ?? values.h ?? 0);
-    if (label === 'Position') { x.id = 'inspector-pos-x'; y.id = 'inspector-pos-y'; }
-    else if (label === 'Dimensions') { x.id = 'inspector-dim-w'; y.id = 'inspector-dim-h'; }
-
-    const update = () => {
-        const v = label === 'Position' ? { x: parseFloat(x.value), y: parseFloat(y.value) } : { w: parseFloat(x.value), h: parseFloat(y.value) };
-        onChange(v);
-        canvas.requestRenderAll();
-        updateLiveInspector({ target: canvas.getActiveObject() });
-    };
-    const finalUpdate = () => {
-        update();
-        saveState();
-    };
-
-    x.oninput = update;
-    y.oninput = update;
-    x.onchange = finalUpdate;
-    y.onchange = finalUpdate;
-    r.append(x, y);
-    w.appendChild(r);
-    return w;
-}
-
-function sliderRow(label, value, onChange, {min=0, max=100, step=1}, idPrefix = null) {
-    const w = document.createElement('div'); w.className = 'stack full-width';
-    w.innerHTML = `<label>${label}</label>`;
-    const r = document.createElement('div'); r.className = 'slider-wrapper';
-    const s = document.createElement('input'); s.type = 'range'; s.min = min; s.max = max; s.step = step; s.value = value;
-    const n = document.createElement('input'); n.type = 'number'; n.min = min; n.max = max; n.step = step; n.value = value;
-    // Use the prefix if provided, otherwise generate one from the label
-    const idBase = idPrefix || 'inspector-' + label.toLowerCase().replace(/\s+/g, '-');
-    s.id = idBase + '-slider'; n.id = idBase + '-input';
-
-    const update = (val) => {
-        onChange(val); // In the new editor, this will just be a function reference
-        canvas.requestRenderAll();
-    };
-
-    s.oninput = () => { n.value = s.value; update(parseFloat(s.value)); };
-    n.oninput = () => { s.value = n.value; update(parseFloat(n.value)); };
-    
-    // For the main inspector, we still want to save state on change
-    if (!idPrefix) {
-        s.onchange = () => saveState();
-        n.onchange = () => saveState();
-    }
-
-    r.append(s, n);
-    w.appendChild(r);
-    return w;
-}
-
-function selectRow(label, opts, val, onChange) {
-    const w=document.createElement('div'); w.className='stack full-width';
-    w.innerHTML=`<label>${label}</label>`;
-    const s=document.createElement('select');
-    opts.forEach(opt=>s.innerHTML+=`<option value="${opt}" ${opt==val?'selected':''}>${opt}</option>`);
-    s.onchange=e=>{
-        onChange(e.target.value);
-        canvas.renderAll();
-        saveState();
-    };
-    w.appendChild(s);
-    return w;
-}
-
-function buttonRow(label, onClick) { const w=document.createElement('div');w.className='full-width'; const b=document.createElement('button');b.className='btn ghost'; b.textContent=label; b.onclick=onClick; b.style.width='100%'; w.appendChild(b); return w;}
-
-function colorInputRow(label, value, onChange) {
-    const w = document.createElement('div'); w.className = 'stack full-width';
-    w.innerHTML = `<label>${label}</label>`;
-    const r = document.createElement('div'); r.className = 'color-picker-wrapper';
-    const t = document.createElement('input'); t.type = 'text'; t.value = value;
-    const c = document.createElement('input'); c.type = 'color'; c.value = value;
-
-    const update = (val) => {
-        onChange(val);
-        canvas.requestRenderAll();
-    };
-
-    t.oninput = () => { c.value = t.value; update(t.value); };
-    c.oninput = () => { t.value = c.value; update(c.value); };
-    t.onchange = () => saveState();
-    c.onchange = () => saveState();
-
-    r.append(t, c);
-    w.appendChild(r);
-    return w;
-}
-
-// --- IMAGE FILL EDITOR LOGIC ---
-function initializeImageFillEditor() {
-    imageFillPreviewCanvas = new fabric.StaticCanvas('imageFillPreviewCanvas', {
-        width: PREVIEW_SIZE,
-        height: PREVIEW_SIZE,
-    });
-
-    $('#confirmFillEdit').addEventListener('click', () => {
-        if (!editingFillObject) return;
-        saveState(); // Save the final state
-        closeImageFillEditor();
-    });
-
-    $('#cancelFillEdit').addEventListener('click', () => {
-        if (!editingFillObject || !originalPatternState) return;
-        // Restore the original state
-        editingFillObject.fill.patternTransform = originalPatternState;
-        canvas.renderAll();
-        closeImageFillEditor();
-    });
-    
-    $('#resetFillTransform').addEventListener('click', () => {
-        const controls = $('#imageFillControls');
-        controls.querySelector('#fill-scale-input').value = 1;
-        controls.querySelector('#fill-offset-x-input').value = 0;
-        controls.querySelector('#fill-offset-y-input').value = 0;
-        // Manually trigger an input event to apply the reset
-        controls.querySelector('#fill-scale-input').dispatchEvent(new Event('input'));
-    });
-
-    $('#closeImageFillEditor').addEventListener('click', closeImageFillEditor);
-}
-
-function openImageFillEditor(object) {
-    editingFillObject = object;
-    const pattern = object.fill;
-    // Store the original state in case of cancellation
-    originalPatternState = [...pattern.patternTransform || [1, 0, 0, 1, 0, 0]];
-    
-    const controlsContainer = $('#imageFillControls');
-    controlsContainer.innerHTML = ''; // Clear previous controls
-
-    // Get current values from the transform matrix [scaleX, skewY, skewX, scaleY, offsetX, offsetY]
-    const [scaleX, , , , offsetX, offsetY] = originalPatternState;
-
-    // Create and append controls
-    controlsContainer.appendChild(sliderRow('Scale', scaleX, updateFillTransform, { min: 0.1, max: 5, step: 0.05 }, 'fill-scale'));
-    controlsContainer.appendChild(sliderRow('Offset X', offsetX, updateFillTransform, { min: -object.width, max: object.width, step: 1 }, 'fill-offset-x'));
-    controlsContainer.appendChild(sliderRow('Offset Y', offsetY, updateFillTransform, { min: -object.height, max: object.height, step: 1 }, 'fill-offset-y'));
-    
-    // Update the preview
-    updatePreview();
-
-    $('#imageFillEditorModal').style.display = 'flex';
-}
-
-function closeImageFillEditor() {
-    $('#imageFillEditorModal').style.display = 'none';
-    editingFillObject = null;
-    originalPatternState = null;
-}
-
-function updateFillTransform() {
-    if (!editingFillObject) return;
-    
-    const scale = parseFloat($('#fill-scale-input').value);
-    const offsetX = parseFloat($('#fill-offset-x-input').value);
-    const offsetY = parseFloat($('#fill-offset-y-input').value);
-    
-    // Create the new transformation matrix
-    editingFillObject.fill.patternTransform = [scale, 0, 0, scale, offsetX, offsetY];
-    
-    // Update the main canvas in real-time
-    canvas.renderAll();
-    
-    // Update the preview canvas
-    updatePreview();
-}
-
-function updatePreview() {
-    if (!editingFillObject) return;
-    
-    const previewObject = new fabric.Rect({
-        width: PREVIEW_SIZE,
-        height: PREVIEW_SIZE,
-        fill: editingFillObject.fill, // Use the exact same pattern object
-        originX: 'center',
-        originY: 'center',
-        left: PREVIEW_SIZE / 2,
-        top: PREVIEW_SIZE / 2,
-    });
-
-    imageFillPreviewCanvas.clear();
-    imageFillPreviewCanvas.add(previewObject);
-    imageFillPreviewCanvas.renderAll();
-}
-
-// --- ALIGNMENT & DISTRIBUTION ---
-function alignToPageButtons() { const container = document.createElement('div'); container.className = 'align-buttons full-width'; const icons = { left: '<svg viewBox="0 0 24 24"><path d="M18 21V3h2v18h-2zm-4 0V3h2v18h-2zM4 21h6V3H4v18z" fill="currentColor"/></svg>', h_center: '<svg viewBox="0 0 24 24"><path d="M4 21V3h2v18H4zm14 0V3h2v18h-2zM9 21V3h6v18H9z" fill="currentColor"/></svg>', right: '<svg viewBox="0 0 24 24"><path d="M4 21V3h2v18H4zm4 0V3h2v18H8zm12 0h-6V3h6v18z" fill="currentColor"/></svg>', top: '<svg viewBox="0 0 24 24" transform="rotate(90)"><path d="M18 21V3h2v18h-2zm-4 0V3h2v18h-2zM4 21h6V3H4v18z" fill="currentColor"/></svg>', v_center: '<svg viewBox="0 0 24 24" transform="rotate(90)"><path d="M4 21V3h2v18H4zm14 0V3h2v18h-2zM9 21V3h6v18H9z" fill="currentColor"/></svg>', bottom: '<svg viewBox="0 0 24 24" transform="rotate(90)"><path d="M4 21V3h2v18H4zm4 0V3h2v18H8zm12 0h-6V3h6v18z" fill="currentColor"/></svg>' }; const actions = { left: o => o.set({ originX: 'left', left: pageRect.left }), h_center: o => o.set({ originX: 'center', left: pageRect.left + pageRect.width / 2 }), right: o => o.set({ originX: 'left', left: pageRect.left + pageRect.width - o.getScaledWidth() }), top: o => o.set({ originY: 'top', top: pageRect.top }), v_center: o => o.set({ originY: 'center', top: pageRect.top + pageRect.height / 2 }), bottom: o => o.set({ originY: 'top', top: pageRect.top + pageRect.height - o.getScaledHeight() }) }; Object.keys(icons).forEach(key => { const btn = document.createElement('button'); btn.className = 'btn ghost'; btn.innerHTML = icons[key]; btn.onclick = () => { const active = canvas.getActiveObject(); if (active && pageRect) { actions[key](active); active.setCoords(); canvas.renderAll(); saveState(); } }; container.appendChild(btn); }); return container; }
-
-// --- DATA BINDING & EXPORT ---
-function propertyOptionsFor(o){ const common=['Opacity','Stroke Color','Stroke Width']; if(o.isTable) return ['Stroke Color', 'Stroke Width']; if(o.type==='textbox')return['Text Content','Font Family','Font Size','Fill Color',...common]; if(['rect','image'].includes(o.type))common.push('Corner Radius'); if(['rect','circle','triangle','polygon','path'].includes(o.type))return['Color','Image Fill URL',...common]; return common; }
-function defaultPropertyFor(o){ return o.type==='textbox'?'Text Content':'Color';}
-function getBindingsFor(o){ const id=ensureId(o); if(!bindings.has(id)) bindings.set(id,[]); return bindings.get(id); }
-function saveBinding(o,b){ const arr=getBindingsFor(o); if(!arr.includes(b)) arr.push(b); }
-function removeBinding(o,b){ const arr=getBindingsFor(o); const i=arr.indexOf(b); if(i>-1) arr.splice(i,1); }
-function ensureId(o){ if(!o.oid) o.oid=`obj_${Date.now()}_${Math.random()}`; return o.oid; }
-canvas.on('object:added', (e) => ensureId(e.target));
-const modal = $('#modalBackdrop');
-function openModal(){ if(!workbook){ alert('Load a data file first.'); return; } modal.style.display='flex'; renderColumnList(); }
-function closeModal(){ modal.style.display='none'; }
-$('#closeModal').addEventListener('click', closeModal);
-$('#columnSearch').addEventListener('input', renderColumnList);
-$('#confirmColumn').addEventListener('click', () => { const sel = $('.col-item[aria-selected="true"]'); if (!sel) return alert('Select a column.'); const col = sel.dataset.name; $('#startCell').value = $('#modalStartCell').value; if (selectedColumn) { selectedColumn.binding.column = col; if (dataLinksManagerModal.style.display === 'flex') renderDataLinksManager(); } closeModal(); });
-function renderColumnList(){ const list=$('#colList'); list.innerHTML=''; const q=($('#columnSearch').value||'').toLowerCase(); headers.filter(h=>h.toLowerCase().includes(q)).forEach(h=>{ const item=document.createElement('div'); item.className='col-item'; item.dataset.name=h; const samples=dataRows.slice(0,5).map(r=>r[h]).filter(Boolean).slice(0,3).join(' · '); item.innerHTML=`<b>${h}</b><div class="muted">Samples: ${samples||'—'}</div>`; item.onclick=()=>{document.querySelectorAll('.col-item').forEach(x=>x.removeAttribute('aria-selected')); item.setAttribute('aria-selected','true');}; list.appendChild(item); }); }
-const dataLinksManagerModal = $('#dataLinksManagerModal'); const openDataLinksManagerBtn = $('#openDataLinksManagerBtn'); const closeDataLinksManagerModalBtn = $('#closeDataLinksManagerModal'); let selectedObjectForManager = null;
-function openDataLinksManager() { renderDataLinksManager(); dataLinksManagerModal.style.display = 'flex'; }
-function closeDataLinksManager() { dataLinksManagerModal.style.display = 'none'; selectedObjectForManager = null; }
-openDataLinksManagerBtn.addEventListener('click', openDataLinksManager); closeDataLinksManagerModalBtn.addEventListener('click', closeDataLinksManager);
-function renderDataLinksManager() {
-    const objectsList = $('#dataLinksObjectsList'); objectsList.innerHTML = ''; const objects = canvas.getObjects().filter(o => o.oid !== 'pageRect' && !o.excludeFromExport);
-    if (objects.length === 0) { objectsList.innerHTML = '<p class="muted" style="font-size:12px; text-align:center;">No objects on canvas.</p>'; $('#dataLinksEditorContent').innerHTML = '<p class="muted" style="text-align:center; padding-top: 24px;">Add an object to the canvas to create a data link.</p>'; return; }
-    objects.forEach(obj => {
-        const item = document.createElement('div'); item.className = 'data-links-object-item'; item.setAttribute('data-oid', ensureId(obj)); let name = obj.type;
-        if (obj.type === 'textbox') name = obj.text.substring(0, 25) || 'Textbox'; if (obj.isTable) name = `Table (${obj.rows}x${obj.cols})`; const bindingCount = getBindingsFor(obj).length;
-        item.innerHTML = `<strong>${name}</strong> <br> <span class="muted">${bindingCount} link(s)</span>`;
-        item.addEventListener('click', () => { selectedObjectForManager = obj; document.querySelectorAll('.data-links-object-item').forEach(el => el.removeAttribute('aria-selected')); item.setAttribute('aria-selected', 'true'); renderBindingsForObject(obj); });
-        objectsList.appendChild(item);
-    });
-    if (selectedObjectForManager) { const selectedItem = objectsList.querySelector(`[data-oid="${selectedObjectForManager.oid}"]`); if (selectedItem) selectedItem.setAttribute('aria-selected', 'true'); else selectedObjectForManager = null; }
-    if (selectedObjectForManager) renderBindingsForObject(selectedObjectForManager); else $('#dataLinksEditorContent').innerHTML = '<p class="muted" style="text-align:center; padding-top: 24px;">Select an object from the left to manage its data links.</p>';
-}
-function renderBindingsForObject(obj) { const container = $('#dataLinksEditorContent'); container.innerHTML = ''; const linksWrapper = document.createElement('div'); linksWrapper.className = 'links-list-wrapper'; const header = document.createElement('h4'); header.textContent = 'Active Links'; linksWrapper.appendChild(header); const objectBindings = getBindingsFor(obj); if (objectBindings.length === 0) { linksWrapper.innerHTML += '<p class="muted" style="text-align:center; padding: 16px 0;">No data links configured for this object.</p>'; } else { objectBindings.forEach(b => linksWrapper.appendChild(bindingEditorRow(obj, b))); } const buttonWrapper = document.createElement('div'); buttonWrapper.className = 'add-link-button-wrapper'; const addButton = document.createElement('button'); addButton.className = 'btn'; addButton.textContent = 'Add New Link'; addButton.style.width = '100%'; addButton.onclick = () => { const newBinding = { column: '', property: defaultPropertyFor(obj) }; saveBinding(obj, newBinding); saveState(); renderDataLinksManager(); }; buttonWrapper.appendChild(addButton); container.append(linksWrapper, buttonWrapper); }
-function bindingEditorRow(o, b) { const box = document.createElement('div'); box.className = 'stack'; box.style.cssText = 'border:1px solid var(--border);padding:8px;border-radius:8px;margin-top:8px;'; box.appendChild(selectRow('Property', propertyOptionsFor(o), b.property, v => { b.property = v; saveState(); })); const info = document.createElement('div'); info.className = 'muted'; info.textContent = `Linked to: ${b.column || '—'}`; info.style.fontSize = '12px'; const linkBtn = document.createElement('button'); linkBtn.className = 'btn'; linkBtn.textContent = 'Link Column'; linkBtn.onclick = () => { selectedColumn = { object: o, binding: b }; openModal(); }; const delBtn = document.createElement('button'); delBtn.className = 'btn ghost'; delBtn.textContent = 'Remove'; delBtn.onclick = () => { removeBinding(o, b); saveState(); renderDataLinksManager(); }; const btnGroup = document.createElement('div'); btnGroup.className = 'row'; btnGroup.style.marginTop = '8px'; btnGroup.append(linkBtn, delBtn); box.append(info, btnGroup); return box; }
-async function exportAllRows({asZip, asSinglePdf}) {
-    if (!pageRect) pageRect = canvas.getObjects().find(o => o.oid === 'pageRect'); if (!pageRect) { alert('Error: Page object not found. Cannot export.'); return; }
-    const startOffset = Math.max(0, parseInt(($('#startCell').value.match(/\d+$/) || [2])[0], 10) - 2);
-    let rows = dataRows.slice(startOffset); if (!rows.length) rows = [null];
-    const title = ($('#titleInput').value || 'Untitled_Template').trim(); const { width: pageW, height: pageH } = pageRect;
-    const pdf = asSinglePdf ? new jsPDF({unit:'px', format:[pageW, pageH]}) : null; const zipFile = asZip ? new JSZip() : null;
-    let firstPage = true; const objectsWithBindings = canvas.getObjects().filter(obj => getBindingsFor(obj).length > 0);
-    for (let i = 0; i < rows.length; i++) {
-        const row = rows[i]; const originalStates = new Map();
-        if (row) { objectsWithBindings.forEach(obj => { const bindings = getBindingsFor(obj); bindings.forEach(binding => { const value = row[binding.column]; if (value != null) { if (!originalStates.has(obj.oid)) originalStates.set(obj.oid, {}); const originalProps = originalStates.get(obj.oid); if (binding.property === 'Text Content' && originalProps.text === undefined) originalProps.text = obj.text; if (binding.property.includes('Color') && originalProps.fill === undefined) originalProps.fill = obj.fill; applyBinding(obj, binding.property, value); } }); }); canvas.renderAll(); }
-        const dataURL = await generateCanvasForRow(row);
-        if (asSinglePdf) { if (!firstPage) pdf.addPage([pageW, pageH]); pdf.addImage(dataURL, 'JPEG', 0, 0, pageW, pageH); firstPage = false; }
-        if (asZip) { const pagePdf = new jsPDF({unit:'px', format:[pageW, pageH]}); pagePdf.addImage(dataURL, 'JPEG', 0, 0, pageW, pageH); zipFile.file(`${title}_${i + 1}.pdf`, await pagePdf.output('blob')); }
-        if (row) { originalStates.forEach((props, oid) => { const obj = canvas.getObjects().find(o => o.oid === oid); if (obj) obj.set(props); }); canvas.renderAll(); }
-    }
-    if (asSinglePdf) saveAs(pdf.output('blob'), `${title}.pdf`); if (asZip) saveAs(await zipFile.generateAsync({type:'blob'}), `${title}.zip`);
-}
-async function generateCanvasForRow(row) {
-    const { left: pageLeft, top: pageTop, width: pageW, height: pageH } = pageRect || { left: 0, top: 0, width: 768, height: 1024 };
-    const multiplier = 2;
-    const gridLines = canvas.getObjects('line').filter(o => o.excludeFromExport);
-    
-    // Temporarily hide gridlines on the main canvas for a clean state
-    gridLines.forEach(l => l.set({ visible: false }));
-    canvas.renderAll();
-
-    const tmpEl = document.createElement('canvas');
-    tmpEl.width = pageW * multiplier;
-    tmpEl.height = pageH * multiplier;
-    const tmpCanvas = new fabric.StaticCanvas(tmpEl, { backgroundColor: pageRect.fill });
-
-    // Create a list of promises for cloning all objects
-    const clonePromises = canvas.getObjects().map(obj => {
-        return new Promise(resolve => {
-            if (obj.oid === 'pageRect' || obj.excludeFromExport) {
-                resolve(null); // Resolve with null for objects we're skipping
-                return;
-            }
-            // Use the asynchronous clone method
-            obj.clone(clone => {
-                 const center = obj.getCenterPoint();
-                 const relX = (center.x - pageLeft) * multiplier;
-                 const relY = (center.y - pageTop) * multiplier;
-                 clone.set({
-                     left: relX,
-                     top: relY,
-                     originX: 'center',
-                     originY: 'center',
-                     scaleX: (clone.scaleX || 1) * multiplier,
-                     scaleY: (clone.scaleY || 1) * multiplier
-                 });
-                 resolve(clone);
-            }, ['oid', 'isTable', 'rows', 'cols']); // Pass properties to clone
+            });
+        }, {
+            threshold: 0.1 // Trigger when 10% of the element is visible
         });
-    });
 
-    // Wait for all cloning operations to complete
-    const clonedObjects = await Promise.all(clonePromises);
-
-    // Add the successfully cloned objects to the temporary canvas
-    clonedObjects.forEach(clone => {
-        if (clone) {
-            tmpCanvas.add(clone);
-        }
-    });
-
-    // Render the temporary canvas and get the data URL
-    tmpCanvas.renderAll();
-    const dataURL = tmpCanvas.toDataURL({ format: 'jpeg', quality: 0.9 });
-
-    // Restore the gridlines on the main canvas
-    gridLines.forEach(l => l.set({ visible: true }));
-    canvas.renderAll();
-
-    return dataURL;
-}
-function parseDims(s){ const m=String(s).match(/^(\d+)[xX](\d+)$/i); return m?{w:+m[1],h:+m[2]}:null; }
-function applyBinding(o,prop,val){ val=String(val).trim(); const numVal=parseFloat(val); switch(prop){ case'Text Content':if(o.type==='textbox')o.set({text:val});break; case'Font Family':if(o.type==='textbox')o.set({fontFamily:val});break; case'Font Size':if(o.type==='textbox')o.set({fontSize:numVal});break; case'Fill Color':case'Color':o.set({fill:val});break; case'Opacity':o.set({opacity:numVal});break; case'Dimensions':{const d=parseDims(val);if(d){o.scaleToWidth(d.w);o.scaleToHeight(d.h);}break;} case'Stroke Color':o.set({stroke:val});break; case'Stroke Width':o.set({strokeWidth:numVal});break; case'Corner Radius':if('rx'in o)o.set({rx:numVal,ry:numVal});break; case'Image Fill URL':fabric.Image.fromURL(val,img=>o.set('fill',new fabric.Pattern({source:img.getElement()})),{crossOrigin:'anonymous'});break; } }
-// --- HISTORY (UNDO/REDO) ---
-function saveState(){ if(historyLocked)return; historyStack.splice(historyIndex+1); const json=canvas.toJSON(['oid','isTable','rows','cols']); historyStack.push(json); historyIndex=historyStack.length-1; updateHistoryButtons(); }
-function undo() { if (historyIndex > 0) { historyLocked = true; historyIndex--; canvas.loadFromJSON(historyStack[historyIndex], restoreCanvasStateAfterLoad); updateHistoryButtons(); } }
-function redo() { if (historyIndex < historyStack.length - 1) { historyLocked = true; historyIndex++; canvas.loadFromJSON(historyStack[historyIndex], restoreCanvasStateAfterLoad); updateHistoryButtons(); } }
-function updateHistoryButtons(){ $('#undoBtn').disabled=historyIndex<=0; $('#redoBtn').disabled=historyIndex>=historyStack.length-1; }
-$('#undoBtn').onclick=undo; $('#redoBtn').onclick=redo;
-function restoreCanvasStateAfterLoad() { pageRect = canvas.getObjects().find(o => o.oid === 'pageRect'); if (pageRect) { pageRect.set({ selectable: false, evented: false, hasControls: false, hasBorders: false, lockMovementX: true, lockMovementY: true, lockScalingX: true, lockScalingY: true, lockRotation: true }); } drawGrid(); renderLayers(); canvas.renderAll(); historyLocked = false; }
-// --- COPY / CUT / PASTE ---
-function updatePasteButton() { document.querySelectorAll('#pasteBtn').forEach(btn => btn.disabled = !_clipboard); }
-function copy() { const activeObject = canvas.getActiveObject(); if (!activeObject) return; activeObject.clone(cloned => { _clipboard = cloned; updatePasteButton(); }, ['oid']); }
-function cut() { copy(); const activeObjects = canvas.getActiveObjects(); if (activeObjects.length) { activeObjects.forEach(obj => canvas.remove(obj)); canvas.discardActiveObject().renderAll(); } }
-function paste() { if (!_clipboard) return; _clipboard.clone(clonedObj => { canvas.discardActiveObject(); clonedObj.set({ left: clonedObj.left + 20, top: clonedObj.top + 20, evented: true, }); if (clonedObj.type === 'activeSelection') { clonedObj.canvas = canvas; clonedObj.forEachObject(obj => { obj.oid = `obj_${Date.now()}_${Math.random()}`; canvas.add(obj); }); clonedObj.setCoords(); } else { clonedObj.oid = `obj_${Date.now()}_${Math.random()}`; canvas.add(clonedObj); } canvas.setActiveObject(clonedObj); canvas.requestRenderAll(); saveState(); }, ['oid']); }
-// --- LAYERS PANEL ---
-function renderLayers() { const list = $('#layersList'); if (!list) return; list.innerHTML = ''; const activeObj = canvas.getActiveObject(); const objects = canvas.getObjects().filter(o => o.oid !== 'pageRect' && !o.excludeFromExport); objects.slice().reverse().forEach(obj => { const item = document.createElement('div'); item.className = 'layer-item'; if (obj === activeObj || (activeObj?.type === 'activeSelection' && activeObj.getObjects().includes(obj))) { item.classList.add('active'); } item.onclick = () => { canvas.setActiveObject(obj).renderAll(); }; let name = obj.type; if (obj.type === 'textbox') name = obj.text.substring(0, 20) || 'Textbox'; if (obj.isTable) name = `Table (${obj.rows}x${obj.cols})`; item.innerHTML = `<span>${name}</span><div class="layer-actions"><button title="Bring Forward" class="btn ghost btn-fwd"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 15l6-6 6 6"/></svg></button><button title="Send Backward" class="btn ghost btn-bwd"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg></button><button title="Bring to Front" class="btn ghost btn-front"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 12l6-6 6 6 M6 19l6-6 6 6"/></svg></button><button title="Send to Back" class="btn ghost btn-back"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 12l6 6 6-6 M6 5l6 6 6-6"/></svg></button></div>`; item.querySelector('.btn-front').onclick = (e) => { e.stopPropagation(); canvas.bringToFront(obj); renderLayers(); saveState(); }; item.querySelector('.btn-back').onclick = (e) => { e.stopPropagation(); canvas.sendToBack(obj); canvas.getObjects('line').forEach(line => canvas.sendToBack(line)); canvas.sendToBack(pageRect); renderLayers(); saveState(); }; item.querySelector('.btn-fwd').onclick = (e) => { e.stopPropagation(); canvas.bringForward(obj); renderLayers(); saveState(); }; item.querySelector('.btn-bwd').onclick = (e) => { e.stopPropagation(); canvas.sendBackwards(obj); renderLayers(); saveState(); }; list.appendChild(item); }); }
-// --- VIEWPORT & KEYBOARD ---
-function centerAndFitPage(){ if(!pageRect)return; const{width:wrapperW,height:wrapperH}=canvasWrapper.getBoundingClientRect(); const pageW=pageRect.width; const pageH=pageRect.height; const zoom=Math.min(wrapperW/pageW,wrapperH/pageH)*0.95; canvas.setZoom(zoom); const center=pageRect.getCenterPoint(); const vpt=[zoom,0,0,zoom,(wrapperW/2)-center.x*zoom,(wrapperH/2)-center.y*zoom]; canvas.setViewportTransform(vpt); $('#zoomLevel').textContent=`Zoom: ${Math.round(zoom*100)}%`; canvas.renderAll(); }
-$('#centerViewBtn').onclick=centerAndFitPage;
-window.addEventListener('keydown', e=>{ if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA')return; const isCtrl=e.ctrlKey||e.metaKey; if(isCtrl&&e.key==='z'){e.preventDefault();undo();} if(isCtrl&&e.key==='y'){e.preventDefault();redo();} if(isCtrl&&e.key==='c'){e.preventDefault();copy();} if(isCtrl&&e.key==='x'){e.preventDefault();cut();} if(isCtrl&&e.key==='v'){e.preventDefault();paste();} if(e.key==='Delete'||e.key==='Backspace'){ const activeObjects=canvas.getActiveObjects(); if(activeObjects.length){ activeObjects.forEach(obj=>canvas.remove(obj)); canvas.discardActiveObject().renderAll(); } } });
-$('#exportZipBtn').addEventListener('click',()=>exportAllRows({asZip:true})); $('#exportSinglePdfBtn').addEventListener('click',()=>exportAllRows({asSinglePdf:true}));
-// --- SAVE/LOAD TEMPLATE LOGIC ---
-function saveTemplate(){ try{ const templateData={canvas:canvas.toJSON(['oid','isTable','rows','cols']),page:{title:$('#titleInput').value,width:$('#pageWidth').value,height:$('#pageHeight').value,},bindings:Array.from(bindings.entries()),}; const jsonString=JSON.stringify(templateData,null,2); const blob=new Blob([jsonString],{type:'application/json'}); const filename=($('#titleInput').value||'template').replace(/[^a-z0-9]/gi,'_').toLowerCase(); saveAs(blob,`${filename}.json`); }catch(error){ console.error("Error saving template:",error); alert("Could not save the template."); } }
-function loadTemplate(e) { const file = e.target.files?.[0]; if (!file) return; const reader = new FileReader(); reader.onload = (event) => { try { const data = JSON.parse(event.target.result); if (!data.canvas || !data.page || !data.bindings) throw new Error("Invalid template file format."); $('#titleInput').value = data.page.title || 'Untitled_Template'; $('#pageWidth').value = data.page.width || 800; $('#pageHeight').value = data.page.height || 1200; setPageDimensions(); bindings = new Map(data.bindings); historyLocked = true; const reviver = (json, object) => { if (json.fill && typeof json.fill === 'object' && json.fill.source) fabric.Image.fromURL(json.fill.source, img => { object.set('fill', new fabric.Pattern({ source: img.getElement(), repeat: json.fill.repeat || 'repeat' })); canvas.renderAll(); }, { crossOrigin: 'anonymous' }); }; canvas.loadFromJSON(data.canvas, () => { restoreCanvasStateAfterLoad(); centerAndFitPage(); historyLocked = false; historyStack = []; historyIndex = -1; saveState(); }, reviver); } catch (error) { console.error("Error loading template:", error); alert(`Could not load the template. Error: ${error.message}`); } finally { e.target.value = null; } }; reader.readAsText(file); }
-$('#saveTemplateBtn').addEventListener('click',saveTemplate); $('#loadTemplateInput').addEventListener('click', (e) => e.target.value = null); $('#loadTemplateInput').addEventListener('change',loadTemplate);
-
-// --- AI ASSISTANT ---
-const aiBubble = $('#ai-bubble');
-const aiModal = $('#aiModalBackdrop');
-const aiCloseBtn = $('#aiCloseModal');
-const aiSendBtn = $('#aiSendBtn');
-const aiApiKeyInput = $('#aiApiKey');
-const aiPromptInput = $('#aiPrompt');
-const aiSendBtnText = $('#aiSendBtnText');
-const aiLoadingSpinner = $('#aiLoadingSpinner');
-const savedApiKey = localStorage.getItem('googleAiApiKey');
-if (savedApiKey) {
-  aiApiKeyInput.value = savedApiKey;
-}
-aiBubble.addEventListener('click', () => { aiModal.style.display = 'flex'; });
-aiCloseBtn.addEventListener('click', () => { aiModal.style.display = 'none'; });
-aiModal.addEventListener('click', (e) => { if (e.target === aiModal) aiModal.style.display = 'none'; });
-aiSendBtn.addEventListener('click', async () => {
-    const apiKey = aiApiKeyInput.value.trim();
-    const userPrompt = aiPromptInput.value.trim();
-    if (!apiKey) { alert('Please enter your Google AI Studio API key.'); return; }
-    if (!userPrompt) { alert('Please enter your request.'); return; }
-    localStorage.setItem('googleAiApiKey', apiKey);
-
-    aiSendBtn.disabled = true;
-    aiSendBtnText.style.display = 'none';
-    aiLoadingSpinner.style.display = 'inline-flex';
-
-    const currentCanvasJson = JSON.stringify(canvas.toJSON(['oid', 'isTable', 'rows', 'cols']), null, 2);
-    const templateStructure = `
-{
-  "canvas": {
-    "version": "5.3.0",
-    "objects": [
-      {
-        "type": "rect",
-        "version": "5.3.0",
-        "originX": "left",
-        "originY": "top",
-        "left": 0,
-        "top": 0,
-        "width": "[USER_PAGE_WIDTH]",
-        "height": "[USER_PAGE_HEIGHT]",
-        "fill": "#ffffff",
-        "stroke": "transparent",
-        "strokeWidth": 0,
-        "scaleX": 1,
-        "scaleY": 1,
-        "angle": 0,
-        "flipX": false,
-        "flipY": false,
-        "opacity": 1,
-        "visible": true,
-        "oid": "pageRect"
-      },
-      {
-        "type": "textbox",
-        "version": "5.3.0",
-        "originX": "center",
-        "originY": "top",
-        "left": "[USER_PAGE_WIDTH / 2]",
-        "top": 80,
-        "width": 600,
-        "height": 56.5,
-        "fill": "#111111",
-        "text": "Main Title Placeholder",
-        "fontSize": 50,
-        "fontFamily": "Helvetica",
-        "fontWeight": "bold",
-        "textAlign": "center",
-        "styles": [],
-        "oid": "main_title"
-      },
-      {
-        "type": "textbox",
-        "version": "5.3.0",
-        "originX": "center",
-        "originY": "top",
-        "left": "[USER_PAGE_WIDTH / 2]",
-        "top": 150,
-        "width": 500,
-        "height": 27.12,
-        "fill": "#555555",
-        "text": "Subtitle or a brief description of the document",
-        "fontSize": 24,
-        "fontFamily": "Helvetica",
-        "textAlign": "center",
-        "styles": [],
-        "oid": "subtitle"
-      },
-      {
-        "type": "rect",
-        "version": "5.3.0",
-        "originX": "left",
-        "originY": "top",
-        "left": 60,
-        "top": 220,
-        "width": 150,
-        "height": 150,
-        "fill": "#e0e0e0",
-        "stroke": "#cccccc",
-        "strokeWidth": 1,
-        "rx": 8,
-        "ry": 8,
-        "oid": "image_placeholder"
-      },
-       {
-        "type": "textbox",
-        "version": "5.3.0",
-        "originX": "left",
-        "originY": "top",
-        "left": 230,
-        "top": 220,
-        "width": 450,
-        "height": 169.5,
-        "fill": "#333333",
-        "text": "This is a primary content block for introductory paragraphs, mission statements, or detailed descriptions. You can replace this text with any content relevant to your document, whether it's for a business proposal, a project summary, or a creative portfolio.",
-        "fontSize": 18,
-        "fontFamily": "Arial",
-        "textAlign": "left",
-        "lineHeight": 1.5,
-        "styles": [],
-        "oid": "body_text"
-      },
-      {
-        "type": "line",
-        "version": "5.3.0",
-        "originX": "center",
-        "originY": "center",
-        "left": "[USER_PAGE_WIDTH / 2]",
-        "top": 450,
-        "width": "[USER_PAGE_WIDTH - 120]",
-        "height": 2,
-        "stroke": "#dddddd",
-        "strokeWidth": 2,
-        "x1": "-[USER_PAGE_WIDTH / 2 - 60]",
-        "y1": 0,
-        "x2": "[USER_PAGE_WIDTH / 2 - 60]",
-        "y2": 0,
-        "oid": "divider_line"
-      },
-      {
-        "type": "textbox",
-        "version": "5.3.0",
-        "originX": "left",
-        "originY": "top",
-        "left": 60,
-        "top": 480,
-        "width": 400,
-        "height": 22.6,
-        "fill": "#111111",
-        "text": "Item / Service / Feature",
-        "fontSize": 20,
-        "fontFamily": "Helvetica",
-        "fontWeight": "bold",
-        "textAlign": "left",
-        "styles": [],
-        "oid": "column_header_1"
-      },
-      {
-        "type": "textbox",
-        "version": "5.3.0",
-        "originX": "right",
-        "originY": "top",
-        "left": "[USER_PAGE_WIDTH - 60]",
-        "top": 480,
-        "width": 200,
-        "height": 22.6,
-        "fill": "#111111",
-        "text": "Value / Amount",
-        "fontSize": 20,
-        "fontFamily": "Helvetica",
-        "fontWeight": "bold",
-        "textAlign": "right",
-        "styles": [],
-        "oid": "column_header_2"
-      },
-      {
-        "type": "textbox",
-        "version": "5.3.0",
-        "originX": "center",
-        "originY": "bottom",
-        "left": "[USER_PAGE_WIDTH / 2]",
-        "top": "[USER_PAGE_HEIGHT - 60]",
-        "width": 600,
-        "height": 45.2,
-        "fill": "#666666",
-        "text": "[Your Company Name] | [Contact Information] | [Website]\nA short tagline or closing statement can go here.",
-        "fontSize": 16,
-        "fontFamily": "Arial",
-        "textAlign": "center",
-        "styles": [],
-        "oid": "footer_text"
-      }
-    ],
-    "background": "transparent"
-  },
-  "page": {
-    "title": "Multi-Purpose_Template",
-    "width": "[USER_PAGE_WIDTH]",
-    "height": "[USER_PAGE_HEIGHT]"
-  },
-  "bindings": [
-    ["pageRect", []],
-    ["main_title", []],
-    ["subtitle", []],
-    ["image_placeholder", []],
-    ["body_text", []],
-    ["divider_line", []],
-    ["column_header_1", []],
-    ["column_header_2", []],
-    ["footer_text", []]
-  ]
-}`;
-    const fullPrompt = [
-      "You are an AI assistant for a web-based template editor.",
-      "Your task is to modify a canvas layout based on user requests.",
-      "The canvas is represented by a Fabric.js JSON object.",
-      "You will receive the current state of the canvas and a user's request for changes.",
-      "You MUST respond ONLY with the updated Fabric.js JSON object that reflects the requested changes.",
-      "Do not add any explanatory text, markdown formatting, code block fences (```json), or anything else outside of the pure JSON structure.",
-      "",
-      "This is the general JSON structure to follow. Ensure each title, subtitle, and section is a separate text box, for example if Title: This is title, Title and This is title are two separate text boxes.",
-      "Using the following template, create a JSON file that aligns with the user requests. ONLY REPLY WITH THE JSON.",
-      JSON.stringify(templateStructure, null, 2),
-      "",
-      "Here is the current canvas state:",
-      JSON.stringify(currentCanvasJson, null, 2),
-      "",
-      `Based on the user's following request, modify the current canvas state above and provide the complete, updated JSON object as your response.`,
-      `User Request: "${userPrompt}"`
-    ].join("\n");
-
-try {
-    const response = await fetch(
-        "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
-        {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "X-goog-api-key": apiKey,
-            },
-            body: JSON.stringify({
-                contents: [
-                    {
-                        parts: [
-                            { text: fullPrompt }
-                        ]
-                    }
-                ]
-            }),
-        }
-    );
-
-    if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(`API Error: ${response.status} - ${errorData.error?.message || "Unknown error"}`);
-    }
-
-    const data = await response.json();
-    let aiResponseText = data.candidates[0].content.parts[0].text;
-
-    // Remove code fences and whitespace
-    aiResponseText = aiResponseText.replace(/^```json\s*|```$/g, "").trim();
-
-    const newCanvasState = JSON.parse(aiResponseText);
-    const canvasDataToLoad = newCanvasState.canvas || newCanvasState;
-
-    historyLocked = true;
-    canvas.loadFromJSON(canvasDataToLoad, () => {
-        restoreCanvasStateAfterLoad();
-        centerAndFitPage();
-        historyLocked = false;
-        saveState();
-        aiModal.style.display = "none";
-    });
-
-} catch (error) {
-    console.error("AI Assistant Error:", error);
-    alert(`An error occurred: ${error.message}`);
-} finally {
-    aiSendBtn.disabled = false;
-    aiSendBtnText.style.display = 'inline-block';
-    aiLoadingSpinner.style.display = 'none';
-}
-
-});
-
-
-// --- INITIALIZE ---
-initializeCanvas();
-initializeImageFillEditor();
-renderPageInspector();
-</script>
+        animatedSections.forEach(section => {
+            observer.observe(section);
+        });
+    </script>
 </body>
 </html>

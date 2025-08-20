@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Template Maker</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/fabric@5.3.0/dist/fabric.min.js"></script>
+    <style>
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+        .tabs {
+            display: flex;
+            gap: 1rem;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 2rem;
+        }
+        .tab {
+            padding: 1rem;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+        }
+        .tab.active {
+            border-bottom-color: var(--accent);
+        }
+        .template-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+        .template-card {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            position: relative; /* Required for the clickable overlay */
+            cursor: pointer;
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        .template-card .preview {
+            height: 180px;
+            background-color: #2a2a2a;
+            display: flex; /* keep flex for centering */
+            align-items: center;
+            justify-content: center;
+            position: relative; /* Needed for canvas positioning */
+            overflow: hidden; /* Hide parts of the canvas that are too big */
+        }
+        .template-card .info {
+            padding: 1rem;
+            flex-grow: 1;
+        }.template-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 12px rgba(0,0,0,.3);
+        }
+
+        /* Create a pseudo-element to act as the main link */
+        .template-card .card-link {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 1; /* Sits on top of content, but below buttons */
+        }
+
+        /* A container for the buttons to push them to the right */
+        .template-card .actions {
+            padding: 0 1rem 1rem;
+            display: flex; /* Use flexbox for alignment */
+            align-items: center; /* Vertically align items */
+        }
+
+        .template-card .button-group {
+            margin-left: auto; /* This is the key to push buttons to the right */
+            display: flex;
+            gap: 8px; /* Space between the buttons */
+            align-items: center;
+        }
+
+        /* ---- ADD THIS NEW SECTION ---- */
+
+        /* A container for the buttons to push them to the right */
+        .template-card .actions {
+            padding: 0 1rem 1rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .template-card .button-group {
+            margin-left: auto; /* Pushes buttons to the right */
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        /* General style for BOTH icon buttons */
+        .template-card .icon-btn {
+            background: transparent;
+            border: none;
+            padding: 6px;
+            cursor: pointer;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            z-index: 2;
+            transition: background-color 0.2s;
+        }
+
+        .template-card .icon-btn svg {
+            width: 18px;
+            height: 18px;
+            transition: stroke 0.2s;
+        }
+
+        /* --- Specific Button Styles --- */
+
+        /* Duplicate Button */
+        .template-card .duplicate-btn svg {
+            stroke: var(--fg); /* CHANGED: Icon is white by default */
+        }
+        .template-card .duplicate-btn:hover {
+            background-color: var(--panel-2);
+        }         
+        .template-card .duplicate-btn:hover svg {
+            stroke: var(--fg); /* CHANGED: Icon is white by default */
+            stroke: #b0b0b0;
+        }
+
+        /* Delete Button */
+        .template-card .delete-btn svg {
+            stroke: #e53e3e; /* Icon is RED by default */
+        }
+        .template-card .delete-btn:hover {
+            /* REMOVED: No red circle on hover */
+            background-color: var(--panel-2); /* Use a standard dark panel color for hover background */
+        }
+        .template-card .delete-btn:hover svg {
+            stroke: #b0b0b0; /* CHANGED: Icon becomes white on hover */
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="/" class="logo">TemplateMaker</a>
+        <div class="nav-links" id="nav-links"></div>
+    </nav>
+
+    <main class="container">
+        <div class="dashboard-header">
+            <h1>My Dashboard</h1>
+            <a href="/tool.html" class="btn">Create New Template</a>
+        </div>
+
+        <div class="tabs">
+            <div class="tab active" data-tab="created">My Created Templates</div>
+            <div class="tab" data-tab="purchased">My Purchased Templates</div>
+        </div>
+
+        <div id="template-grid" class="template-grid">
+            <!-- Templates will be loaded here -->
+            <p>Loading templates...</p>
+        </div>
+    </main>
+    
+    <script type="module" src="assets/js/auth.js"></script>
+    <script type="module" src="assets/js/dashboard.js"></script>
+</body>
+</html>

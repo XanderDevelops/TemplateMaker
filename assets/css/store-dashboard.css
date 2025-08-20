@@ -1,0 +1,97 @@
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+.tabs {
+    display: flex;
+    gap: 1rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 2rem;
+}
+.tab {
+    padding: 1rem;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+}
+.tab.active {
+    border-bottom-color: var(--accent);
+}
+.template-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1.5rem;
+}
+.template-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    cursor: pointer;
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+.template-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 12px rgba(0,0,0,.3);
+}
+.template-card .preview {
+    height: 180px;
+    background-color: #2a2a2a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+}
+.template-card .info {
+    padding: 1rem;
+    flex-grow: 1;
+}
+.template-card .card-link {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1;
+}
+.template-card .actions {
+    padding: 0 1rem 1rem;
+    display: flex;
+    align-items: center;
+}
+.template-card .button-group {
+    margin-left: auto;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    position: relative;
+    z-index: 2; /* Ensure buttons are clickable */
+}
+.template-card .icon-btn {
+    background: transparent;
+    border: none;
+    padding: 6px;
+    cursor: pointer;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s;
+}
+.template-card .icon-btn svg {
+    width: 18px;
+    height: 18px;
+    stroke: var(--fg);
+    transition: stroke 0.2s;
+}
+.template-card .icon-btn:hover {
+    background-color: #2a2a2a;
+}
+.template-card .delete-btn svg {
+    stroke: #e53e3e;
+}

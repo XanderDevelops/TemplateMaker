@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Store - Template Maker</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+    <!-- Re-using dashboard styles for the grid -->
+    <link rel="stylesheet" href="assets/css/store-dashboard.css">
+    <style>
+        .store-layout {
+            display: grid;
+            grid-template-columns: 200px 1fr;
+            gap: 2rem;
+            align-items: flex-start;
+        }
+
+        .categories {
+            background: var(--panel);
+            padding: 1rem;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+
+        .categories h3 {
+            margin-top: 0;
+        }
+
+        .categories ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .categories li {
+            padding: 0.75rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .categories li:hover {
+            background-color: #2a2a2a;
+        }
+
+        .categories li.active {
+            background-color: var(--accent);
+            color: #000000;
+        }
+
+        /* Modal Styles */
+        .modal-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: none; /* Hidden by default */
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: var(--panel);
+            padding: 1rem;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            width: 90vw;
+            height: 85vh;
+            max-width: 1000px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .modal-body {
+            flex-grow: 1;
+            background-color: #2a2a2a;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="/" class="logo">TemplateMaker</a>
+        <div class="nav-links" id="nav-links"></div>
+    </nav>
+
+    <main class="container">
+        <h1>Template Store</h1>
+        <div class="store-layout">
+            <aside class="categories">
+                <h3>Categories</h3>
+                <ul id="category-list">
+                    <li class="active" data-category="all">All</li>
+                    <li data-category="invoice">Invoices</li>
+                    <li data-category="post">Posts</li>
+                    <li data-category="report">Reports</li>
+                    <li data-category="resume">Resumes</li>
+                </ul>
+            </aside>
+            <div id="template-grid" class="template-grid">
+                <p>Loading templates...</p>
+            </div>
+        </div>
+    </main>
+    
+    <!-- Template Preview Modal -->
+    <div id="preview-modal" class="modal-backdrop">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button id="close-modal-btn" class="btn ghost">&times;</button>
+            </div>
+            <div class="modal-body">
+                <canvas id="modal-canvas"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/fabric@5.3.0/dist/fabric.min.js"></script>
+    <script type="module" src="assets/js/auth.js"></script>
+    <script type="module" src="assets/js/store.js"></script>
+</body>
+</html>
