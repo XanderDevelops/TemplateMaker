@@ -316,6 +316,7 @@ nav .nav-links .btn:hover {
         <label for="csvInput" class="btn ghost">Load Data</label>
         <input id="csvInput" type="file" accept=".csv,.xlsx,.xls" style="display:none;"/>
         <span id="fileName" class="muted" style="max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">No file selected</span>
+        <input id="startCell" type="text" placeholder="Starting cell" value="A1" style="width: 100px;"/>
     </div>
   </header>
 
@@ -419,6 +420,7 @@ nav .nav-links .btn:hover {
   <div class="modal">
     <div class="row" style="justify-content:space-between;align-items:center;gap:12px;"><h3>Link to Column</h3><button id="closeModal" class="btn ghost">Close</button></div>
     <div class="row" style="gap:8px; margin-top:8px;"><input id="columnSearch" type="text" placeholder="Search columns..." style="flex:1"/>
+      <label class="row" style="gap:8px; align-items:center;"><span class="muted">Start at</span><input id="modalStartCell" type="text" value="A1" style="width:88px;"/></label>
     </div>
     <div id="colList" class="col-list"></div>
     <div class="row" style="margin-top:12px; justify-content:flex-end;"><button id="confirmColumn" class="btn">Use Selected Column</button></div>
@@ -1269,7 +1271,7 @@ function openModal(){ if(!workbook){ alert('Load a data file first.'); return; }
 function closeModal(){ modal.style.display='none'; }
 $('#closeModal').addEventListener('click', closeModal);
 $('#columnSearch').addEventListener('input', renderColumnList);
-$('#confirmColumn').addEventListener('click', () => { const sel = $('.col-item[aria-selected="true"]'); if (!sel) return alert('Select a column.'); const col = sel.dataset.name; $('#startCell').value = "A1"; if (selectedColumn) { selectedColumn.binding.column = col; if (dataLinksManagerModal.style.display === 'flex') renderDataLinksManager(); } closeModal(); });
+$('#confirmColumn').addEventListener('click', () => { const sel = $('.col-item[aria-selected="true"]'); if (!sel) return alert('Select a column.'); const col = sel.dataset.name; $('#startCell').value = $('#modalStartCell').value; if (selectedColumn) { selectedColumn.binding.column = col; if (dataLinksManagerModal.style.display === 'flex') renderDataLinksManager(); } closeModal(); });
 function renderColumnList(){ const list=$('#colList'); list.innerHTML=''; const q=($('#columnSearch').value||'').toLowerCase(); headers.filter(h=>h.toLowerCase().includes(q)).forEach(h=>{ const item=document.createElement('div'); item.className='col-item'; item.dataset.name=h; const samples=dataRows.slice(0,5).map(r=>r[h]).filter(Boolean).slice(0,3).join(' · '); item.innerHTML=`<b>${h}</b><div class="muted">Samples: ${samples||'—'}</div>`; item.onclick=()=>{document.querySelectorAll('.col-item').forEach(x=>x.removeAttribute('aria-selected')); item.setAttribute('aria-selected','true');}; list.appendChild(item); }); }
 const dataLinksManagerModal = $('#dataLinksManagerModal'); const openDataLinksManagerBtn = $('#openDataLinksManagerBtn'); const closeDataLinksManagerModalBtn = $('#closeDataLinksManagerModal'); let selectedObjectForManager = null;
 function openDataLinksManager() { renderDataLinksManager(); dataLinksManagerModal.style.display = 'flex'; }
