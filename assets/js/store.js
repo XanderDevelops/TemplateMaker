@@ -11,6 +11,7 @@ let purchasedTemplateIds = new Set();
 let modalCanvas;
 
 // --- Render Templates in the Grid ---
+// This function remains the same.
 const renderTemplates = (templatesToRender) => {
     templateGrid.innerHTML = '';
     if (templatesToRender.length === 0) {
@@ -24,7 +25,7 @@ const renderTemplates = (templatesToRender) => {
 
         const card = document.createElement('div');
         card.className = 'template-card';
-        card.dataset.templateId = template.id; // For modal click
+        card.dataset.templateId = template.id;
 
         let buttonHtml = '';
         if (isPurchased || isFree) {
@@ -39,7 +40,7 @@ const renderTemplates = (templatesToRender) => {
             </div>
             <div class="info">
                 <h4>${template.title}</h4>
-                <p style="color:#aaa; font-size: 0.9em;">${template.description || ''}</p>
+                <p style="color:#aaa; font-size: 0.9em; min-height: 2.7em;">${template.description || ''}</p>
             </div>
             <div class="actions">
                 <div class="button-group">
@@ -53,6 +54,7 @@ const renderTemplates = (templatesToRender) => {
 };
 
 // --- Render the Small Preview on a Card ---
+// This function remains the same.
 const renderCardPreview = (template) => {
     const canvasEl = document.getElementById(`preview-${template.id}`);
     if (!canvasEl) return;
@@ -62,54 +64,47 @@ const renderCardPreview = (template) => {
         height: canvasEl.parentElement.clientHeight,
     });
 
-    staticCanvas.loadFromJSON(template.preview_url, () => {
-        const group = new fabric.Group(staticCanvas.getObjects());
-        const scale = Math.min(
-            staticCanvas.width / group.width,
-            staticCanvas.height / group.height
-        ) * 0.9;
-        staticCanvas.setViewportTransform([scale, 0, 0, scale, 
-            (staticCanvas.width - group.width * scale) / 2, 
-            (staticCanvas.height - group.height * scale) / 2
-        ]);
-        group.destroy();
-        staticCanvas.renderAll();
-    });
+    if (template.preview_url) {
+        staticCanvas.loadFromJSON(template.preview_url, () => {
+            const group = new fabric.Group(staticCanvas.getObjects());
+            const scale = Math.min(staticCanvas.width / group.width, staticCanvas.height / group.height) * 0.9;
+            staticCanvas.setViewportTransform([scale, 0, 0, scale, (staticCanvas.width - group.width * scale) / 2, (staticCanvas.height - group.height * scale) / 2]);
+            group.destroy();
+            staticCanvas.renderAll();
+        });
+    }
 };
 
 // --- Modal Logic ---
+// This function remains the same.
 const openPreviewModal = (template) => {
     previewModal.style.display = 'flex';
     if (!modalCanvas) {
         modalCanvas = new fabric.StaticCanvas('modal-canvas');
     }
 
-    // Resize canvas to fit modal body
     const modalBody = modalCanvasEl.parentElement;
     modalCanvas.setWidth(modalBody.clientWidth);
     modalCanvas.setHeight(modalBody.clientHeight);
     
-    modalCanvas.loadFromJSON(template.preview_url, () => {
-        const group = new fabric.Group(modalCanvas.getObjects());
-        const scale = Math.min(
-            modalCanvas.width / group.width,
-            modalCanvas.height / group.height
-        ) * 0.95;
-         modalCanvas.setViewportTransform([scale, 0, 0, scale, 
-            (modalCanvas.width - group.width * scale) / 2, 
-            (modalCanvas.height - group.height * scale) / 2
-        ]);
-        group.destroy();
-        modalCanvas.renderAll();
-    });
+    if (template.preview_url) {
+        modalCanvas.loadFromJSON(template.preview_url, () => {
+            const group = new fabric.Group(modalCanvas.getObjects());
+            const scale = Math.min(modalCanvas.width / group.width, modalCanvas.height / group.height) * 0.95;
+            modalCanvas.setViewportTransform([scale, 0, 0, scale, (modalCanvas.width - group.width * scale) / 2, (modalCanvas.height - group.height * scale) / 2]);
+            group.destroy();
+            modalCanvas.renderAll();
+        });
+    }
 };
 
 closeModalBtn.addEventListener('click', () => {
     previewModal.style.display = 'none';
-    modalCanvas.clear();
+    if (modalCanvas) modalCanvas.clear();
 });
 
 // --- Category Filtering Logic ---
+// This function remains the same.
 categoryList.addEventListener('click', (e) => {
     if (e.target.tagName === 'LI') {
         document.querySelector('#category-list li.active').classList.remove('active');
@@ -125,23 +120,17 @@ categoryList.addEventListener('click', (e) => {
     }
 });
 
-// --- Action Button Logic (Buy, Use) ---
-templateGrid.addEventListener('click', async (e) => {
-    const templateId = e.target.dataset.templateId;
-    if (!templateId) return;
 
-    if (e.target.classList.contains('buy-template-btn')) {
-        // --- MONEI PAYMENT INTEGRATION (Placeholder) ---
-        // This is where you would call the Monei API.
-        // It requires a server-side component (e.g., a Supabase Edge Function)
-        // to securely create a payment session.
-        alert(`Redirecting to payment for template ${templateId}. This is a placeholder.`);
-        // Example: const { data, error } = await supabase.functions.invoke('create-monei-checkout', { body: { templateId } });
-        // if (data) window.location.href = data.redirectUrl;
-        
-    } else if (e.target.classList.contains('use-template-btn')) {
-        e.target.disabled = true;
-        e.target.textContent = 'Preparing...';
+// --- [START] REPLACED AND UNIFIED ACTION LOGIC ---
+templateGrid.addEventListener('click', async (e) => {
+    // Check if the "Buy" button was clicked
+    const buyButton = e.target.closest('.buy-template-btn');
+    if (buyButton) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        buyButton.disabled = true;
+        buyButton.textContent = 'Processing...';
 
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) {
@@ -149,55 +138,101 @@ templateGrid.addEventListener('click', async (e) => {
             return;
         }
 
-        // 1. Get the full template data from the store
-        const { data: storeTemplate, error } = await supabase
-            .from('store_templates')
-            .select('title, template_data')
-            .eq('id', templateId)
-            .single();
+        const templateId = buyButton.dataset.templateId;
+        const templateData = allTemplates.find(t => t.id === templateId);
+        if (!templateData || !templateData.paddle_price_id) {
+            alert('This product is not configured for sale.');
+            return;
+        }
+
+        try {
+            // Call the updated Edge Function with all required data
+            const { data, error } = await supabase.functions.invoke('paddle-wrapper', {
+                body: {
+                    price_id: templateData.paddle_price_id,
+                    user_email: user.email,
+                    template_id: templateId,
+                    user_id: user.id
+                },
+            });
+
+            if (error) throw error;
+
+            // Redirect to Paddle Checkout
+            Paddle.Checkout.open({
+                transactionId: data.checkoutUrl.split('/').pop(),
+                settings: {
+                    // Redirect to the purchased tab after success for better UX
+                    successUrl: `${window.location.origin}/dashboard.html?tab=purchased`,
+                },
+            });
+
+        } catch (error) {
+            alert(`Error: ${error.message}`);
+            console.error(error);
+            buyButton.disabled = false;
+            buyButton.textContent = `$${templateData.price}`;
+        }
+        return; // Stop further execution
+    }
+
+    // Check if the "Use" button was clicked
+    const useButton = e.target.closest('.use-template-btn');
+    if (useButton) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        useButton.disabled = true;
+        useButton.textContent = 'Preparing...';
+        const templateId = useButton.dataset.templateId;
         
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+            window.location.href = '/login.html';
+            return;
+        }
+
+        const { data: storeTemplate, error } = await supabase.from('store_templates').select('title, template_data').eq('id', templateId).single();
         if (error) {
             alert('Error fetching template details.');
             console.error(error);
             return;
         }
 
-        // 2. Create a copy in the user's personal `templates` table
-        const { data: newTemplate, error: insertError } = await supabase
-            .from('templates')
-            .insert({
-                user_id: user.id,
-                title: storeTemplate.title,
-                template_data: storeTemplate.template_data,
-                // The preview is inside the main data, so we extract it
-                preview_url: storeTemplate.template_data.canvas, 
-            })
-            .select('id')
-            .single();
+        const { data: newTemplate, error: insertError } = await supabase.from('templates').insert({
+            user_id: user.id,
+            title: storeTemplate.title,
+            template_data: storeTemplate.template_data,
+            preview_url: storeTemplate.template_data.canvas,
+        }).select('id').single();
 
         if (insertError) {
              alert('Could not create your copy of the template.');
              console.error(insertError);
         } else {
-            // 3. Redirect the user to the tool with the ID of their new copy
             window.location.href = `/tool.html?id=${newTemplate.id}`;
         }
-    } else if (e.target.closest('.template-card')) {
-        // Handle click on card itself to open modal
-        const card = e.target.closest('.template-card');
+        return; // Stop further execution
+    }
+
+    // If no button was clicked, assume the card was clicked to open the modal
+    const card = e.target.closest('.template-card');
+    if (card) {
         const clickedId = card.dataset.templateId;
         const templateData = allTemplates.find(t => t.id === clickedId);
         if (templateData) openPreviewModal(templateData);
     }
 });
+// --- [END] REPLACED AND UNIFIED ACTION LOGIC ---
 
 
 // --- Initial Data Loading ---
+// This function remains the same.
 const loadStoreData = async () => {
-    // 1. Fetch all store templates
+    // 1. Fetch all store templates, including the new paddle_price_id
     const { data: storeData, error: storeError } = await supabase
         .from('store_templates')
-        .select('*')
+        .select('*') // select * gets all columns
         .order('title');
 
     if (storeError) {
