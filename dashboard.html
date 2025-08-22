@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Template Maker</title>
+    <title>Dashboard - CSVLink</title>
     <link rel="stylesheet" href="assets/css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/fabric@5.3.0/dist/fabric.min.js"></script>
     <style>
@@ -12,6 +12,11 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 2rem;
+        }
+        /* -- NEW STYLE -- */
+        .header-actions {
+            display: flex;
+            gap: 1rem;
         }
         .tabs {
             display: flex;
@@ -58,6 +63,24 @@
         }.template-card:hover {
             transform: translateY(-5px);
             box-shadow: 0 4px 12px rgba(0,0,0,.3);
+        }
+
+        /* --- NEW STYLES for SELECTION --- */
+
+        .template-card .selection-checkbox {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            z-index: 3;
+            width: 15px;
+            height: 15px;
+            cursor: pointer;
+            opacity: 70%;;
+        }
+        
+        .template-card.selected {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 1px var(--accent);
         }
 
         /* Create a pseudo-element to act as the main link */
@@ -150,14 +173,18 @@
 </head>
 <body>
     <nav>
-        <a href="/" class="logo">TemplateMaker</a>
+        <a href="/" class="logo">CSVLink</a>
         <div class="nav-links" id="nav-links"></div>
     </nav>
 
     <main class="container">
         <div class="dashboard-header">
             <h1>My Dashboard</h1>
-            <a href="/tool.html" class="btn">Create New Template</a>
+            <!-- MODIFIED THIS SECTION -->
+            <div class="header-actions">
+                <button id="delete-selected-btn" class="btn" style="display: none; color: #fff; background-color: #e53e3e;">Delete Selected</button>
+                <a href="/tool.html" class="btn">Create New Template</a>
+            </div>
         </div>
 
         <div class="tabs">
@@ -174,4 +201,16 @@
     <script type="module" src="assets/js/auth.js"></script>
     <script type="module" src="assets/js/dashboard.js"></script>
 </body>
+
+    <footer>
+        <div class="footer-links">
+            <a href="terms.html">Terms of Service</a>
+            <a href="privacy.html">Privacy Policy</a>
+            <a href="refunds.html">Refund Policy</a>
+        </div>
+        <div class="copyright">
+            <p>&copy; 2025 CSVLink. All Rights Reserved.</p>
+        </div>
+    </footer>
+
 </html>

@@ -2,7 +2,33 @@ import { supabase } from './supabase-client.js';
 
 const templateGrid = document.getElementById('template-grid');
 const tabs = document.querySelectorAll('.tab');
+const deleteSelectedBtn = document.getElementById('delete-selected-btn');
 let currentTab = 'created';
+let selectedTemplates = new Set();
+
+
+// --- NEW FUNCTION to manage selection state ---
+const updateSelectionUI = () => {
+    // Toggle delete button visibility
+    if (selectedTemplates.size > 0) {
+        deleteSelectedBtn.style.display = 'block';
+        deleteSelectedBtn.textContent = `Delete (${selectedTemplates.size}) Selected`;
+    } else {
+        deleteSelectedBtn.style.display = 'none';
+    }
+
+    // Toggle .selected class on cards
+    document.querySelectorAll('.template-card').forEach(card => {
+        const id = card.dataset.id;
+        if (selectedTemplates.has(id)) {
+            card.classList.add('selected');
+            card.querySelector('.selection-checkbox').checked = true;
+        } else {
+            card.classList.remove('selected');
+            card.querySelector('.selection-checkbox').checked = false;
+        }
+    });
+};
 
 
 const renderTemplates = (templates) => {
@@ -16,10 +42,12 @@ const renderTemplates = (templates) => {
         try {
             const card = document.createElement('div');
             card.className = 'template-card';
+            card.dataset.id = template.id; // --- ADDED data-id for selection
             const canvasId = `preview-canvas-${template.id}`;
 
             // --- MODIFIED HTML STRUCTURE ---
             card.innerHTML = `
+                ${currentTab === 'created' ? `<input type="checkbox" class="selection-checkbox" data-id="${template.id}">` : ''}
                 <a href="/tool.html?id=${template.id}" class="card-link"></a>
                 
                 <div class="preview">
@@ -85,13 +113,27 @@ const renderTemplates = (templates) => {
         }
     });
 
-    // Attach listeners for the new buttons
+    // Attach listeners for all actions
     attachActionListeners();
+    updateSelectionUI(); // Ensure UI is correct on render
 };
 
-// --- NEW COMBINED LISTENER FUNCTION ---
-// Replaces attachDeleteListeners
+// --- MODIFIED and COMBINED LISTENER FUNCTION ---
 const attachActionListeners = () => {
+    // --- NEW: Selection Checkbox Logic ---
+    document.querySelectorAll('.selection-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent card link from firing
+            const id = e.target.dataset.id;
+            if (e.target.checked) {
+                selectedTemplates.add(id);
+            } else {
+                selectedTemplates.delete(id);
+            }
+            updateSelectionUI();
+        });
+    });
+
     // Delete Button Logic
     document.querySelectorAll('.delete-btn').forEach(button => {
         button.addEventListener('click', async (e) => {
@@ -107,6 +149,7 @@ const attachActionListeners = () => {
                     alert('Could not delete template.');
                     console.error(error);
                 } else {
+                    selectedTemplates.delete(id); // --- Remove from selection if deleted
                     loadTemplates(currentTab);
                 }
             }
@@ -169,6 +212,31 @@ const attachActionListeners = () => {
         });
     });
 };
+
+// --- NEW EVENT LISTENER for the "Delete Selected" button ---
+deleteSelectedBtn.addEventListener('click', async () => {
+    const count = selectedTemplates.size;
+    const confirmed = await showConfirm(`Are you sure you want to delete ${count} selected templates? This action cannot be undone.`);
+
+    if (confirmed) {
+        // Convert the Set to an array for the Supabase query
+        const idsToDelete = Array.from(selectedTemplates);
+        
+        const { error } = await supabase
+            .from('templates')
+            .delete()
+            .in('id', idsToDelete);
+
+        if (error) {
+            alert(`Could not delete selected templates.`);
+            console.error(error);
+        } else {
+            selectedTemplates.clear(); // Clear the selection
+            loadTemplates(currentTab); // Refresh the list
+        }
+    }
+});
+
 
 // REPLACE your existing showConfirm function with this one
 function showConfirm(message) {
@@ -246,12 +314,17 @@ const loadTemplates = async (tab) => {
     renderTemplates(templates);
 };
 
-// Tab switching logic
+// --- MODIFIED Tab switching logic ---
 tabs.forEach(tab => {
     tab.addEventListener('click', () => {
         tabs.forEach(t => t.classList.remove('active'));
         tab.classList.add('active');
         currentTab = tab.dataset.tab;
+        
+        // Clear selection when switching tabs
+        selectedTemplates.clear();
+        updateSelectionUI();
+
         loadTemplates(currentTab);
     });
 });

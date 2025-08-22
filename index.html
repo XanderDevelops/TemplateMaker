@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Template Maker - Home</title>
+    <title>CSVLink - Home</title>
     <link rel="stylesheet" href="assets/css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/fabric@5.3.0/dist/fabric.min.js"></script>
     <style>
         /* General Body Styles */
         body {
@@ -42,11 +43,105 @@
             text-align: center;
             padding: 150px 20px 100px;
             background: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%);
+            position: relative;
+            overflow: hidden; /* To contain the pseudo-element */
         }
+        
+        /* 3. Added pseudo-element for feather effect */
+/* --- REPLACE THIS ENTIRE BLOCK in your <style> tag --- */
+
+/* Hero Section */
+.hero {
+    text-align: center;
+    padding: 150px 20px 100px;
+    /* Use the darker color from the gradient for a seamless base */
+    background-color: #121212; 
+    position: relative;
+    overflow: hidden; /* Crucial for containing the rotating element */
+}
+
+/* This is the new ROTATING element - it sits in the back */
+.hero::after {
+    content: '';
+    position: absolute;
+    top: 100%; /* Make it much larger than the container */
+    left: -100%;
+    width: 300%;
+    height: 300%;
+    /* Creates a soft, sweeping light effect */
+    background: conic-gradient(
+        from 0.5turn at 50% 50%,
+        #121212, /* Start with the background color */
+        rgba(79, 172, 254, 0.15) 48%, /* The rotating glow color */
+        rgba(79, 172, 254, 0.15) 52%,
+        #121212 55%, /* End with the background color */
+        #121212
+    );
+    z-index: 0; /* Sits behind everything */
+    
+    /* Apply the animation */
+    animation: rotate-background 25s linear infinite;
+}
+
+/* This is your original feather effect - it sits on top of the rotation */
+.hero::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    /* Updated to use the correct background color for a perfect blend */
+    background: linear-gradient(to right, 
+        #121212 0%, 
+        rgba(18, 18, 18, 0) 25%, 
+        rgba(18, 18, 18, 0) 75%, 
+        #121212 100%
+    );
+    z-index: 1; /* Sits on top of the ::after element */
+}
+
+/* Ensure the hero content (h1, p, btn) is on the very top */
+.hero > * {
+    position: relative;
+    z-index: 2;
+}
+
+.hero h1 {
+    font-size: 3.5rem;
+    margin-bottom: 1rem;
+    background: linear-gradient(90deg, #4facfe, #00f2fe);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.hero p {
+    font-size: 1.2rem;
+    color: #aaa;
+    max-width: 600px;
+    margin: 0 auto 2rem;
+}
+
+/* --- ADD THIS KEYFRAMES RULE at the end of your <style> tag --- */
+
+@keyframes rotate-background {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+        .hero > * {
+            position: relative;
+            z-index: 2; /* Ensure content is above the gradient overlay */
+        }
+
         .hero h1 {
             font-size: 3.5rem;
             margin-bottom: 1rem;
-            background: linear-gradient(90deg, #4facfe, #00f2fe);
+            background: linear-gradient(90deg, #ffffff, #00f2fe);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
@@ -56,18 +151,22 @@
             max-width: 600px;
             margin: 0 auto 2rem;
         }
+        
+        /* 5. Modified button style */
         .btn {
-            background-color: #4facfe;
-            color: white;
+            background-color: #ffffff;
+            color: #121212;
             padding: 12px 24px;
             border-radius: 8px;
             text-decoration: none;
             font-weight: bold;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3s;
+            border: 1px solid transparent;
         }
         .btn:hover {
+            background-color: #f0f0f0;
             transform: translateY(-3px);
-            box-shadow: 0 10px 20px rgba(79, 172, 254, 0.3);
+            box-shadow: 0 10px 20px rgba(255, 255, 255, 0.1);
         }
 
         /* Feature Sections General Style */
@@ -99,6 +198,8 @@
         .feature-content h2 {
             font-size: 2.5rem;
             margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
         }
         
         .feature-content p, .feature-content li {
@@ -143,8 +244,27 @@
             margin-top: 1rem;
             text-align: center;
         }
+        
+        /* 2. AI Icon and Animation */
+        .ai-spark-icon {
+            margin-left: 0.75rem;
+            width: 32px;
+            height: 32px;
+            animation: spark-pulse 3s infinite ease-in-out;
+        }
+        
+        @keyframes spark-pulse {
+            0%, 100% {
+                transform: scale(1);
+                filter: drop-shadow(0 0 2px #00f2fe);
+            }
+            50% {
+                transform: scale(1.15);
+                filter: drop-shadow(0 0 10px #00f2fe);
+            }
+        }
 
-        /* Template Gallery Section */
+        /* 6. Template Gallery Section - MODIFIED */
         .templates-section {
             text-align: center;
             padding: 6rem 2rem;
@@ -152,6 +272,7 @@
             opacity: 0;
             transform: translateY(50px);
             transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+            overflow: hidden; /* Hide overflowing carousel items */
         }
 
         .templates-section.is-visible {
@@ -161,39 +282,105 @@
 
         .templates-section h2 {
             font-size: 2.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .template-gallery {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 2rem;
-            margin-top: 2rem;
+            margin-bottom: 1rem;
         }
         
+        /* 6. Template Category Buttons */
+        .template-categories {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 3rem;
+        }
+
+        .template-category-btn {
+            background-color: transparent;
+            border: 1px solid #555;
+            color: #aaa;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .template-category-btn:hover {
+            background-color: #333;
+            color: #fff;
+        }
+
+        .template-category-btn.active {
+            background-color: #ffffff;
+            color: #000000;
+        }
+
+        /* 6. Template Carousel */
+        .template-carousel-container {
+            width: 100%;
+            overflow: hidden;
+        }
+        
+        .template-carousel-track {
+            display: flex;
+            transition: transform 0.5s ease-in-out;
+        }
+
+        .template-carousel-slide {
+            flex: 0 0 100%;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 2rem;
+        }
+
         .template-card {
             border-radius: 12px;
             overflow: hidden;
             box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
             transition: transform 0.3s ease, box-shadow 0.3s ease;
+            text-decoration: none; /* For the link */
+            display: block; /* For the link */
         }
         
         .template-card:hover {
             transform: scale(1.05);
-            box-shadow: 0 15px 30px rgba(79, 172, 254, 0.3);
+            box-shadow: 0 30px 0px rgba(79, 172, 254, 0.3);
         }
         
         .template-card img {
             width: 100%;
             height: auto;
             display: block;
+            background-color: #2a2a2a;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 2rem;
+            margin-top: 4rem;
+            background-color: #1a1a1a;
+            color: #888;
+        }
+        .footer-links a {
+            color: #aaa;
+            text-decoration: none;
+            margin: 0 1rem;
+            transition: color 0.3s ease;
+        }
+        .footer-links a:hover {
+            color: #4facfe;
+        }
+        .copyright {
+            margin-top: 1rem;
+            font-size: 0.9rem;
         }
 
     </style>
 </head>
 <body>
     <nav>
-        <a href="/" class="logo">TemplateMaker</a>
+        <a href="/" class="logo">CSVLink</a>
         <div class="nav-links" id="nav-links">
             <!-- Auth links will be injected here by JS -->
         </div>
@@ -201,23 +388,14 @@
 
     <main class="container">
         <section class="hero">
-            <h1>Create Stunning Documents Effortlessly</h1>
-            <p>Our intuitive drag-and-drop editor allows you to design, customize, and export professional templates in minutes.</p>
-            <a href="/tool.html" class="btn">Go to the Tool</a>
+            <!-- 4. Modified Hero Text -->
+            <h1>Link Data, Generate Documents in Bulk</h1>
+            <p>Connect your data from a CSV or Excel file to any template and generate hundreds of personalized documents with a single click.</p>
+            <!-- 5. Modified Button Text -->
+            <a href="/tool.html" class="btn">Try It Now</a>
         </section>
-
-        <!-- Section 1: AI Design -->
-        <section class="feature-section animated-section">
-            <div class="feature-content">
-                <h2>Let AI design your documents for you</h2>
-                <p>Say goodbye to tedious formatting. Just tell our AI exactly what you are looking for, and it will generate a beautiful, professional document in seconds. Focus on your content, and let us handle the design.</p>
-            </div>
-            <div class="feature-image">
-                <img src="https://placehold.co/500x350/1e1e1e/4facfe?text=AI+Generating+Design" alt="AI designing a document interface">
-            </div>
-        </section>
-
-        <!-- Section 2: Bulk Generation -->
+        
+        <!-- 1. Section Order Changed: Bulk Generation is now first -->
         <section class="feature-section animated-section">
             <div class="feature-content">
                 <h2>Generate documents in bulk</h2>
@@ -233,44 +411,249 @@
                 <img src="https://placehold.co/500x400/1e1e1e/00f2fe?text=Data+Linking+UI" alt="Bulk document generation workflow">
             </div>
         </section>
-
-        <!-- Section 3: Template Gallery -->
-        <section class="templates-section animated-section">
-            <h2>Find the perfect template for your needs</h2>
-            <p style="color: #aaa; max-width: 600px; margin: 0 auto 2rem;">Browse our library of professionally designed templates for any occasion.</p>
-            <div class="template-gallery">
-                <div class="template-card">
-                    <img src="https://placehold.co/400x300/2a2a2a/ffffff?text=Invoice+Template" alt="Invoice Template">
-                </div>
-                <div class="template-card">
-                    <img src="https://placehold.co/400x300/2a2a2a/ffffff?text=Report+Template" alt="Business Report Template">
-                </div>
-                <div class="template-card">
-                    <img src="https://placehold.co/400x300/2a2a2a/ffffff?text=Resume+Template" alt="Resume Template">
-                </div>
+        
+        <!-- Section 2: AI Design -->
+        <section class="feature-section animated-section">
+            <div class="feature-content">
+                <!-- 2. Added AI Icon -->
+                <h2>Let AI design your documents
+                    <svg class="ai-spark-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 2L9.5 9.5L2 12L9.5 14.5L12 22L14.5 14.5L22 12L14.5 9.5L12 2Z" stroke="#00f2fe" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M5 2L6 6L10 7L6 8L5 12L4 8L0 7L4 6L5 2Z" stroke="#4facfe" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </h2>
+                <p>Say goodbye to tedious formatting. Just tell our AI exactly what you are looking for, and it will generate a beautiful, professional document in seconds. Focus on your content, and let us handle the design.</p>
+            </div>
+            <div class="feature-image">
+                <img src="https://placehold.co/500x350/1e1e1e/4facfe?text=AI+Generating+Design" alt="AI designing a document interface">
             </div>
         </section>
 
+
+        <!-- 6. Section 3: Template Gallery - REWORKED -->
+        <section class="templates-section animated-section">
+            <h2>Find the perfect template for your needs</h2>
+            <p style="color: #aaa; max-width: 600px; margin: 0 auto 2rem;">Browse our library of professionally designed templates for any occasion.</p>
+            
+            <!-- Using the correct class name: "template-category-btn" -->
+            <div class="template-categories">
+                <button class="template-category-btn active" data-category="invoice">Invoice Templates</button>
+                <button class="template-category-btn" data-category="report">Report Templates</button>
+                <button class="template-category-btn" data-category="resume">Resume Templates</button>
+            </div>
+
+            <div class="template-carousel-container">
+                <!-- 
+                THIS IS THE CRITICAL FIX:
+                - The class is now "template-carousel-track".
+                - It is EMPTY because the JavaScript will fill it.
+                - We have removed all the static <a> and <img> tags.
+                -->
+                <div class="template-carousel-track">
+                    <!-- Templates from Supabase will be rendered here -->
+                </div>
+            </div>
+        </section>
     </main>
+    
+    <footer>
+        <div class="footer-links">
+            <a href="terms.html">Terms of Service</a>
+            <a href="privacy.html">Privacy Policy</a>
+            <a href="refunds.html">Refund Policy</a>
+        </div>
+        <div class="copyright">
+            <p>&copy; 2025 CSVLink. All Rights Reserved.</p>
+        </div>
+    </footer>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script type="module" src="assets/js/supabase-client.js"></script>
     <script type="module" src="assets/js/auth.js"></script>
-    <script>
-        // JavaScript for "cool effects" on scroll
-        const animatedSections = document.querySelectorAll('.animated-section');
+    <script type="module">
+        // 1. Import your configured Supabase client
+        import { supabase } from './assets/js/supabase-client.js';
 
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('is-visible');
-                    observer.unobserve(entry.target);
+        document.addEventListener('DOMContentLoaded', async function() {
+
+            // --- GLOBAL VARIABLES (WITH CORRECTED SELECTORS) ---
+            const carouselTrack = document.querySelector('.template-carousel-track'); // <-- FIX 1: Correct selector
+            const categoryButtons = document.querySelectorAll('.template-category-btn'); // <-- FIX 2: Correct selector
+            
+            // FIX 3: Aligned category names with HTML data-category attributes
+            const templatesByCategory = {
+                invoice: [],
+                report: [],
+                resume: [] 
+            };
+            let currentCarouselInterval;
+
+            // --- TEMPLATE RENDERING (This logic is for the multi-item slider) ---
+            const renderTemplates = (templates) => {
+                // Check if carouselTrack exists before using it
+                if (!carouselTrack) {
+                    console.error("Carousel track element not found!");
+                    return;
                 }
-            });
-        }, {
-            threshold: 0.1 // Trigger when 10% of the element is visible
-        });
 
-        animatedSections.forEach(section => {
-            observer.observe(section);
+                carouselTrack.innerHTML = ''; // Clear previous templates
+                if (!templates || templates.length === 0) {
+                    carouselTrack.innerHTML = `<p style="width: 100%; text-align: center;">No templates found for this category.</p>`;
+                    if (currentCarouselInterval) clearInterval(currentCarouselInterval);
+                    return;
+                }
+
+                templates.forEach(template => {
+                    const card = document.createElement('a');
+                    card.href = `/tool.html?id=${template.id}&public=true`;
+                    card.className = 'template-card';
+                    card.title = `Use ${template.title}`;
+                    const canvasId = `preview-canvas-${template.id}`;
+
+                    card.innerHTML = `
+                        <div class="preview" style="height: 350px; background-color: #fff; display:flex; align-items:center; justify-content:center; overflow: hidden;">
+                            <canvas id="${canvasId}"></canvas>
+                        </div>
+                        <div class="info" style="text-align: center; padding: 1rem;">
+                            <h4 style="margin: 0; color: #fff;">${template.title || 'Untitled Template'}</h4>
+                        </div>
+                    `;
+                    carouselTrack.appendChild(card);
+                    
+                    // --- START: THIS IS THE CRITICAL RENDERING LOGIC ---
+// --- START: THIS IS THE CRITICAL RENDERING LOGIC ---
+                    if (template.preview_url && typeof template.preview_url === 'object') {
+                        const previewCanvasEl = document.getElementById(canvasId);
+                        const previewContainer = previewCanvasEl.parentElement;
+
+                        // The dimensions of your actual page/template.
+                        const PAGE_WIDTH = 768;
+                        const PAGE_HEIGHT = 1024;
+                        
+                        // Use a non-interactive canvas for previews.
+                        const staticCanvas = new fabric.StaticCanvas(canvasId, {
+                            width: previewContainer.clientWidth,
+                            height: previewContainer.clientHeight,
+                        });
+
+                        // Load the preview data from the database.
+                        staticCanvas.loadFromJSON(template.preview_url, () => {
+                            // --- FIX START ---
+
+                            // 1. Define the clipping rectangle (the visible page area).
+                            // This rectangle has the same dimensions as your default page.
+                            const clipRect = new fabric.Rect({
+                                left: 0,
+                                top: 0,
+                                width: PAGE_WIDTH,
+                                height: PAGE_HEIGHT,
+                                absolutePositioned: true // Ensures the clipPath is not affected by canvas transformations.
+                            });
+                            
+                            // 2. Assign the rectangle as the canvas's clipPath.
+                            // Anything outside this path will not be rendered.
+                            staticCanvas.clipPath = clipRect;
+
+                            // 3. Calculate scale based on the PAGE dimensions, not the objects.
+                            // This ensures we are fitting the 768x1024 page into the preview area.
+                            const scaleX = staticCanvas.width / PAGE_WIDTH;
+                            const scaleY = staticCanvas.height / PAGE_HEIGHT;
+                            const scale = Math.min(scaleX, scaleY) * 0.95; // Apply 5% padding.
+
+                            // 4. Center the page (the clipped area) within the canvas view.
+                            const offsetX = (staticCanvas.width - PAGE_WIDTH * scale) / 2;
+                            const offsetY = (staticCanvas.height - PAGE_HEIGHT * scale) / 2;
+
+                            // 5. Apply the transformation to the canvas viewport.
+                            staticCanvas.setViewportTransform([scale, 0, 0, scale, offsetX, offsetY]);
+                            
+                            // --- FIX END ---
+                            
+                            staticCanvas.renderAll();
+                        });
+                    } else {
+                        // Fallback if no preview is available.
+                        const previewContainer = document.getElementById(canvasId).parentElement;
+                        previewContainer.innerHTML = '<span>No preview available</span>';
+                    }
+                    // --- END: CRITICAL RENDERING LOGIC ---
+                });
+
+                // Re-initialize the carousel for the new set of templates
+                carouselTrack.style.display = 'grid';
+                carouselTrack.style.gridTemplateColumns = `repeat(${templates.length}, 1fr)`;
+                carouselTrack.style.gap = '2rem';
+                setupCarousel(templates.length);
+            };
+
+            // --- CAROUSEL LOGIC ---
+            function setupCarousel(itemCount) {
+                if (currentCarouselInterval) clearInterval(currentCarouselInterval);
+                carouselTrack.parentElement.scrollTo({ left: 0, behavior: 'smooth' }); // Reset scroll
+
+                const itemsToShow = 4;
+                if (itemCount <= itemsToShow) return;
+
+                let currentIndex = 0;
+                const maxIndex = itemCount - itemsToShow;
+
+                function nextSlide() {
+                    currentIndex = currentIndex >= maxIndex ? 0 : currentIndex + 1;
+                    const scrollAmount = carouselTrack.children[0].offsetWidth * currentIndex;
+                    carouselTrack.parentElement.scrollTo({ left: scrollAmount, behavior: 'smooth' });
+                }
+                
+                currentCarouselInterval = setInterval(nextSlide, 5000);
+            }
+
+            // --- DATA FETCHING ---
+            async function fetchPublicTemplates() {
+                let { data: public_templates, error } = await supabase
+                    .from('public_templates')
+                    .select('id, title, preview_url, category');
+
+                if (error) {
+                    console.error('Error fetching public templates:', error);
+                    if (carouselTrack) {
+                        carouselTrack.innerHTML = `<p style="width: 100%; text-align: center; color: #ff8a8a;">Could not load templates.</p>`;
+                    }
+                    return;
+                }
+
+                public_templates.forEach(template => {
+                    if (templatesByCategory[template.category]) {
+                        templatesByCategory[template.category].push(template);
+                    }
+                });
+
+                // Initial render with the default active category
+                renderTemplates(templatesByCategory['invoice']);
+            }
+
+            // --- EVENT LISTENERS ---
+            categoryButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    categoryButtons.forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+                    const category = button.dataset.category;
+                    renderTemplates(templatesByCategory[category]);
+                });
+            });
+
+            // For scroll animations
+            const animatedSections = document.querySelectorAll('.animated-section');
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('is-visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.1 });
+            animatedSections.forEach(section => observer.observe(section));
+
+            // --- INITIALIZATION ---
+            await fetchPublicTemplates();
         });
     </script>
 </body>

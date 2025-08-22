@@ -125,3 +125,26 @@ nav a:hover {
     color: var(--accent);
     cursor: pointer;
 }
+
+
+/* Footer */
+footer {
+    text-align: center;
+    padding: 2rem;
+    margin-top: 4rem;
+    background-color: #1a1a1a;
+    color: #888;
+}
+.footer-links a {
+    color: #aaa;
+    text-decoration: none;
+    margin: 0 1rem;
+    transition: color 0.3s ease;
+}
+.footer-links a:hover {
+    color: #4facfe;
+}
+.copyright {
+    margin-top: 1rem;
+    font-size: 0.9rem;
+}

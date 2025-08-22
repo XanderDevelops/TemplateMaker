@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Template Maker</title>
+<title>CSVLink</title>
 <!-- Fabric.js -->
 <script src="https://cdn.jsdelivr.net/npm/fabric@5.3.0/dist/fabric.min.js"></script>
 <!-- SheetJS -->
@@ -284,7 +284,7 @@ nav .nav-links .btn:hover {
 </head>
 <body>
       <nav>
-        <a href="/" class="logo">TemplateMaker</a>
+        <a href="/" class="logo">CSVLink</a>
         <div class="nav-links" id="nav-links">
             <!-- Auth links will be injected here -->
         </div>
@@ -482,7 +482,7 @@ nav .nav-links .btn:hover {
     </div>
     <div class="stack" style="margin-top: 16px; gap: 12px;">
        <div class="stack">
-          <label for="aiApiKey">Google AI Studio API Key</label>
+          <label for="aiApiKey">Google AI Studio API Key <a href="https://aistudio.google.com/apikey" target="_blank">(Get it)</a></label>
           <input type="password" id="aiApiKey" placeholder="Enter your API key">
       </div>
       <div class="stack">
@@ -491,14 +491,13 @@ nav .nav-links .btn:hover {
       </div>
     </div>
     <div class="row" style="margin-top:16px; justify-content:flex-end;">
-      <button id="aiSendBtn" class="btn">
+      <button id="aiSendBtn" class="btn" style="background-color: white; color: black;">
         <span id="aiSendBtnText">Send Request</span>
         <span id="aiLoadingSpinner" style="display: none;"><span>.</span><span>.</span><span>.</span></span>
       </button>
     </div>
   </div>
 </div>
-<!-- At the very end of your <body> tag -->
 
 <script type="module" src="assets/js/supabase-client.js"></script>
 <script type="module" src="assets/js/auth.js"></script>
@@ -572,46 +571,116 @@ async function initializeEditor() {
 function showGuestWarning() {
     saveStatusEl.textContent = "Log in to save your work.";
 }
-
 async function loadTemplateFromDB(templateId) {
     saveStatusEl.textContent = 'Loading...';
-    let { data, error } = await supabase
-        .from('templates')
-        .select('id, title, template_data')
-        .eq('id', templateId)
-        .eq('user_id', currentUser.id)
-        .single();
 
-    if (error) { // If not found in user's templates, check purchased templates
-        const { data: purchasedData, error: purchasedError } = await supabase
-            .from('purchased_templates')
-            .select(`store_templates (id, title, template_data)`)
+    const urlParams = new URLSearchParams(window.location.search);
+    const isPublic = urlParams.get('public') === 'true';
+
+    let data = null;
+
+    // ===================================================================
+    // NEW LOGIC: Handle public templates first.
+    // ===================================================================
+    if (isPublic) {
+        console.log(`Attempting to load PUBLIC template: ${templateId}`);
+
+        if (!currentUser) {
+            console.error("Cannot load public template: User not logged in.");
+            saveStatusEl.textContent = 'Please log in to load this template.';
+            return;
+        }
+
+        // 1️⃣ Check if the user ALREADY has this template in `templates`
+        let { data: existingTemplate, error: existingError } = await supabase
+            .from('templates')
+            .select('id, title, template_data')
             .eq('user_id', currentUser.id)
-            .eq('template_id', templateId)
+            .eq('source_template_id', templateId) // assuming you store where it came from
             .single();
 
-        if (purchasedData && purchasedData.store_templates) {
-            data = purchasedData.store_templates;
-            currentTemplateId = null; // Save will create a copy
+        if (existingTemplate && !existingError) {
+            console.log("User already owns this template. Opening existing copy.");
+            data = existingTemplate;
+            currentTemplateId = data.id; // open normally
         } else {
-             console.error('Error or template not found:', purchasedError || error);
-             saveStatusEl.textContent = 'Could not load template.';
-             return;
+            // 2️⃣ Otherwise, load from `public_templates` as before
+            const { data: publicData, error: publicError } = await supabase
+                .from('public_templates')
+                .select('id, title, template_data')
+                .eq('id', templateId)
+                .single();
+
+            if (publicError) {
+                console.error('Error loading public template:', publicError);
+                saveStatusEl.textContent = 'Could not load the selected template.';
+                return;
+            }
+
+            data = publicData;
+            currentTemplateId = null; // will create a NEW copy on save
+        }
+    } 
+    // ===================================================================
+    // EXISTING LOGIC: If not public, check user's private/purchased templates.
+    // ===================================================================
+    else {
+        if (!currentUser) {
+            console.error("Cannot load private template: User not logged in.");
+            saveStatusEl.textContent = 'Please log in to load your templates.';
+            return;
+        }
+
+        console.log(`Attempting to load USER template: ${templateId}`);
+
+        // 1. Check user's created templates
+        let { data: privateData, error: privateError } = await supabase
+            .from('templates')
+            .select('id, title, template_data')
+            .eq('id', templateId)
+            .eq('user_id', currentUser.id)
+            .single();
+
+        // 2. If not found, check their purchased templates
+        if (privateError) {
+            const { data: purchasedData, error: purchasedError } = await supabase
+                .from('purchased_templates')
+                .select('store_templates (id, title, template_data)')
+                .eq('user_id', currentUser.id)
+                .eq('template_id', templateId)
+                .single();
+
+            if (purchasedData && purchasedData.store_templates) {
+                data = purchasedData.store_templates;
+                currentTemplateId = null; // purchased templates are copied on save
+            } else {
+                console.error('Error or template not found:', purchasedError || privateError);
+                saveStatusEl.textContent = 'Could not load template.';
+                return;
+            }
+        } else {
+            data = privateData; // found in user's private list
         }
     }
-    
+
+    // ===================================================================
+    // COMMON LOGIC: Load into canvas
+    // ===================================================================
     if (data && data.template_data) {
-        currentTemplateId = data.id;
+        if (currentTemplateId !== null) {
+            currentTemplateId = data.id;
+        }
+
         const template = data.template_data;
-        
-        historyLocked = true; // Prevent loading from triggering saves
-        
-        $('#titleInput').value = template.page.title || 'Untitled Template';
+
+        historyLocked = true;
+
+        $('#titleInput').value = data.title || template.page.title || 'Untitled Template';
         $('#pageWidth').value = template.page.width || 768;
         $('#pageHeight').value = template.page.height || 1024;
-        
+
         pageRect.set({ width: parseInt(template.page.width), height: parseInt(template.page.height) });
-        
+
         bindings = new Map(template.bindings || []);
 
         canvas.loadFromJSON(template.canvas, () => {
@@ -620,9 +689,14 @@ async function loadTemplateFromDB(templateId) {
             historyStack = [];
             historyIndex = -1;
             historyLocked = false;
-            saveState(); // Save initial loaded state
-            saveStatusEl.textContent = 'Template loaded.';
+            saveState();
+            saveStatusEl.textContent = currentTemplateId
+                ? 'Template loaded. Your work will be saved to your copy.'
+                : 'Template loaded. Your work will be saved as a new copy.';
         });
+    } else {
+        console.error("Data was fetched, but 'template_data' field is missing or null.", data);
+        saveStatusEl.textContent = 'Template data is corrupted or empty.';
     }
 }
 
@@ -744,8 +818,9 @@ const setPageDimensions = debounce(() => {
     saveState();
 }, 300);
 
-$('#pageWidth').addEventListener('input', setPageDimensions);
-$('#pageHeight').addEventListener('input', setPageDimensions);
+$('#titleInput').addEventListener("input", () => { saveState(); });
+$('#pageWidth').addEventListener('input', setPageDimensions, saveState());
+$('#pageHeight').addEventListener('input', setPageDimensions, saveState());
 
 // ... PASTE THE REST OF YOUR ORIGINAL JAVASCRIPT LOGIC HERE ...
 // (from drawGrid() all the way to the end)
