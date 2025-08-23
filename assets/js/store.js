@@ -122,9 +122,8 @@ categoryList.addEventListener('click', (e) => {
 
 
 // --- [START] REPLACED AND UNIFIED ACTION LOGIC ---
-// Add this event listener to your main template grid container
 templateGrid.addEventListener('click', async (e) => {
-    // --- (1) HANDLE "BUY" BUTTON CLICK ---
+    // Check if the "Buy" button was clicked
     const buyButton = e.target.closest('.buy-template-btn');
     if (buyButton) {
         e.preventDefault();
@@ -135,15 +134,12 @@ templateGrid.addEventListener('click', async (e) => {
 
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) {
-            // Redirect to login if the user is not signed in
             window.location.href = '/login.html';
             return;
         }
 
         const templateId = buyButton.dataset.templateId;
         const templateData = allTemplates.find(t => t.id === templateId);
-
-        // Verify that the template is configured for sale with a Paddle Price ID
         if (!templateData || !templateData.paddle_price_id) {
             alert('This product is not configured for sale.');
             buyButton.disabled = false;
@@ -151,42 +147,13 @@ templateGrid.addEventListener('click', async (e) => {
             return;
         }
 
-        try {
-            // **FIX APPLIED HERE**
-            // Invoke a Supabase Edge Function to create a checkout session with Paddle
-            const { data, error } = await supabase.functions.invoke('create-paddle-checkout', {
-                body: {
-                    priceId: templateData.paddle_price_id,
-                    email: user.email // Pass the user's email here
-                }
-            });
-
-            if (error) {
-                // If the function call itself fails
-                throw new Error(error.message);
-            }
-
-            // The function should return a checkout URL from the Paddle API
-            if (data && data.checkoutUrl) {
-                // Redirect the user to the Paddle checkout page
-                window.location.href = data.checkoutUrl;
-            } else {
-                // If the function succeeded but didn't return a URL
-                throw new Error('Could not retrieve a checkout URL.');
-            }
-
-        } catch (error) {
-            console.error('Error creating Paddle checkout:', error);
-            alert(`An error occurred while creating the payment page: ${error.message}`);
-            // Re-enable the button so the user can try again
-            buyButton.disabled = false;
-            buyButton.textContent = `$${templateData?.price || '0'}`;
-        }
+        const checkoutUrl = `https://www.csvlink.app`;
+        window.location.href = checkoutUrl;
 
         return; // Stop further execution
     }
 
-    // --- (2) HANDLE "USE" BUTTON CLICK (No changes needed here) ---
+    // Check if the "Use" button was clicked
     const useButton = e.target.closest('.use-template-btn');
     if (useButton) {
         e.preventDefault();
@@ -233,7 +200,7 @@ templateGrid.addEventListener('click', async (e) => {
         return; // Stop further execution
     }
 
-    // --- (3) HANDLE MODAL PREVIEW (No changes needed here) ---
+    // If no button was clicked, assume the card was clicked to open the modal
     const card = e.target.closest('.template-card');
     if (card) {
         const clickedId = card.dataset.templateId;
