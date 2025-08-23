@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let allTemplates = [];
     let purchasedTemplateIds = new Set();
     let modalCanvas;
+    let activePurchaseDetails = null; 
 
     // --- Initialize Paddle.js ---
     // Now this code will run only after the Paddle script is available.
@@ -21,14 +22,19 @@ document.addEventListener('DOMContentLoaded', () => {
         Paddle.Environment.set('sandbox');
         Paddle.Initialize({
             token: PADDLE_CLIENT_TOKEN,
-            eventCallback: function(data) {
+            eventCallback: async function(data) { // Make this function async
                 console.log('Paddle event:', data);
                 if (data.name === 'checkout.completed') {
                     console.log('Transaction completed:', data.data);
-                    // Reload the store data to reflect the new purchase
-                    loadStoreData(); 
-                    // Optional: Redirect to a success page
-                    // window.location.href = `/success.html?transaction_id=${data.data.id}`;
+                    
+                    // If we have details from an active purchase, grant access
+                    if (activePurchaseDetails) {
+                        await grantTemplateAccess(activePurchaseDetails.userId, activePurchaseDetails.templateId);
+                        activePurchaseDetails = null; // Clear it out after use
+                    }
+                    
+                    // Now reload the store data. It will find the new purchase.
+                    await loadStoreData(); 
                 }
             }
         });
@@ -36,6 +42,23 @@ document.addEventListener('DOMContentLoaded', () => {
         console.error("Failed to initialize Paddle. Make sure the Paddle.js script is included in your HTML.", e);
         alert("There was a problem setting up the payment system.");
     }
+
+    const grantTemplateAccess = async (userId, templateId) => {
+        try {
+            const { error } = await supabase
+                .from('purchased_templates')
+                .insert({ user_id: userId, template_id: templateId });
+
+            if (error) {
+                throw error;
+            }
+            console.log(`Successfully granted access for user ${userId} to template ${templateId}`);
+        } catch (error) {
+            console.error('Error granting template access:', error);
+            // Optionally alert the user that there was an issue and to contact support
+            alert('Your payment was successful, but there was an error granting access automatically. Please contact support.');
+        }
+    };
 
     // --- Render Templates in the Grid ---
     const renderTemplates = (templatesToRender) => {
@@ -169,6 +192,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             try {
+                activePurchaseDetails = {
+                    userId: user.id,
+                    templateId: templateId
+                };
+
                 const { data, error } = await supabase.functions.invoke('paddle-wrapper', {
                     body: { price_id: templateData.paddle_price_id, user_email: user.email, template_id: templateId, user_id: user.id },
                 });
@@ -198,10 +226,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 buyButton.textContent = `$${templateData.price}`;
 
             } catch (error) {
+                // --- CLEAR THE DETAILS IF THE PROCESS FAILS ---
+                activePurchaseDetails = null; 
                 alert(`Error: ${error.message}`);
                 console.error(error);
                 buyButton.disabled = false;
-                buyButton.textContent = `$${templateData.price}`;
+                buyButton.textContent = `${templateData.price}`;
             }
             return;
         }
