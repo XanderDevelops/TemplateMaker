@@ -1,8 +1,5 @@
 import { supabase } from './supabase-client.js';
 
-// --- [START] Main execution logic wrapped in an event listener ---
-// This ensures that the entire page, including the external Paddle.js script,
-// has loaded before we try to use the Paddle object.
 document.addEventListener('DOMContentLoaded', () => {
 
     // --- Get references to DOM elements ---
