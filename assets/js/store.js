@@ -168,33 +168,30 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-        try {
-            console.log('CLIENT-SIDE CHECK: About to send this data to the server:', {
-                price_id: templateData.paddle_price_id,
-                user_email: user.email,
-                template_id: templateId,
-                user_id: user.id
-            });
-            
-            const { data, error } = await supabase.functions.invoke('paddle-wrapper', {
-                body: {
-                    price_id: templateData.paddle_price_id,
-                    user_email: user.email,
-                    template_id: templateId,
-                    user_id: user.id
-                },
-            });
+            try {
+                const { data, error } = await supabase.functions.invoke('paddle-wrapper', {
+                    body: { price_id: templateData.paddle_price_id, user_email: user.email, template_id: templateId, user_id: user.id },
+                });
 
                 if (error) throw error;
-                if (!data?.url) throw new Error('No checkout URL returned');
+                if (!data?.url) throw new Error('No checkout URL returned from the server.');
+
+                // ===================================================================
+                // === THIS IS THE FINAL FIX FOR URL PARSING ===
+                // The server is returning a redirect URL like:
+                // "https://.../store.html?_ptxn=txn_123"
+                // We need to parse the '_ptxn' query parameter.
 
                 const checkoutUrl = new URL(data.url);
-                const transactionId = checkoutUrl.searchParams.get('txn_id');
+                const transactionId = checkoutUrl.searchParams.get('_ptxn'); 
 
-                if (!transactionId) {
+                if (!transactionId || !transactionId.startsWith('txn_')) {
+                    // This is the error message you were seeing.
                     throw new Error('Transaction ID not found in the URL from the server.');
                 }
+                // ===================================================================
 
+                // This will now work correctly
                 Paddle.Checkout.open({ transactionId: transactionId });
                 
                 buyButton.disabled = false;
