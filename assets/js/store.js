@@ -122,8 +122,9 @@ categoryList.addEventListener('click', (e) => {
 
 
 // --- [START] REPLACED AND UNIFIED ACTION LOGIC ---
+// Add this event listener to your main template grid container
 templateGrid.addEventListener('click', async (e) => {
-    // Check if the "Buy" button was clicked
+    // --- (1) HANDLE "BUY" BUTTON CLICK ---
     const buyButton = e.target.closest('.buy-template-btn');
     if (buyButton) {
         e.preventDefault();
@@ -134,49 +135,58 @@ templateGrid.addEventListener('click', async (e) => {
 
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) {
+            // Redirect to login if the user is not signed in
             window.location.href = '/login.html';
             return;
         }
 
         const templateId = buyButton.dataset.templateId;
         const templateData = allTemplates.find(t => t.id === templateId);
+
+        // Verify that the template is configured for sale with a Paddle Price ID
         if (!templateData || !templateData.paddle_price_id) {
             alert('This product is not configured for sale.');
+            buyButton.disabled = false;
+            buyButton.textContent = `$${templateData?.price || '0'}`;
             return;
         }
 
         try {
-            // Call the updated Edge Function with all required data
-            const { data, error } = await supabase.functions.invoke('paddle-wrapper', {
+            // **FIX APPLIED HERE**
+            // Invoke a Supabase Edge Function to create a checkout session with Paddle
+            const { data, error } = await supabase.functions.invoke('create-paddle-checkout', {
                 body: {
-                    price_id: templateData.paddle_price_id,
-                    user_email: user.email,
-                    template_id: templateId,
-                    user_id: user.id
-                },
+                    priceId: templateData.paddle_price_id,
+                    email: user.email // Pass the user's email here
+                }
             });
 
-            if (error) throw error;
+            if (error) {
+                // If the function call itself fails
+                throw new Error(error.message);
+            }
 
-            // Redirect to Paddle Checkout
-            Paddle.Checkout.open({
-                transactionId: data.checkoutUrl.split('/').pop(),
-                settings: {
-                    // Redirect to the purchased tab after success for better UX
-                    successUrl: `${window.location.origin}/dashboard.html?tab=purchased`,
-                },
-            });
+            // The function should return a checkout URL from the Paddle API
+            if (data && data.checkoutUrl) {
+                // Redirect the user to the Paddle checkout page
+                window.location.href = data.checkoutUrl;
+            } else {
+                // If the function succeeded but didn't return a URL
+                throw new Error('Could not retrieve a checkout URL.');
+            }
 
         } catch (error) {
-            alert(`Error: ${error.message}`);
-            console.error(error);
+            console.error('Error creating Paddle checkout:', error);
+            alert(`An error occurred while creating the payment page: ${error.message}`);
+            // Re-enable the button so the user can try again
             buyButton.disabled = false;
-            buyButton.textContent = `$${templateData.price}`;
+            buyButton.textContent = `$${templateData?.price || '0'}`;
         }
+
         return; // Stop further execution
     }
 
-    // Check if the "Use" button was clicked
+    // --- (2) HANDLE "USE" BUTTON CLICK (No changes needed here) ---
     const useButton = e.target.closest('.use-template-btn');
     if (useButton) {
         e.preventDefault();
@@ -192,30 +202,38 @@ templateGrid.addEventListener('click', async (e) => {
             return;
         }
 
-        const { data: storeTemplate, error } = await supabase.from('store_templates').select('title, template_data').eq('id', templateId).single();
+        const { data: storeTemplate, error } = await supabase
+            .from('store_templates')
+            .select('title, template_data')
+            .eq('id', templateId)
+            .single();
         if (error) {
             alert('Error fetching template details.');
             console.error(error);
             return;
         }
 
-        const { data: newTemplate, error: insertError } = await supabase.from('templates').insert({
-            user_id: user.id,
-            title: storeTemplate.title,
-            template_data: storeTemplate.template_data,
-            preview_url: storeTemplate.template_data.canvas,
-        }).select('id').single();
+        const { data: newTemplate, error: insertError } = await supabase
+            .from('templates')
+            .insert({
+                user_id: user.id,
+                title: storeTemplate.title,
+                template_data: storeTemplate.template_data,
+                preview_url: storeTemplate.template_data.canvas,
+            })
+            .select('id')
+            .single();
 
         if (insertError) {
-             alert('Could not create your copy of the template.');
-             console.error(insertError);
+            alert('Could not create your copy of the template.');
+            console.error(insertError);
         } else {
             window.location.href = `/tool.html?id=${newTemplate.id}`;
         }
         return; // Stop further execution
     }
 
-    // If no button was clicked, assume the card was clicked to open the modal
+    // --- (3) HANDLE MODAL PREVIEW (No changes needed here) ---
     const card = e.target.closest('.template-card');
     if (card) {
         const clickedId = card.dataset.templateId;
@@ -224,7 +242,6 @@ templateGrid.addEventListener('click', async (e) => {
     }
 });
 // --- [END] REPLACED AND UNIFIED ACTION LOGIC ---
-
 
 // --- Initial Data Loading ---
 // This function remains the same.
