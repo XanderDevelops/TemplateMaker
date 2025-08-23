@@ -13,7 +13,6 @@
             align-items: center;
             margin-bottom: 2rem;
         }
-        /* -- NEW STYLE -- */
         .header-actions {
             display: flex;
             gap: 1rem;
@@ -44,86 +43,102 @@
             overflow: hidden;
             display: flex;
             flex-direction: column;
-            position: relative; /* Required for the clickable overlay */
+            position: relative;
             cursor: pointer;
-            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out, border-color 0.2s ease-in-out;
         }
         .template-card .preview {
             height: 180px;
             background-color: #2a2a2a;
-            display: flex; /* keep flex for centering */
+            display: flex;
             align-items: center;
             justify-content: center;
-            position: relative; /* Needed for canvas positioning */
-            overflow: hidden; /* Hide parts of the canvas that are too big */
+            position: relative;
+            overflow: hidden;
         }
         .template-card .info {
             padding: 1rem;
             flex-grow: 1;
-        }.template-card:hover {
+        }
+        .template-card:hover {
             transform: translateY(-5px);
             box-shadow: 0 4px 12px rgba(0,0,0,.3);
         }
 
-        /* --- NEW STYLES for SELECTION --- */
+        /* --- STYLES for SELECTION --- */
 
-        .template-card .selection-checkbox {
+        .template-card.selected {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 1px var(--accent);
+        }
+        
+        /* --- NEW: Selection Indicator (the little square) --- */
+        .template-card .selection-indicator {
             position: absolute;
             top: 12px;
             left: 12px;
             z-index: 3;
             width: 15px;
             height: 15px;
-            cursor: pointer;
-            opacity: 70%;;
-        }
-        
-        .template-card.selected {
-            border-color: var(--accent);
-            box-shadow: 0 0 0 1px var(--accent);
+            border: 1px solid rgba(255,255,255,0.7);
+            background-color: rgba(0,0,0,0.4);
+            border-radius: 5px;
+            display: none; /* Hide by default */
+            pointer-events: none; /* Make sure it doesn't interfere with clicks */
+            transition: background-color 0.2s, border-color 0.2s;
         }
 
-        /* Create a pseudo-element to act as the main link */
+        /* Show the indicator when selection mode is active */
+        .template-grid.selection-active .template-card .selection-indicator {
+            display: block;
+        }
+
+        /* Style for the indicator when the card is selected */
+        .template-card.selected .selection-indicator {
+            background-color: var(--accent);
+            border-color: var(--accent);
+        }
+
+        /* The checkmark, created with a pseudo-element */
+        .template-card.selected .selection-indicator::after {
+            content: '';
+            position: absolute;
+            left: 4px;
+            top: 0px;
+            width: 5px;
+            height: 10px;
+            border: solid rgb(0, 0, 0);
+            border-width: 0 2px 2px 0;
+            transform: rotate(45deg);
+        }
+
+        /* In selection mode, disable the link and change cursor */
+        .template-grid.selection-active .template-card .card-link {
+            pointer-events: none;
+        }
+        .template-grid.selection-active .template-card {
+            cursor: pointer;
+        }
+        
         .template-card .card-link {
             position: absolute;
             top: 0;
             left: 0;
             right: 0;
             bottom: 0;
-            z-index: 1; /* Sits on top of content, but below buttons */
+            z-index: 1;
         }
-
-        /* A container for the buttons to push them to the right */
-        .template-card .actions {
-            padding: 0 1rem 1rem;
-            display: flex; /* Use flexbox for alignment */
-            align-items: center; /* Vertically align items */
-        }
-
-        .template-card .button-group {
-            margin-left: auto; /* This is the key to push buttons to the right */
-            display: flex;
-            gap: 8px; /* Space between the buttons */
-            align-items: center;
-        }
-
-        /* ---- ADD THIS NEW SECTION ---- */
-
-        /* A container for the buttons to push them to the right */
         .template-card .actions {
             padding: 0 1rem 1rem;
             display: flex;
             align-items: center;
         }
-
         .template-card .button-group {
-            margin-left: auto; /* Pushes buttons to the right */
+            margin-left: auto;
             display: flex;
             gap: 8px;
             align-items: center;
         }
-
-        /* General style for BOTH icon buttons */
         .template-card .icon-btn {
             background: transparent;
             border: none;
@@ -137,37 +152,28 @@
             z-index: 2;
             transition: background-color 0.2s;
         }
-
         .template-card .icon-btn svg {
             width: 18px;
             height: 18px;
             transition: stroke 0.2s;
         }
-
-        /* --- Specific Button Styles --- */
-
-        /* Duplicate Button */
         .template-card .duplicate-btn svg {
-            stroke: var(--fg); /* CHANGED: Icon is white by default */
+            stroke: var(--fg);
         }
         .template-card .duplicate-btn:hover {
             background-color: var(--panel-2);
         }         
         .template-card .duplicate-btn:hover svg {
-            stroke: var(--fg); /* CHANGED: Icon is white by default */
             stroke: #b0b0b0;
         }
-
-        /* Delete Button */
         .template-card .delete-btn svg {
-            stroke: #e53e3e; /* Icon is RED by default */
+            stroke: #e53e3e;
         }
         .template-card .delete-btn:hover {
-            /* REMOVED: No red circle on hover */
-            background-color: var(--panel-2); /* Use a standard dark panel color for hover background */
+            background-color: var(--panel-2);
         }
         .template-card .delete-btn:hover svg {
-            stroke: #b0b0b0; /* CHANGED: Icon becomes white on hover */
+            stroke: #b0b0b0;
         }
     </style>
 </head>
@@ -180,8 +186,9 @@
     <main class="container">
         <div class="dashboard-header">
             <h1>My Dashboard</h1>
-            <!-- MODIFIED THIS SECTION -->
             <div class="header-actions">
+                <button id="select-btn" class="btn ghost">Select</button>
+                <button id="cancel-selection-btn" class="btn ghost" style="display: none;">Cancel</button>
                 <button id="delete-selected-btn" class="btn" style="display: none; color: #fff; background-color: #e53e3e;">Delete Selected</button>
                 <a href="/tool.html" class="btn">Create New Template</a>
             </div>
@@ -193,7 +200,6 @@
         </div>
 
         <div id="template-grid" class="template-grid">
-            <!-- Templates will be loaded here -->
             <p>Loading templates...</p>
         </div>
     </main>
@@ -202,15 +208,15 @@
     <script type="module" src="assets/js/dashboard.js"></script>
 </body>
 
-    <footer>
-        <div class="footer-links">
-            <a href="terms.html">Terms of Service</a>
-            <a href="privacy.html">Privacy Policy</a>
-            <a href="refunds.html">Refund Policy</a>
-        </div>
-        <div class="copyright">
-            <p>&copy; 2025 CSVLink. All Rights Reserved.</p>
-        </div>
-    </footer>
+<footer>
+    <div class="footer-links">
+        <a href="terms.html">Terms of Service</a>
+        <a href="privacy.html">Privacy Policy</a>
+        <a href="refunds.html">Refund Policy</a>
+    </div>
+    <div class="copyright">
+        <p>&copy; 2025 CSVLink. All Rights Reserved.</p>
+    </div>
+</footer>
 
 </html>

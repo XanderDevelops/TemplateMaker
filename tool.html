@@ -579,9 +579,6 @@ async function loadTemplateFromDB(templateId) {
 
     let data = null;
 
-    // ===================================================================
-    // NEW LOGIC: Handle public templates first.
-    // ===================================================================
     if (isPublic) {
         console.log(`Attempting to load PUBLIC template: ${templateId}`);
 
@@ -591,20 +588,28 @@ async function loadTemplateFromDB(templateId) {
             return;
         }
 
-        // 1️⃣ Check if the user ALREADY has this template in `templates`
+        // ===================================================================
+        // BUG ANALYSIS: The following query is likely the source of the issue.
+        // It is not finding the user's existing copy, which causes the 'else'
+        // block to execute every time.
+        //
+        // TO FIX:
+        // 1. Ensure your 'templates' table has a 'source_template_id' column.
+        // 2. Ensure your saving logic populates this column with the public
+        //    template's ID when a user saves a copy for the first time.
+        // ===================================================================
         let { data: existingTemplate, error: existingError } = await supabase
             .from('templates')
             .select('id, title, template_data')
             .eq('user_id', currentUser.id)
-            .eq('source_template_id', templateId) // assuming you store where it came from
+            .eq('source_template_id', templateId)
             .single();
 
         if (existingTemplate && !existingError) {
             console.log("User already owns this template. Opening existing copy.");
             data = existingTemplate;
-            currentTemplateId = data.id; // open normally
+            currentTemplateId = data.id; // Correctly load the existing copy
         } else {
-            // 2️⃣ Otherwise, load from `public_templates` as before
             const { data: publicData, error: publicError } = await supabase
                 .from('public_templates')
                 .select('id, title, template_data')
@@ -618,13 +623,9 @@ async function loadTemplateFromDB(templateId) {
             }
 
             data = publicData;
-            currentTemplateId = null; // will create a NEW copy on save
+            currentTemplateId = null; // Set to null to create a NEW copy on the next save
         }
-    } 
-    // ===================================================================
-    // EXISTING LOGIC: If not public, check user's private/purchased templates.
-    // ===================================================================
-    else {
+    } else { // Handle private or purchased templates
         if (!currentUser) {
             console.error("Cannot load private template: User not logged in.");
             saveStatusEl.textContent = 'Please log in to load your templates.';
@@ -633,7 +634,6 @@ async function loadTemplateFromDB(templateId) {
 
         console.log(`Attempting to load USER template: ${templateId}`);
 
-        // 1. Check user's created templates
         let { data: privateData, error: privateError } = await supabase
             .from('templates')
             .select('id, title, template_data')
@@ -641,7 +641,6 @@ async function loadTemplateFromDB(templateId) {
             .eq('user_id', currentUser.id)
             .single();
 
-        // 2. If not found, check their purchased templates
         if (privateError) {
             const { data: purchasedData, error: purchasedError } = await supabase
                 .from('purchased_templates')
@@ -652,27 +651,22 @@ async function loadTemplateFromDB(templateId) {
 
             if (purchasedData && purchasedData.store_templates) {
                 data = purchasedData.store_templates;
-                currentTemplateId = null; // purchased templates are copied on save
+                currentTemplateId = null; // Purchased templates are copied on first load/save
             } else {
                 console.error('Error or template not found:', purchasedError || privateError);
                 saveStatusEl.textContent = 'Could not load template.';
                 return;
             }
         } else {
-            data = privateData; // found in user's private list
+            data = privateData;
+            // BUG FIX: Set the currentTemplateId when loading a user's own private template.
+            currentTemplateId = data.id;
         }
     }
 
-    // ===================================================================
-    // COMMON LOGIC: Load into canvas
-    // ===================================================================
+    // Common logic to load the template data into the canvas
     if (data && data.template_data) {
-        if (currentTemplateId !== null) {
-            currentTemplateId = data.id;
-        }
-
         const template = data.template_data;
-
         historyLocked = true;
 
         $('#titleInput').value = data.title || template.page.title || 'Untitled Template';
@@ -680,7 +674,6 @@ async function loadTemplateFromDB(templateId) {
         $('#pageHeight').value = template.page.height || 1024;
 
         pageRect.set({ width: parseInt(template.page.width), height: parseInt(template.page.height) });
-
         bindings = new Map(template.bindings || []);
 
         canvas.loadFromJSON(template.canvas, () => {
@@ -1492,209 +1485,191 @@ aiSendBtn.addEventListener('click', async () => {
     aiLoadingSpinner.style.display = 'inline-flex';
 
     const currentCanvasJson = JSON.stringify(canvas.toJSON(['oid', 'isTable', 'rows', 'cols']), null, 2);
-    const templateStructure = `
+    const fullPrompt = `
+# AI Template Generation Instructions
+
+## 1. Core Principles
+
+You are an AI assistant for a web-based template editor. Your primary task is to create templates based on user requests. Adhere to the following principles to ensure a high-quality outcome:
+
+*   **Readability and Layout**: Ensure that no objects improperly overlap. All text and important elements must be clearly readable and accessible. Arrange elements in a professional and aesthetically pleasing manner.
+*   **Creative Freedom**: While adhering to the user's request, allow for creative interpretations to enhance the design. This includes using appropriate decorations, layouts, and color schemes that align with the context.
+*   **Professional Outcome**: The final template should look polished and professional. Pay attention to alignment, spacing, and font choices.
+
+## 2. Dynamic Properties
+
+Adapt the template's properties based on the user's input and the context of the request:
+
+*   **Page Dimensions**: Adjust the page.width and page.height to a suitable size that aligns with the context of the user's request (e.g., a business card template will have different dimensions than a poster).
+*   **File Name**: Generate a descriptive and relevant page.title based on the user's prompt.
+*   **Background Color**: Set an appropriate canvas.background color that complements the template's purpose. You can also use a full-page rectangle as the background layer.
+*   **Decorative Shapes**: Use shapes like rectangles, circles, and lines to add decorative elements, borders, or to structure the layout.
+
+## 3. Data Bindings
+
+If the user's prompt mentions specific column names or fields, you must set up bindings. The bindings array connects canvas objects to data columns.
+
+The structure for a binding is: ["object_id", [{"column": "column_name", "property": "property_name"}]]
+
+*   object_id: The oid of the canvas object to be bound.
+*   column_name: The name of the data column specified by the user in their prompt.
+*   property_name: The object property to be updated by the data from the column.
+
+Here are the available properties for binding:
+
+*   **Text Properties**:
+    *   Text Content
+    *   Font Family
+    *   Font Size
+    *   Fill Color
+    *   Opacity
+    *   Stroke Color
+    *   Stroke Width
+*   **Shape Properties**:
+    *   Fill
+    *   Fill Color
+    *   Opacity
+    *   Stroke Color
+    *   Stroke Width
+
+**Example:**
+
+If the user says, "The main text should come from the 'product_description' column," you would identify the oid of the main text object (e.g., "analysis_text") and create the following binding:
+
+"bindings": [
+  ["analysis_text", [{"column": "product_description", "property": "Text Content"}]]
+]
+4. JSON Structure and Object Definitions
+You MUST respond ONLY with the updated Fabric.js JSON object. Do not add any explanatory text or markdown formatting.
+4.1. Root Structure
+All templates must adhere to the following root structure:
+
 {
-  "canvas": {
-    "version": "5.3.0",
-    "objects": [
-      {
-        "type": "rect",
-        "version": "5.3.0",
-        "originX": "left",
-        "originY": "top",
-        "left": 0,
-        "top": 0,
-        "width": "[USER_PAGE_WIDTH]",
-        "height": "[USER_PAGE_HEIGHT]",
-        "fill": "[PAGE_BACKGROUND_COLOR]",
-        "stroke": "transparent",
-        "strokeWidth": 0,
-        "scaleX": 1,
-        "scaleY": 1,
-        "angle": 0,
-        "flipX": false,
-        "flipY": false,
-        "opacity": 1,
-        "visible": true,
-        "oid": "pageRect"
-      },
-      {
-        "type": "textbox",
-        "version": "5.3.0",
-        "originX": "center",
-        "originY": "top",
-        "left": "[USER_PAGE_WIDTH / 2]",
-        "top": 80,
-        "width": 600,
-        "height": 56.5,
-        "fill": "#111111",
-        "text": "Main Title Placeholder",
-        "fontSize": 50,
-        "fontFamily": "Helvetica",
-        "fontWeight": "bold",
-        "textAlign": "center",
-        "styles": [],
-        "oid": "main_title"
-      },
-      {
-        "type": "textbox",
-        "version": "5.3.0",
-        "originX": "center",
-        "originY": "top",
-        "left": "[USER_PAGE_WIDTH / 2]",
-        "top": 150,
-        "width": 500,
-        "height": 27.12,
-        "fill": "#555555",
-        "text": "Subtitle or a brief description of the document",
-        "fontSize": 24,
-        "fontFamily": "Helvetica",
-        "textAlign": "center",
-        "styles": [],
-        "oid": "subtitle"
-      },
-      {
-        "type": "rect",
-        "version": "5.3.0",
-        "originX": "left",
-        "originY": "top",
-        "left": 60,
-        "top": 220,
-        "width": 150,
-        "height": 150,
-        "fill": "#e0e0e0",
-        "stroke": "#cccccc",
-        "strokeWidth": 1,
-        "rx": 8,
-        "ry": 8,
-        "oid": "image_placeholder"
-      },
-       {
-        "type": "textbox",
-        "version": "5.3.0",
-        "originX": "left",
-        "originY": "top",
-        "left": 230,
-        "top": 220,
-        "width": 450,
-        "height": 169.5,
-        "fill": "#333333",
-        "text": "This is a primary content block for introductory paragraphs, mission statements, or detailed descriptions. You can replace this text with any content relevant to your document, whether it's for a business proposal, a project summary, or a creative portfolio.",
-        "fontSize": 18,
-        "fontFamily": "Arial",
-        "textAlign": "left",
-        "lineHeight": 1.5,
-        "styles": [],
-        "oid": "body_text"
-      },
-      {
-        "type": "line",
-        "version": "5.3.0",
-        "originX": "center",
-        "originY": "center",
-        "left": "[USER_PAGE_WIDTH / 2]",
-        "top": 450,
-        "width": "[USER_PAGE_WIDTH - 120]",
-        "height": 2,
-        "stroke": "#dddddd",
-        "strokeWidth": 2,
-        "x1": "-[USER_PAGE_WIDTH / 2 - 60]",
-        "y1": 0,
-        "x2": "[USER_PAGE_WIDTH / 2 - 60]",
-        "y2": 0,
-        "oid": "divider_line"
-      },
-      {
-        "type": "textbox",
-        "version": "5.3.0",
-        "originX": "left",
-        "originY": "top",
-        "left": 60,
-        "top": 480,
-        "width": 400,
-        "height": 22.6,
-        "fill": "#111111",
-        "text": "Item / Service / Feature",
-        "fontSize": 20,
-        "fontFamily": "Helvetica",
-        "fontWeight": "bold",
-        "textAlign": "left",
-        "styles": [],
-        "oid": "column_header_1"
-      },
-      {
-        "type": "textbox",
-        "version": "5.3.0",
-        "originX": "right",
-        "originY": "top",
-        "left": "[USER_PAGE_WIDTH - 60]",
-        "top": 480,
-        "width": 200,
-        "height": 22.6,
-        "fill": "#111111",
-        "text": "Value / Amount",
-        "fontSize": 20,
-        "fontFamily": "Helvetica",
-        "fontWeight": "bold",
-        "textAlign": "right",
-        "styles": [],
-        "oid": "column_header_2"
-      },
-      {
-        "type": "textbox",
-        "version": "5.3.0",
-        "originX": "center",
-        "originY": "bottom",
-        "left": "[USER_PAGE_WIDTH / 2]",
-        "top": "[USER_PAGE_HEIGHT - 60]",
-        "width": 600,
-        "height": 45.2,
-        "fill": "#666666",
-        "text": "[Your Company Name] | [Contact Information] | [Website]\nA short tagline or closing statement can go here.",
-        "fontSize": 16,
-        "fontFamily": "Arial",
-        "textAlign": "center",
-        "styles": [],
-        "oid": "footer_text"
-      }
-    ],
-    "background": "transparent"
-  },
   "page": {
-    "title": "Multi-Purpose_Template",
+    "title": "[GENERATE A CONTEXTUAL TITLE]",
     "width": "[USER_PAGE_WIDTH]",
     "height": "[USER_PAGE_HEIGHT]"
   },
-  "bindings": [
-    ["pageRect", []],
-    ["main_title", []],
-    ["subtitle", []],
-    ["image_placeholder", []],
-    ["body_text", []],
-    ["divider_line", []],
-    ["column_header_1", []],
-    ["column_header_2", []],
-    ["footer_text", []]
-  ]
-}`;
-    const fullPrompt = [
-      "You are an AI assistant for a web-based template editor.",
-      "Your task is to modify a canvas layout based on user requests.",
-      "The canvas is represented by a Fabric.js JSON object.",
-      "You will receive the current state of the canvas and a user's request for changes.",
-      "You MUST respond ONLY with the updated Fabric.js JSON object that reflects the requested changes.",
-      "Do not add any explanatory text, markdown formatting, code block fences (```json), or anything else outside of the pure JSON structure.",
-      "",
-      "This is the general JSON structure to follow. Ensure each title, subtitle, and section is a separate text box, for example if Title: This is title, Title and This is title are two separate text boxes.",
-      "Using the following template, create a JSON file that aligns with the user requests. ONLY REPLY WITH THE JSON.",
-      templateStructure,
-      "",
-      "Here is the current canvas state:",
-      currentCanvasJson,
-      "",
-      `Based on the user's following request, modify the current canvas state above and provide the complete, updated JSON object as your response.`,
-      `User Request: "${userPrompt}"`
-    ].join("\n");
+  "canvas": {
+    "version": "5.3.0",
+    "objects": [],
+    "background": "transparent"
+  },
+  "bindings": []
+}
+The first object in canvas.objects MUST be the page rectangle with the oid "pageRect". This object defines the page size and background color.
+4.2. Common Object Properties
+Every object in the canvas.objects array MUST include these properties:
+{
+  "type": "[rect|textbox|line|circle|image|path|group]",
+  "version": "5.3.0",
+  "originX": "left",
+  "originY": "top",
+  "left": 0,
+  "top": 0,
+  "width": 0,
+  "height": 0,
+  "fill": "#000000",
+  "stroke": null,
+  "strokeWidth": 1,
+  "strokeDashArray": null,
+  "strokeLineCap": "butt",
+  "strokeDashOffset": 0,
+  "strokeLineJoin": "miter",
+  "strokeUniform": false,
+  "strokeMiterLimit": 4,
+  "scaleX": 1,
+  "scaleY": 1,
+  "angle": 0,
+  "flipX": false,
+  "flipY": false,
+  "opacity": 1,
+  "shadow": null,
+  "visible": true,
+  "backgroundColor": "",
+  "fillRule": "nonzero",
+  "paintFirst": "fill",
+  "globalCompositeOperation": "source-over",
+  "skewX": 0,
+  "skewY": 0,
+  "oid": "unique_id"
+}
+4.3. Object Type Examples
+Rectangle (rect)
+{
+  "type": "rect",
+  "oid": "rect",
+  "left": 0,
+  "top": 0,
+  "width": 768,
+  "height": 1024,
+  "fill": "#f8f8f8",
+  "stroke": "transparent",
+  "strokeWidth": 0
+}
+Textbox (textbox)
+{
+  "type": "textbox",
+  "oid": "graph_title",
+  "left": 384,
+  "top": 80,
+  "width": 600,
+  "height": 102.51,
+  "text": "Global Car Production Over Time",
+  "fontSize": 42,
+  "fontWeight": "bold",
+  "fontFamily": "Roboto Slab",
+  "fill": "#2c3e50",
+  "textAlign": "center",
+  "originX": "center",
+  "originY": "top",
+  "styles": []
+}
+Line (line)
+{
+  "type": "line",
+  "oid": "x_axis",
+  "left": 120,
+  "top": 650,
+  "width": 500,
+  "height": 0,
+  "stroke": "#bdc3c7",
+  "strokeWidth": 2,
+  "x1": -250,
+  "y1": 0,
+  "x2": 250,
+  "y2": 0
+}
+5. Final Output Checklist
+Before generating the final JSON, ensure the following:
+The entire response is a single, valid JSON object.
+The page object has a relevant title, width, and height.
+All objects in the canvas.objects array have unique oids.
+All required properties for each object type are present.
+Text objects have an empty styles array ([]).
+The bindings array is correctly populated if the user specified column names.
+The overall design is professional and adheres to the user's request.
+
+User Request: "${userPrompt}""
+`;
+    // const fullPrompt = [
+    //   "You are an AI assistant for a web-based template editor.",
+    //   "Your task is to modify a canvas layout based on user requests.",
+    //   "The canvas is represented by a Fabric.js JSON object.",
+    //   "You will receive the current state of the canvas and a user's request for changes.",
+    //   "You MUST respond ONLY with the updated Fabric.js JSON object that reflects the requested changes.",
+    //   "Do not add any explanatory text, markdown formatting, code block fences (```json), or anything else outside of the pure JSON structure.",
+    //   "",
+    //   "This is the general JSON structure to follow. Ensure each title, subtitle, and section is a separate text box, for example if Title: This is title, Title and This is title are two separate text boxes.",
+    //   "Using the following template, create a JSON file that aligns with the user requests. ONLY REPLY WITH THE JSON.",
+    //   templateStructure,
+    //   "",
+    //   "Here is the current canvas state:",
+    //   currentCanvasJson,
+    //   "",
+    //   `Based on the user's following request, modify the current canvas state above and provide the complete, updated JSON object as your response.`,
+    //   `User Request: "${userPrompt}"`
+    // ].join("\n");
 
 try {
     const response = await fetch(

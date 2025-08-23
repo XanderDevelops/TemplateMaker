@@ -3,33 +3,48 @@ import { supabase } from './supabase-client.js';
 const templateGrid = document.getElementById('template-grid');
 const tabs = document.querySelectorAll('.tab');
 const deleteSelectedBtn = document.getElementById('delete-selected-btn');
+const selectBtn = document.getElementById('select-btn');
+const cancelSelectionBtn = document.getElementById('cancel-selection-btn');
+
 let currentTab = 'created';
 let selectedTemplates = new Set();
+let selectionMode = false;
 
+const enterSelectionMode = () => {
+    selectionMode = true;
+    templateGrid.classList.add('selection-active');
+    selectBtn.style.display = 'none';
+    cancelSelectionBtn.style.display = 'block';
+    updateSelectionUI();
+};
 
-// --- NEW FUNCTION to manage selection state ---
+const exitSelectionMode = () => {
+    selectionMode = false;
+    templateGrid.classList.remove('selection-active');
+    selectBtn.style.display = 'block';
+    cancelSelectionBtn.style.display = 'none';
+    
+    selectedTemplates.clear();
+    updateSelectionUI();
+};
+
 const updateSelectionUI = () => {
-    // Toggle delete button visibility
-    if (selectedTemplates.size > 0) {
+    if (selectedTemplates.size > 0 && selectionMode) {
         deleteSelectedBtn.style.display = 'block';
         deleteSelectedBtn.textContent = `Delete (${selectedTemplates.size}) Selected`;
     } else {
         deleteSelectedBtn.style.display = 'none';
     }
 
-    // Toggle .selected class on cards
     document.querySelectorAll('.template-card').forEach(card => {
         const id = card.dataset.id;
         if (selectedTemplates.has(id)) {
             card.classList.add('selected');
-            card.querySelector('.selection-checkbox').checked = true;
         } else {
             card.classList.remove('selected');
-            card.querySelector('.selection-checkbox').checked = false;
         }
     });
 };
-
 
 const renderTemplates = (templates) => {
     templateGrid.innerHTML = '';
@@ -42,12 +57,12 @@ const renderTemplates = (templates) => {
         try {
             const card = document.createElement('div');
             card.className = 'template-card';
-            card.dataset.id = template.id; // --- ADDED data-id for selection
+            card.dataset.id = template.id;
             const canvasId = `preview-canvas-${template.id}`;
 
-            // --- MODIFIED HTML STRUCTURE ---
+            // --- MODIFIED HTML: Added the selection-indicator div ---
             card.innerHTML = `
-                ${currentTab === 'created' ? `<input type="checkbox" class="selection-checkbox" data-id="${template.id}">` : ''}
+                <div class="selection-indicator"></div>
                 <a href="/tool.html?id=${template.id}" class="card-link"></a>
                 
                 <div class="preview">
@@ -57,7 +72,6 @@ const renderTemplates = (templates) => {
                     <h4>${template.title || 'Untitled Template'}</h4>
                 </div>
                 <div class="actions">
-                    <!-- New container for buttons -->
                     <div class="button-group">
                         ${currentTab === 'created' ? `
                             <button class="icon-btn duplicate-btn" title="Duplicate" data-id="${template.id}">
@@ -72,9 +86,7 @@ const renderTemplates = (templates) => {
             `;
             templateGrid.appendChild(card);
 
-            // The preview rendering logic remains the same
             if (template.preview_url && typeof template.preview_url === 'object' && template.preview_url.objects) {
-                // ... (the existing canvas rendering logic from the previous step)
                 const previewCanvasEl = document.getElementById(canvasId);
                 const previewContainer = previewCanvasEl.parentElement;
                 
@@ -113,28 +125,27 @@ const renderTemplates = (templates) => {
         }
     });
 
-    // Attach listeners for all actions
     attachActionListeners();
-    updateSelectionUI(); // Ensure UI is correct on render
+    updateSelectionUI();
 };
 
-// --- MODIFIED and COMBINED LISTENER FUNCTION ---
 const attachActionListeners = () => {
-    // --- NEW: Selection Checkbox Logic ---
-    document.querySelectorAll('.selection-checkbox').forEach(checkbox => {
-        checkbox.addEventListener('click', (e) => {
-            e.stopPropagation(); // Prevent card link from firing
-            const id = e.target.dataset.id;
-            if (e.target.checked) {
-                selectedTemplates.add(id);
-            } else {
-                selectedTemplates.delete(id);
+    document.querySelectorAll('.template-card').forEach(card => {
+        card.addEventListener('click', (e) => {
+            if (selectionMode) {
+                e.preventDefault();
+                const id = card.dataset.id;
+                
+                if (selectedTemplates.has(id)) {
+                    selectedTemplates.delete(id);
+                } else {
+                    selectedTemplates.add(id);
+                }
+                updateSelectionUI();
             }
-            updateSelectionUI();
         });
     });
 
-    // Delete Button Logic
     document.querySelectorAll('.delete-btn').forEach(button => {
         button.addEventListener('click', async (e) => {
             e.preventDefault();
@@ -149,25 +160,21 @@ const attachActionListeners = () => {
                     alert('Could not delete template.');
                     console.error(error);
                 } else {
-                    selectedTemplates.delete(id); // --- Remove from selection if deleted
+                    selectedTemplates.delete(id);
                     loadTemplates(currentTab);
                 }
             }
         });
     });
 
-    // Duplicate Button Logic - THIS IS NOW FULLY IMPLEMENTED
     document.querySelectorAll('.duplicate-btn').forEach(button => {
         button.addEventListener('click', async (e) => {
             e.preventDefault();
             e.stopPropagation();
-
             const buttonEl = e.target.closest('button');
-            buttonEl.disabled = true; // Prevent multiple clicks
+            buttonEl.disabled = true;
 
             const id = buttonEl.dataset.id;
-            
-            // 1. Fetch the original template data
             const { data: originalTemplate, error } = await supabase
                 .from('templates')
                 .select('title, template_data, preview_url')
@@ -181,47 +188,40 @@ const attachActionListeners = () => {
                 return;
             }
 
-            // 2. Insert a new record with the copied data
             const newTitle = `${originalTemplate.title} (Copy)`;
             const newTemplateData = originalTemplate.template_data;
+            newTemplateData.page.title = newTitle;
 
-            // This is the critical fix: update the title inside the main JSON object
-            newTemplateData.page.title = newTitle; 
-
-            // 3. Insert the new record with the fully updated data
             const { data: { user } } = await supabase.auth.getUser();
             const { error: insertError } = await supabase
                 .from('templates')
                 .insert({
                     user_id: user.id,
-                    title: newTitle, // The main column title
-                    template_data: newTemplateData, // The updated JSON object
-                    preview_url: originalTemplate.preview_url, // The preview can be copied directly
+                    title: newTitle,
+                    template_data: newTemplateData,
+                    preview_url: originalTemplate.preview_url,
                 });
             
             if (insertError) {
                 alert('Failed to duplicate template.');
                 console.error(insertError);
             } else {
-                // Refresh the list to show the new copy
                 loadTemplates(currentTab);
             }
-
-            // Re-enable the button regardless of outcome
             buttonEl.disabled = false;
         });
     });
 };
 
-// --- NEW EVENT LISTENER for the "Delete Selected" button ---
+selectBtn.addEventListener('click', enterSelectionMode);
+cancelSelectionBtn.addEventListener('click', exitSelectionMode);
+
 deleteSelectedBtn.addEventListener('click', async () => {
     const count = selectedTemplates.size;
     const confirmed = await showConfirm(`Are you sure you want to delete ${count} selected templates? This action cannot be undone.`);
 
     if (confirmed) {
-        // Convert the Set to an array for the Supabase query
         const idsToDelete = Array.from(selectedTemplates);
-        
         const { error } = await supabase
             .from('templates')
             .delete()
@@ -231,14 +231,12 @@ deleteSelectedBtn.addEventListener('click', async () => {
             alert(`Could not delete selected templates.`);
             console.error(error);
         } else {
-            selectedTemplates.clear(); // Clear the selection
-            loadTemplates(currentTab); // Refresh the list
+            exitSelectionMode();
+            loadTemplates(currentTab);
         }
     }
 });
 
-
-// REPLACE your existing showConfirm function with this one
 function showConfirm(message) {
   return new Promise(resolve => {
     const backdrop = document.createElement('div');
@@ -254,7 +252,7 @@ function showConfirm(message) {
     const btnGroup = document.createElement('div');
     btnGroup.style.display = 'flex';
     btnGroup.style.gap = '8px';
-    btnGroup.style.justifyContent = 'flex-end'; // THIS IS THE FIX for alignment
+    btnGroup.style.justifyContent = 'flex-end';
 
     const btnConfirm = document.createElement('button');
     btnConfirm.textContent = 'Delete';
@@ -293,6 +291,7 @@ const loadTemplates = async (tab) => {
 
     let templates = [];
     if (tab === 'created') {
+        selectBtn.style.display = 'block';
         const { data, error } = await supabase
             .from('templates')
             .select('id, title, preview_url')
@@ -302,6 +301,7 @@ const loadTemplates = async (tab) => {
         else templates = data;
 
     } else if (tab === 'purchased') {
+        selectBtn.style.display = 'none';
         const { data, error } = await supabase
             .from('purchased_templates')
             .select(`store_templates ( id, title, description, preview_url )`)
@@ -314,17 +314,13 @@ const loadTemplates = async (tab) => {
     renderTemplates(templates);
 };
 
-// --- MODIFIED Tab switching logic ---
 tabs.forEach(tab => {
     tab.addEventListener('click', () => {
         tabs.forEach(t => t.classList.remove('active'));
         tab.classList.add('active');
         currentTab = tab.dataset.tab;
         
-        // Clear selection when switching tabs
-        selectedTemplates.clear();
-        updateSelectionUI();
-
+        exitSelectionMode();
         loadTemplates(currentTab);
     });
 });
