@@ -168,10 +168,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            try {
-                const { data, error } = await supabase.functions.invoke('paddle-wrapper', {
-                    body: { price_id: templateData.paddle_price_id, user_email: user.email, template_id: templateId, user_id: user.id },
-                });
+        try {
+            console.log('CLIENT-SIDE CHECK: About to send this data to the server:', {
+                price_id: templateData.paddle_price_id,
+                user_email: user.email,
+                template_id: templateId,
+                user_id: user.id
+            });
+            
+            const { data, error } = await supabase.functions.invoke('paddle-wrapper', {
+                body: {
+                    price_id: templateData.paddle_price_id,
+                    user_email: user.email,
+                    template_id: templateId,
+                    user_id: user.id
+                },
+            });
 
                 if (error) throw error;
                 if (!data?.url) throw new Error('No checkout URL returned');
