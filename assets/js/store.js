@@ -122,54 +122,121 @@ categoryList.addEventListener('click', (e) => {
 
 
 // --- [START] REPLACED AND UNIFIED ACTION LOGIC ---
-templateGrid.addEventListener("click", async (e) => {
-  const buyButton = e.target.closest(".buy-template-btn");
-  if (!buyButton) return;
+templateGrid.addEventListener('click', async (e) => {
+    // ------------------------
+    // 1️⃣ Buy button clicked
+    // ------------------------
+    const buyButton = e.target.closest('.buy-template-btn');
+    if (buyButton) {
+        e.preventDefault();
+        e.stopPropagation();
 
-  e.preventDefault();
-  e.stopPropagation();
+        buyButton.disabled = true;
+        buyButton.textContent = 'Processing...';
 
-  buyButton.disabled = true;
-  buyButton.textContent = "Processing...";
+        // Get current user
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+            window.location.href = '/login.html';
+            return;
+        }
 
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    window.location.href = "/login.html";
-    return;
-  }
+        const templateId = buyButton.dataset.templateId;
+        const templateData = allTemplates.find(t => t.id === templateId);
+        if (!templateData || !templateData.paddle_price_id) {
+            alert('This product is not configured for sale.');
+            buyButton.disabled = false;
+            buyButton.textContent = `$${templateData?.price || '0'}`;
+            return;
+        }
 
-  const templateId = buyButton.dataset.templateId;
-  const templateData = allTemplates.find(t => t.id === templateId);
+        try {
+            // Call your Supabase Edge Function to generate Paddle checkout URL
+            const { data, error } = await supabase.functions.invoke('paddle-wrapper', {
+                body: {
+                    price_id: templateData.paddle_price_id,
+                    user_email: user.email,
+                    template_id: templateId,
+                    user_id: user.id
+                },
+            });
 
-  if (!templateData?.paddle_price_id) {
-    alert("This product is not configured for sale.");
-    buyButton.disabled = false;
-    buyButton.textContent = `$${templateData?.price || 0}`;
-    return;
-  }
+            if (error) throw error;
+            if (!data?.url) throw new Error('No checkout URL returned');
 
-  try {
-    const { data, error } = await supabase.functions.invoke("paddle-wrapper", {
-      body: {
-        price_id: templateData.paddle_price_id,
-        user_email: user.email,
-        template_id: templateId,
-      },
-    });
+            // Redirect user to Paddle checkout page
+            window.location.href = data.url;
 
-    if (error) throw error;
+        } catch (error) {
+            alert(`Error: ${error.message}`);
+            console.error(error);
+            buyButton.disabled = false;
+            buyButton.textContent = `$${templateData.price}`;
+        }
 
-    if (!data?.url) throw new Error("Checkout URL not returned by Paddle.");
+        return; // Stop further execution
+    }
 
-    // Redirect user to Paddle checkout
-    window.location.href = data.url;
+    // ------------------------
+    // 2️⃣ Use button clicked
+    // ------------------------
+    const useButton = e.target.closest('.use-template-btn');
+    if (useButton) {
+        e.preventDefault();
+        e.stopPropagation();
 
-  } catch (err) {
-    alert(`Error: ${err.message}`);
-    console.error(err);
-    buyButton.disabled = false;
-    buyButton.textContent = `$${templateData.price}`;
-  }
+        useButton.disabled = true;
+        useButton.textContent = 'Preparing...';
+
+        const templateId = useButton.dataset.templateId;
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+            window.location.href = '/login.html';
+            return;
+        }
+
+        const { data: storeTemplate, error } = await supabase
+            .from('store_templates')
+            .select('title, template_data')
+            .eq('id', templateId)
+            .single();
+
+        if (error) {
+            alert('Error fetching template details.');
+            console.error(error);
+            return;
+        }
+
+        const { data: newTemplate, error: insertError } = await supabase
+            .from('templates')
+            .insert({
+                user_id: user.id,
+                title: storeTemplate.title,
+                template_data: storeTemplate.template_data,
+                preview_url: storeTemplate.template_data.canvas,
+            })
+            .select('id')
+            .single();
+
+        if (insertError) {
+            alert('Could not create your copy of the template.');
+            console.error(insertError);
+        } else {
+            window.location.href = `/tool.html?id=${newTemplate.id}`;
+        }
+
+        return; // Stop further execution
+    }
+
+    // ------------------------
+    // 3️⃣ Card clicked (Preview)
+    // ------------------------
+    const card = e.target.closest('.template-card');
+    if (card) {
+        const clickedId = card.dataset.templateId;
+        const templateData = allTemplates.find(t => t.id === clickedId);
+        if (templateData) openPreviewModal(templateData);
+    }
 });
 
 // --- [END] REPLACED AND UNIFIED ACTION LOGIC ---
