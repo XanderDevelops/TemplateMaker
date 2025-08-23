@@ -154,7 +154,7 @@ templateGrid.addEventListener('click', async (e) => {
             // Call your Supabase Edge Function to generate Paddle checkout URL
             const { data, error } = await supabase.functions.invoke('paddle-wrapper', {
                 body: {
-                    price_id: "pro_01k3a6qwy8f607647dqmwncwxx",//templateData.paddle_price_id,
+                    price_id: templateData.paddle_price_id,
                     user_email: user.email,
                     template_id: templateId,
                     user_id: user.id
