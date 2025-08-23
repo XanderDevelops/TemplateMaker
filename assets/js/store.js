@@ -147,7 +147,9 @@ templateGrid.addEventListener('click', async (e) => {
             return;
         }
 
-        const checkoutUrl = `https://www.csvlink.app`;
+        // Redirect directly to your default Paddle checkout link
+        // You can append templateId to track the purchase later
+        const checkoutUrl = `https://www.csvlink.app/store.html?templateId=${templateId}&userId=${user.id}`;
         window.location.href = checkoutUrl;
 
         return; // Stop further execution
