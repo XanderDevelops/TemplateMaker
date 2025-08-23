@@ -122,94 +122,56 @@ categoryList.addEventListener('click', (e) => {
 
 
 // --- [START] REPLACED AND UNIFIED ACTION LOGIC ---
-templateGrid.addEventListener('click', async (e) => {
-    // Check if the "Buy" button was clicked
-    const buyButton = e.target.closest('.buy-template-btn');
-    if (buyButton) {
-        e.preventDefault();
-        e.stopPropagation();
+templateGrid.addEventListener("click", async (e) => {
+  const buyButton = e.target.closest(".buy-template-btn");
+  if (!buyButton) return;
 
-        buyButton.disabled = true;
-        buyButton.textContent = 'Processing...';
+  e.preventDefault();
+  e.stopPropagation();
 
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
-            window.location.href = '/login.html';
-            return;
-        }
+  buyButton.disabled = true;
+  buyButton.textContent = "Processing...";
 
-        const templateId = buyButton.dataset.templateId;
-        const templateData = allTemplates.find(t => t.id === templateId);
-        if (!templateData || !templateData.paddle_price_id) {
-            alert('This product is not configured for sale.');
-            buyButton.disabled = false;
-            buyButton.textContent = `$${templateData?.price || '0'}`;
-            return;
-        }
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    window.location.href = "/login.html";
+    return;
+  }
 
-        // Redirect directly to your default Paddle checkout link
-        // You can append templateId to track the purchase later
-        const checkoutUrl = `https://www.csvlink.app/store.html?templateId=${templateId}&userId=${user.id}`;
-        window.location.href = checkoutUrl;
+  const templateId = buyButton.dataset.templateId;
+  const templateData = allTemplates.find(t => t.id === templateId);
 
-        return; // Stop further execution
-    }
+  if (!templateData?.paddle_price_id) {
+    alert("This product is not configured for sale.");
+    buyButton.disabled = false;
+    buyButton.textContent = `$${templateData?.price || 0}`;
+    return;
+  }
 
-    // Check if the "Use" button was clicked
-    const useButton = e.target.closest('.use-template-btn');
-    if (useButton) {
-        e.preventDefault();
-        e.stopPropagation();
+  try {
+    const { data, error } = await supabase.functions.invoke("paddle-wrapper", {
+      body: {
+        price_id: templateData.paddle_price_id,
+        user_email: user.email,
+        template_id: templateId,
+      },
+    });
 
-        useButton.disabled = true;
-        useButton.textContent = 'Preparing...';
-        const templateId = useButton.dataset.templateId;
-        
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
-            window.location.href = '/login.html';
-            return;
-        }
+    if (error) throw error;
 
-        const { data: storeTemplate, error } = await supabase
-            .from('store_templates')
-            .select('title, template_data')
-            .eq('id', templateId)
-            .single();
-        if (error) {
-            alert('Error fetching template details.');
-            console.error(error);
-            return;
-        }
+    if (!data?.url) throw new Error("Checkout URL not returned by Paddle.");
 
-        const { data: newTemplate, error: insertError } = await supabase
-            .from('templates')
-            .insert({
-                user_id: user.id,
-                title: storeTemplate.title,
-                template_data: storeTemplate.template_data,
-                preview_url: storeTemplate.template_data.canvas,
-            })
-            .select('id')
-            .single();
+    // Redirect user to Paddle checkout
+    window.location.href = data.url;
 
-        if (insertError) {
-            alert('Could not create your copy of the template.');
-            console.error(insertError);
-        } else {
-            window.location.href = `/tool.html?id=${newTemplate.id}`;
-        }
-        return; // Stop further execution
-    }
-
-    // If no button was clicked, assume the card was clicked to open the modal
-    const card = e.target.closest('.template-card');
-    if (card) {
-        const clickedId = card.dataset.templateId;
-        const templateData = allTemplates.find(t => t.id === clickedId);
-        if (templateData) openPreviewModal(templateData);
-    }
+  } catch (err) {
+    alert(`Error: ${err.message}`);
+    console.error(err);
+    buyButton.disabled = false;
+    buyButton.textContent = `$${templateData.price}`;
+  }
 });
+
 // --- [END] REPLACED AND UNIFIED ACTION LOGIC ---
 
 // --- Initial Data Loading ---
