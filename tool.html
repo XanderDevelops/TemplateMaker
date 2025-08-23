@@ -1704,6 +1704,20 @@ try {
     aiResponseText = aiResponseText.replace(/^```json\s*|```$/g, "").trim();
 
     const newCanvasState = JSON.parse(aiResponseText);
+        if (newCanvasState.page) {
+        $('#titleInput').value = newCanvasState.page.title || 'Untitled Template';
+        $('#pageWidth').value = newCanvasState.page.width || 768;
+        $('#pageHeight').value = newCanvasState.page.height || 1024;
+        
+        // Ensure the actual page object on the canvas is also resized
+        if (pageRect) {
+            pageRect.set({
+                width: parseInt(newCanvasState.page.width, 10),
+                height: parseInt(newCanvasState.page.height, 10)
+            });
+        }
+    }
+    
     // Also update bindings from the AI response
     if (newCanvasState.bindings) {
         bindings = new Map(newCanvasState.bindings);

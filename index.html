@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CSVLink - Home</title>
+    <meta name="description" content="Instantly generate hundreds of personalized documents from CSV or Excel data with CSVLink. Use our AI designer and pre-made templates for free—no login required.">
+    <meta name="keywords" content="bulk document generation, csv to document, excel to document, data merge, document automation, invoice, resume, link word, AI document designer, free tool">
+    <title>CSVLink | Bulk Document Generation from CSV & Excel Data</title>
     <link rel="stylesheet" href="assets/css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/fabric@5.3.0/dist/fabric.min.js"></script>
     <style>
@@ -48,90 +50,90 @@
         }
         
         /* 3. Added pseudo-element for feather effect */
-/* --- REPLACE THIS ENTIRE BLOCK in your <style> tag --- */
+        /* --- REPLACE THIS ENTIRE BLOCK in your <style> tag --- */
 
-/* Hero Section */
-.hero {
-    text-align: center;
-    padding: 150px 20px 100px;
-    /* Use the darker color from the gradient for a seamless base */
-    background-color: #121212; 
-    position: relative;
-    overflow: hidden; /* Crucial for containing the rotating element */
-}
+        /* Hero Section */
+        .hero {
+            text-align: center;
+            padding: 150px 20px 100px;
+            /* Use the darker color from the gradient for a seamless base */
+            background-color: #121212; 
+            position: relative;
+            overflow: hidden; /* Crucial for containing the rotating element */
+        }
 
-/* This is the new ROTATING element - it sits in the back */
-.hero::after {
-    content: '';
-    position: absolute;
-    top: 100%; /* Make it much larger than the container */
-    left: -100%;
-    width: 300%;
-    height: 300%;
-    /* Creates a soft, sweeping light effect */
-    background: conic-gradient(
-        from 0.5turn at 50% 50%,
-        #121212, /* Start with the background color */
-        rgba(79, 172, 254, 0.15) 48%, /* The rotating glow color */
-        rgba(79, 172, 254, 0.15) 52%,
-        #121212 55%, /* End with the background color */
-        #121212
-    );
-    z-index: 0; /* Sits behind everything */
-    
-    /* Apply the animation */
-    animation: rotate-background 25s linear infinite;
-}
+        /* This is the new ROTATING element - it sits in the back */
+        .hero::after {
+            content: '';
+            position: absolute;
+            top: 100%; /* Make it much larger than the container */
+            left: -100%;
+            width: 300%;
+            height: 300%;
+            /* Creates a soft, sweeping light effect */
+            background: conic-gradient(
+                from 0.5turn at 50% 50%,
+                #121212, /* Start with the background color */
+                rgba(79, 172, 254, 0.15) 48%, /* The rotating glow color */
+                rgba(79, 172, 254, 0.15) 52%,
+                #121212 55%, /* End with the background color */
+                #121212
+            );
+            z-index: 0; /* Sits behind everything */
+            
+            /* Apply the animation */
+            animation: rotate-background 25s linear infinite;
+        }
 
-/* This is your original feather effect - it sits on top of the rotation */
-.hero::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    /* Updated to use the correct background color for a perfect blend */
-    background: linear-gradient(to right, 
-        #121212 0%, 
-        rgba(18, 18, 18, 0) 25%, 
-        rgba(18, 18, 18, 0) 75%, 
-        #121212 100%
-    );
-    z-index: 1; /* Sits on top of the ::after element */
-}
+        /* This is your original feather effect - it sits on top of the rotation */
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            /* Updated to use the correct background color for a perfect blend */
+            background: linear-gradient(to right, 
+                #121212 0%, 
+                rgba(18, 18, 18, 0) 25%, 
+                rgba(18, 18, 18, 0) 75%, 
+                #121212 100%
+            );
+            z-index: 1; /* Sits on top of the ::after element */
+        }
 
-/* Ensure the hero content (h1, p, btn) is on the very top */
-.hero > * {
-    position: relative;
-    z-index: 2;
-}
+        /* Ensure the hero content (h1, p, btn) is on the very top */
+        .hero > * {
+            position: relative;
+            z-index: 2;
+        }
 
-.hero h1 {
-    font-size: 3.5rem;
-    margin-bottom: 1rem;
-    background: linear-gradient(90deg, #4facfe, #00f2fe);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-}
+        .hero h1 {
+            font-size: 3.5rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(90deg, #4facfe, #00f2fe);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
 
-.hero p {
-    font-size: 1.2rem;
-    color: #aaa;
-    max-width: 600px;
-    margin: 0 auto 2rem;
-}
+        .hero p {
+            font-size: 1.2rem;
+            color: #aaa;
+            max-width: 600px;
+            margin: 0 auto 2rem;
+        }
 
-/* --- ADD THIS KEYFRAMES RULE at the end of your <style> tag --- */
+        /* --- ADD THIS KEYFRAMES RULE at the end of your <style> tag --- */
 
-@keyframes rotate-background {
-    from {
-        transform: rotate(0deg);
-    }
-    to {
-        transform: rotate(360deg);
-    }
-}
+        @keyframes rotate-background {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
 
         .hero > * {
             position: relative;
@@ -354,6 +356,50 @@
             background-color: #2a2a2a;
         }
 
+        /* --- Scroll Down Arrow Animation --- */
+        .scroll-down-arrow {
+            position: absolute;
+            bottom: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            cursor: pointer;
+            z-index: 3;
+            width: 36px;
+            height: 36px;
+        }
+
+        /* Primary visible SVG arrow */
+        .scroll-down-arrow svg {
+            width: 100%;
+            height: 100%;
+            transition: transform 0.3s ease;
+            animation: pulse-down 2s infinite ease-in-out;
+        }
+
+        .scroll-down-arrow:hover svg {
+            transform: scale(1.1);
+        }
+
+        /* Ghost arrows (pseudo-elements) */
+        .scroll-down-arrow::before,
+        .scroll-down-arrow::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 16.5l-6-6 1.41-1.41L12 13.67l4.59-4.58L18 10.5l-6 6z' fill='rgba(255,255,255,0.7)'/%3E%3C/svg%3E");
+            background-size: cover;
+            opacity: 0; /* Hidden by default */
+        }
+
+        /* Keyframes for main arrow pulse down */
+        @keyframes pulse-down {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(15px); }
+        }
+
         /* Footer */
         footer {
             text-align: center;
@@ -391,45 +437,33 @@
             <!-- 4. Modified Hero Text -->
             <h1>Link Data, Generate Documents in Bulk</h1>
             <p>Connect your data from a CSV or Excel file to any template and generate hundreds of personalized documents with a single click.</p>
-            <!-- 5. Modified Button Text -->
             <a href="/tool.html" class="btn">Try It Now</a>
+            <p style="font-size: 1rem; color: #888; margin-top: 1rem; margin-bottom: 2rem;">Free to use.<br>No login required to try the tool.</p>
+            <a href="#first-feature" class="scroll-down-arrow" aria-label="Scroll down">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+                    <path fill="none" d="M0 0h24v24H0z"/>
+                    <path d="M12 16.5l-6-6 1.41-1.41L12 13.67l4.59-4.58L18 10.5l-6 6z" fill="rgba(255,255,255,0.7)"/>
+                </svg>
+            </a>
         </section>
         
         <!-- 1. Section Order Changed: Bulk Generation is now first -->
-        <section class="feature-section animated-section">
+        <section id="first-feature" class="feature-section animated-section">
             <div class="feature-content">
                 <h2>Generate documents in bulk</h2>
-                <p>Effortlessly create hundreds of personalized documents from a single template and your data file. Perfect for invoices, reports, and plans.</p>
+                <p>Effortlessly create hundreds of personalized documents...</p>
                 <ul class="bulk-steps">
                     <li><strong>1. Input your data:</strong> Upload a .csv or .xlsx file with all your information.</li>
                     <li><strong>2. Link your data:</strong> Map your data fields to the template placeholders.</li>
                     <li><strong>3. Export it!</strong> Generate and download all your documents in a single click.</li>
                 </ul>
-                <p class="that-simple">That simple.</p>
             </div>
             <div class="feature-image">
-                <img src="https://placehold.co/500x400/1e1e1e/00f2fe?text=Data+Linking+UI" alt="Bulk document generation workflow">
+                <img src="https://placehold.co/500x400/1e1e1e/00f2fe?text=Data+Linking+UI" alt="Diagram showing data from a CSV file being linked to a document template to generate bulk reports.">
             </div>
         </section>
         
-        <!-- Section 2: AI Design -->
-        <section class="feature-section animated-section">
-            <div class="feature-content">
-                <!-- 2. Added AI Icon -->
-                <h2>Let AI design your documents
-                    <svg class="ai-spark-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M12 2L9.5 9.5L2 12L9.5 14.5L12 22L14.5 14.5L22 12L14.5 9.5L12 2Z" stroke="#00f2fe" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        <path d="M5 2L6 6L10 7L6 8L5 12L4 8L0 7L4 6L5 2Z" stroke="#4facfe" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                </h2>
-                <p>Say goodbye to tedious formatting. Just tell our AI exactly what you are looking for, and it will generate a beautiful, professional document in seconds. Focus on your content, and let us handle the design.</p>
-            </div>
-            <div class="feature-image">
-                <img src="https://placehold.co/500x350/1e1e1e/4facfe?text=AI+Generating+Design" alt="AI designing a document interface">
-            </div>
-        </section>
-
-
+        
         <!-- 6. Section 3: Template Gallery - REWORKED -->
         <section class="templates-section animated-section">
             <h2>Find the perfect template for your needs</h2>
@@ -455,6 +489,23 @@
             </div>
         </section>
     </main>
+
+        <!-- Section 2: AI Design -->
+        <section class="feature-section animated-section">
+            <div class="feature-content">
+                <!-- 2. Added AI Icon -->
+                <h2>Let AI design your documents
+                    <svg class="ai-spark-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 2L9.5 9.5L2 12L9.5 14.5L12 22L14.5 14.5L22 12L14.5 9.5L12 2Z" stroke="#00f2fe" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M5 2L6 6L10 7L6 8L5 12L4 8L0 7L4 6L5 2Z" stroke="#4facfe" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </h2>
+                <p>Say goodbye to tedious formatting. Just tell our AI exactly what you are looking for, and it will generate a beautiful, professional document in seconds. Focus on your content, and let us handle the design.</p>
+            </div>
+            <div class="feature-image">
+                <img src="https://placehold.co/500x350/1e1e1e/4facfe?text=AI+Generating+Design" alt="AI designing a document interface">
+            </div>
+        </section>
     
     <footer>
         <div class="footer-links">
