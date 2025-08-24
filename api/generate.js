@@ -1,9 +1,7 @@
-// your-project/api/generate.js
-
 import { createClient } from '@supabase/supabase-js';
 
 // Initialize Supabase client using environment variables
-const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
