@@ -6,8 +6,11 @@ const supabaseKey = process.env.SUPABASE_SECRET_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 export default async function handler(req, res) {
-    // This function is now just a secure data provider.
-    // It returns the full template data, ready for client-side rendering.
+    
+    if (req.method === "OPTIONS") {
+        res.status(200).end();
+        return;
+    }
 
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method Not Allowed' });
