@@ -86,11 +86,11 @@ if (toggleSignupLink) {
         if (isSignup) {
             h1.textContent = 'Sign Up';
             submitBtn.textContent = 'Sign Up';
-            toggleSignupLink.textContent = 'Sign in';
+            toggleSignupLink.textContent = 'Log in';
             formContainer.querySelector('p:last-of-type').childNodes[0].nodeValue = 'Already have an account? ';
         } else {
-            h1.textContent = 'Sign In';
-            submitBtn.textContent = 'Sign In';
+            h1.textContent = 'Log in';
+            submitBtn.textContent = 'Log in';
             toggleSignupLink.textContent = 'Sign up';
             formContainer.querySelector('p:last-of-type').childNodes[0].nodeValue = "Don't have an account? ";
         }
