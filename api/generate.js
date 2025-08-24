@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { fabric } from 'fabric';
+import { fabric } from 'fabric/node';
 import { jsPDF } from 'jspdf';
 import nodemailer from 'nodemailer';
 
