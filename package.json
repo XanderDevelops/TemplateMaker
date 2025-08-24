@@ -3,12 +3,6 @@
   "version": "1.0.0",
   "private": true,
   "dependencies": {
-    "@supabase/supabase-js": "^2.56.0",
-    "fabric": "^6.7.1",
-    "jspdf": "^3.0.1",
-    "nodemailer": "^7.0.5"
-  },
-  "optionalDependencies": {
-    "canvas": "^2.11.2"
+    "@supabase/supabase-js": "^2.56.0"
   }
 }
