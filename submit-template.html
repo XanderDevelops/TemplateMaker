@@ -24,11 +24,15 @@
                 </div>
                 <div class="form-group">
                     <label for="description">Description</label>
-                    <textarea id="description" rows="3"></textarea>
+                    <textarea id="description" rows="3" required></textarea>
                 </div>
                 <div class="form-group">
                     <label for="price">Price (USD)</label>
                     <input type="number" id="price" min="0" step="0.01" value="0" required>
+                </div>
+                <div class="form-group">
+                    <label for="price_id">Price ID</label>
+                    <input type="text" id="price_id" placeholder="price_123" required>
                 </div>
                 <div class="form-group">
                     <label for="category">Category</label>
@@ -40,16 +44,17 @@
                         <option value="other">Other</option>
                     </select>
                 </div>
-                 <div class="form-group">
+                <div class="form-group">
                     <label for="tags">Tags (comma-separated)</label>
                     <input type="text" id="tags">
                 </div>
                 <div class="form-group">
                     <label for="template-file">Template File (.json)</label>
-                    <input type="file" id="template-file" accept=".json" required style="padding: 10px; border: 1px dashed var(--border);">
+                    <input type="file" id="template-file" accept=".json" required>
                 </div>
                 <button type="submit" class="btn" style="width: 100%;">Submit Template</button>
             </form>
+
         </div>
     </main>
 

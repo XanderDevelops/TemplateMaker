@@ -279,7 +279,23 @@ nav .nav-links .btn:hover {
     50% { opacity: 1; }
 }
 
-
+#newKeyDisplay {
+    background: var(--bg);
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    font-family: monospace;
+    word-break: break-all;
+}
+.api-key-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--panel-2);
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-family: monospace;
+}
 </style>
 </head>
 <body>
@@ -312,6 +328,9 @@ nav .nav-links .btn:hover {
         </button>
     </div>
     <div class="toolbar" style="margin-left: auto;">
+        <button id="settingsBtn" class="btn ghost" title="Settings">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 0 2l-.15.08a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1 0-2l.15-.08a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
         <span id="saveStatus" class="muted" style="margin-right: 16px;"></span>
         <label for="csvInput" class="btn ghost">Load Data</label>
         <input id="csvInput" type="file" accept=".csv,.xlsx,.xls" style="display:none;"/>
@@ -497,6 +516,19 @@ nav .nav-links .btn:hover {
       </button>
     </div>
   </div>
+</div>
+
+<div id="settingsModal" class="modal-backdrop">
+    <div class="modal" style="width: 550px;">
+        <div class="row" style="justify-content:space-between;align-items:center;gap:12px;">
+            <h3>Settings & API Keys</h3>
+            <button id="closeSettingsModal" class="btn ghost">&times;</button>
+        </div>
+        
+        <div id="settingsContent" class="stack" style="margin-top: 16px; gap: 12px;">
+            <!-- Content will be loaded here by JavaScript -->
+        </div>
+    </div>
 </div>
 
 <script type="module" src="assets/js/supabase-client.js"></script>
@@ -1007,6 +1039,152 @@ dropTarget.addEventListener('drop', (e) => {
 
 // --- SNAPPING TO GRID ---
 canvas.on('object:moving', (options) => { if (!snapEnabled || !pageRect) return; const target = options.target; const pageLeft = pageRect.left; const pageTop = pageRect.top; const snapLeft = Math.round((target.left - pageLeft) / gridCellSize) * gridCellSize + pageLeft; const snapTop = Math.round((target.top - pageTop) / gridCellSize) * gridCellSize + pageTop; target.set({ left: snapLeft, top: snapTop }).setCoords(); });
+
+// --- NEW: SETTINGS & API KEY MODAL LOGIC ---
+
+// Get Modal Elements
+const settingsBtn = $('#settingsBtn');
+const settingsModal = $('#settingsModal');
+const closeSettingsModalBtn = $('#closeSettingsModal');
+const settingsContent = $('#settingsContent');
+
+// Show/Hide Modal
+settingsBtn.addEventListener('click', openSettingsModal);
+closeSettingsModalBtn.addEventListener('click', () => settingsModal.style.display = 'none');
+settingsModal.addEventListener('click', (e) => {
+    if (e.target === settingsModal) {
+        settingsModal.style.display = 'none';
+    }
+});
+
+async function openSettingsModal() {
+    settingsContent.innerHTML = '<p class="muted">Loading...</p>';
+    settingsModal.style.display = 'flex';
+
+    // 1. Get current user
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+        settingsContent.innerHTML = '<p>Please log in to manage your settings.</p>';
+        return;
+    }
+
+    // 2. Get user's profile to check their role
+    const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+
+    if (error || !profile) {
+        settingsContent.innerHTML = '<p class="error">Could not load your profile.</p>';
+        return;
+    }
+
+    // 3. Render content based on user role
+    if (profile.role === 'pro' || profile.role === 'admin') {
+        renderProSettings(user.id);
+    } else {
+        renderUpgradeMessage();
+    }
+}
+
+function renderUpgradeMessage() {
+    settingsContent.innerHTML = `
+        <div class="stack">
+            <h4>Upgrade to Pro</h4>
+            <p class="muted">To generate API keys and use the document generation API, you need a Pro account.</p>
+            <a href="/pricing" class="btn" style="text-decoration: none;">View Pricing Plans</a>
+        </div>
+    `;
+}
+
+async function renderProSettings(userId) {
+    settingsContent.innerHTML = `
+        <div class="stack" style="gap: 16px;">
+            <div id="newKeyContainer" class="stack" style="display:none;">
+                <h4>Your New API Key</h4>
+                <p class="muted">Please copy this key and store it somewhere safe. <strong>You will not be able to see it again.</strong></p>
+                <div id="newKeyDisplay"></div>
+            </div>
+
+            <div class="stack">
+                <h4>Your Existing Keys</h4>
+                <div id="existingKeysList" class="stack">Loading keys...</div>
+            </div>
+
+            <div class="stack">
+                <button id="generateKeyBtn" class="btn">Generate New API Key</button>
+                <p id="keyMessage" class="muted" style="text-align:center; margin-top: 8px;"></p>
+            </div>
+        </div>
+    `;
+
+    // Add event listener for the new button
+    $('#generateKeyBtn').addEventListener('click', handleGenerateKey);
+    
+    // Load and display existing keys
+    loadAndDisplayKeys(userId);
+}
+
+async function loadAndDisplayKeys(userId) {
+    const existingKeysList = $('#existingKeysList');
+    const { data: keys, error } = await supabase
+        .from('api_keys')
+        .select('api_key, created_at')
+        .eq('user_id', userId);
+
+    if (error) {
+        existingKeysList.innerHTML = '<p class="error">Could not load keys.</p>';
+        return;
+    }
+    
+    if (keys.length === 0) {
+        existingKeysList.innerHTML = '<p class="muted">You have not generated any API keys yet.</p>';
+    } else {
+        existingKeysList.innerHTML = keys.map(key => `
+            <div class="api-key-item">
+                <span>${key.api_key.substring(0, 11)}...${key.api_key.substring(key.api_key.length - 4)}</span>
+                <span class="muted">Created: ${new Date(key.created_at).toLocaleDateString()}</span>
+            </div>
+        `).join('');
+    }
+}
+
+async function handleGenerateKey() {
+    const generateBtn = $('#generateKeyBtn');
+    const keyMessage = $('#keyMessage');
+    const newKeyContainer = $('#newKeyContainer');
+    const newKeyDisplay = $('#newKeyDisplay');
+
+    // Provide user feedback
+    generateBtn.disabled = true;
+    generateBtn.textContent = 'Generating...';
+    keyMessage.textContent = '';
+    newKeyContainer.style.display = 'none';
+
+    try {
+        // Securely call the Edge Function
+        const { data, error } = await supabase.functions.invoke('generate-api-key');
+
+        if (error) {
+            throw error;
+        }
+
+        // Display the new key to the user ONCE
+        newKeyDisplay.textContent = data.apiKey;
+        newKeyContainer.style.display = 'block';
+        
+        // Refresh the list of keys to show the new one (partially hidden)
+        const { data: { user } } = await supabase.auth.getUser();
+        loadAndDisplayKeys(user.id);
+
+    } catch (error) {
+        keyMessage.textContent = `Error: ${error.message}`;
+    } finally {
+        generateBtn.disabled = false;
+        generateBtn.textContent = 'Generate New API Key';
+    }
+}
 
 // --- INSPECTOR ---
 const inspector = $('#inspector'); const multiInspector = $('#multiSelectInspector');
@@ -1558,6 +1736,7 @@ All templates must adhere to the following root structure:
   "bindings": []
 }
 The first object in canvas.objects MUST be the page rectangle with the oid "pageRect". This object defines the page size and background color.
+The page should always be selectable False
 4.2. Common Object Properties
 Every object in the canvas.objects array MUST include these properties:
 {
