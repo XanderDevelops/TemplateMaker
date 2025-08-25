@@ -13,7 +13,9 @@ const renderNav = (user) => {
     if (!navLinksContainer) return;
     navLinksContainer.innerHTML = '';
     
+    // MODIFICATION: Added the pricing link here
     let linksHtml = `
+        <a href="/#pricing">Pricing</a>
         <a href="/store.html">Store</a>
     `;
 

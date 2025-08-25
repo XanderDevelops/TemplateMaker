@@ -8,7 +8,13 @@
     <title>CSVLink | Bulk Document Generation from CSV & Excel Data</title>
     <link rel="stylesheet" href="assets/css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/fabric@5.3.0/dist/fabric.min.js"></script>
+    
+    <!-- Paddle.js Script (Correctly placed) -->
+    <script src="https://cdn.paddle.com/paddle/v2/paddle.js"></script>
+
     <style>
+        /* All your existing CSS remains unchanged */
+        
         /* General Body Styles */
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
@@ -428,6 +434,7 @@
         /* This is the hover effect: it simply pauses the animation */
         .feature-image-3d-container:hover .feature-image-3d-wrapper {
             animation-play-state: paused;
+            scale: 1.05;
         }
 
         /* This styles the image holder */
@@ -488,6 +495,128 @@
             font-size: 0.9rem;
         }
 
+        /* Pricing Section */
+        .pricing-section {
+            padding: 6rem 2rem;
+            text-align: center;
+            opacity: 0;
+            transform: translateY(50px);
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+        }
+
+        .pricing-section.is-visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .pricing-header h2 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .pricing-header p {
+            font-size: 1.2rem;
+            color: #aaa;
+            max-width: 600px;
+            margin: 0 auto 3rem;
+        }
+
+        .pricing-container {
+            display: grid; /* Use grid for more control */
+            justify-content: center;
+            gap: 6rem;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            max-width: 1100px; /* Set a max-width for the container itself */
+            margin: 0 auto; /* Center the container */
+        }
+
+        .pricing-card {
+            background-color: #1a1a1a;
+            border-radius: 12px;
+            padding: 2rem;
+            width: 100%; /* The grid handles the width, so this can be 100% */
+            display: flex;
+            flex-direction: column;
+            border: 1px solid #333;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        /* Optional: Media query for very small screens if needed */
+        @media (max-width: 1024px) {
+            .pricing-container {
+                /* On tablets and smaller, allow fewer columns */
+                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            }
+        }
+
+        .pricing-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .pricing-card.recommended {
+            border-color: #4facfe;
+            box-shadow: 0 0 20px rgba(79, 172, 254, 0.3);
+        }
+
+        .card-header h3 {
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .card-header p {
+            color: #bbb;
+            margin-bottom: 1.5rem;
+            min-height: 40px;
+        }
+
+        .price {
+            font-size: 3rem;
+            font-weight: bold;
+            margin-bottom: 2rem;
+        }
+
+        .price sup {
+            font-size: 1.5rem;
+            top: -1em;
+        }
+
+        .price span {
+            font-size: 1rem;
+            font-weight: normal;
+            color: #aaa;
+        }
+
+        .card-body ul {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 2rem;
+            text-align: left;
+            flex-grow: 1;
+        }
+
+        .card-body li {
+            margin-bottom: 1rem;
+            color: #ddd;
+        }
+
+        .card-body {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+        }
+
+        .card-footer {
+            margin-top: auto;
+        }
+
+        .card-footer .btn {
+            display: block; /* Make the link a block-level element */
+            box-sizing: border-box; /* Ensure padding is included in the total width */
+            width: 100%;
+            text-align: center; /* Center the text inside the button */
+        }
     </style>
 </head>
 <body>
@@ -499,6 +628,7 @@
     </nav>
 
     <main class="container">
+        <!-- (Your Hero, Features, and Template sections go here...) -->
         <section class="hero">
             <!-- 4. Modified Hero Text -->
             <h1>Link Data, Generate Documents in Bulk</h1>
@@ -553,7 +683,6 @@
                 </div>
             </div>
         </section>
-    </main>
 
         <!-- Section 2: AI Design -->
         <section class="feature-section animated-section">
@@ -571,6 +700,73 @@
                 <img src="https://placehold.co/500x350/1e1e1e/4facfe?text=AI+Generating+Design" alt="AI designing a document interface">
             </div>
         </section>
+
+        <section id="pricing" class="pricing-section animated-section">
+            <div class="pricing-header">
+                <h2>Choose the Plan That's Right for You</h2>
+                <p>Simple, transparent pricing for teams of all sizes.</p>
+            </div>
+            <div class="pricing-container">
+                <div class="pricing-card">
+                    <div class="card-header">
+                        <h3>Starter</h3>
+                        <p>Perfect for individuals and small projects.</p>
+                        <div class="price"><sup>$</sup>0<span>/month</span></div>
+                    </div>
+                    <div class="card-body">
+                        <ul>
+                           <li>✓ Access to the tool</li>
+                           <li>✓ Access to the AI</li>
+                           <li>✓ 5 templates max</li>
+                        </ul>
+                    </div>
+                    <div class="card-footer">
+                        <a href="/tool.html" class="btn">Get Started</a>
+                    </div>
+                </div>
+                <div class="pricing-card recommended">
+                    <div class="card-header">
+                        <h3>Pro</h3>
+                        <p>For professionals who need more power.</p>
+                        <div class="price"><sup>$</sup>12<span>/month</span></div>
+                    </div>
+                    <div class="card-body">
+                        <ul>
+                           <li>✓ Access to the tool</li>
+                           <li>✓ Access to the AI</li>
+                           <li>✓ Unlimited templates</li>
+                           <li>✓ Access to the api</li>
+                           <li>✓ Export to png</li>
+                           <li>✓ Access to all premium templates</li>
+                        </ul>
+                    </div>
+                    <div class="card-footer">
+                        <a href="#" class="btn paddle_button" data-price-id="pri_01k3gs3p1qeej5v9bjjdcgppbv">Upgrade to Pro</a>
+                    </div>
+                </div>
+                <div class="pricing-card">
+                    <div class="card-header">
+                        <h3>Business</h3>
+                        <p>For teams and businesses with advanced needs.</p>
+                        <div class="price"><sup>$</sup>25<span>/month</span></div>
+                    </div>
+                    <div class="card-body">
+                        <ul>
+                           <li>✓ All features from Pro</li>
+                           <li>✓ Priority support</li>
+                           <li>✓ Team collaboration features</li>
+                           <li>✓ Custom branding</li>
+                           <li>✓ Advanced analytics</li>
+                           <li>✓ Early access to new features</li>
+                        </ul>
+                    </div>
+                    <div class="card-footer">
+                        <a href="#" class="btn paddle_button" data-price-id="pri_01k3gs4brnv6snf1x2smn03mcg">Upgrade to Business</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
     
     <footer>
         <div class="footer-links">
@@ -586,17 +782,19 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script type="module" src="assets/js/supabase-client.js"></script>
     <script type="module" src="assets/js/auth.js"></script>
+
+    <!-- The external paddle-checkout.js script has been removed -->
+
     <script type="module">
         // 1. Import your configured Supabase client
         import { supabase } from './assets/js/supabase-client.js';
 
         document.addEventListener('DOMContentLoaded', async function() {
 
-            // --- GLOBAL VARIABLES (WITH CORRECTED SELECTORS) ---
-            const carouselTrack = document.querySelector('.template-carousel-track'); // <-- FIX 1: Correct selector
-            const categoryButtons = document.querySelectorAll('.template-category-btn'); // <-- FIX 2: Correct selector
+            // --- ALL YOUR EXISTING PAGE LOGIC IS HERE ---
+            const carouselTrack = document.querySelector('.template-carousel-track');
+            const categoryButtons = document.querySelectorAll('.template-category-btn');
             
-            // FIX 3: Aligned category names with HTML data-category attributes
             const templatesByCategory = {
                 invoice: [],
                 report: [],
@@ -604,28 +802,20 @@
             };
             let currentCarouselInterval;
 
-            // --- TEMPLATE RENDERING (This logic is for the multi-item slider) ---
             const renderTemplates = (templates) => {
-                // Check if carouselTrack exists before using it
-                if (!carouselTrack) {
-                    console.error("Carousel track element not found!");
-                    return;
-                }
-
-                carouselTrack.innerHTML = ''; // Clear previous templates
+                if (!carouselTrack) { console.error("Carousel track not found!"); return; }
+                carouselTrack.innerHTML = '';
                 if (!templates || templates.length === 0) {
-                    carouselTrack.innerHTML = `<p style="width: 100%; text-align: center;">No templates found for this category.</p>`;
+                    carouselTrack.innerHTML = `<p style="width: 100%; text-align: center;">No templates found.</p>`;
                     if (currentCarouselInterval) clearInterval(currentCarouselInterval);
                     return;
                 }
-
                 templates.forEach(template => {
                     const card = document.createElement('a');
                     card.href = `/tool.html?id=${template.id}&public=true`;
                     card.className = 'template-card';
                     card.title = `Use ${template.title}`;
                     const canvasId = `preview-canvas-${template.id}`;
-
                     card.innerHTML = `
                         <div class="preview" style="height: 350px; background-color: #fff; display:flex; align-items:center; justify-content:center; overflow: hidden;">
                             <canvas id="${canvasId}"></canvas>
@@ -635,117 +825,67 @@
                         </div>
                     `;
                     carouselTrack.appendChild(card);
-                    
-                    // --- START: THIS IS THE CRITICAL RENDERING LOGIC ---
                     if (template.preview_url && typeof template.preview_url === 'object') {
                         const previewCanvasEl = document.getElementById(canvasId);
                         const previewContainer = previewCanvasEl.parentElement;
-
-                        // The dimensions of your actual page/template.
                         const PAGE_WIDTH = 768;
                         const PAGE_HEIGHT = 1024;
-                        
-                        // Use a non-interactive canvas for previews.
                         const staticCanvas = new fabric.StaticCanvas(canvasId, {
                             width: previewContainer.clientWidth,
                             height: previewContainer.clientHeight,
                         });
-
-                        // Load the preview data from the database.
                         staticCanvas.loadFromJSON(template.preview_url, () => {
-                            // --- FIX START ---
-
-                            // 1. Define the clipping rectangle (the visible page area).
-                            // This rectangle has the same dimensions as your default page.
-                            const clipRect = new fabric.Rect({
-                                left: 0,
-                                top: 0,
-                                width: PAGE_WIDTH,
-                                height: PAGE_HEIGHT,
-                                absolutePositioned: true // Ensures the clipPath is not affected by canvas transformations.
-                            });
-                            
-                            // 2. Assign the rectangle as the canvas's clipPath.
-                            // Anything outside this path will not be rendered.
+                            const clipRect = new fabric.Rect({ left: 0, top: 0, width: PAGE_WIDTH, height: PAGE_HEIGHT, absolutePositioned: true });
                             staticCanvas.clipPath = clipRect;
-
-                            // 3. Calculate scale based on the PAGE dimensions, not the objects.
-                            // This ensures we are fitting the 768x1024 page into the preview area.
                             const scaleX = staticCanvas.width / PAGE_WIDTH;
                             const scaleY = staticCanvas.height / PAGE_HEIGHT;
-                            const scale = Math.min(scaleX, scaleY) * 0.95; // Apply 5% padding.
-
-                            // 4. Center the page (the clipped area) within the canvas view.
+                            const scale = Math.min(scaleX, scaleY) * 0.95;
                             const offsetX = (staticCanvas.width - PAGE_WIDTH * scale) / 2;
                             const offsetY = (staticCanvas.height - PAGE_HEIGHT * scale) / 2;
-
-                            // 5. Apply the transformation to the canvas viewport.
                             staticCanvas.setViewportTransform([scale, 0, 0, scale, offsetX, offsetY]);
-                            
-                            // --- FIX END ---
-                            
                             staticCanvas.renderAll();
                         });
                     } else {
-                        // Fallback if no preview is available.
                         const previewContainer = document.getElementById(canvasId).parentElement;
                         previewContainer.innerHTML = '<span>No preview available</span>';
                     }
-                    // --- END: CRITICAL RENDERING LOGIC ---
                 });
-
-                // Re-initialize the carousel for the new set of templates
                 carouselTrack.style.display = 'grid';
                 carouselTrack.style.gridTemplateColumns = `repeat(${templates.length}, 1fr)`;
                 carouselTrack.style.gap = '2rem';
                 setupCarousel(templates.length);
             };
 
-            // --- CAROUSEL LOGIC ---
             function setupCarousel(itemCount) {
                 if (currentCarouselInterval) clearInterval(currentCarouselInterval);
-                carouselTrack.parentElement.scrollTo({ left: 0, behavior: 'smooth' }); // Reset scroll
-
+                if(carouselTrack.parentElement) carouselTrack.parentElement.scrollTo({ left: 0, behavior: 'smooth' });
                 const itemsToShow = 4;
                 if (itemCount <= itemsToShow) return;
-
                 let currentIndex = 0;
                 const maxIndex = itemCount - itemsToShow;
-
                 function nextSlide() {
                     currentIndex = currentIndex >= maxIndex ? 0 : currentIndex + 1;
                     const scrollAmount = carouselTrack.children[0].offsetWidth * currentIndex;
-                    carouselTrack.parentElement.scrollTo({ left: scrollAmount, behavior: 'smooth' });
+                    if(carouselTrack.parentElement) carouselTrack.parentElement.scrollTo({ left: scrollAmount, behavior: 'smooth' });
                 }
-                
                 currentCarouselInterval = setInterval(nextSlide, 5000);
             }
 
-            // --- DATA FETCHING ---
             async function fetchPublicTemplates() {
-                let { data: public_templates, error } = await supabase
-                    .from('public_templates')
-                    .select('id, title, preview_url, category');
-
+                let { data: public_templates, error } = await supabase.from('public_templates').select('id, title, preview_url, category');
                 if (error) {
                     console.error('Error fetching public templates:', error);
-                    if (carouselTrack) {
-                        carouselTrack.innerHTML = `<p style="width: 100%; text-align: center; color: #ff8a8a;">Could not load templates.</p>`;
-                    }
+                    if (carouselTrack) carouselTrack.innerHTML = `<p>Could not load templates.</p>`;
                     return;
                 }
-
                 public_templates.forEach(template => {
                     if (templatesByCategory[template.category]) {
                         templatesByCategory[template.category].push(template);
                     }
                 });
-
-                // Initial render with the default active category
                 renderTemplates(templatesByCategory['invoice']);
             }
 
-            // --- EVENT LISTENERS ---
             categoryButtons.forEach(button => {
                 button.addEventListener('click', () => {
                     categoryButtons.forEach(btn => btn.classList.remove('active'));
@@ -755,7 +895,6 @@
                 });
             });
 
-            // For scroll animations
             const animatedSections = document.querySelectorAll('.animated-section');
             const observer = new IntersectionObserver((entries) => {
                 entries.forEach(entry => {
@@ -767,8 +906,65 @@
             }, { threshold: 0.1 });
             animatedSections.forEach(section => observer.observe(section));
 
-            // --- INITIALIZATION ---
             await fetchPublicTemplates();
+            
+            // ------------------------------------------------------------------
+            // --- MODIFIED SECTION: PADDLE CHECKOUT LOGIC IS NOW HERE ---
+            // ------------------------------------------------------------------
+
+            // Initialize Paddle with your Client-side Token
+            // IMPORTANT: Replace with your token from the Paddle dashboard.
+            // It looks like 'test_...' for sandbox or 'live_...' for production.
+            try {
+                Paddle.Environment.set('sandbox'); 
+                const paddle = await Paddle.Initialize({
+                    token: 'test_3d5ff71e58015d190b1a3b42991', // <-- Replace with YOUR Client-side Token
+                    eventCallback: function(data) {
+                        if (data.name === "checkout.completed") {
+                            console.log('Checkout completed!', data.data);
+                            // On success, redirect to the dashboard
+                            window.location.href = '/dashboard.html?upgraded=true';
+                        }
+                    }
+                });
+            } catch (error) {
+                console.error("Paddle initialization failed:", error);
+                // Handle the error, e.g., by disabling the checkout buttons
+                document.querySelectorAll('.paddle_button').forEach(btn => btn.disabled = true);
+            }
+            
+            // Add event listeners to all Paddle checkout buttons
+            const checkoutButtons = document.querySelectorAll('.paddle_button');
+            checkoutButtons.forEach(button => {
+                button.addEventListener('click', async (e) => {
+                    e.preventDefault(); // Prevent the link from navigating
+
+                    const priceId = e.currentTarget.dataset.priceId;
+                    if (!priceId) return; // Should not happen for these buttons
+
+                    // Check if the user is logged in before opening checkout
+                    const { data: { session } } = await supabase.auth.getSession();
+                    const user = session?.user;
+
+                    if (user) {
+                        // User is logged in, open the checkout overlay
+                        Paddle.Checkout.open({
+                            items: [{
+                                priceId: priceId,
+                                quantity: 1
+                            }],
+                            customer: {
+                                email: user.email // Pre-fill the user's email
+                            }
+                        });
+                    } else {
+                        // User is NOT logged in, redirect them to the login page
+                        alert('Please log in or sign up to upgrade your plan.');
+                        window.location.href = '/login.html';
+                    }
+                });
+            });
+
         });
     </script>
 </body>

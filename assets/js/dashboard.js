@@ -5,6 +5,8 @@ const tabs = document.querySelectorAll('.tab');
 const deleteSelectedBtn = document.getElementById('delete-selected-btn');
 const selectBtn = document.getElementById('select-btn');
 const cancelSelectionBtn = document.getElementById('cancel-selection-btn');
+// NEW: Reference to the counter element
+const templateCounterEl = document.getElementById('template-counter');
 
 let currentTab = 'created';
 let selectedTemplates = new Set();
@@ -281,6 +283,7 @@ function showConfirm(message) {
   });
 }
 
+// MODIFIED: This function now handles showing/hiding the counter
 const loadTemplates = async (tab) => {
     templateGrid.innerHTML = '<p>Loading templates...</p>';
     const { data: { user } } = await supabase.auth.getUser();
@@ -297,11 +300,36 @@ const loadTemplates = async (tab) => {
             .select('id, title, preview_url')
             .eq('user_id', user.id)
             .order('updated_at', { ascending: false });
-        if (error) console.error('Error fetching created templates:', error);
-        else templates = data;
+        if (error) {
+            console.error('Error fetching created templates:', error);
+        } else {
+            templates = data;
+        }
+
+        // --- NEW: Template Counter Logic ---
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', user.id)
+            .single();
+
+        const isPro = profile && (profile.role === 'pro' || profile.role === 'admin');
+        const limit = isPro ? 'Unlimited' : 5;
+        const count = templates.length;
+
+        if (templateCounterEl) {
+            templateCounterEl.textContent = `Templates: ${count} / ${limit}`;
+            templateCounterEl.style.display = 'inline-block';
+        }
+        // --- END: Template Counter Logic ---
 
     } else if (tab === 'purchased') {
         selectBtn.style.display = 'none';
+        // NEW: Hide the counter when not on the "created" tab
+        if (templateCounterEl) {
+            templateCounterEl.style.display = 'none';
+        }
+
         const { data, error } = await supabase
             .from('purchased_templates')
             .select(`store_templates ( id, title, description, preview_url )`)

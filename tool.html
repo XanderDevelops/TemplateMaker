@@ -4,6 +4,7 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>CSVLink</title>
+<script src="https://cdn.paddle.com/paddle/v2/paddle.js"></script>
 <!-- Fabric.js -->
 <script src="https://cdn.jsdelivr.net/npm/fabric@5.3.0/dist/fabric.min.js"></script>
 <!-- SheetJS -->
@@ -85,7 +86,7 @@ nav .nav-links .btn:hover {
 }
   textarea { resize: vertical; }
   input[type="text"]:focus, input[type="number"]:focus, input[type="password"]:focus, select:focus, textarea:focus { border-color: #555; }
-  .btn{ background:var(--accent); color:#000; border:none; padding:9px 16px; border-radius:8px; cursor:pointer; font-weight:600; display:inline-flex; align-items:center; justify-content:center; gap: 8px; transition: background .2s; }
+  .btn{ background:var(--accent); color: var(--bg); border:none; padding:9px 16px; border-radius:8px; cursor:pointer; font-weight:600; display:inline-flex; align-items:center; justify-content:center; gap: 8px; transition: background .2s; }
   .btn:hover{ background: #ccc; }
   .btn:disabled{ opacity:.4; cursor:not-allowed; }
   .btn.ghost{ background:transparent; color:var(--fg); border:1px solid var(--border); }
@@ -156,7 +157,7 @@ nav .nav-links .btn:hover {
 
   /* Modal */
   .modal-backdrop{ position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,.6); z-index:50; }
-  .modal{ width:720px; max-width:95vw; background:var(--panel); border:1px solid var(--border); border-radius:16px; padding:16px; display:flex; flex-direction:column; }
+  .modal{ width:720px; max-width:95vw; background:var(--panel); border:1px solid var(--border); border-radius:16px; padding:16px; display:flex; flex-direction:column; max-height:80vh; overflow: scroll;}
   .col-list{ max-height:46vh; overflow:auto; display:grid; gap:8px; margin-top:8px; }
   .col-item{ border:1px solid var(--border); border-radius:12px; padding:8px; cursor:pointer; }
   .col-item[aria-selected="true"]{ border-color:#444; background:#121212; }
@@ -296,6 +297,27 @@ nav .nav-links .btn:hover {
     border-radius: 8px;
     font-family: monospace;
 }
+
+/* Add this to your <style> block */
+body.light-mode {
+  --bg:#f5f5f5; --fg:#111; --muted:#555; --panel:#fff; --panel-2:#f0f0f0;
+  --border:#ddd; --accent:#111; color: white;
+}
+
+/* Style for settings sections */
+.settings-section {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  height: fit-content;
+  padding: 16px;
+}
+.settings-section h4 {
+  margin: 0 0 12px;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: var(--fg);
+}
 </style>
 </head>
 <body>
@@ -397,6 +419,7 @@ nav .nav-links .btn:hover {
       <div class="toolbar-group">
         <button id="exportZipBtn" class="btn">Export as ZIP</button>
         <button id="exportSinglePdfBtn" class="btn">Export Single PDF</button>
+        <button id="exportPngBtn" class="btn" style="display: none;">Export as PNG</button>
       </div>
       <div class="toolbar">
           <button id="centerViewBtn" class="btn ghost" title="Reset View">
@@ -561,6 +584,11 @@ let originalPatternState = null;
 let imageFillPreviewCanvas = null;
 const PREVIEW_SIZE = 200;
 
+Paddle.Environment.set('sandbox'); 
+Paddle.Initialize({
+    token: 'test_3d5ff71e58015d190b1a3b42991' 
+});
+
 // Auth State
 let currentUser = null;
 let currentTemplateId = null; 
@@ -579,8 +607,22 @@ function debounce(func, delay = 1500) {
 
 // --- NEW: AUTH & DATA LOADING ---
 async function initializeEditor() {
+    applyTheme(localStorage.getItem('csvlink-theme') || 'dark');
     const { data: { session } } = await supabase.auth.getSession();
     currentUser = session?.user;
+
+    if (currentUser) {
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', currentUser.id)
+            .single();
+
+        if (profile && (profile.role === 'pro' || profile.role === 'admin')) {
+            const exportPngBtn = $('#exportPngBtn');
+            if(exportPngBtn) exportPngBtn.style.display = 'inline-flex';
+        }
+    }
 
     const urlParams = new URLSearchParams(window.location.search);
     const templateId = urlParams.get('id');
@@ -765,6 +807,32 @@ const debouncedSave = debounce(async () => {
 
     } else {
         // --- CREATE NEW TEMPLATE ---
+
+        // >>> TEMPLATE LIMIT LOGIC START <<<
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', currentUser.id)
+            .single();
+
+        const isFreeUser = !profile || (profile.role !== 'pro' && profile.role !== 'admin');
+
+        if (isFreeUser) {
+            const { count, error: countError } = await supabase
+                .from('templates')
+                .select('*', { count: 'exact', head: true })
+                .eq('user_id', currentUser.id);
+
+            if (count >= 5) {
+                saveStatusEl.textContent = 'Free account limit (5 templates) reached.';
+                console.warn('User has reached the free template limit.');
+                // We could also trigger a modal here to prompt for an upgrade.
+                // For now, just stopping the save is enough.
+                return; // <-- STOP THE SAVE OPERATION
+            }
+        }
+        // >>> TEMPLATE LIMIT LOGIC END <<<
+
         const { data, error } = await supabase
             .from('templates')
             .insert({
@@ -1058,20 +1126,19 @@ settingsModal.addEventListener('click', (e) => {
 });
 
 async function openSettingsModal() {
-    settingsContent.innerHTML = '<p class="muted">Loading...</p>';
+    const settingsContent = $('#settingsContent');
+    settingsContent.innerHTML = '<p class="muted">Loading account details...</p>';
     settingsModal.style.display = 'flex';
 
-    // 1. Get current user
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
         settingsContent.innerHTML = '<p>Please log in to manage your settings.</p>';
         return;
     }
 
-    // 2. Get user's profile to check their role
     const { data: profile, error } = await supabase
         .from('profiles')
-        .select('role')
+        .select('role, paddle_cancel_url') // Fetch the cancel URL for pro users
         .eq('id', user.id)
         .single();
 
@@ -1080,50 +1147,133 @@ async function openSettingsModal() {
         return;
     }
 
-    // 3. Render content based on user role
+    // --- Build the HTML for the modal ---
+    const currentTheme = localStorage.getItem('csvlink-theme') || 'dark';
+    let modalHTML = `
+        <!-- Section 1: Appearance (for everyone) -->
+        <div class="settings-section stack">
+            <h4>Appearance</h4>
+            <button id="themeToggleBtn" class="btn ghost" style="width: 100%;">${currentTheme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}</button>
+        </div>
+
+        <!-- Section 2: Account (for everyone) -->
+        <div class="settings-section stack" style="gap: 16px;">
+            <h4>Account</h4>
+            <div class="stack">
+                <label for="newPassword">New Password</label>
+                <input type="password" id="newPassword" placeholder="Enter new password">
+            </div>
+            <div class="stack">
+                <label for="confirmPassword">Confirm Password</label>
+                <input type="password" id="confirmPassword" placeholder="Confirm new password">
+            </div>
+            <button id="changePasswordBtn" class="btn">Update Password</button>
+            <p id="passwordMessage" class="muted" style="text-align:center; margin-top: 4px;"></p>
+        </div>
+    `;
+
+    // --- Section 3: Subscription (Conditional) ---
     if (profile.role === 'pro' || profile.role === 'admin') {
-        renderProSettings(user.id);
+        // IMPORTANT: Assumes you store 'paddle_cancel_url' in your 'profiles' table
+        // This URL is provided by Paddle's 'subscription.updated' webhook
+        const cancelUrl = profile.paddle_cancel_url;
+        modalHTML += `
+            <div class="settings-section stack">
+                <h4>Subscription</h4>
+                <p class="muted">You are currently on the Pro plan.</p>
+                ${cancelUrl 
+                    ? `<a href="${cancelUrl}" target="_blank" class="btn ghost" style="text-decoration: none;">Manage or Cancel Subscription</a>` 
+                    : '<p class="muted">Subscription management link not available. Please contact support.</p>'
+                }
+            </div>
+        `;
     } else {
-        renderUpgradeMessage();
+        modalHTML += `
+            <div class="settings-section stack">
+                <h4>Upgrade to Pro</h4>
+                <p class="muted">To get API access and unlimited templates, upgrade your account.</p>
+                <a href="/#pricing" class="btn" style="text-decoration: none;">View Pricing Plans</a>
+            </div>
+        `;
+    }
+
+    // --- Section 4: Developer API Keys (Conditional) ---
+    if (profile.role === 'pro' || profile.role === 'admin') {
+        modalHTML += `
+            <div class="settings-section stack" style="gap: 16px;">
+                <h4>Developer API Keys</h4>
+                <div id="newKeyContainer" class="stack" style="display:none;">
+                    <h5>Your New API Key</h5>
+                    <p class="muted">Copy this key and store it safely. <strong>You will not see it again.</strong></p>
+                    <div id="newKeyDisplay"></div>
+                </div>
+                <div class="stack">
+                    <h5>Your Existing Keys</h5>
+                    <div id="existingKeysList" class="stack">Loading...</div>
+                </div>
+                <button id="generateKeyBtn" class="btn">Generate New API Key</button>
+                <p id="keyMessage" class="muted" style="text-align:center; margin-top: 4px;"></p>
+            </div>
+        `;
+    }
+
+    // --- Render the final HTML and attach event listeners ---
+    settingsContent.innerHTML = modalHTML;
+    attachSettingsEventListeners(user.id, profile.role);
+}
+
+function attachSettingsEventListeners(userId, role) {
+    // Theme toggle
+    $('#themeToggleBtn').addEventListener('click', toggleTheme);
+    
+    // Change password
+    $('#changePasswordBtn').addEventListener('click', async () => {
+        const newPassword = $('#newPassword').value;
+        const confirmPassword = $('#confirmPassword').value;
+        const msgEl = $('#passwordMessage');
+
+        if (!newPassword || newPassword !== confirmPassword) {
+            msgEl.textContent = 'Passwords do not match or are empty.';
+            return;
+        }
+
+        msgEl.textContent = 'Updating...';
+        const { error } = await supabase.auth.updateUser({ password: newPassword });
+
+        if (error) {
+            msgEl.textContent = `Error: ${error.message}`;
+        } else {
+            msgEl.textContent = 'Password updated successfully!';
+            $('#newPassword').value = '';
+            $('#confirmPassword').value = '';
+        }
+    });
+
+    // API Keys (if the elements exist)
+    if (role === 'pro' || role === 'admin') {
+        $('#generateKeyBtn').addEventListener('click', handleGenerateKey);
+        loadAndDisplayKeys(userId); // This is your existing function
     }
 }
 
-function renderUpgradeMessage() {
-    settingsContent.innerHTML = `
-        <div class="stack">
-            <h4>Upgrade to Pro</h4>
-            <p class="muted">To generate API keys and use the document generation API, you need a Pro account.</p>
-            <a href="/pricing" class="btn" style="text-decoration: none;">View Pricing Plans</a>
-        </div>
-    `;
+function applyTheme(theme) {
+    if (theme === 'light') {
+        document.body.classList.add('light-mode');
+    } else {
+        document.body.classList.remove('light-mode');
+    }
+    localStorage.setItem('csvlink-theme', theme);
 }
 
-async function renderProSettings(userId) {
-    settingsContent.innerHTML = `
-        <div class="stack" style="gap: 16px;">
-            <div id="newKeyContainer" class="stack" style="display:none;">
-                <h4>Your New API Key</h4>
-                <p class="muted">Please copy this key and store it somewhere safe. <strong>You will not be able to see it again.</strong></p>
-                <div id="newKeyDisplay"></div>
-            </div>
-
-            <div class="stack">
-                <h4>Your Existing Keys</h4>
-                <div id="existingKeysList" class="stack">Loading keys...</div>
-            </div>
-
-            <div class="stack">
-                <button id="generateKeyBtn" class="btn">Generate New API Key</button>
-                <p id="keyMessage" class="muted" style="text-align:center; margin-top: 8px;"></p>
-            </div>
-        </div>
-    `;
-
-    // Add event listener for the new button
-    $('#generateKeyBtn').addEventListener('click', handleGenerateKey);
-    
-    // Load and display existing keys
-    loadAndDisplayKeys(userId);
+function toggleTheme() {
+    const currentTheme = localStorage.getItem('csvlink-theme') || 'dark';
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    applyTheme(newTheme);
+    // We also need to update the button text inside the modal if it's open
+    const themeBtn = $('#themeToggleBtn');
+    if (themeBtn) {
+        themeBtn.textContent = newTheme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode';
+    }
 }
 
 async function loadAndDisplayKeys(userId) {
@@ -1555,6 +1705,44 @@ async function exportAllRows({asZip, asSinglePdf}) {
     }
     if (asSinglePdf) saveAs(pdf.output('blob'), `${title}.pdf`); if (asZip) saveAs(await zipFile.generateAsync({type:'blob'}), `${title}.zip`);
 }
+
+async function exportAsPNG() {
+    if (!pageRect) {
+        alert('Error: Page object not found. Cannot export.');
+        return;
+    }
+
+    const title = ($('#titleInput').value || 'Untitled_Template').trim();
+    const multiplier = 2; // Export at 2x resolution for better quality
+
+    // Temporarily hide gridlines for a clean export
+    const gridLines = canvas.getObjects('line').filter(o => o.excludeFromExport);
+    gridLines.forEach(l => l.set({ visible: false }));
+    canvas.renderAll();
+
+    // Generate the Data URL from the specific page area
+    const dataURL = canvas.toDataURL({
+        format: 'png', // Specify the format as png
+        multiplier: multiplier,
+        left: pageRect.left,
+        top: pageRect.top,
+        width: pageRect.width,
+        height: pageRect.height
+    });
+
+    // Restore gridlines on the main canvas
+    gridLines.forEach(l => l.set({ visible: true }));
+    canvas.renderAll();
+
+    // Trigger the download
+    const link = document.createElement('a');
+    link.download = `${title}.png`;
+    link.href = dataURL;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
 async function generateCanvasForRow(row) {
     const { left: pageLeft, top: pageTop, width: pageW, height: pageH } = pageRect || { left: 0, top: 0, width: 768, height: 1024 };
     const multiplier = 2;
@@ -1634,6 +1822,7 @@ function centerAndFitPage(){ if(!pageRect)return; const{width:wrapperW,height:wr
 $('#centerViewBtn').onclick=centerAndFitPage;
 window.addEventListener('keydown', e=>{ if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA')return; const isCtrl=e.ctrlKey||e.metaKey; if(isCtrl&&e.key==='z'){e.preventDefault();undo();} if(isCtrl&&e.key==='y'){e.preventDefault();redo();} if(isCtrl&&e.key==='c'){e.preventDefault();copy();} if(isCtrl&&e.key==='x'){e.preventDefault();cut();} if(isCtrl&&e.key==='v'){e.preventDefault();paste();} if(e.key==='Delete'||e.key==='Backspace'){ const activeObjects=canvas.getActiveObjects(); if(activeObjects.length){ activeObjects.forEach(obj=>canvas.remove(obj)); canvas.discardActiveObject().renderAll(); } } });
 $('#exportZipBtn').addEventListener('click',()=>exportAllRows({asZip:true})); $('#exportSinglePdfBtn').addEventListener('click',()=>exportAllRows({asSinglePdf:true}));
+$('#exportPngBtn').addEventListener('click', exportAsPNG);
 
 // --- AI ASSISTANT ---
 const aiBubble = $('#ai-bubble');
