@@ -871,6 +871,21 @@ function saveState(){
 
 // --- CANVAS & PAGE SETUP ---
 function initializeCanvas() {
+        fabric.Object.prototype.set({
+        transparentCorners: false,
+        cornerStyle: 'circle', // Use circles instead of squares
+        cornerColor: '#000000', // Black corners
+        cornerSize: 10,
+        borderColor: '#000000', // A strong blue for the border
+        borderScaleFactor: 1,
+    });
+    // For active selections (multi-select)
+    fabric.ActiveSelection.prototype.set({
+        cornerStyle: 'circle',
+        cornerColor: '#000000',
+        borderColor: 'black',
+    });
+    
     const resizeCanvas = () => {
         const { width, height } = canvasWrapper.getBoundingClientRect();
         canvas.setWidth(width); canvas.setHeight(height); canvas.renderAll();
@@ -898,6 +913,36 @@ function initializeCanvas() {
     saveState();
     renderLayers();
 }
+window.addEventListener('paste', (e) => {
+    // Don't paste if user is typing in an input
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+    const items = e.clipboardData.items;
+    if (!items) return;
+
+    for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        if (item.type.indexOf('image') !== -1) {
+            e.preventDefault();
+            const blob = item.getAsFile();
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const {x, y} = canvas.getVpCenter();
+                adders.image(x, y, event.target.result);
+            };
+            reader.readAsDataURL(blob);
+            break; // Only paste the first image found
+        }
+         if (item.type.indexOf('text/plain') !== -1) {
+            e.preventDefault();
+            item.getAsString((text) => {
+                 const {x, y} = canvas.getVpCenter();
+                 adders.text(x, y, text);
+            });
+            break; // Only paste plain text
+        }
+    }
+});
 
 const setPageDimensions = debounce(() => {
     if (!pageRect) return;
@@ -1038,49 +1083,255 @@ $('#csvInput').addEventListener('change', async (e) => {
 // --- COMPONENT ADDITION ---
 const tableCreatorModal = $('#tableCreatorModal');
 const adders = {
-  text: (x, y) => canvas.add(new fabric.Textbox('Sample Text', { left: x, top: y, fontSize: 28, fill: '#000', fontFamily: 'Arial', originX: 'center', originY: 'center', styles: [] })).setActiveObject(canvas.getObjects().pop()),
+  text: (x, y) => canvas.add(new fabric.Textbox('Sample Text', { left: x, top: y, fontSize: 28, fill: '#000', fontFamily: 'Arial', originX: 'center', originY: 'center', styles: [], padding: 10 })).setActiveObject(canvas.getObjects().pop()),
   rect: ({x, y, asSquare=true}={}) => canvas.add(new fabric.Rect({ left: x, top: y, width: asSquare?150:220, height: 150, fill: '#f0f0f0', stroke: '#333', strokeWidth: 2, originX: 'center', originY: 'center' })).setActiveObject(canvas.getObjects().pop()),
   circle: (x, y) => canvas.add(new fabric.Circle({ left: x, top: y, radius: 75, fill: '#f0f0f0', stroke: '#333', strokeWidth: 2, originX: 'center', originY: 'center' })).setActiveObject(canvas.getObjects().pop()),
   triangle: (x, y) => canvas.add(new fabric.Triangle({ left: x, top: y, width: 150, height: 130, fill: '#f0f0f0', stroke: '#333', strokeWidth: 2, originX: 'center', originY: 'center' })).setActiveObject(canvas.getObjects().pop()),
-  line: (x, y) => canvas.add(new fabric.Line([-75, 0, 75, 0], { left: x, top: y, stroke: '#333', strokeWidth: 2, originX: 'center', originY: 'center' })).setActiveObject(canvas.getObjects().pop()),
+  line: (x, y) => canvas.add(new fabric.Line([-75, 0, 75, 0], { left: x, top: y, stroke: '#333', strokeWidth: 2, originX: 'center', originY: 'center', padding: 10 })).setActiveObject(canvas.getObjects().pop()),
   star: (x, y) => { const pts = (n, oR, iR) => { const p=[]; let a=-Math.PI/2; const s=(Math.PI*2)/n; for(let i=0;i<n;i++){p.push({x:oR*Math.cos(a),y:oR*Math.sin(a)});a+=s/2;p.push({x:iR*Math.cos(a),y:iR*Math.sin(a)});a+=s/2;} return p;}; canvas.add(new fabric.Polygon(pts(5, 75, 35), { left: x, top: y, fill: '#f0f0f0', stroke: '#333', strokeWidth: 2, originX: 'center', originY: 'center' })).setActiveObject(canvas.getObjects().pop()); },
   square: (x, y) => adders.rect({x, y, asSquare: true}),
   arrow: (x, y) => canvas.add(new fabric.Path('M 0 20 L 60 20 L 60 0 L 100 30 L 60 60 L 60 40 L 0 40 Z', { left: x, top: y, fill: '#f0f0f0', stroke: '#333', strokeWidth: 2, originX: 'center', originY: 'center' })).setActiveObject(canvas.getObjects().pop()),
   image: (x, y, url) => { fabric.Image.fromURL(url, (img) => { img.set({ left: x, top: y, scaleX: 0.5, scaleY: 0.5, originX: 'center', originY: 'center' }); canvas.add(img).setActiveObject(img); }, { crossOrigin: 'anonymous' }); },
   table: (x, y) => {
     tableCreatorModal.style.display = 'flex';
+
     const createHandler = () => {
         const rows = parseInt($('#tableRows').value, 10) || 3;
         const cols = parseInt($('#tableCols').value, 10) || 3;
-        if (rows > 0 && cols > 0) {
-            const cellWidth = 100, cellHeight = 40;
-            const tableItems = [];
-            for (let r = 0; r < rows; r++) {
-                for (let c = 0; c < cols; c++) {
-                    const cell = new fabric.Rect({
-                        left: c * cellWidth, top: r * cellHeight,
-                        width: cellWidth, height: cellHeight,
-                        fill: 'transparent', stroke: '#333', strokeWidth: 1
-                    });
-                    tableItems.push(cell);
-                }
+        if (rows <= 0 || cols <= 0) return;
+
+        const cellWidth = 100, cellHeight = 40;
+        const tableItems = [];
+        const colWidths = Array(cols).fill(cellWidth);
+        const rowHeights = Array(rows).fill(cellHeight);
+
+        for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) {
+                const cell = new fabric.Rect({
+                    left: 0, top: 0,
+                    width: cellWidth, height: cellHeight,
+                    fill: 'transparent', stroke: '#333', strokeWidth: 1,
+                });
+                tableItems.push(cell);
             }
-            const table = new fabric.Group(tableItems, { left: x, top: y, originX: 'center', originY: 'center', isTable: true, rows, cols });
-            canvas.add(table).setActiveObject(table);
         }
+
+        const table = new fabric.Group(tableItems, {
+            left: x, top: y,
+            originX: 'center', originY: 'center',
+            isTable: true,
+            rows, cols, colWidths, rowHeights,
+            // Use a border to indicate selection
+            hasBorders: true,
+            // FIX: Add padding to the selection area
+            padding: 10,
+            // Prevent rendering artifacts during resize
+            objectCaching: false,
+        });
+        
+        updateTableLayout(table);
+
+        canvas.add(table).setActiveObject(table);
         closeTableModal();
     };
+
     const closeTableModal = () => {
         tableCreatorModal.style.display = 'none';
         $('#confirmTableCreate').removeEventListener('click', createHandler);
         $('#cancelTableCreate').removeEventListener('click', closeTableModal);
         $('#closeTableCreator').removeEventListener('click', closeTableModal);
     };
+
     $('#confirmTableCreate').addEventListener('click', createHandler, { once: true });
     $('#cancelTableCreate').addEventListener('click', closeTableModal, { once: true });
     $('#closeTableCreator').addEventListener('click', closeTableModal, { once: true });
   }
 };
+
+/**
+ * Recalculates and applies the layout for a table group.
+ * @param {fabric.Group} table The table object.
+ */
+function updateTableLayout(table) {
+    if (!table || !table.isTable) return;
+
+    // Calculate total dimensions from the width/height arrays
+    const totalWidth = table.colWidths.reduce((sum, w) => sum + w, 0);
+    const totalHeight = table.rowHeights.reduce((sum, h) => sum + h, 0);
+
+    let currentY = -totalHeight / 2;
+
+    for (let r = 0; r < table.rows; r++) {
+        let currentX = -totalWidth / 2;
+        for (let c = 0; c < table.cols; c++) {
+            const cellIndex = r * table.cols + c;
+            const cell = table.item(cellIndex);
+            const width = table.colWidths[c];
+            const height = table.rowHeights[r];
+
+            // Set cell size and position relative to the group's center
+            cell.set({ width, height, left: currentX, top: currentY });
+            currentX += width;
+        }
+        currentY += table.rowHeights[r];
+    }
+    
+    // Update the group's dimensions to match the cells' total size
+    table.width = totalWidth;
+    table.height = totalHeight;
+
+    // This is crucial to update the group's bounding box and controls.
+    table.setCoords(); 
+    canvas.requestRenderAll();
+}
+
+
+// --- Global variables for tracking table resizing state ---
+let isResizing = false;
+let resizeInfo = {
+    table: null,
+    type: null, // 'col' or 'row'
+    index: -1,  // The index of the line being dragged
+    startX: 0,
+    startY: 0,
+    originalWidths: [],
+    originalHeights: []
+};
+// Defines the clickable area around a line
+const resizeHandleSize = 15; 
+const minCellSize = 20;
+
+
+// --- Canvas Event Listeners for Table Resizing ---
+
+canvas.on('mouse:down', (options) => {
+    // Start resizing only if the cursor is a resize cursor and a table is the target
+    if (canvas.defaultCursor.includes('resize') && options.target && options.target.isTable) {
+        isResizing = true;
+        const pointer = canvas.getPointer(options.e);
+        const table = options.target;
+
+        resizeInfo.table = table;
+        resizeInfo.startX = pointer.x;
+        resizeInfo.startY = pointer.y;
+        
+        // Store original sizes to calculate changes against
+        resizeInfo.originalWidths = [...table.colWidths];
+        resizeInfo.originalHeights = [...table.rowHeights];
+
+        // Prevent the table from being dragged while resizing a cell
+        table.lockMovementX = true;
+        table.lockMovementY = true;
+    }
+});
+
+canvas.on('mouse:move', (options) => {
+    const pointer = canvas.getPointer(options.e);
+    
+    if (isResizing && resizeInfo.table) {
+        const table = resizeInfo.table;
+        const dx = pointer.x - resizeInfo.startX;
+        const dy = pointer.y - resizeInfo.startY;
+
+        if (resizeInfo.type === 'col') {
+            const colIndex = resizeInfo.index;
+            const adjacentColIndex = colIndex + 1;
+
+            const originalWidth = resizeInfo.originalWidths[colIndex];
+            const adjacentOriginalWidth = resizeInfo.originalWidths[adjacentColIndex];
+
+            // Calculate new widths based on mouse movement
+            let newWidth = originalWidth + dx;
+            let adjacentNewWidth = adjacentOriginalWidth - dx;
+
+            // Enforce minimum cell size
+            if (newWidth >= minCellSize && adjacentNewWidth >= minCellSize) {
+                table.colWidths[colIndex] = newWidth;
+                table.colWidths[adjacentColIndex] = adjacentNewWidth;
+            }
+            
+        } else if (resizeInfo.type === 'row') {
+            const rowIndex = resizeInfo.index;
+            const adjacentRowIndex = rowIndex + 1;
+
+            const originalHeight = resizeInfo.originalHeights[rowIndex];
+            const adjacentOriginalHeight = resizeInfo.originalHeights[adjacentRowIndex];
+            
+            // Calculate new heights based on mouse movement
+            let newHeight = originalHeight + dy;
+            let adjacentNewHeight = adjacentOriginalHeight - dy;
+
+            // Enforce minimum cell size
+            if (newHeight >= minCellSize && adjacentNewHeight >= minCellSize) {
+                table.rowHeights[rowIndex] = newHeight;
+                table.rowHeights[adjacentRowIndex] = adjacentNewHeight;
+            }
+        }
+        
+        updateTableLayout(table);
+        
+    } else {
+        // --- HOVER DETECTION FOR SETTING CURSOR ---
+        const target = options.target;
+        if (!target || !target.isTable) {
+            canvas.defaultCursor = 'default';
+            return;
+        }
+
+        const table = target;
+        const localPoint = table.toLocalPoint(pointer, 'center', 'center');
+        
+        let onBoundary = false;
+
+        // Check vertical column boundaries
+        let currentX = -table.width / 2;
+        for (let c = 0; c < table.cols - 1; c++) {
+            currentX += table.colWidths[c];
+            if (Math.abs(localPoint.x - currentX) < resizeHandleSize) {
+                canvas.defaultCursor = 'ew-resize';
+                resizeInfo.type = 'col';
+                resizeInfo.index = c;
+                onBoundary = true;
+                break;
+            }
+        }
+
+        // Check horizontal row boundaries
+        if (!onBoundary) {
+            let currentY = -table.height / 2;
+            for (let r = 0; r < table.rows - 1; r++) {
+                currentY += table.rowHeights[r];
+                if (Math.abs(localPoint.y - currentY) < resizeHandleSize) {
+                    canvas.defaultCursor = 'ns-resize';
+                    resizeInfo.type = 'row';
+                    resizeInfo.index = r;
+                    onBoundary = true;
+                    break;
+                }
+            }
+        }
+        
+        // If not on any boundary, revert to the default cursor
+        if (!onBoundary) {
+            canvas.defaultCursor = 'default';
+        }
+    }
+});
+
+canvas.on('mouse:up', () => {
+    if (isResizing) {
+        if(resizeInfo.table){
+            // Re-enable table movement
+            resizeInfo.table.lockMovementX = false;
+            resizeInfo.table.lockMovementY = false;
+        }
+        // Clear all resizing state
+        isResizing = false;
+        resizeInfo = { table: null, type: null, index: -1, startX: 0, startY: 0, originalWidths: [], originalHeights: [] };
+        canvas.defaultCursor = 'default';
+        canvas.requestRenderAll(); // Perform a final render
+    }
+});
 
 document.getElementById('imageUpload').addEventListener('change', e => {
     if (!e.target.files || !e.target.files[0]) return;
@@ -1105,9 +1356,74 @@ dropTarget.addEventListener('drop', (e) => {
   }
 });
 
-// --- SNAPPING TO GRID ---
-canvas.on('object:moving', (options) => { if (!snapEnabled || !pageRect) return; const target = options.target; const pageLeft = pageRect.left; const pageTop = pageRect.top; const snapLeft = Math.round((target.left - pageLeft) / gridCellSize) * gridCellSize + pageLeft; const snapTop = Math.round((target.top - pageTop) / gridCellSize) * gridCellSize + pageTop; target.set({ left: snapLeft, top: snapTop }).setCoords(); });
+// --- SNAPPING TO GRID & PAGE CENTER ---
 
+const snapThreshold = 15;
+let centerLineV, centerLineH;
+
+function removeCenterLines() {
+  if (centerLineV) { canvas.remove(centerLineV); centerLineV = null; }
+  if (centerLineH) { canvas.remove(centerLineH); centerLineH = null; }
+}
+
+canvas.on('object:moving', (options) => {
+  if (!pageRect) return;
+
+  const target = options.target;
+  const pageCenter = {
+    x: pageRect.left + (pageRect.width * pageRect.scaleX) / 2,
+    y: pageRect.top + (pageRect.height * pageRect.scaleY) / 2
+  };
+
+  let snappedToV = false;
+  let snappedToH = false;
+
+  if (Math.abs(target.left - pageCenter.x) < snapThreshold) {
+    target.set({ left: pageCenter.x });
+    snappedToV = true;
+    if (!centerLineV) {
+      centerLineV = new fabric.Line([pageCenter.x, pageRect.top, pageCenter.x, pageRect.top + (pageRect.height*pageRect.scaleY)], { stroke: 'rgba(255, 0, 0, 0.75)', strokeWidth: 1, selectable: false, evented: false, excludeFromExport: true });
+      canvas.add(centerLineV);
+    }
+  } else if (centerLineV) {
+    removeCenterLines();
+  }
+
+  if (Math.abs(target.top - pageCenter.y) < snapThreshold) {
+    target.set({ top: pageCenter.y });
+    snappedToH = true;
+    if (!centerLineH) {
+      centerLineH = new fabric.Line([pageRect.left, pageCenter.y, pageRect.left + (pageRect.width*pageRect.scaleX), pageCenter.y], { stroke: 'rgba(255, 0, 0, 0.75)', strokeWidth: 1, selectable: false, evented: false, excludeFromExport: true });
+      canvas.add(centerLineH);
+    }
+  } else if (centerLineH) {
+    removeCenterLines();
+  }
+
+  if (snapEnabled) {
+    if (!snappedToV) {
+      const pageLeft = pageRect.left;
+      const snapLeft = Math.round((target.left - pageLeft) / gridCellSize) * gridCellSize + pageLeft;
+      target.set({ left: snapLeft });
+    }
+    if (!snappedToH) {
+      const pageTop = pageRect.top;
+      const snapTop = Math.round((target.top - pageTop) / gridCellSize) * gridCellSize + pageTop;
+      target.set({ top: snapTop });
+    }
+  }
+
+  target.setCoords();
+  canvas.renderAll();
+});
+
+function onInteractionEnd() {
+  removeCenterLines();
+  canvas.renderAll();
+}
+
+canvas.on('object:modified', onInteractionEnd);
+canvas.on('mouse:up', onInteractionEnd);
 // --- NEW: SETTINGS & API KEY MODAL LOGIC ---
 
 // Get Modal Elements
