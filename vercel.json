@@ -11,5 +11,18 @@
         { "key": "Access-Control-Allow-Headers", "value": "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization" }
       ]
     }
+  ],
+  "rewrites": [
+    { "source": "/privacy", "destination": "/privacy.html" },
+    { "source": "/refunds", "destination": "/refunds.html" },
+    { "source": "/terms", "destination": "/terms.html" },
+    { "source": "/portal", "destination": "/.html" },
+    { "source": "/dashboard", "destination": "/dashboard.html" },
+    { "source": "/tool", "destination": "/tool.html" },
+    { "source": "/login", "destination": "/login.html" },
+    { "source": "/api-documentation", "destination": "/api-documentation.html" },
+    { "source": "/verify", "destination": "/verify.html" },
+    { "source": "/cambiar-contrasena", "destination": "/cambiar-contrasena.html" },
+    { "source": "/reset-password", "destination": "/reset-password.html" }
   ]
 }
