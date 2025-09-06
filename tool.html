@@ -1448,6 +1448,37 @@ settingsModal.addEventListener('click', (e) => {
     }
 });
 
+const openCustomerPortal = async () => {
+    const btn = document.querySelector('#manageSubscriptionBtn'); // Use a standard selector
+    if (btn) {
+        btn.disabled = true;
+        btn.textContent = 'Generating link...';
+    }
+
+    try {
+        // This function invokes your Supabase Edge Function
+        const { data, error } = await supabase.functions.invoke('lemonsqueezy-sub-manager', {
+            body: { action: 'getPortalLink' } 
+        });
+
+        if (error) throw error;
+
+        if (data && data.url) {
+            window.open(data.url, '_blank'); // Open the portal in a new tab
+        } else {
+            throw new Error('Could not generate the portal link.');
+        }
+
+    } catch (error) {
+        alert(`Error: ${error.message}`); // Use the standard alert
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.textContent = 'Manage Subscription';
+        }
+    }
+};
+
 async function openSettingsModal() {
     const settingsContent = $('#settingsContent');
     settingsContent.innerHTML = '<p class="muted">Loading account details...</p>';
@@ -1461,7 +1492,7 @@ async function openSettingsModal() {
 
     const { data: profile, error } = await supabase
         .from('profiles')
-        .select('role, lemonsqueezy_update_url')
+        .select('role')
         .eq('id', user.id)
         .single();
 
@@ -1497,17 +1528,12 @@ async function openSettingsModal() {
 
     // --- Section 3: Subscription (Conditional) ---
     if (profile.role === 'pro' || profile.role === 'admin') {
-        const manageUrl = profile.lemonsqueezy_update_url;
-        modalHTML += `
+       modalHTML += `
             <div class="settings-section stack">
                 <h4>Subscription</h4>
                 <p class="muted">You are currently on the Pro plan.</p>
-                ${manageUrl 
-                    ? `<a href="${manageUrl}" target="_blank" class="btn ghost" style="text-decoration: none;">Manage Subscription</a>` 
-                    : '<p class="muted">Subscription management link not available. Please contact support.</p>'
-                }
+                <button id="manageSubscriptionBtn" class="btn ghost" style="width: 100%;">Manage Subscription</button>
             </div>
-        `;
         `;
     } else {
         modalHTML += `
@@ -1575,6 +1601,11 @@ function attachSettingsEventListeners(userId, role) {
     if (role === 'pro' || role === 'admin') {
         $('#generateKeyBtn').addEventListener('click', handleGenerateKey);
         loadAndDisplayKeys(userId); // This is your existing function
+        
+        const manageSubscriptionBtn = $('#manageSubscriptionBtn');
+        if (manageSubscriptionBtn) {
+            manageSubscriptionBtn.addEventListener('click', openCustomerPortal);
+        }
     }
 }
 
