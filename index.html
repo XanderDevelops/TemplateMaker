@@ -9,8 +9,8 @@
     <link rel="stylesheet" href="assets/css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/fabric@5.3.0/dist/fabric.min.js"></script>
     
-    <!-- Paddle.js Script (Correctly placed) -->
-    <script src="https://cdn.paddle.com/paddle/v2/paddle.js"></script>
+    <!-- Lemon Squeezy.js Script -->
+    <script src="https://app.lemonsqueezy.com/js/lemon.js" defer></script>
 
     <style>
         /* All your existing CSS remains unchanged */
@@ -741,7 +741,7 @@
                         </ul>
                     </div>
                     <div class="card-footer">
-                        <a href="#" class="btn paddle_button" data-price-id="pri_01k3gs3p1qeej5v9bjjdcgppbv">Upgrade to Pro</a>
+                        <a href="https://csvlink.lemonsqueezy.com/buy/888fd3d8-3327-4fb8-92bd-bf99f95f791b" class="btn lemonsqueezy-button">Upgrade to Pro</a>
                     </div>
                 </div>
                 <div class="pricing-card">
@@ -759,7 +759,7 @@
                         </ul>
                     </div>
                     <div class="card-footer">
-                        <a href="#" class="btn paddle_button" data-price-id="pri_01k3gs4brnv6snf1x2smn03mcg">Upgrade to Business</a>
+                         <a href="https://csvlink.lemonsqueezy.com/buy/888fd3d8-3327-4fb8-92bd-bf99f95f791b" class="btn lemonsqueezy-button">Upgrade to Business</a>
                     </div>
                 </div>
             </div>
@@ -780,8 +780,6 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script type="module" src="assets/js/supabase-client.js"></script>
     <script type="module" src="assets/js/auth.js"></script>
-
-    <!-- The external paddle-checkout.js script has been removed -->
 
     <script type="module">
         // 1. Import your configured Supabase client
@@ -906,62 +904,7 @@
 
             await fetchPublicTemplates();
             
-            // ------------------------------------------------------------------
-            // --- MODIFIED SECTION: PADDLE CHECKOUT LOGIC IS NOW HERE ---
-            // ------------------------------------------------------------------
-
-            // Initialize Paddle with your Client-side Token
-            // IMPORTANT: Replace with your token from the Paddle dashboard.
-            // It looks like 'test_...' for sandbox or 'live_...' for production.
-            try {
-                Paddle.Environment.set('sandbox'); 
-                const paddle = await Paddle.Initialize({
-                    token: 'test_3d5ff71e58015d190b1a3b42991', // <-- Replace with YOUR Client-side Token
-                    eventCallback: function(data) {
-                        if (data.name === "checkout.completed") {
-                            console.log('Checkout completed!', data.data);
-                            // On success, redirect to the dashboard
-                            window.location.href = '/dashboard.html?upgraded=true';
-                        }
-                    }
-                });
-            } catch (error) {
-                console.error("Paddle initialization failed:", error);
-                // Handle the error, e.g., by disabling the checkout buttons
-                document.querySelectorAll('.paddle_button').forEach(btn => btn.disabled = true);
-            }
-            
-            // Add event listeners to all Paddle checkout buttons
-            const checkoutButtons = document.querySelectorAll('.paddle_button');
-            checkoutButtons.forEach(button => {
-                button.addEventListener('click', async (e) => {
-                    e.preventDefault(); // Prevent the link from navigating
-
-                    const priceId = e.currentTarget.dataset.priceId;
-                    if (!priceId) return; // Should not happen for these buttons
-
-                    // Check if the user is logged in before opening checkout
-                    const { data: { session } } = await supabase.auth.getSession();
-                    const user = session?.user;
-
-                    if (user) {
-                        // User is logged in, open the checkout overlay
-                        Paddle.Checkout.open({
-                            items: [{
-                                priceId: priceId,
-                                quantity: 1
-                            }],
-                            customer: {
-                                email: user.email // Pre-fill the user's email
-                            }
-                        });
-                    } else {
-                        // User is NOT logged in, redirect them to the login page
-                        alert('Please log in or sign up to upgrade your plan.');
-                        window.location.href = '/login.html';
-                    }
-                });
-            });
+            // Lemon.js will automatically handle links with the 'lemonsqueezy-button' class.
 
         });
     </script>
