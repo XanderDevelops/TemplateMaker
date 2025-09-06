@@ -4,7 +4,7 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>CSVLink</title>
-<script src="https://cdn.paddle.com/paddle/v2/paddle.js"></script>
+<script src="https://app.lemonsqueezy.com/js/lemon.js" defer></script>
 <!-- Fabric.js -->
 <script src="https://cdn.jsdelivr.net/npm/fabric@5.3.0/dist/fabric.min.js"></script>
 <!-- SheetJS -->
@@ -584,9 +584,16 @@ let originalPatternState = null;
 let imageFillPreviewCanvas = null;
 const PREVIEW_SIZE = 200;
 
-Paddle.Environment.set('sandbox'); 
-Paddle.Initialize({
-    token: 'test_3d5ff71e58015d190b1a3b42991' 
+window.createLemonSqueezy();
+LemonSqueezy.Setup({
+    eventHandler: (event) => {
+        // This can be used for client-side actions after a checkout.
+        if (event.event === 'Checkout.Success') {
+            console.log('Checkout successful!', event.data);
+            // Example: Redirect to a thank you page
+            // window.location.href = '/thank-you.html';
+        }
+    }
 });
 
 // Auth State
@@ -1454,7 +1461,7 @@ async function openSettingsModal() {
 
     const { data: profile, error } = await supabase
         .from('profiles')
-        .select('role, paddle_cancel_url') // Fetch the cancel URL for pro users
+        .select('role, lemonsqueezy_update_url')
         .eq('id', user.id)
         .single();
 
@@ -1490,18 +1497,17 @@ async function openSettingsModal() {
 
     // --- Section 3: Subscription (Conditional) ---
     if (profile.role === 'pro' || profile.role === 'admin') {
-        // IMPORTANT: Assumes you store 'paddle_cancel_url' in your 'profiles' table
-        // This URL is provided by Paddle's 'subscription.updated' webhook
-        const cancelUrl = profile.paddle_cancel_url;
+        const manageUrl = profile.lemonsqueezy_update_url;
         modalHTML += `
             <div class="settings-section stack">
                 <h4>Subscription</h4>
                 <p class="muted">You are currently on the Pro plan.</p>
-                ${cancelUrl 
-                    ? `<a href="${cancelUrl}" target="_blank" class="btn ghost" style="text-decoration: none;">Manage or Cancel Subscription</a>` 
+                ${manageUrl 
+                    ? `<a href="${manageUrl}" target="_blank" class="btn ghost" style="text-decoration: none;">Manage Subscription</a>` 
                     : '<p class="muted">Subscription management link not available. Please contact support.</p>'
                 }
             </div>
+        `;
         `;
     } else {
         modalHTML += `
