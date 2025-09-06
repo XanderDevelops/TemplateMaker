@@ -10,38 +10,25 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalCanvasEl = document.getElementById('modal-canvas');
     
     // --- Configuration and State Variables ---
-    const PADDLE_CLIENT_TOKEN = 'test_3d5ff71e58015d190b1a3b42991'; // Your public client-side token
     let allTemplates = [];
     let purchasedTemplateIds = new Set();
     let modalCanvas;
-    let activePurchaseDetails = null; 
 
-    // --- Initialize Paddle.js ---
-    // Now this code will run only after the Paddle script is available.
-    try {
-        Paddle.Environment.set('sandbox');
-        Paddle.Initialize({
-            token: PADDLE_CLIENT_TOKEN,
-            eventCallback: async function(data) { // Make this function async
-                console.log('Paddle event:', data);
-                if (data.name === 'checkout.completed') {
-                    console.log('Transaction completed:', data.data);
-                    
-                    // If we have details from an active purchase, grant access
-                    if (activePurchaseDetails) {
-                        await grantTemplateAccess(activePurchaseDetails.userId, activePurchaseDetails.templateId);
-                        activePurchaseDetails = null; // Clear it out after use
-                    }
-                    
-                    // Now reload the store data. It will find the new purchase.
-                    await loadStoreData(); 
-                }
+    // --- Initialize Lemon Squeezy ---
+    // Make sure you have included the Lemon.js script in your HTML file:
+    // <script src="https://app.lemonsqueezy.com/js/lemon.js" defer></script>
+    window.createLemonSqueezy();
+    LemonSqueezy.Setup({
+        eventHandler: async (event) => {
+            console.log('Lemon Squeezy event:', event);
+            if (event.event === 'Checkout.Success') {
+                console.log('Checkout completed:', event.data);
+                // The webhook is the primary way to grant access,
+                // but we can also optimistically update the UI here.
+                await loadStoreData();
             }
-        });
-    } catch (e) {
-        console.error("Failed to initialize Paddle. Make sure the Paddle.js script is included in your HTML.", e);
-        alert("There was a problem setting up the payment system.");
-    }
+        }
+    });
 
     const grantTemplateAccess = async (userId, templateId) => {
         try {
@@ -138,7 +125,7 @@ document.addEventListener('DOMContentLoaded', () => {
             modalCanvas.loadFromJSON(template.preview_url, () => {
                 const group = new fabric.Group(modalCanvas.getObjects());
                 const scale = Math.min(modalCanvas.width / group.width, modalCanvas.height / group.height) * 0.95;
-                modalCanvas.setViewportTransform([scale, 0, 0, scale, (modalCanvas.width - group.width * scale) / 2, (modalCanvas.height - group.height * scale) / 2]);
+                modalCanvas.setViewportTransform([scale, 0, 0, scale, (modalCanvas.width - group.width * scale) / 2, (staticCanvas.height - group.height * scale) / 2]);
                 group.destroy();
                 modalCanvas.renderAll();
             });
@@ -183,8 +170,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const templateId = buyButton.dataset.templateId;
-            const templateData = allTemplates.find(t => t.id === templateId);
-            if (!templateData || !templateData.paddle_price_id) {
+            const templateData = allTemplates.find(t => t.id.toString() === templateId);
+
+            if (!templateData || !templateData.lemonsqueezy_variant_id) {
                 alert('This product is not configured for sale.');
                 buyButton.disabled = false;
                 buyButton.textContent = `$${templateData?.price || '0'}`;
@@ -192,46 +180,28 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             try {
-                activePurchaseDetails = {
-                    userId: user.id,
-                    templateId: templateId
-                };
-
-                const { data, error } = await supabase.functions.invoke('paddle-wrapper', {
-                    body: { price_id: templateData.paddle_price_id, user_email: user.email, template_id: templateId, user_id: user.id },
+                const { data, error } = await supabase.functions.invoke('lemonsqueezy-checkout', {
+                    body: { 
+                        variant_id: templateData.lemonsqueezy_variant_id, 
+                        user_email: user.email,
+                        user_id: user.id,
+                        template_id: templateId
+                    },
                 });
 
                 if (error) throw error;
                 if (!data?.url) throw new Error('No checkout URL returned from the server.');
 
-                // ===================================================================
-                // === THIS IS THE FINAL FIX FOR URL PARSING ===
-                // The server is returning a redirect URL like:
-                // "https://.../store.html?_ptxn=txn_123"
-                // We need to parse the '_ptxn' query parameter.
-
-                const checkoutUrl = new URL(data.url);
-                const transactionId = checkoutUrl.searchParams.get('_ptxn'); 
-
-                if (!transactionId || !transactionId.startsWith('txn_')) {
-                    // This is the error message you were seeing.
-                    throw new Error('Transaction ID not found in the URL from the server.');
-                }
-                // ===================================================================
-
-                // This will now work correctly
-                Paddle.Checkout.open({ transactionId: transactionId });
+                LemonSqueezy.Url.Open(data.url);
                 
                 buyButton.disabled = false;
                 buyButton.textContent = `$${templateData.price}`;
 
             } catch (error) {
-                // --- CLEAR THE DETAILS IF THE PROCESS FAILS ---
-                activePurchaseDetails = null; 
                 alert(`Error: ${error.message}`);
                 console.error(error);
                 buyButton.disabled = false;
-                buyButton.textContent = `${templateData.price}`;
+                buyButton.textContent = `$${templateData.price}`;
             }
             return;
         }
@@ -273,7 +243,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const card = e.target.closest('.template-card');
         if (card) {
             const clickedId = card.dataset.templateId;
-            const templateData = allTemplates.find(t => t.id === clickedId);
+            const templateData = allTemplates.find(t => t.id.toString() === clickedId);
             if (templateData) openPreviewModal(templateData);
         }
     });
