@@ -318,6 +318,70 @@ body.light-mode {
   letter-spacing: .05em;
   color: var(--fg);
 }
+.main {
+    display: grid;
+    /* Respect the min/max width of the panels */
+    grid-template-columns: minmax(200px, 1fr) 5px 6fr 5px minmax(260px, 1.5fr);
+    gap: 0;
+    padding: 12px;
+    min-height: 0;
+}
+.resizer {
+    background: var(--border);
+    cursor: col-resize;
+    z-index: 10;
+}
+.panel-toggle {
+    position: absolute;
+    top: 50%;
+    z-index: 20;
+    width: 28px;
+    height: 28px;
+    
+    /* Style Reset */
+    padding: 0;
+    border: 1px solid var(--border);
+    background: var(--panel-2);
+    color: var(--fg);
+    cursor: pointer;
+
+    /* Appearance */
+    border-radius: 50%; /* Makes it a circle */
+    box-shadow: 0 2px 8px rgba(0,0,0,.2);
+    transform: translateY(-50%); /* Centers it vertically */
+    
+    /* Flexbox for centering the icon */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    /* Smooth Transitions */
+    transition: background .2s, transform .2s ease-in-out;
+}
+
+.panel-toggle:hover {
+    background: var(--panel);
+    transform: translateY(-50%) scale(1.1); /* Slight zoom on hover */
+}
+
+/* Position the left button on the resizer */
+#left-panel-toggle {
+    left: 100%;
+    margin-left: -14px; /* Move left by half its width */
+}
+
+/* Position the right button on the resizer */
+#right-panel-toggle {
+    right: 100%;
+    margin-right: -14px; /* Move right by half its width */
+}
+
+/* Style the SVG icon inside the button */
+.panel-toggle svg {
+    width: 18px;
+    height: 18px;
+}
+
 </style>
 </head>
 <body>
@@ -356,13 +420,16 @@ body.light-mode {
         <span id="fileName" class="muted" style="max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">No file selected</span>
         <input hidden id="startCell" type="text" placeholder="Starting cell" value="A1" style="width: 100px;"/>
         <button id="settingsBtn" class="btn ghost" title="Settings">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 0 2l-.15.08a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1 0-2l.15-.08a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 0 2l-.15.08a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1 0-2l.15.08a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
         </button>
     </div>
   </header>
 
-  <main class="main">
-    <div class="panel left">
+  <main class="main" id="main-layout">
+    <div class="panel left" id="left-panel">
+      <button id="left-panel-toggle" class="panel-toggle" title="Toggle Left Panel">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+      </button>
       <div class="left-panel-content">
         <h3>Components</h3>
         <div class="components-grid">
@@ -384,6 +451,7 @@ body.light-mode {
         </div>
       </div>
     </div>
+    <div class="resizer" id="left-resizer"></div>
 
     <div class="canvas-container-wrapper">
       <div class="canvas-wrap">
@@ -398,8 +466,11 @@ body.light-mode {
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sparkles"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/></svg>
       </div>
     </div>
-
-    <div class="panel right">
+       <div class="resizer" id="right-resizer"></div>
+    <div class="panel right" id="right-panel">
+       <button id="right-panel-toggle" class="panel-toggle" title="Toggle Right Panel">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+       </button>
       <div id="inspectorWrap">
         <h3>Inspector</h3>
         <div id="noSelection">
@@ -1364,6 +1435,120 @@ dropTarget.addEventListener('drop', (e) => {
         if (file && file.type.startsWith('image/')) { const reader = new FileReader(); reader.onload = (ev) => adders.image(x, y, ev.target.result); reader.readAsDataURL(file); } else { $('#imageUpload').click(); }
     } else { adders[type](x, y); }
   }
+});
+
+// --- NEW: SIDEBAR RESIZING & TOGGLING LOGIC ---
+
+
+const mainLayout = document.getElementById('main-layout');
+const leftResizer = document.getElementById('left-resizer');
+const rightResizer = document.getElementById('right-resizer');
+const leftPanel = document.getElementById('left-panel');
+const rightPanel = document.getElementById('right-panel');
+
+let isResizingLeft = false;
+let isResizingRight = false;
+let lastLeftPanelWidth = '260px'; // Default width
+let lastRightPanelWidth = '320px'; // Default width
+
+// FIX: Set the initial grid layout when the script loads
+mainLayout.style.gridTemplateColumns = `${lastLeftPanelWidth} 5px 1fr 5px ${lastRightPanelWidth}`;
+
+function initResizer(resizer, panel, resizeFlagSetter, lastWidthTracker) {
+    resizer.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        resizeFlagSetter(true);
+        document.body.style.cursor = 'col-resize';
+        document.body.style.userSelect = 'none';
+    });
+
+    document.addEventListener('mousemove', (e) => {
+        if (resizeFlagSetter() === false) return;
+        const mainRect = mainLayout.getBoundingClientRect();
+        
+        if (resizer === leftResizer) {
+            const newLeftWidth = e.clientX - mainRect.left;
+            if (newLeftWidth > 100 && newLeftWidth < mainRect.width / 2) {
+                mainLayout.style.gridTemplateColumns = `${newLeftWidth}px 5px 1fr 5px ${mainLayout.style.gridTemplateColumns.split(' ')[4]}`;
+                lastLeftPanelWidth = `${newLeftWidth}px`;
+            }
+        } else if (resizer === rightResizer) {
+            const newRightWidth = mainRect.right - e.clientX;
+            if (newRightWidth > 100 && newRightWidth < mainRect.width / 2) {
+                 mainLayout.style.gridTemplateColumns = `${mainLayout.style.gridTemplateColumns.split(' ')[0]} 5px 1fr 5px ${newRightWidth}px`;
+                 lastRightPanelWidth = `${newRightWidth}px`;
+            }
+        }
+         canvas.setWidth(canvasWrapper.getBoundingClientRect().width);
+         canvas.renderAll();
+    });
+
+    document.addEventListener('mouseup', () => {
+        if (resizeFlagSetter() === true) {
+            resizeFlagSetter(false);
+            document.body.style.cursor = 'default';
+            document.body.style.userSelect = 'auto';
+        }
+    });
+}
+initResizer(leftResizer, leftPanel, (val) => { if(val !== undefined) isResizingLeft=val; return isResizingLeft; }, (val) => { if(val !== undefined) lastLeftPanelWidth=val; return lastLeftPanelWidth; });
+initResizer(rightResizer, rightPanel, (val) => { if(val !== undefined) isResizingRight=val; return isResizingRight; }, (val) => { if(val !== undefined) lastRightPanelWidth=val; return lastRightPanelWidth; });
+
+// Helper function to resize the canvas
+function refreshCanvasSize() {
+    // Use a small timeout to allow the browser to reflow the layout first
+    setTimeout(() => {
+        const canvasWrapper = document.querySelector('.canvas-wrap');
+        const { width, height } = canvasWrapper.getBoundingClientRect();
+        canvas.setWidth(width);
+        canvas.setHeight(height);
+        canvas.renderAll();
+        // Optionally, recenter the view after resize
+        centerAndFitPage();
+    }, 50); // 50ms is usually enough
+}
+
+document.getElementById('left-panel-toggle').addEventListener('click', () => {
+    const mainLayout = document.getElementById('main-layout');
+    const toggleBtn = document.getElementById('left-panel-toggle');
+    const currentCols = mainLayout.style.gridTemplateColumns.split(' ');
+
+    if (currentCols[0] !== '0px') {
+        lastLeftPanelWidth = currentCols[0];
+        // Hide panel and its resizer
+        mainLayout.style.gridTemplateColumns = `0px 0px 1fr 5px ${currentCols[4]}`;
+        // Update button icon/text for "show" state
+        toggleBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>`;
+
+    } else {
+        // Show panel and its resizer
+        mainLayout.style.gridTemplateColumns = `${lastLeftPanelWidth} 5px 1fr 5px ${currentCols[4]}`;
+        // Update button icon/text for "hide" state
+        toggleBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>`;
+    }
+    // Crucial fix: Refresh the canvas size after toggling
+    refreshCanvasSize();
+});
+
+document.getElementById('right-panel-toggle').addEventListener('click', () => {
+    const mainLayout = document.getElementById('main-layout');
+    const toggleBtn = document.getElementById('right-panel-toggle');
+    const currentCols = mainLayout.style.gridTemplateColumns.split(' ');
+
+    if (currentCols[4] !== '0px') {
+        lastRightPanelWidth = currentCols[4];
+        // Hide panel and its resizer
+        mainLayout.style.gridTemplateColumns = `${currentCols[0]} 5px 1fr 0px 0px`;
+        // Update button icon/text for "show" state
+        toggleBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>`;
+    } else {
+        // Show panel and its resizer
+        mainLayout.style.gridTemplateColumns = `${currentCols[0]} 5px 1fr 5px ${lastRightPanelWidth}`;
+        // Update button icon/text for "hide" state
+        toggleBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>`;
+    }
+    // Crucial fix: Refresh the canvas size after toggling
+    refreshCanvasSize();
 });
 
 // --- SNAPPING TO GRID & PAGE CENTER ---
