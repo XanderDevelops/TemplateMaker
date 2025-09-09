@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { PDFDocument } from 'pdf-lib';
+import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 
 // Initialize Supabase client
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -37,7 +37,7 @@ export default async function handler(req, res) {
             return res.status(400).json({ error: 'Missing templateId or data in request body.' });
         }
 
-        // 3. FETCH THE TEMPLATE CONTENT FROM THE DATABASE (Correct)
+        // 3. FETCH THE JSON TEMPLATE INSTRUCTIONS FROM THE DATABASE (Correct)
         const { data: templateRecord, error: dbError } = await supabase
             .from('templates')
             .select('template_data')
@@ -49,43 +49,42 @@ export default async function handler(req, res) {
             return res.status(404).json({ error: 'Template not found or you do not have permission.' });
         }
         
-        if (!templateRecord.template_data) {
-            return res.status(500).json({ error: 'Template data is missing from the database record.' });
+        const templateJson = templateRecord.template_data;
+        if (!templateJson || !Array.isArray(templateJson.elements)) {
+            return res.status(500).json({ error: 'Template data is invalid or missing an "elements" array.' });
         }
 
-        // 4. *** THE FIX: CONVERT TEMPLATE DATA TO A BUFFER ***
-        // We will assume the data is a Base64 encoded string, which is standard for this use case.
-        let pdfBuffer;
-        try {
-            // The template_data from jsonb is treated as a string.
-            // We create a Buffer from this string, telling Node.js it's Base64 encoded.
-            const base64Data = templateRecord.template_data;
-            pdfBuffer = Buffer.from(base64Data, 'base64');
-        } catch (e) {
-            console.error("Failed to decode Base64 template data:", e);
-            return res.status(500).json({ error: 'Template data is corrupt or not in Base64 format.' });
+        // 4. *** BUILD THE PDF FROM THE JSON INSTRUCTIONS ***
+        const pdfDoc = await PDFDocument.create();
+        const page = pdfDoc.addPage(); // Assuming a single-page template for now
+        const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+
+        // Process each element from the JSON template
+        for (const element of templateJson.elements) {
+            if (element.type === 'text') {
+                // Find and replace all placeholders like {{key}} in the text content
+                let processedText = element.content.replace(/{{\s*(\w+)\s*}}/g, (match, key) => {
+                    // If the key exists in dynamicData, return the value, otherwise return the original placeholder
+                    return dynamicData[key] !== undefined ? dynamicData[key] : match;
+                });
+                
+                // Draw the processed text onto the page
+                page.drawText(processedText, {
+                    x: element.x || 50,
+                    y: element.y || 750,
+                    font: font,
+                    size: element.fontSize || 12,
+                    color: rgb(0, 0, 0), // You could make color dynamic too
+                });
+            }
+            // Add other element types like 'image' here if needed
         }
         
-        // 5. LOAD THE PDF AND FILL THE FORM (This part remains the same)
-        const pdfDoc = await PDFDocument.load(pdfBuffer);
-        const form = pdfDoc.getForm();
-        
-        Object.keys(dynamicData).forEach(key => {
-            try {
-                const field = form.getTextField(key);
-                field.setText(String(dynamicData[key]));
-            } catch (e) {
-                console.warn(`PDF template does not have a field named: ${key}`);
-            }
-        });
-        
-        form.flatten();
         const pdfBytes = await pdfDoc.save();
 
-        // 6. SEND THE COMPLETED PDF (Correct)
+        // 5. SEND THE COMPLETED PDF (Correct)
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', 'attachment; filename="generated-document.pdf"');
-        // IMPORTANT: In Vercel/serverless environments, it's more robust to send the final Buffer directly
         return res.status(200).send(Buffer.from(pdfBytes));
 
     } catch (error) {
