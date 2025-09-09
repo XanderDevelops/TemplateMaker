@@ -40,7 +40,7 @@ export default async function handler(req, res) {
         // 3. FETCH THE TEMPLATE CONTENT FROM THE DATABASE (Correct)
         const { data: templateRecord, error: dbError } = await supabase
             .from('templates')
-            .select('template_data') // This column contains the PDF content
+            .select('template_data')
             .eq('id', templateId)
             .eq('user_id', apiKeyRecord.user_id)
             .single();
@@ -50,28 +50,26 @@ export default async function handler(req, res) {
         }
         
         if (!templateRecord.template_data) {
-            return res.status(500).json({
-                error: 'Template data is missing.',
-                detail: 'The "template_data" column for the requested template is empty.'
-            });
+            return res.status(500).json({ error: 'Template data is missing from the database record.' });
         }
 
-        // 4. *** FIX: LOAD THE PDF DIRECTLY FROM THE DATABASE RECORD ***
-        // Since the PDF content is stored in a JSONB field, it's likely stored as a serialized Buffer.
-        // It looks like: { type: "Buffer", data: [7, 3, 1, ...] }
-        // We need to reconstruct the Buffer from this object.
+        // 4. *** THE FIX: CONVERT TEMPLATE DATA TO A BUFFER ***
+        // We will assume the data is a Base64 encoded string, which is standard for this use case.
         let pdfBuffer;
-        if (templateRecord.template_data.type === 'Buffer' && Array.isArray(templateRecord.template_data.data)) {
-            pdfBuffer = Buffer.from(templateRecord.template_data.data);
-        } else {
-            // Add a fallback for other potential formats if needed, otherwise error
-            return res.status(500).json({ error: 'Template data is not in the expected format (serialized Buffer).' });
+        try {
+            // The template_data from jsonb is treated as a string.
+            // We create a Buffer from this string, telling Node.js it's Base64 encoded.
+            const base64Data = templateRecord.template_data;
+            pdfBuffer = Buffer.from(base64Data, 'base64');
+        } catch (e) {
+            console.error("Failed to decode Base64 template data:", e);
+            return res.status(500).json({ error: 'Template data is corrupt or not in Base64 format.' });
         }
         
+        // 5. LOAD THE PDF AND FILL THE FORM (This part remains the same)
         const pdfDoc = await PDFDocument.load(pdfBuffer);
         const form = pdfDoc.getForm();
         
-        // 5. FILL THE PDF FORM (Correct)
         Object.keys(dynamicData).forEach(key => {
             try {
                 const field = form.getTextField(key);
@@ -87,7 +85,8 @@ export default async function handler(req, res) {
         // 6. SEND THE COMPLETED PDF (Correct)
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', 'attachment; filename="generated-document.pdf"');
-        return res.status(200).send(pdfBytes);
+        // IMPORTANT: In Vercel/serverless environments, it's more robust to send the final Buffer directly
+        return res.status(200).send(Buffer.from(pdfBytes));
 
     } catch (error) {
         console.error('API Error:', error);
