@@ -10,7 +10,7 @@ export default async function handler(req, res) {
     if (req.method === "OPTIONS") {
         res.setHeader('Access-Control-Allow-Origin', '*');
         res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-        res.setHeader('Access-control-allow-headers', 'Content-Type, Authorization');
+        res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
         res.status(200).end();
         return;
     }
@@ -20,7 +20,7 @@ export default async function handler(req, res) {
     }
 
     try {
-        // 1. API KEY AUTHENTICATION (Remains the same)
+        // 1. API KEY AUTHENTICATION (Correct)
         const apiKey = req.headers.authorization?.split(' ')[1];
         if (!apiKey) {
             return res.status(401).json({ error: 'Authorization header missing.' });
@@ -31,49 +31,47 @@ export default async function handler(req, res) {
             return res.status(403).json({ error: 'Forbidden. Invalid API Key.' });
         }
 
-        // 2. GET DATA FROM REQUEST (Remains the same)
+        // 2. GET DATA FROM REQUEST (Correct)
         const { templateId, data: dynamicData } = req.body;
         if (!templateId || !dynamicData) {
             return res.status(400).json({ error: 'Missing templateId or data in request body.' });
         }
 
-        // 3. FETCH TEMPLATE METADATA FROM DATABASE
+        // 3. FETCH THE TEMPLATE CONTENT FROM THE DATABASE (Correct)
         const { data: templateRecord, error: dbError } = await supabase
             .from('templates')
-            .select('template_data')
+            .select('template_data') // This column contains the PDF content
             .eq('id', templateId)
             .eq('user_id', apiKeyRecord.user_id)
             .single();
 
         if (dbError || !templateRecord) {
-            return res.status(404).json({ error: 'Template metadata not found or you do not have permission.' });
+            return res.status(404).json({ error: 'Template not found or you do not have permission.' });
         }
-
-        // 4. *** NEW: VALIDATE THE FILE PATH ***
-        // This is the crucial fix. We check if the path exists before using it.
+        
         if (!templateRecord.template_data) {
             return res.status(500).json({
-                error: 'Template record is missing the file path. Check your database.',
-                detail: 'The "template_data" column is likely empty or named incorrectly for this template ID.'
+                error: 'Template data is missing.',
+                detail: 'The "template_data" column for the requested template is empty.'
             });
         }
 
-        // 5. FETCH THE TEMPLATE FILE FROM STORAGE
-        const { data: fileData, error: fileError } = await supabase
-            .storage
-            .from('templates') // Assuming your bucket is named 'templates'
-            .download(templateRecord.template_data); // Now this is guaranteed to be a valid string
-
-        if (fileError || !fileData) {
-            console.error('Supabase Storage Error:', fileError);
-            return res.status(500).json({ error: 'Could not fetch the template file from storage.', detail: fileError.message });
+        // 4. *** FIX: LOAD THE PDF DIRECTLY FROM THE DATABASE RECORD ***
+        // Since the PDF content is stored in a JSONB field, it's likely stored as a serialized Buffer.
+        // It looks like: { type: "Buffer", data: [7, 3, 1, ...] }
+        // We need to reconstruct the Buffer from this object.
+        let pdfBuffer;
+        if (templateRecord.template_data.type === 'Buffer' && Array.isArray(templateRecord.template_data.data)) {
+            pdfBuffer = Buffer.from(templateRecord.template_data.data);
+        } else {
+            // Add a fallback for other potential formats if needed, otherwise error
+            return res.status(500).json({ error: 'Template data is not in the expected format (serialized Buffer).' });
         }
-
-        // 6. LOAD AND FILL THE PDF (Remains the same)
-        const pdfBuffer = await fileData.arrayBuffer();
+        
         const pdfDoc = await PDFDocument.load(pdfBuffer);
         const form = pdfDoc.getForm();
         
+        // 5. FILL THE PDF FORM (Correct)
         Object.keys(dynamicData).forEach(key => {
             try {
                 const field = form.getTextField(key);
@@ -86,10 +84,10 @@ export default async function handler(req, res) {
         form.flatten();
         const pdfBytes = await pdfDoc.save();
 
-        // 7. SEND THE COMPLETED PDF (Remains the same)
+        // 6. SEND THE COMPLETED PDF (Correct)
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', 'attachment; filename="generated-document.pdf"');
-        return res.status(200).send(Buffer.from(pdfBytes));
+        return res.status(200).send(pdfBytes);
 
     } catch (error) {
         console.error('API Error:', error);
