@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { PDFDocument } from 'pdf-lib'; // Crucially, we only need PDFDocument to load/manipulate
+import { PDFDocument } from 'pdf-lib';
 
 // Initialize Supabase client
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -8,10 +8,9 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 
 export default async function handler(req, res) {
     if (req.method === "OPTIONS") {
-        // Handle CORS preflight
         res.setHeader('Access-Control-Allow-Origin', '*');
         res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-        res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+        res.setHeader('Access-control-allow-headers', 'Content-Type, Authorization');
         res.status(200).end();
         return;
     }
@@ -21,34 +20,27 @@ export default async function handler(req, res) {
     }
 
     try {
-        // 1. API KEY AUTHENTICATION (Your code is correct)
+        // 1. API KEY AUTHENTICATION (Remains the same)
         const apiKey = req.headers.authorization?.split(' ')[1];
         if (!apiKey) {
             return res.status(401).json({ error: 'Authorization header missing.' });
         }
-
         const { data: apiKeyRecord, error: keyError } = await supabase
-            .from('api_keys')
-            .select('user_id')
-            .eq('api_key', apiKey)
-            .single();
-
+            .from('api_keys').select('user_id').eq('api_key', apiKey).single();
         if (keyError || !apiKeyRecord) {
             return res.status(403).json({ error: 'Forbidden. Invalid API Key.' });
         }
 
-        // 2. FETCH THE PDF TEMPLATE AND DYNAMIC DATA
+        // 2. GET DATA FROM REQUEST (Remains the same)
         const { templateId, data: dynamicData } = req.body;
         if (!templateId || !dynamicData) {
             return res.status(400).json({ error: 'Missing templateId or data in request body.' });
         }
 
-        // 3. FETCH THE ACTUAL PDF TEMPLATE FILE FROM SUPABASE STORAGE
-        //    It's better practice to store files in Storage and keep a reference in the database.
-        //    Let's assume 'template_path' is a column in your 'templates' table.
+        // 3. FETCH TEMPLATE METADATA FROM DATABASE
         const { data: templateRecord, error: dbError } = await supabase
             .from('templates')
-            .select('template_data') // e.g., 'public/invoice-template.pdf'
+            .select('template_data') // <-- Double-check this column name in your Supabase table
             .eq('id', templateId)
             .eq('user_id', apiKeyRecord.user_id)
             .single();
@@ -56,43 +48,45 @@ export default async function handler(req, res) {
         if (dbError || !templateRecord) {
             return res.status(404).json({ error: 'Template metadata not found or you do not have permission.' });
         }
-        
+
+        // 4. *** NEW: VALIDATE THE FILE PATH ***
+        // This is the crucial fix. We check if the path exists before using it.
+        if (!templateRecord.template_path) {
+            return res.status(500).json({
+                error: 'Template record is missing the file path. Check your database.',
+                detail: 'The "template_path" column is likely empty or named incorrectly for this template ID.'
+            });
+        }
+
+        // 5. FETCH THE TEMPLATE FILE FROM STORAGE
         const { data: fileData, error: fileError } = await supabase
             .storage
             .from('templates') // Assuming your bucket is named 'templates'
-            .download(templateRecord.template_path);
-            
-        if(fileError || !fileData) {
-             return res.status(500).json({ error: 'Could not fetch the template file from storage.' });
+            .download(templateRecord.template_path); // Now this is guaranteed to be a valid string
+
+        if (fileError || !fileData) {
+            console.error('Supabase Storage Error:', fileError);
+            return res.status(500).json({ error: 'Could not fetch the template file from storage.', detail: fileError.message });
         }
 
-        // 4. *** LOAD THE PDF AND FILL ITS FORM FIELDS ***
+        // 6. LOAD AND FILL THE PDF (Remains the same)
         const pdfBuffer = await fileData.arrayBuffer();
         const pdfDoc = await PDFDocument.load(pdfBuffer);
         const form = pdfDoc.getForm();
-
-        // Iterate through the data provided by the user and fill the form fields
-        // The keys in `dynamicData` should match the names of the fields in your PDF template
+        
         Object.keys(dynamicData).forEach(key => {
-            const fieldName = key;
-            const fieldValue = dynamicData[key];
-
             try {
-                // Get the field and set its value
-                const field = form.getTextField(fieldName);
-                field.setText(String(fieldValue));
+                const field = form.getTextField(key);
+                field.setText(String(dynamicData[key]));
             } catch (e) {
-                // This allows you to pass extra data without the API failing
-                console.warn(`PDF template does not have a field named: ${fieldName}`);
+                console.warn(`PDF template does not have a field named: ${key}`);
             }
         });
         
-        // Flatten the form fields to make them non-editable in the final PDF
         form.flatten();
-
-        // 5. *** SAVE AND SEND THE COMPLETED PDF ***
         const pdfBytes = await pdfDoc.save();
-        
+
+        // 7. SEND THE COMPLETED PDF (Remains the same)
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', 'attachment; filename="generated-document.pdf"');
         return res.status(200).send(Buffer.from(pdfBytes));
