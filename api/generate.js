@@ -17,7 +17,7 @@ export default async function handler(req, res) {
     }
 
     try {
-        // 1. API KEY AUTHENTICATION (Remains the same and is crucial)
+        // 1. API KEY AUTHENTICATION
         const apiKey = req.headers.authorization?.split(' ')[1];
         if (!apiKey) {
             return res.status(401).json({ error: 'Authorization header missing.' });
@@ -33,7 +33,7 @@ export default async function handler(req, res) {
             return res.status(403).json({ error: 'Forbidden. Invalid API Key.' });
         }
 
-        // 2. FETCH THE TEMPLATE DATA
+        // 2. FETCH THE TEMPLATE AND PDF PATH
         const { templateId } = req.body;
         if (!templateId) {
             return res.status(400).json({ error: 'Missing templateId in request body.' });
@@ -41,22 +41,34 @@ export default async function handler(req, res) {
 
         const { data: templateRecord, error: dbError } = await supabase
             .from('templates')
-            .select('template_data')
+            .select('pdf_storage_path') // Assuming you store a path to the PDF in your table
             .eq('id', templateId)
-            .eq('user_id', apiKeyRecord.user_id) // Security check
+            .eq('user_id', apiKeyRecord.user_id)
             .single();
 
         if (dbError || !templateRecord) {
             return res.status(404).json({ error: 'Template not found or you do not have permission to access it.' });
         }
         
-        // 3. RETURN THE TEMPLATE JSON
-        // The core change: we send the template data back to the client.
-        res.setHeader('Content-Type', 'application/json');
-        return res.status(200).json({
-            success: true,
-            template: templateRecord.template_data
-        });
+        // 3. DOWNLOAD THE PDF FROM SUPABASE STORAGE
+        const { data: pdfData, error: storageError } = await supabase
+            .storage
+            .from('your-bucket-name') // Replace with your bucket name
+            .download(templateRecord.pdf_storage_path);
+
+        if (storageError) {
+            console.error('Storage Error:', storageError);
+            return res.status(500).json({ error: 'Could not retrieve PDF from storage.' });
+        }
+
+        // 4. SEND THE PDF AS THE RESPONSE
+        const pdfBuffer = Buffer.from(await pdfData.arrayBuffer());
+
+        res.setHeader('Content-Type', 'application/pdf'); [1, 4]
+        res.setHeader('Content-Disposition', 'attachment; filename="template.pdf"'); // Optional: suggests a filename for download [3, 5]
+        res.setHeader('Content-Length', pdfBuffer.length);
+
+        return res.status(200).send(pdfBuffer); [1]
 
     } catch (error) {
         console.error('API Error:', error);
