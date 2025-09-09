@@ -40,7 +40,7 @@ export default async function handler(req, res) {
         // 3. FETCH TEMPLATE METADATA FROM DATABASE
         const { data: templateRecord, error: dbError } = await supabase
             .from('templates')
-            .select('template_data') // <-- Double-check this column name in your Supabase table
+            .select('template_data')
             .eq('id', templateId)
             .eq('user_id', apiKeyRecord.user_id)
             .single();
@@ -51,10 +51,10 @@ export default async function handler(req, res) {
 
         // 4. *** NEW: VALIDATE THE FILE PATH ***
         // This is the crucial fix. We check if the path exists before using it.
-        if (!templateRecord.template_path) {
+        if (!templateRecord.template_data) {
             return res.status(500).json({
                 error: 'Template record is missing the file path. Check your database.',
-                detail: 'The "template_path" column is likely empty or named incorrectly for this template ID.'
+                detail: 'The "template_data" column is likely empty or named incorrectly for this template ID.'
             });
         }
 
@@ -62,7 +62,7 @@ export default async function handler(req, res) {
         const { data: fileData, error: fileError } = await supabase
             .storage
             .from('templates') // Assuming your bucket is named 'templates'
-            .download(templateRecord.template_path); // Now this is guaranteed to be a valid string
+            .download(templateRecord.template_data); // Now this is guaranteed to be a valid string
 
         if (fileError || !fileData) {
             console.error('Supabase Storage Error:', fileError);
