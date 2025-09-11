@@ -23,7 +23,7 @@
   .app{ display:grid; grid-template-rows:auto 1fr auto; flex-grow: 1; min-height: 0; }
   header{ display:flex; gap:16px; align-items:center; padding:12px 16px; background:var(--panel); border-bottom:1px solid var(--border); flex-wrap:wrap; }
   .title{ font-weight:700; font-size:16px; margin-right: auto; }
-  input[type="text"], input[type="number"], input[type="password"], select, textarea {
+  input[type="text"], input[type="search"], input[type="number"], input[type="password"], select, textarea {
     background:var(--panel-2); color:var(--fg); border:1px solid var(--border);
     padding:8px 10px; border-radius:8px; outline:none; transition: border-color .2s;
     width: 100%; font-family: inherit;
@@ -37,24 +37,22 @@ body {
     margin: 0;
     color: var(--fg);
     font: 14px/1.4 system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
-    
-    /* This creates the main layout */
     display: flex;
     flex-direction: column;
-    overflow: hidden; /* Overflow is now on the flex container */
+    overflow: hidden;
 }
 nav {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 12px 16px; /* Match the tool's header padding */
-    background: var(--panel); /* Use theme variable */
-    border-bottom: 1px solid var(--border); /* Use theme variable */
-    flex-shrink: 0; /* Prevent the navbar from shrinking */
+    padding: 12px 16px;
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
 }
 nav .logo {
     font-weight: 700;
-    font-size: 16px; /* Match the tool's title font-size */
+    font-size: 16px;
     color: var(--fg);
     text-decoration: none;
 }
@@ -73,7 +71,6 @@ nav .nav-links a {
 nav .nav-links a:hover {
     color: var(--fg);
 }
-/* Style for the Login/Dashboard buttons */
 nav .nav-links .btn {
     background: var(--accent);
     color: var(--bg);
@@ -121,7 +118,7 @@ nav .nav-links .btn:hover {
   label{ font-size:12px; color:var(--muted); }
 
   /* Custom Scrollbar Styling */
-  #inspectorWrap, .left-panel-content {
+  #inspectorWrap, .left-panel-content, #components-content, #elements-content, #layers-content {
     overflow-y:auto; flex:1; min-height:0; padding-right: 8px;
   }
   ::-webkit-scrollbar { width: 8px; }
@@ -132,14 +129,14 @@ nav .nav-links .btn:hover {
   #inspector, #multiSelectInspector{ display:grid; gap:16px; }
   .inspector-panel {
   display: grid;
-  gap: 16px; /* The consistent vertical spacing you want */
-  align-content: start; /* Prevents items from stretching vertically */
+  gap: 16px;
+  align-content: start;
 }
   #noSelection {
   border: 1px dashed var(--border);
   border-radius: 12px;
-  padding: 24px; /* Increased padding */
-  text-align: center; /* Center the content for a cleaner look */
+  padding: 24px;
+  text-align: center;
 }
 #noSelection h4 {
   margin: 0 0 12px;
@@ -175,7 +172,7 @@ nav .nav-links .btn:hover {
   .slider-wrapper { display: flex; align-items: center; gap: 8px; }
   .slider-wrapper input[type="range"] { flex-grow: 1; }
   .slider-wrapper input[type="number"] { width: 60px; text-align: right; }
-  .action-buttons { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .action-buttons { display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 8px; }
   .align-buttons { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; }
   .align-buttons .btn { padding: 8px; }
   #multiSelectInspector .btn-group { display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 16px; }
@@ -185,6 +182,7 @@ nav .nav-links .btn:hover {
   .layers-list .layer-item span { flex-grow: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .layers-list .layer-item .layer-actions { display: flex; gap: 4px; }
   .layers-list .layer-item .layer-actions button { padding: 4px; line-height: 0; }
+  .layers-list .layer-item[data-locked="true"] { opacity: 0.6; }
 
 .data-links-object-item {
     padding: 8px 12px;
@@ -193,272 +191,73 @@ nav .nav-links .btn:hover {
     cursor: pointer;
     font-size: 13px;
     transition: background .2s, border-color .2s;
-    height: 72px;           /* Sets a consistent fixed height. */
-    display: flex;          /* Enables flexbox for easy alignment. */
-    flex-direction: column; /* Stacks the text lines vertically. */
-    justify-content: flex-start; /* MODIFIED: Aligns content to the top. */
-}
-
-.data-links-object-item:hover {
-    background: var(--panel-2);
-}
-.data-links-object-item[aria-selected="true"] {
-    background: #2a2a2a;
-    border-color: var(--accent);
-}
-.data-links-object-item .muted {
-    font-size: 11px;
-}
-
-.bindings-editor-container {
-    display: flex; /* Establishes a flexbox layout */
-    flex-direction: column;
-}
-
-#dataLinksEditorContent {
+    height: 72px;
     display: flex;
     flex-direction: column;
-    flex-grow: 1; /* Allows this element to fill all available vertical space */
-    min-height: 0; /* Prevents flexbox overflow issues */
+    justify-content: flex-start;
 }
 
-.links-list-wrapper {
-    flex-grow: 1; /* This part will grow and fill the space */
-    overflow-y: auto; /* The list of links will scroll if it gets too long */
-    padding-right: 8px; /* Adds space for the scrollbar */
-}
+.data-links-object-item:hover { background: var(--panel-2); }
+.data-links-object-item[aria-selected="true"] { background: #2a2a2a; border-color: var(--accent); }
+.data-links-object-item .muted { font-size: 11px; }
+.bindings-editor-container { display: flex; flex-direction: column; }
+#dataLinksEditorContent { display: flex; flex-direction: column; flex-grow: 1; min-height: 0; }
+.links-list-wrapper { flex-grow: 1; overflow-y: auto; padding-right: 8px; }
+.add-link-button-wrapper { flex-shrink: 0; padding-top: 12px; margin-top: 8px; border-top: 1px solid var(--border); }
+.ai-bubble { position: absolute; bottom: 24px; right: 24px; width: 56px; height: 56px; background: var(--accent); color: var(--bg); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,.3); z-index: 20; transition: transform .2s ease-in-out; }
+.ai-bubble:hover { transform: scale(1.1); }
+#aiLoadingSpinner { display: inline-flex; align-items: flex-end; gap: 2px; }
+#aiLoadingSpinner span { animation: blink 1.2s infinite; font-size: 24px; line-height: 1; }
+#aiLoadingSpinner span:nth-child(2) { animation-delay: 0.2s; }
+#aiLoadingSpinner span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes blink { 0%, 100% { opacity: 0.2; } 50% { opacity: 1; } }
+#newKeyDisplay { background: var(--bg); padding: 1rem; border-radius: 8px; border: 1px solid var(--border); font-family: monospace; word-break: break-all; }
+.api-key-item { display: flex; justify-content: space-between; align-items: center; background: var(--panel-2); padding: 8px 12px; border-radius: 8px; font-family: monospace; }
+body.light-mode { --bg:#f5f5f5; --fg:#111; --muted:#555; --panel:#fff; --panel-2:#f0f0f0; --border:#ddd; --accent:#111; color: white; }
+.settings-section { border: 1px solid var(--border); border-radius: 12px; height: fit-content; padding: 16px; }
+.settings-section h4 { margin: 0 0 12px; font-size: 14px; text-transform: uppercase; letter-spacing: .05em; color: var(--fg); }
+.main { display: grid; grid-template-columns: minmax(200px, 1fr) 5px 6fr 5px minmax(260px, 1.5fr); gap: 0; padding: 12px; min-height: 0; }
+.resizer { background: var(--border); cursor: col-resize; z-index: 10; }
+.panel-toggle { position: absolute; top: 50%; z-index: 20; width: 28px; height: 28px; padding: 0; border: 1px solid var(--border); background: var(--panel-2); color: var(--fg); cursor: pointer; border-radius: 50%; box-shadow: 0 2px 8px rgba(0,0,0,.2); transform: translateY(-50%); display: flex; align-items: center; justify-content: center; transition: background .2s, transform .2s ease-in-out; }
+.panel-toggle:hover { background: var(--panel); transform: translateY(-50%) scale(1.1); }
+#left-panel-toggle { left: 100%; margin-left: -14px; }
+#right-panel-toggle { right: 100%; margin-right: -14px; }
+.panel-toggle svg { width: 18px; height: 18px; }
+#start-tour-btn { width: 38px; height: 38px; border-radius: 50%; padding: 0; font-size: 18px; font-weight: bold; }
+#tour-modal { position: fixed; z-index: 1001; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; width: 300px; box-shadow: 0 8px 24px rgba(0,0,0,.4); display: none; flex-direction: column; transition: all 0.4s ease-in-out; }
+#tour-modal-header { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-bottom: 1px solid var(--border); cursor: move; }
+#tour-modal-header h4 { margin: 0; font-size: 14px; }
+#tour-modal-controls button { padding: 4px; line-height: 0; }
+#tour-modal-content { padding: 12px; font-size: 13px; line-height: 1.5; }
+#tour-modal-content p { margin: 0 0 10px; }
+#tour-modal-content ul { margin: 0; padding-left: 18px; }
+#tour-modal-nav { display: flex; justify-content: space-between; padding: 12px; margin-top: auto; border-top: 1px solid var(--border); }
+#tour-highlight { position: fixed; z-index: 1000; background: rgba(0, 150, 255, 0.15); border: 2px solid #0099ff; border-radius: 8px; box-shadow: 0 0 0 9999px rgba(0,0,0,0.5); pointer-events: none; display: none; transition: all 0.4s ease-in-out; }
+  
+  /* NEW: Left Panel Tabs - H3 Style */
+  .panel-tabs { display: flex; gap: 16px; border-bottom: 1px solid var(--border); margin: 0 -12px 12px -12px; padding: 0 12px;}
+  .panel-tab-btn { flex: 0; border: none; background: transparent; padding: 0 0 8px 0; cursor: pointer; margin:0; font-size:12px; color: var(--muted); text-transform:uppercase; letter-spacing:.1em; font-weight: 600; border-bottom: 2px solid transparent; transition: color .2s, border-color .2s; }
+  .panel-tab-btn.active { color: var(--fg); border-bottom-color: var(--accent); }
+  .panel-tab-btn:hover { color: var(--fg); }
+  .panel-tab-content { display: none; flex-direction: column; min-height: 0; flex: 1; }
+  .panel-tab-content.active { display: flex; }
 
-.add-link-button-wrapper {
-    flex-shrink: 0; /* Prevents the button area from shrinking */
-    padding-top: 12px;
-    margin-top: 8px;
-    /* Adds a subtle line to visually separate the button from the content */
-    border-top: 1px solid var(--border);
-}
+  #elements-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 8px; margin-top: 8px; }
+  .element-chip { background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; padding: 8px; cursor: grab; user-select: none; transition: border-color .2s; }
+  .element-chip:hover { border-color: #555; }
+  .element-chip img { width: 100%; height: auto; object-fit: contain; }
 
-/* AI Assistant Bubble */
-.ai-bubble {
-  position: absolute;
-  bottom: 24px;
-  right: 24px;
-  width: 56px;
-  height: 56px;
-  background: var(--accent);
-  color: var(--bg);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  box-shadow: 0 4px 12px rgba(0,0,0,.3);
-  z-index: 20;
-  transition: transform .2s ease-in-out;
-}
-.ai-bubble:hover {
-  transform: scale(1.1);
-}
-
-/* AI Loading Animation */
-#aiLoadingSpinner {
-    display: inline-flex;
-    align-items: flex-end;
-    gap: 2px;
-}
-#aiLoadingSpinner span {
-    animation: blink 1.2s infinite;
-    font-size: 24px;
-    line-height: 1;
-}
-#aiLoadingSpinner span:nth-child(2) {
-    animation-delay: 0.2s;
-}
-#aiLoadingSpinner span:nth-child(3) {
-    animation-delay: 0.4s;
-}
-@keyframes blink {
-    0%, 100% { opacity: 0.2; }
-    50% { opacity: 1; }
-}
-
-#newKeyDisplay {
-    background: var(--bg);
-    padding: 1rem;
-    border-radius: 8px;
-    border: 1px solid var(--border);
-    font-family: monospace;
-    word-break: break-all;
-}
-.api-key-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: var(--panel-2);
-    padding: 8px 12px;
-    border-radius: 8px;
-    font-family: monospace;
-}
-
-/* Add this to your <style> block */
-body.light-mode {
-  --bg:#f5f5f5; --fg:#111; --muted:#555; --panel:#fff; --panel-2:#f0f0f0;
-  --border:#ddd; --accent:#111; color: white;
-}
-
-/* Style for settings sections */
-.settings-section {
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  height: fit-content;
-  padding: 16px;
-}
-.settings-section h4 {
-  margin: 0 0 12px;
-  font-size: 14px;
-  text-transform: uppercase;
-  letter-spacing: .05em;
-  color: var(--fg);
-}
-.main {
-    display: grid;
-    /* Respect the min/max width of the panels */
-    grid-template-columns: minmax(200px, 1fr) 5px 6fr 5px minmax(260px, 1.5fr);
-    gap: 0;
-    padding: 12px;
-    min-height: 0;
-}
-.resizer {
-    background: var(--border);
-    cursor: col-resize;
-    z-index: 10;
-}
-.panel-toggle {
-    position: absolute;
-    top: 50%;
-    z-index: 20;
-    width: 28px;
-    height: 28px;
-    
-    /* Style Reset */
-    padding: 0;
-    border: 1px solid var(--border);
-    background: var(--panel-2);
-    color: var(--fg);
-    cursor: pointer;
-
-    /* Appearance */
-    border-radius: 50%; /* Makes it a circle */
-    box-shadow: 0 2px 8px rgba(0,0,0,.2);
-    transform: translateY(-50%); /* Centers it vertically */
-    
-    /* Flexbox for centering the icon */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    
-    /* Smooth Transitions */
-    transition: background .2s, transform .2s ease-in-out;
-}
-
-.panel-toggle:hover {
-    background: var(--panel);
-    transform: translateY(-50%) scale(1.1); /* Slight zoom on hover */
-}
-
-/* Position the left button on the resizer */
-#left-panel-toggle {
-    left: 100%;
-    margin-left: -14px; /* Move left by half its width */
-}
-
-/* Position the right button on the resizer */
-#right-panel-toggle {
-    right: 100%;
-    margin-right: -14px; /* Move right by half its width */
-}
-
-/* Style the SVG icon inside the button */
-.panel-toggle svg {
-    width: 18px;
-    height: 18px;
-}
-
-  /* === NEW: TOUR STYLES === */
-  #start-tour-btn {
-    width: 38px;
-    height: 38px;
-    border-radius: 50%;
-    padding: 0;
-    font-size: 18px;
-    font-weight: bold;
-  }
-  #tour-modal {
-    position: fixed;
-    z-index: 1001;
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    width: 300px;
-    box-shadow: 0 8px 24px rgba(0,0,0,.4);
-    display: none; /* Hidden by default */
-    flex-direction: column;
-    transition: all 0.4s ease-in-out;
-  }
-  #tour-modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 8px 12px;
-    border-bottom: 1px solid var(--border);
-    cursor: move;
-  }
-  #tour-modal-header h4 {
-    margin: 0;
-    font-size: 14px;
-  }
-  #tour-modal-controls button {
-    padding: 4px;
-    line-height: 0;
-  }
-  #tour-modal-content {
-    padding: 12px;
-    font-size: 13px;
-    line-height: 1.5;
-  }
-  #tour-modal-content p {
-      margin: 0 0 10px;
-  }
-   #tour-modal-content ul {
-    margin: 0; padding-left: 18px;
-   }
-  #tour-modal-nav {
-    display: flex;
-    justify-content: space-between;
-    padding: 12px;
-    margin-top: auto;
-    border-top: 1px solid var(--border);
-  }
-  #tour-highlight {
-    position: fixed;
-    z-index: 1000;
-    background: rgba(0, 150, 255, 0.15);
-    border: 2px solid #0099ff;
-    border-radius: 8px;
-    box-shadow: 0 0 0 9999px rgba(0,0,0,0.5);
-    pointer-events: none;
-    display: none;
-    transition: all 0.4s ease-in-out;
-  }
+  #visualCropModal .modal { width: 80vw; height: 85vh; max-width: 1200px; }
+  #visualCropContainer { flex-grow: 1; position: relative; background: var(--bg); border-radius: 8px; overflow: hidden; }
 
 </style>
 </head>
 <body>
-      <nav>
-        <a href="/" class="logo">CSVLink</a>
-        <div class="nav-links" id="nav-links">
-            <!-- Auth links will be injected here -->
-        </div>
-    </nav>
-<!-- === NEW: Hidden file inputs for image loading === -->
+<nav>
+    <a href="/" class="logo">CSVLink</a>
+    <div class="nav-links" id="nav-links"><!-- Auth links will be injected here --></div>
+</nav>
+
 <input type="file" id="imageUpload" accept="image/*" style="display:none;" />
 <input type="file" id="imageFillUpload" accept="image/*" style="display:none;" />
 
@@ -473,72 +272,64 @@ body.light-mode {
         </div>
     </div>
       <div class="toolbar-group">
-        <button id="undoBtn" class="btn ghost" title="Undo (Ctrl+Z)">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3l3 2.7"/></svg>
-        </button>
-        <button id="redoBtn" class="btn ghost" title="Redo (Ctrl+Y)">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l-3 2.7"/></svg>
-        </button>
+        <button id="undoBtn" class="btn ghost" title="Undo (Ctrl+Z)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3l3 2.7"/></svg></button>
+        <button id="redoBtn" class="btn ghost" title="Redo (Ctrl+Y)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l-3 2.7"/></svg></button>
     </div>
     <div class="toolbar" style="margin-left: auto;">
         <span id="saveStatus" class="muted" style="margin-right: 16px;"></span>
-        <button id="start-tour-btn" class="btn ghost" title="Start Tutorial">?</button> <!-- NEW TOUR BUTTON -->
+        <button id="start-tour-btn" class="btn ghost" title="Start Tutorial">?</button>
         <label for="csvInput" class="btn ghost">Load Data</label>
         <input id="csvInput" type="file" accept=".csv,.xlsx,.xls" style="display:none;"/>
         <span id="fileName" class="muted" style="max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">No file selected</span>
         <input hidden id="startCell" type="text" placeholder="Starting cell" value="A1" style="width: 100px;"/>
-        <button id="settingsBtn" class="btn ghost" title="Settings">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 0 2l-.15.08a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1 0 2l.15.08a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
-        </button>
+        <button id="settingsBtn" class="btn ghost" title="Settings"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 0 2l-.15.08a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l-.22-.38a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1 0 2l.15.08a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg></button>
     </div>
   </header>
 
   <main class="main" id="main-layout">
     <div class="panel left" id="left-panel">
-      <button id="left-panel-toggle" class="panel-toggle" title="Toggle Left Panel">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
-      </button>
+      <button id="left-panel-toggle" class="panel-toggle" title="Toggle Left Panel"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg></button>
       <div class="left-panel-content">
-        <h3>Components</h3>
-        <div class="components-grid">
-            <div class="shape-chip" draggable="true" data-add="text"><svg viewBox="0 0 24 24"><path d="M5 4h14M12 4v16M8 20h8" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg><span>Text</span></div>
-            <div class="shape-chip" draggable="true" data-add="image"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><path d="M21 15l-5-5L5 21" fill="none"></path></svg><span>Image</span></div>
-            <div class="shape-chip" draggable="true" data-add="square"><svg viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="1"></rect></svg><span>Square</span></div>
-            <div class="shape-chip" draggable="true" data-add="circle"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"></circle></svg><span>Circle</span></div>
-            <div class="shape-chip" draggable="true" data-add="triangle"><svg viewBox="0 0 24 24"><path d="M12 2L2 22h20L12 2z"></path></svg><span>Triangle</span></div>
-            <div class="shape-chip" draggable="true" data-add="star"><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg><span>Star</span></div>
-            <div class="shape-chip" draggable="true" data-add="arrow"><svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7" fill="none"></path></svg><span>Arrow</span></div>
-            <div class="shape-chip" draggable="true" data-add="table"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="3" y1="15" x2="21" y2="15"></line><line x1="9" y1="3" x2="9" y2="21"></line><line x1="15" y1="3" x2="15" y2="21"></line></svg><span>Table</span></div>
-            <div class="shape-chip" draggable="true" data-add="line"><svg viewBox="0 0 24 24"> <path d="M4 12h16" fill="none"></path> </svg> <span>Line</span>
-          </div>
+        <div class="panel-tabs">
+            <button id="components-tab-btn" class="panel-tab-btn active" data-target="components-content">Components</button>
+            <button id="layers-tab-btn" class="panel-tab-btn" data-target="layers-content">Layers</button>
+            <button id="elements-tab-btn" class="panel-tab-btn" data-target="elements-content">Elements</button>
         </div>
-         <!-- === Layers Panel === -->
-        <div class="stack" style="margin-top: 16px;">
-          <h3>Layers</h3>
-          <div id="layersList" class="layers-list stack"></div>
+
+        <div id="components-content" class="panel-tab-content active">
+            <div class="components-grid">
+                <div class="shape-chip" draggable="true" data-add="text"><svg viewBox="0 0 24 24"><path d="M5 4h14M12 4v16M8 20h8" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg><span>Text</span></div>
+                <div class="shape-chip" draggable="true" data-add="image"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><path d="M21 15l-5-5L5 21" fill="none"></path></svg><span>Image</span></div>
+                <div class="shape-chip" draggable="true" data-add="square"><svg viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14" rx="1"></rect></svg><span>Square</span></div>
+                <div class="shape-chip" draggable="true" data-add="circle"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"></circle></svg><span>Circle</span></div>
+                <div class="shape-chip" draggable="true" data-add="triangle"><svg viewBox="0 0 24 24"><path d="M12 2L2 22h20L12 2z"></path></svg><span>Triangle</span></div>
+                <div class="shape-chip" draggable="true" data-add="star"><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg><span>Star</span></div>
+                <div class="shape-chip" draggable="true" data-add="arrow"><svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7" fill="none"></path></svg><span>Arrow</span></div>
+                <div class="shape-chip" draggable="true" data-add="table"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="3" y1="15" x2="21" y2="15"></line><line x1="9" y1="3" x2="9" y2="21"></line><line x1="15" y1="3" x2="15" y2="21"></line></svg><span>Table</span></div>
+                <div class="shape-chip" draggable="true" data-add="line"><svg viewBox="0 0 24 24"> <path d="M4 12h16" fill="none"></path> </svg> <span>Line</span></div>
+            </div>
+        </div>
+
+        <div id="layers-content" class="panel-tab-content">
+            <div id="layersList" class="layers-list stack"></div>
+        </div>
+
+        <div id="elements-content" class="panel-tab-content">
+            <input type="search" id="element-search" placeholder="Search elements...">
+            <div id="elements-grid"></div>
         </div>
       </div>
     </div>
     <div class="resizer" id="left-resizer"></div>
 
     <div class="canvas-container-wrapper">
-      <div class="canvas-wrap">
-        <canvas id="c"></canvas>
-      </div>
-      <button id="openDataLinksManagerBtn" class="btn" style="position: absolute; top: 16px; right: 16px; z-index: 10; box-shadow: 0 4px 12px rgba(0,0,0,.3);">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.72"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.72-1.72"></path></svg>
-        <span>Data Links</span>
-      </button>
-      <!-- AI Assistant Bubble -->
-      <div id="ai-bubble" class="ai-bubble" title="AI Template Assistant">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sparkles"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/></svg>
-      </div>
+      <div class="canvas-wrap"><canvas id="c"></canvas></div>
+      <button id="openDataLinksManagerBtn" class="btn" style="position: absolute; top: 16px; right: 16px; z-index: 10; box-shadow: 0 4px 12px rgba(0,0,0,.3);"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.72"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.72-1.72"></path></svg><span>Data Links</span></button>
+      <div id="ai-bubble" class="ai-bubble" title="AI Template Assistant"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sparkles"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/></svg></div>
     </div>
        <div class="resizer" id="right-resizer"></div>
     <div class="panel right" id="right-panel">
-       <button id="right-panel-toggle" class="panel-toggle" title="Toggle Right Panel">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
-       </button>
+       <button id="right-panel-toggle" class="panel-toggle" title="Toggle Right Panel"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg></button>
       <div id="inspectorWrap">
         <h3>Inspector</h3>
         <div id="noSelection">
@@ -561,16 +352,14 @@ body.light-mode {
         <button id="exportPngBtn" class="btn" style="display: none;">Export as PNG</button>
       </div>
       <div class="toolbar">
-          <button id="centerViewBtn" class="btn ghost" title="Reset View">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
-          </button>
+          <button id="centerViewBtn" class="btn ghost" title="Reset View"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg></button>
           <div id="zoomLevel" class="muted">Zoom: 100%</div>
       </div>
       <div class="toolbar-group">
         <label for="gridSizeInput" class="muted" style="font-size:12px; margin-left:8px;">Size:</label>
         <input type="number" id="gridSizeInput" min="12" max="64" style="width: 60px; padding: 4px 8px;">
         <button id="toggleGridBtn" class="btn ghost">Toggle Grid</button>
-        <button id="toggleSnapBtn" class="btn ghost">Toggle Snap</button>
+        <button id="toggleSnapBtn" class="btn ghost active">Toggle Snap</button>
       </div>
   </footer>
 </div>
@@ -588,9 +377,7 @@ body.light-mode {
                 <div id="dataLinksObjectsList" class="stack"></div>
             </div>
             <div class="bindings-editor-container" style="border: 1px solid var(--border); border-radius: 12px; padding: 12px; overflow-y: auto;">
-                <div id="dataLinksEditorContent" class="stack">
-                    <p class="muted" style="text-align:center; padding-top: 24px;">Select an object from the left to manage its data links.</p>
-                </div>
+                <div id="dataLinksEditorContent" class="stack"><p class="muted" style="text-align:center; padding-top: 24px;">Select an object from the left to manage its data links.</p></div>
             </div>
         </div>
     </div>
@@ -600,9 +387,7 @@ body.light-mode {
 <div id="modalBackdrop" class="modal-backdrop">
   <div class="modal">
     <div class="row" style="justify-content:space-between;align-items:center;gap:12px;"><h3>Link to Column</h3><button id="closeModal" class="btn ghost">Close</button></div>
-    <div class="row" style="gap:8px; margin-top:8px;"><input id="columnSearch" type="text" placeholder="Search columns..." style="flex:1"/>
-      <label class="row" style="gap:8px; align-items:center;"><span class="muted">Start at</span><input id="modalStartCell" type="text" value="A1" style="width:88px;"/></label>
-    </div>
+    <div class="row" style="gap:8px; margin-top:8px;"><input id="columnSearch" type="text" placeholder="Search columns..." style="flex:1"/><label class="row" style="gap:8px; align-items:center;"><span class="muted">Start at</span><input id="modalStartCell" type="text" value="A1" style="width:88px;"/></label></div>
     <div id="colList" class="col-list"></div>
     <div class="row" style="margin-top:12px; justify-content:flex-end;"><button id="confirmColumn" class="btn">Use Selected Column</button></div>
   </div>
@@ -611,19 +396,10 @@ body.light-mode {
 <!-- Table Creator Modal -->
 <div id="tableCreatorModal" class="modal-backdrop">
     <div class="modal" style="width: 360px;">
-        <div class="row" style="justify-content:space-between;align-items:center;gap:12px;">
-            <h3>Create Table</h3>
-            <button id="closeTableCreator" class="btn ghost">&times;</button>
-        </div>
+        <div class="row" style="justify-content:space-between;align-items:center;gap:12px;"><h3>Create Table</h3><button id="closeTableCreator" class="btn ghost">&times;</button></div>
         <div class="stack" style="margin-top: 16px; gap: 12px;">
-            <div class="stack">
-                <label for="tableRows">Rows</label>
-                <input type="number" id="tableRows" value="3" min="1" max="100">
-            </div>
-            <div class="stack">
-                <label for="tableCols">Columns</label>
-                <input type="number" id="tableCols" value="3" min="1" max="100">
-            </div>
+            <div class="stack"><label for="tableRows">Rows</label><input type="number" id="tableRows" value="3" min="1" max="100"></div>
+            <div class="stack"><label for="tableCols">Columns</label><input type="number" id="tableCols" value="3" min="1" max="100"></div>
         </div>
         <div class="row" style="margin-top: 24px; justify-content:flex-end; gap: 8px;">
             <button id="cancelTableCreate" class="btn ghost">Cancel</button>
@@ -632,95 +408,48 @@ body.light-mode {
     </div>
 </div>
 
-<div id="imageFillEditorModal" class="modal-backdrop">
-    <div class="modal" style="width: 480px;">
-        <div class="row" style="justify-content:space-between;align-items:center;gap:12px;">
-            <h3>Edit Image Fill</h3>
-            <button id="closeImageFillEditor" class="btn ghost">&times;</button>
-        </div>
-        <div class="main-content" style="display: grid; grid-template-columns: 200px 1fr; gap: 16px; margin-top: 16px;">
-            <div class="preview-container" style="border: 1px solid var(--border); border-radius: 8px; background-color: var(--panel-2); overflow: hidden;">
-                <canvas id="imageFillPreviewCanvas"></canvas>
-            </div>
-            <div id="imageFillControls" class="stack" style="gap: 16px;">
-                <!-- Controls will be added here by JS -->
-            </div>
-        </div>
-        <div class="row" style="margin-top: 24px; justify-content:flex-end; gap: 8px;">
-            <button id="resetFillTransform" class="btn ghost">Reset</button>
-            <button id="cancelFillEdit" class="btn ghost">Cancel</button>
-            <button id="confirmFillEdit" class="btn">Done</button>
+<!-- Visual Crop Modal -->
+<div id="visualCropModal" class="modal-backdrop">
+    <div class="modal">
+        <div class="row" style="justify-content:space-between;align-items:center;gap:12px;"><h3>Crop Image</h3><button id="closeVisualCropModal" class="btn ghost">&times;</button></div>
+        <div id="visualCropContainer" style="margin-top: 16px;"><canvas id="cropCanvas"></canvas></div>
+        <div class="row" style="margin-top:16px; justify-content:flex-end; gap: 8px;">
+            <button id="cancelCropBtn" class="btn ghost">Cancel</button>
+            <button id="applyCropBtn" class="btn">Apply Crop</button>
         </div>
     </div>
 </div>
+
 <!-- AI Assistant Modal --> 
 <div id="aiModalBackdrop" class="modal-backdrop">
   <div class="modal" style="width: 500px;">
-    <div class="row" style="justify-content:space-between;align-items:center;gap:12px;">
-      <h3>AI Template Assistant</h3>
-      <button id="aiCloseModal" class="btn ghost" style="padding: 4px 8px; line-height: 1;">&times;</button>
-    </div>
+    <div class="row" style="justify-content:space-between;align-items:center;gap:12px;"><h3>AI Template Assistant</h3><button id="aiCloseModal" class="btn ghost" style="padding: 4px 8px; line-height: 1;">&times;</button></div>
     <div class="stack" style="margin-top: 16px; gap: 12px;">
-       <div class="stack">
-          <label for="aiApiKey">Google AI Studio API Key <a href="https://aistudio.google.com/apikey" target="_blank">(Get it)</a></label>
-          <input type="password" id="aiApiKey" placeholder="Enter your API key">
-      </div>
-      <div class="stack">
-        <label for="aiPrompt">Request</label>
-        <textarea id="aiPrompt" rows="4" placeholder="e.g., 'Create an invoice template with fields for item, quantity, price, and total.'"></textarea>
-      </div>
-      <div id="pasted-image-container" style="display: none; text-align: center;">
-        <label>Pasted Image Preview:</label>
-            <img id="pasted-image" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="Pasted Image" style="max-width: 100%; max-height: 150px; border: 1px solid #ccc; padding: 5px; margin-top: 5px; object-fit: contain;">
-      </div>
+       <div class="stack"><label for="aiApiKey">Google AI Studio API Key <a href="https://aistudio.google.com/apikey" target="_blank">(Get it)</a></label><input type="password" id="aiApiKey" placeholder="Enter your API key"></div>
+      <div class="stack"><label for="aiPrompt">Request</label><textarea id="aiPrompt" rows="4" placeholder="e.g., 'Create an invoice template with fields for item, quantity, price, and total.'"></textarea></div>
+      <div id="pasted-image-container" style="display: none; text-align: center;"><label>Pasted Image Preview:</label><img id="pasted-image" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="Pasted Image" style="max-width: 100%; max-height: 150px; border: 1px solid #ccc; padding: 5px; margin-top: 5px; object-fit: contain;"></div>
     </div>
-    <div class="row" style="margin-top:16px; justify-content:flex-end;">
-      <button id="aiSendBtn" class="btn" style="background-color: white; color: black;">
-        <span id="aiSendBtnText">Send Request</span>
-        <span id="aiLoadingSpinner" style="display: none;"><span>.</span><span>.</span><span>.</span></span>
-      </button>
-    </div>
+    <div class="row" style="margin-top:16px; justify-content:flex-end;"><button id="aiSendBtn" class="btn" style="background-color: white; color: black;"><span id="aiSendBtnText">Send Request</span><span id="aiLoadingSpinner" style="display: none;"><span>.</span><span>.</span><span>.</span></span></button></div>
   </div>
 </div>
 
 <div id="settingsModal" class="modal-backdrop">
     <div class="modal" style="width: 550px;">
-        <div class="row" style="justify-content:space-between;align-items:center;gap:12px;">
-            <h3>Settings & API Keys</h3>
-            <button id="closeSettingsModal" class="btn ghost">&times;</button>
-        </div>
-        
-        <div id="settingsContent" class="stack" style="margin-top: 16px; gap: 12px;">
-            <!-- Content will be loaded here by JavaScript -->
-        </div>
+        <div class="row" style="justify-content:space-between;align-items:center;gap:12px;"><h3>Settings & API Keys</h3><button id="closeSettingsModal" class="btn ghost">&times;</button></div>
+        <div id="settingsContent" class="stack" style="margin-top: 16px; gap: 12px;"></div>
     </div>
 </div>
 
-<!-- === NEW: TOUR MODAL & HIGHLIGHTER === -->
 <div id="tour-highlight"></div>
 <div id="tour-modal">
-    <div id="tour-modal-header">
-        <h4 id="tour-modal-title">Welcome!</h4>
-        <div id="tour-modal-controls" class="row">
-            <button id="tour-close-btn" class="btn ghost" title="Close Tutorial">&times;</button>
-        </div>
-    </div>
-    <div id="tour-modal-content">
-        <p>This is an interactive tour to guide you through the main features of the editor.</p>
-    </div>
-    <div id="tour-modal-nav">
-        <button id="tour-prev-btn" class="btn ghost">Previous</button>
-        <div id="tour-step-counter" class="muted"></div>
-        <button id="tour-next-btn" class="btn">Next</button>
-        <button id="tour-finish-btn" class="btn" style="display: none;">Finish</button>
-    </div>
+    <div id="tour-modal-header"><h4 id="tour-modal-title">Welcome!</h4><div id="tour-modal-controls" class="row"><button id="tour-close-btn" class="btn ghost" title="Close Tutorial">&times;</button></div></div>
+    <div id="tour-modal-content"><p>This is an interactive tour to guide you through the main features of the editor.</p></div>
+    <div id="tour-modal-nav"><button id="tour-prev-btn" class="btn ghost">Previous</button><div id="tour-step-counter" class="muted"></div><button id="tour-next-btn" class="btn">Next</button><button id="tour-finish-btn" class="btn" style="display: none;">Finish</button></div>
 </div>
-
 
 <script type="module" src="assets/js/supabase-client.js"></script>
 <script type="module" src="assets/js/auth.js"></script>
 
-<!-- THIS IS THE MISSING SCRIPT BLOCK -->
 <script type="module">
 // --- Supabase and Auth Integration ---
 import { supabase } from './assets/js/supabase-client.js';
@@ -735,7 +464,7 @@ const canvas = new fabric.Canvas('c', { backgroundColor: 'transparent', selectio
 let pageRect;
 let bindings = new Map();
 let workbook, worksheet, headers = [], dataRows = [], selectedColumn;
-let gridEnabled = false, snapEnabled = false;
+let gridEnabled = false, snapEnabled = true;
 let gridCellSize = 32;
 let historyStack = [];
 let historyIndex = -1;
@@ -743,51 +472,24 @@ let historyLocked = false;
 let _clipboard = null;
 const FONT_LIST = ["Arial", "Helvetica", "Times New Roman", "Georgia", "Courier New", "Verdana", "Impact", "Comic Sans MS"];
 let editingFillObject = null;
-let originalPatternState = null;
-let imageFillPreviewCanvas = null;
-const PREVIEW_SIZE = 200;
-
-window.createLemonSqueezy();
-LemonSqueezy.Setup({
-    eventHandler: (event) => {
-        // This can be used for client-side actions after a checkout.
-        if (event.event === 'Checkout.Success') {
-            console.log('Checkout successful!', event.data);
-            // Example: Redirect to a thank you page
-            // window.location.href = '/thank-you.html';
-        }
-    }
-});
-
-// Auth State
-let currentUser = null;
-let currentTemplateId = null; 
+let cropCanvas, croppingImage = null;
+let currentUser = null, currentTemplateId = null; 
 const saveStatusEl = $('#saveStatus');
 
-// --- DEBOUNCE UTILITY ---
-function debounce(func, delay = 1500) {
-    let timeout;
-    const debounced = (...args) => {
-        clearTimeout(timeout);
-        timeout = setTimeout(() => { func.apply(this, args); }, delay);
-    };
-    debounced.clear = () => { clearTimeout(timeout); }; // Method to cancel pending saves
-    return debounced;
-}
+window.createLemonSqueezy();
+LemonSqueezy.Setup({ eventHandler: (event) => { if (event.event === 'Checkout.Success') console.log('Checkout successful!', event.data); } });
 
-// --- NEW: AUTH & DATA LOADING ---
+// --- DEBOUNCE UTILITY ---
+function debounce(func, delay = 1500) { let timeout; const debounced = (...args) => { clearTimeout(timeout); timeout = setTimeout(() => { func.apply(this, args); }, delay); }; debounced.clear = () => { clearTimeout(timeout); }; return debounced; }
+
+// --- AUTH & DATA LOADING ---
 async function initializeEditor() {
     applyTheme(localStorage.getItem('csvlink-theme') || 'dark');
     const { data: { session } } = await supabase.auth.getSession();
     currentUser = session?.user;
 
     if (currentUser) {
-        const { data: profile } = await supabase
-            .from('profiles')
-            .select('role')
-            .eq('id', currentUser.id)
-            .single();
-
+        const { data: profile } = await supabase.from('profiles').select('role').eq('id', currentUser.id).single();
         if (profile && (profile.role === 'pro' || profile.role === 'admin')) {
             const exportPngBtn = $('#exportPngBtn');
             if(exportPngBtn) exportPngBtn.style.display = 'inline-flex';
@@ -797,373 +499,129 @@ async function initializeEditor() {
     const urlParams = new URLSearchParams(window.location.search);
     const templateId = urlParams.get('id');
 
-    // Always initialize the canvas first with default or loaded dimensions
     initializeCanvas(); 
-    initializeImageFillEditor();
+    initializeVisualCropper();
     renderPageInspector();
 
-    if (templateId && currentUser) {
-        await loadTemplateFromDB(templateId);
-    } else if (!currentUser) {
-        showGuestWarning();
-        centerAndFitPage(); // Center the default page for guests
-    } else {
-        centerAndFitPage(); // Center for logged-in user with new template
-    }
+    if (templateId && currentUser) { await loadTemplateFromDB(templateId); } 
+    else if (!currentUser) { showGuestWarning(); centerAndFitPage(); } 
+    else { centerAndFitPage(); }
 
-    if (!localStorage.getItem('hasSeenTour')) {
-        startTour();
-    }
+    if (!localStorage.getItem('hasSeenTour')) startTour();
+    initializeLeftPanelTabs();
 }
 
-function showGuestWarning() {
-    saveStatusEl.textContent = "Log in to save your work.";
-}
+function showGuestWarning() { saveStatusEl.textContent = "Log in to save your work."; }
 async function loadTemplateFromDB(templateId) {
     saveStatusEl.textContent = 'Loading...';
-
     const urlParams = new URLSearchParams(window.location.search);
     const isPublic = urlParams.get('public') === 'true';
-
     let data = null;
 
     if (isPublic) {
-        console.log(`Attempting to load PUBLIC template: ${templateId}`);
-
-        if (!currentUser) {
-            console.error("Cannot load public template: User not logged in.");
-            saveStatusEl.textContent = 'Please log in to load this template.';
-            return;
+        if (!currentUser) { saveStatusEl.textContent = 'Please log in to load this template.'; return; }
+        let { data: existingTemplate, error: existingError } = await supabase.from('templates').select('id, title, template_data').eq('user_id', currentUser.id).eq('source_template_id', templateId).single();
+        if (existingTemplate && !existingError) { data = existingTemplate; currentTemplateId = data.id; } 
+        else {
+            const { data: publicData, error: publicError } = await supabase.from('public_templates').select('id, title, template_data').eq('id', templateId).single();
+            if (publicError) { console.error('Error loading public template:', publicError); saveStatusEl.textContent = 'Could not load the selected template.'; return; }
+            data = publicData; currentTemplateId = null;
         }
-
-        // ===================================================================
-        // BUG ANALYSIS: The following query is likely the source of the issue.
-        // It is not finding the user's existing copy, which causes the 'else'
-        // block to execute every time.
-        //
-        // TO FIX:
-        // 1. Ensure your 'templates' table has a 'source_template_id' column.
-        // 2. Ensure your saving logic populates this column with the public
-        //    template's ID when a user saves a copy for the first time.
-        // ===================================================================
-        let { data: existingTemplate, error: existingError } = await supabase
-            .from('templates')
-            .select('id, title, template_data')
-            .eq('user_id', currentUser.id)
-            .eq('source_template_id', templateId)
-            .single();
-
-        if (existingTemplate && !existingError) {
-            console.log("User already owns this template. Opening existing copy.");
-            data = existingTemplate;
-            currentTemplateId = data.id; // Correctly load the existing copy
-        } else {
-            const { data: publicData, error: publicError } = await supabase
-                .from('public_templates')
-                .select('id, title, template_data')
-                .eq('id', templateId)
-                .single();
-
-            if (publicError) {
-                console.error('Error loading public template:', publicError);
-                saveStatusEl.textContent = 'Could not load the selected template.';
-                return;
-            }
-
-            data = publicData;
-            currentTemplateId = null; // Set to null to create a NEW copy on the next save
-        }
-    } else { // Handle private or purchased templates
-        if (!currentUser) {
-            console.error("Cannot load private template: User not logged in.");
-            saveStatusEl.textContent = 'Please log in to load your templates.';
-            return;
-        }
-
-        console.log(`Attempting to load USER template: ${templateId}`);
-
-        let { data: privateData, error: privateError } = await supabase
-            .from('templates')
-            .select('id, title, template_data')
-            .eq('id', templateId)
-            .eq('user_id', currentUser.id)
-            .single();
-
+    } else { 
+        if (!currentUser) { saveStatusEl.textContent = 'Please log in to load your templates.'; return; }
+        let { data: privateData, error: privateError } = await supabase.from('templates').select('id, title, template_data').eq('id', templateId).eq('user_id', currentUser.id).single();
         if (privateError) {
-            const { data: purchasedData, error: purchasedError } = await supabase
-                .from('purchased_templates')
-                .select('store_templates (id, title, template_data)')
-                .eq('user_id', currentUser.id)
-                .eq('template_id', templateId)
-                .single();
-
-            if (purchasedData && purchasedData.store_templates) {
-                data = purchasedData.store_templates;
-                currentTemplateId = null; // Purchased templates are copied on first load/save
-            } else {
-                console.error('Error or template not found:', purchasedError || privateError);
-                saveStatusEl.textContent = 'Could not load template.';
-                return;
-            }
-        } else {
-            data = privateData;
-            // BUG FIX: Set the currentTemplateId when loading a user's own private template.
-            currentTemplateId = data.id;
-        }
+            const { data: purchasedData, error: purchasedError } = await supabase.from('purchased_templates').select('store_templates (id, title, template_data)').eq('user_id', currentUser.id).eq('template_id', templateId).single();
+            if (purchasedData && purchasedData.store_templates) { data = purchasedData.store_templates; currentTemplateId = null; } 
+            else { console.error('Error or template not found:', purchasedError || privateError); saveStatusEl.textContent = 'Could not load template.'; return; }
+        } else { data = privateData; currentTemplateId = data.id; }
     }
 
-    // Common logic to load the template data into the canvas
     if (data && data.template_data) {
-        const template = data.template_data;
-        historyLocked = true;
-
+        const template = data.template_data; historyLocked = true;
         $('#titleInput').value = data.title || template.page.title || 'Untitled Template';
-        $('#pageWidth').value = template.page.width || 768;
-        $('#pageHeight').value = template.page.height || 1024;
-
+        $('#pageWidth').value = template.page.width || 768; $('#pageHeight').value = template.page.height || 1024;
         pageRect.set({ width: parseInt(template.page.width), height: parseInt(template.page.height) });
         bindings = new Map(template.bindings || []);
-
         canvas.loadFromJSON(template.canvas, () => {
-            restoreCanvasStateAfterLoad();
-            centerAndFitPage();
-            historyStack = [];
-            historyIndex = -1;
-            historyLocked = false;
-            saveState();
-            saveStatusEl.textContent = currentTemplateId
-                ? 'Template loaded. Your work will be saved to your copy.'
-                : 'Template loaded. Your work will be saved as a new copy.';
+            restoreCanvasStateAfterLoad(); centerAndFitPage(); historyStack = []; historyIndex = -1; historyLocked = false; saveState();
+            saveStatusEl.textContent = currentTemplateId ? 'Template loaded. Your work will be saved to your copy.' : 'Template loaded. Your work will be saved as a new copy.';
         });
-    } else {
-        console.error("Data was fetched, but 'template_data' field is missing or null.", data);
-        saveStatusEl.textContent = 'Template data is corrupted or empty.';
-    }
+    } else { saveStatusEl.textContent = 'Template data is corrupted or empty.'; }
 }
 
-// --- MODIFIED: SAVE/LOAD LOGIC ---
 const debouncedSave = debounce(async () => {
-    if (!currentUser || historyLocked) return;
-
-    saveStatusEl.textContent = 'Saving...';
-
-    // Prepare both the full template data and the preview JSON
-    const fullTemplateData = {
-        canvas: canvas.toJSON(['oid', 'isTable', 'rows', 'cols']),
-        page: { title: $('#titleInput').value, width: $('#pageWidth').value, height: $('#pageHeight').value },
-        bindings: Array.from(bindings.entries()),
-    };
-
-    // For the preview, we just need the canvas objects and background
-    const previewJson = {
-        version: fullTemplateData.canvas.version,
-        objects: fullTemplateData.canvas.objects,
-        background: fullTemplateData.canvas.background || pageRect.fill
-    };
+    if (!currentUser || historyLocked) return; saveStatusEl.textContent = 'Saving...';
+    const fullTemplateData = { canvas: canvas.toJSON(['oid', 'isTable', 'rows', 'cols', 'colWidths', 'rowHeights', 'locked']), page: { title: $('#titleInput').value, width: $('#pageWidth').value, height: $('#pageHeight').value }, bindings: Array.from(bindings.entries()), };
+    const previewJson = { version: fullTemplateData.canvas.version, objects: fullTemplateData.canvas.objects, background: fullTemplateData.canvas.background || pageRect.fill };
 
     if (currentTemplateId) {
-        // --- UPDATE EXISTING TEMPLATE ---
-        const { error } = await supabase
-            .from('templates')
-            .update({
-                title: $('#titleInput').value,
-                template_data: fullTemplateData,
-                preview_url: previewJson // Save the preview JSON here
-            })
-            .eq('id', currentTemplateId);
-
-        if (error) {
-            saveStatusEl.textContent = 'Error saving.';
-            console.error('Update Error:', error);
-        } else {
-            saveStatusEl.textContent = 'All changes saved.';
-        }
-
+        const { error } = await supabase.from('templates').update({ title: $('#titleInput').value, template_data: fullTemplateData, preview_url: previewJson }).eq('id', currentTemplateId);
+        if (error) { saveStatusEl.textContent = 'Error saving.'; console.error('Update Error:', error); } else { saveStatusEl.textContent = 'All changes saved.'; }
     } else {
-        // --- CREATE NEW TEMPLATE ---
-
-        // >>> TEMPLATE LIMIT LOGIC START <<<
-        const { data: profile } = await supabase
-            .from('profiles')
-            .select('role')
-            .eq('id', currentUser.id)
-            .single();
-
+        const { data: profile } = await supabase.from('profiles').select('role').eq('id', currentUser.id).single();
         const isFreeUser = !profile || (profile.role !== 'pro' && profile.role !== 'admin');
-
-        if (isFreeUser) {
-            const { count, error: countError } = await supabase
-                .from('templates')
-                .select('*', { count: 'exact', head: true })
-                .eq('user_id', currentUser.id);
-
-            if (count >= 5) {
-                saveStatusEl.textContent = 'Free account limit (5 templates) reached.';
-                console.warn('User has reached the free template limit.');
-                // We could also trigger a modal here to prompt for an upgrade.
-                // For now, just stopping the save is enough.
-                return; // <-- STOP THE SAVE OPERATION
-            }
-        }
-        // >>> TEMPLATE LIMIT LOGIC END <<<
-
-        const { data, error } = await supabase
-            .from('templates')
-            .insert({
-                user_id: currentUser.id,
-                title: $('#titleInput').value,
-                template_data: fullTemplateData,
-                preview_url: previewJson // Save the preview JSON here
-            })
-            .select('id')
-            .single();
-
-        if (error) {
-            saveStatusEl.textContent = 'Error creating template.';
-            console.error('Insert Error:', error);
-        } else {
-            currentTemplateId = data.id;
-            const newUrl = `${window.location.pathname}?id=${currentTemplateId}`;
-            window.history.replaceState({ path: newUrl }, '', newUrl);
-            saveStatusEl.textContent = 'Template saved.';
-        }
+        if (isFreeUser) { const { count } = await supabase.from('templates').select('*', { count: 'exact', head: true }).eq('user_id', currentUser.id); if (count >= 5) { saveStatusEl.textContent = 'Free account limit (5 templates) reached.'; return; } }
+        const { data, error } = await supabase.from('templates').insert({ user_id: currentUser.id, title: $('#titleInput').value, template_data: fullTemplateData, preview_url: previewJson }).select('id').single();
+        if (error) { saveStatusEl.textContent = 'Error creating template.'; console.error('Insert Error:', error); } 
+        else { currentTemplateId = data.id; const newUrl = `${window.location.pathname}?id=${currentTemplateId}`; window.history.replaceState({ path: newUrl }, '', newUrl); saveStatusEl.textContent = 'Template saved.'; }
     }
 });
 
-function saveState(){
-    if (historyLocked) return;
-    historyStack.splice(historyIndex + 1);
-    historyStack.push(canvas.toJSON(['oid', 'isTable', 'rows', 'cols']));
-    historyIndex = historyStack.length - 1;
-    updateHistoryButtons();
-    
-    if (currentUser) {
-       saveStatusEl.textContent = 'Unsaved changes...';
-       debouncedSave();
-    }
-}
+function saveState(){ if (historyLocked) return; historyStack.splice(historyIndex + 1); historyStack.push(canvas.toJSON(['oid', 'isTable', 'rows', 'cols', 'colWidths', 'rowHeights', 'locked'])); historyIndex = historyStack.length - 1; updateHistoryButtons(); if (currentUser) { saveStatusEl.textContent = 'Unsaved changes...'; debouncedSave(); } }
 
 // --- CANVAS & PAGE SETUP ---
 function initializeCanvas() {
-        fabric.Object.prototype.set({
-        transparentCorners: false,
-        cornerStyle: 'circle', // Use circles instead of squares
-        cornerColor: '#000000', // Black corners
-        cornerSize: 10,
-        borderColor: '#000000', // A strong blue for the border
-        borderScaleFactor: 1,
-    });
-    // For active selections (multi-select)
-    fabric.ActiveSelection.prototype.set({
-        cornerStyle: 'circle',
-        cornerColor: '#000000',
-        borderColor: 'black',
-    });
-    
-    const resizeCanvas = () => {
-        const { width, height } = canvasWrapper.getBoundingClientRect();
-        canvas.setWidth(width); canvas.setHeight(height); canvas.renderAll();
-    };
-    pageRect = new fabric.Rect({
-        left: 0, top: 0, width: 768, height: 1024, fill: '#fff', stroke: 'transparent', strokeWidth: 0,
-        selectable: false, evented: false, hasControls: false, hasBorders: false,
-        lockMovementX: true, lockMovementY: true, lockScalingX: true, lockScalingY: true, lockRotation: true,
-        oid: 'pageRect',
-    });
-    canvas.add(pageRect);
-    resizeCanvas();
-    // Do not center here, wait for data to load or for guest mode
-    drawGrid();
-    new ResizeObserver(resizeCanvas).observe(canvasWrapper);
+    fabric.Object.prototype.set({ transparentCorners: false, cornerStyle: 'circle', cornerColor: '#000000', cornerSize: 10, borderColor: '#000000', borderScaleFactor: 1, padding: 10 });
+    fabric.ActiveSelection.prototype.set({ cornerStyle: 'circle', cornerColor: '#000000', borderColor: 'black' });
+        const resizeCanvas = () => {
+        // Get the device's pixel ratio, defaulting to 1 for standard displays
+        const pixelRatio = window.devicePixelRatio || 1;
 
-    canvas.on({
-        'object:added': () => { saveState(); renderLayers(); if (dataLinksManagerModal.style.display === 'flex') renderDataLinksManager(); },
-        'object:removed': () => { saveState(); renderLayers(); if (dataLinksManagerModal.style.display === 'flex') renderDataLinksManager(); },
-        'object:modified': (e) => { saveState(); if (e.target) { refreshInspector({target: e.target}); } },
-        'object:moving': updateLiveInspector,
-        'object:scaling': updateLiveInspector,
-        'object:rotating': updateLiveInspector,
-    });
-    saveState();
-    renderLayers();
+        // Get the dimensions the canvas should appear on the screen (CSS pixels)
+        const { width, height } = canvasWrapper.getBoundingClientRect();
+
+        // Get the actual canvas element that Fabric.js uses
+        const canvasEl = canvas.getElement();
+
+        // --- HIGH DPI FIX ---
+        // 1. Set the canvas backing store size to match the high resolution
+        canvasEl.width = width * pixelRatio;
+        canvasEl.height = height * pixelRatio;
+        
+        // 2. Set the canvas CSS size to fit the container
+        canvasEl.style.width = `${width}px`;
+        canvasEl.style.height = `${height}px`;
+
+        // 3. Tell Fabric the logical (CSS) size of the canvas
+        canvas.setWidth(width);
+        canvas.setHeight(height);
+
+        // 4. Scale the canvas context to draw everything at the correct resolution
+        canvas.getContext().setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+
+        // 5. Re-render all objects on the high-quality canvas
+        canvas.renderAll();
+    };
+    pageRect = new fabric.Rect({ left: 0, top: 0, width: 768, height: 1024, fill: '#fff', stroke: 'transparent', strokeWidth: 0, selectable: false, evented: false, hasControls: false, hasBorders: false, lockMovementX: true, lockMovementY: true, lockScalingX: true, lockScalingY: true, lockRotation: true, oid: 'pageRect' });
+    canvas.add(pageRect); resizeCanvas(); drawGrid(); new ResizeObserver(resizeCanvas).observe(canvasWrapper);
+    canvas.on({ 'object:added': () => { saveState(); renderLayers(); if (dataLinksManagerModal.style.display === 'flex') renderDataLinksManager(); }, 'object:removed': () => { saveState(); renderLayers(); if (dataLinksManagerModal.style.display === 'flex') renderDataLinksManager(); }, 'object:modified': (e) => { saveState(); if (e.target) { refreshInspector({target: e.target}); } }, 'object:moving': handleSmartSnapping, 'object:scaling': updateLiveInspector, 'object:rotating': updateLiveInspector });
+    saveState(); renderLayers();
 }
 window.addEventListener('paste', (e) => {
-    // Don't paste if user is typing in an input
-    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-
-    const items = e.clipboardData.items;
-    if (!items) return;
-
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return; const items = e.clipboardData.items; if (!items) return;
     for (let i = 0; i < items.length; i++) {
         const item = items[i];
-        if (item.type.indexOf('image') !== -1) {
-            e.preventDefault();
-            const blob = item.getAsFile();
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                const {x, y} = canvas.getVpCenter();
-                adders.image(x, y, event.target.result);
-            };
-            reader.readAsDataURL(blob);
-            break; // Only paste the first image found
-        }
-         if (item.type.indexOf('text/plain') !== -1) {
-            e.preventDefault();
-            item.getAsString((text) => {
-                 const {x, y} = canvas.getVpCenter();
-                 adders.text(x, y, text);
-            });
-            break; // Only paste plain text
-        }
+        if (item.type.indexOf('image') !== -1) { e.preventDefault(); const blob = item.getAsFile(); const reader = new FileReader(); reader.onload = (event) => { const {x, y} = canvas.getVpCenter(); adders.image(x, y, event.target.result); }; reader.readAsDataURL(blob); break; }
+        if (item.type.indexOf('text/plain') !== -1) { e.preventDefault(); item.getAsString((text) => { const {x, y} = canvas.getVpCenter(); adders.text(x, y, text); }); break; }
     }
 });
-
-const setPageDimensions = debounce(() => {
-    if (!pageRect) return;
-    const w = parseInt($('#pageWidth').value, 10) || 768;
-    const h = parseInt($('#pageHeight').value, 10) || 1024;
-    pageRect.set({ width: w, height: h });
-    canvas.centerObject(pageRect);
-    pageRect.setCoords();
-    drawGrid();
-    canvas.renderAll();
-    saveState();
-}, 300);
-
-$('#titleInput').addEventListener("input", () => { saveState(); });
-$('#pageWidth').addEventListener('input', setPageDimensions, saveState());
-$('#pageHeight').addEventListener('input', setPageDimensions, saveState());
-
-// ... (The rest of your original JavaScript from drawGrid() onwards remains here) ...
-
-function drawGrid() {
-    canvas.remove(...canvas.getObjects('line').filter(o => o.excludeFromExport));
-    if (!gridEnabled || !pageRect) {
-        canvas.renderAll();
-        return;
-    }
-
-    const { width, height, left, top } = pageRect;
-    const gridLines = [];
-
-    const lineOption = { stroke: 'rgba(0,0,0,0.1)', selectable: false, evented: false, excludeFromExport: true };
-    const step = gridCellSize;
-    for (let i = 1; i < (width / step); i++) gridLines.push(new fabric.Line([left + i * step, top, left + i * step, top + height], lineOption));
-    for (let i = 1; i < (height / step); i++) gridLines.push(new fabric.Line([left, top + i * step, left + width, top + i * step], lineOption));
-
-    canvas.add(...gridLines);
-    gridLines.forEach(line => canvas.sendToBack(line));
-    canvas.sendToBack(pageRect);
-    canvas.renderAll();
-}
-
-
+const setPageDimensions = debounce(() => { if (!pageRect) return; const w = parseInt($('#pageWidth').value, 10) || 768; const h = parseInt($('#pageHeight').value, 10) || 1024; pageRect.set({ width: w, height: h }); canvas.centerObject(pageRect); pageRect.setCoords(); drawGrid(); canvas.renderAll(); saveState(); }, 300);
+$('#titleInput').addEventListener("input", () => { saveState(); }); $('#pageWidth').addEventListener('input', setPageDimensions); $('#pageHeight').addEventListener('input', setPageDimensions);
+function drawGrid() { canvas.remove(...canvas.getObjects('line').filter(o => o.excludeFromExport)); if (!gridEnabled || !pageRect) { canvas.renderAll(); return; } const { width, height, left, top } = pageRect; const gridLines = []; const lineOption = { stroke: 'rgba(0,0,0,0.1)', selectable: false, evented: false, excludeFromExport: true }; const step = gridCellSize; for (let i = 1; i < (width / step); i++) gridLines.push(new fabric.Line([left + i * step, top, left + i * step, top + height], lineOption)); for (let i = 1; i < (height / step); i++) gridLines.push(new fabric.Line([left, top + i * step, left + width, top + i * step], lineOption)); canvas.add(...gridLines); gridLines.forEach(line => canvas.sendToBack(line)); canvas.sendToBack(pageRect); canvas.renderAll(); }
 $('#toggleGridBtn').addEventListener('click', () => { gridEnabled = !gridEnabled; $('#toggleGridBtn').classList.toggle('active', gridEnabled); drawGrid(); });
 $('#toggleSnapBtn').addEventListener('click', () => { snapEnabled = !snapEnabled; $('#toggleSnapBtn').classList.toggle('active', snapEnabled); });
-
-const gridSizeInput = $('#gridSizeInput');
-gridSizeInput.value = gridCellSize;
-gridSizeInput.addEventListener('input', (e) => { const newSize = Math.max(12, Math.min(64, parseInt(e.target.value, 10))); if (!isNaN(newSize) && gridCellSize !== newSize) { gridCellSize = newSize; drawGrid(); } });
+const gridSizeInput = $('#gridSizeInput'); gridSizeInput.value = gridCellSize; gridSizeInput.addEventListener('input', (e) => { const newSize = Math.max(12, Math.min(64, parseInt(e.target.value, 10))); if (!isNaN(newSize) && gridCellSize !== newSize) { gridCellSize = newSize; drawGrid(); } });
 
 // --- CANVAS PANNING & ZOOM ---
 // Detect if running on a touch device
@@ -1241,22 +699,12 @@ if (!isTouchDevice) {
 }
 
 // --- DATA HANDLING ---
-$('#csvInput').addEventListener('change', async (e) => {
-    const file = e.target.files?.[0]; if (!file) { $('#fileName').textContent = 'No file selected'; return; }
-    $('#fileName').textContent = file.name; const data = await file.arrayBuffer();
-    try {
-        workbook = XLSX.read(data, { type: 'array' }); const sheetName = workbook.SheetNames[0]; worksheet = workbook.Sheets[sheetName];
-        const json = XLSX.utils.sheet_to_json(worksheet, { defval: '', raw: false });
-        if (!json.length) { alert('No data found in the sheet.'); return; }
-        headers = Object.keys(json[0]); dataRows = json;
-        alert(`Loaded "${sheetName}" with ${dataRows.length} rows.`);
-    } catch (err) { alert('Error reading file.'); $('#fileName').textContent = 'No file selected'; }
-});
+$('#csvInput').addEventListener('change', async (e) => { const file = e.target.files?.[0]; if (!file) { $('#fileName').textContent = 'No file selected'; return; } $('#fileName').textContent = file.name; const data = await file.arrayBuffer(); try { workbook = XLSX.read(data, { type: 'array' }); const sheetName = workbook.SheetNames[0]; worksheet = workbook.Sheets[sheetName]; const json = XLSX.utils.sheet_to_json(worksheet, { defval: '', raw: false }); if (!json.length) { alert('No data found in the sheet.'); return; } headers = Object.keys(json[0]); dataRows = json; alert(`Loaded "${sheetName}" with ${dataRows.length} rows.`); } catch (err) { alert('Error reading file.'); $('#fileName').textContent = 'No file selected'; } });
 
 // --- COMPONENT ADDITION ---
 const tableCreatorModal = $('#tableCreatorModal');
 const adders = {
-  text: (x, y) => canvas.add(new fabric.Textbox('Sample Text', { left: x, top: y, fontSize: 28, fill: '#000', fontFamily: 'Arial', originX: 'center', originY: 'center', styles: [], padding: 10 })).setActiveObject(canvas.getObjects().pop()),
+  text: (x, y, content = 'Sample Text') => canvas.add(new fabric.Textbox(content, { left: x, top: y, fontSize: 28, fill: '#000', fontFamily: 'Arial', originX: 'center', originY: 'center', styles: [], padding: 10 })).setActiveObject(canvas.getObjects().pop()),
   rect: ({x, y, asSquare=true}={}) => canvas.add(new fabric.Rect({ left: x, top: y, width: asSquare?150:220, height: 150, fill: '#f0f0f0', stroke: '#333', strokeWidth: 2, originX: 'center', originY: 'center' })).setActiveObject(canvas.getObjects().pop()),
   circle: (x, y) => canvas.add(new fabric.Circle({ left: x, top: y, radius: 75, fill: '#f0f0f0', stroke: '#333', strokeWidth: 2, originX: 'center', originY: 'center' })).setActiveObject(canvas.getObjects().pop()),
   triangle: (x, y) => canvas.add(new fabric.Triangle({ left: x, top: y, width: 150, height: 130, fill: '#f0f0f0', stroke: '#333', strokeWidth: 2, originX: 'center', originY: 'center' })).setActiveObject(canvas.getObjects().pop()),
@@ -1264,7 +712,7 @@ const adders = {
   star: (x, y) => { const pts = (n, oR, iR) => { const p=[]; let a=-Math.PI/2; const s=(Math.PI*2)/n; for(let i=0;i<n;i++){p.push({x:oR*Math.cos(a),y:oR*Math.sin(a)});a+=s/2;p.push({x:iR*Math.cos(a),y:iR*Math.sin(a)});a+=s/2;} return p;}; canvas.add(new fabric.Polygon(pts(5, 75, 35), { left: x, top: y, fill: '#f0f0f0', stroke: '#333', strokeWidth: 2, originX: 'center', originY: 'center' })).setActiveObject(canvas.getObjects().pop()); },
   square: (x, y) => adders.rect({x, y, asSquare: true}),
   arrow: (x, y) => canvas.add(new fabric.Path('M 0 20 L 60 20 L 60 0 L 100 30 L 60 60 L 60 40 L 0 40 Z', { left: x, top: y, fill: '#f0f0f0', stroke: '#333', strokeWidth: 2, originX: 'center', originY: 'center' })).setActiveObject(canvas.getObjects().pop()),
-  image: (x, y, url) => { fabric.Image.fromURL(url, (img) => { img.set({ left: x, top: y, scaleX: 0.5, scaleY: 0.5, originX: 'center', originY: 'center' }); canvas.add(img).setActiveObject(img); }, { crossOrigin: 'anonymous' }); },
+  image: (x, y, url, elementData = {}) => { fabric.Image.fromURL(url, (img) => { img.set({ left: x, top: y, scaleX: 0.5, scaleY: 0.5, originX: 'center', originY: 'center', ...elementData }); canvas.add(img).setActiveObject(img); }, { crossOrigin: 'anonymous' }); },
   table: (x, y) => {
     tableCreatorModal.style.display = 'flex';
 
@@ -1506,788 +954,140 @@ canvas.on('mouse:up', () => {
     }
 });
 
-document.getElementById('imageUpload').addEventListener('change', e => {
-    if (!e.target.files || !e.target.files[0]) return;
-    const reader = new FileReader();
-    reader.onload = (ev) => { const {x, y} = canvas.getVpCenter(); adders.image(x, y, ev.target.result); e.target.value = ''; }
-    reader.readAsDataURL(e.target.files[0]);
-});
-document.querySelectorAll('.shape-chip').forEach(chip => {
-    const type = chip.getAttribute('data-add');
-    chip.addEventListener('dragstart', e => { e.dataTransfer.setData('text/plain', type); });
-    chip.addEventListener('click', () => { if (!adders[type]) return; if (type === 'image') { $('#imageUpload').click(); return; } const center = canvas.getVpCenter(); adders[type](center.x, center.y); });
-});
+document.getElementById('imageUpload').addEventListener('change', e => { if (!e.target.files || !e.target.files[0]) return; const reader = new FileReader(); reader.onload = (ev) => { const {x, y} = canvas.getVpCenter(); adders.image(x, y, ev.target.result); e.target.value = ''; }; reader.readAsDataURL(e.target.files[0]); });
+document.querySelectorAll('.shape-chip').forEach(chip => { const type = chip.getAttribute('data-add'); chip.addEventListener('dragstart', e => { e.dataTransfer.setData('text/plain', `component:${type}`); }); chip.addEventListener('click', () => { if (!adders[type]) return; if (type === 'image') { $('#imageUpload').click(); return; } const center = canvas.getVpCenter(); adders[type](center.x, center.y); }); });
 const dropTarget = canvas.upperCanvasEl; canvas.calcOffset();
 dropTarget.addEventListener('dragover', (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; });
 dropTarget.addEventListener('drop', (e) => {
-  e.preventDefault(); const { x, y } = canvas.getPointer(e); const type = e.dataTransfer.getData('text/plain');
-  if (type && adders[type]) {
-    if (type === 'image') {
-        const file = e.dataTransfer.files && e.dataTransfer.files[0];
-        if (file && file.type.startsWith('image/')) { const reader = new FileReader(); reader.onload = (ev) => adders.image(x, y, ev.target.result); reader.readAsDataURL(file); } else { $('#imageUpload').click(); }
-    } else { adders[type](x, y); }
-  }
+  e.preventDefault(); const { x, y } = canvas.getPointer(e); const data = e.dataTransfer.getData('text/plain'); const [dataType, value] = data.split(/:(.*)/s);
+  if (dataType === 'component' && adders[value]) { if (value === 'image') { const file = e.dataTransfer.files?.[0]; if (file?.type.startsWith('image/')) { const reader = new FileReader(); reader.onload = (ev) => adders.image(x, y, ev.target.result); reader.readAsDataURL(file); } else { $('#imageUpload').click(); } } else { adders[value](x, y); } } 
+  else if (dataType === 'element') { const elementData = JSON.parse(value); adders.image(x, y, elementData.image_url, { oid: elementData.id }); }
 });
 
-// --- NEW: SIDEBAR RESIZING & TOGGLING LOGIC ---
+// --- SIDEBAR RESIZING & TOGGLING ---
+const mainLayout = document.getElementById('main-layout'); const leftResizer = document.getElementById('left-resizer'); const rightResizer = document.getElementById('right-resizer'); let isResizingLeft = false, isResizingRight = false; let lastLeftPanelWidth = '260px', lastRightPanelWidth = '320px'; mainLayout.style.gridTemplateColumns = `${lastLeftPanelWidth} 5px 1fr 5px ${lastRightPanelWidth}`;
+function initResizer(resizer, resizeFlagSetter, panelSide) { resizer.addEventListener('mousedown', (e) => { e.preventDefault(); resizeFlagSetter(true); document.body.style.cursor = 'col-resize'; document.body.style.userSelect = 'none'; }); document.addEventListener('mousemove', (e) => { if (!resizeFlagSetter()) return; const mainRect = mainLayout.getBoundingClientRect(); if (panelSide === 'left') { const newWidth = e.clientX - mainRect.left; if (newWidth > 150 && newWidth < mainRect.width / 2) { mainLayout.style.gridTemplateColumns = `${newWidth}px 5px 1fr 5px ${mainLayout.style.gridTemplateColumns.split(' ')[4]}`; lastLeftPanelWidth = `${newWidth}px`; } } else { const newWidth = mainRect.right - e.clientX; if (newWidth > 200 && newWidth < mainRect.width / 2) { mainLayout.style.gridTemplateColumns = `${mainLayout.style.gridTemplateColumns.split(' ')[0]} 5px 1fr 5px ${newWidth}px`; lastRightPanelWidth = `${newWidth}px`; } } canvas.setWidth(canvasWrapper.getBoundingClientRect().width); canvas.renderAll(); }); document.addEventListener('mouseup', () => { if (resizeFlagSetter()) { resizeFlagSetter(false); document.body.style.cursor = 'default'; document.body.style.userSelect = 'auto'; } }); }
+initResizer(leftResizer, (v) => { if(v !== undefined) isResizingLeft=v; return isResizingLeft; }, 'left'); initResizer(rightResizer, (v) => { if(v !== undefined) isResizingRight=v; return isResizingRight; }, 'right');
+function refreshCanvasSize() { setTimeout(() => { const { width, height } = canvasWrapper.getBoundingClientRect(); canvas.setWidth(width); canvas.setHeight(height); canvas.renderAll(); centerAndFitPage(); }, 50); }
+document.getElementById('left-panel-toggle').addEventListener('click', () => { const btn = document.getElementById('left-panel-toggle'); const cols = mainLayout.style.gridTemplateColumns.split(' '); if (cols[0] !== '0px') { lastLeftPanelWidth = cols[0]; mainLayout.style.gridTemplateColumns = `0px 0px 1fr 5px ${cols[4]}`; btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>`; } else { mainLayout.style.gridTemplateColumns = `${lastLeftPanelWidth} 5px 1fr 5px ${cols[4]}`; btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>`; } refreshCanvasSize(); });
+document.getElementById('right-panel-toggle').addEventListener('click', () => { const btn = document.getElementById('right-panel-toggle'); const cols = mainLayout.style.gridTemplateColumns.split(' '); if (cols[4] !== '0px') { lastRightPanelWidth = cols[4]; mainLayout.style.gridTemplateColumns = `${cols[0]} 5px 1fr 0px 0px`; btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>`; } else { mainLayout.style.gridTemplateColumns = `${cols[0]} 5px 1fr 5px ${lastRightPanelWidth}`; btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>`; } refreshCanvasSize(); });
 
+// --- REBUILT: SNAPPING GUIDES ---
+const snapThreshold = 20, snapColor = '#FFC107';
+let snapLines = [];
+function handleSmartSnapping(options) {
+    if (!snapEnabled) return; const target = options.target; if (!target.isLocked) {
+        clearSnapLines();
+        const targetCenter = target.getCenterPoint();
+        const targetBoundingRect = target.getBoundingRect();
+        let snapX = null, snapY = null;
+        const otherObjects = canvas.getObjects().filter(o => o.visible && o.evented && o !== target && !o.excludeFromExport && !o.isSnapLine);
 
-const mainLayout = document.getElementById('main-layout');
-const leftResizer = document.getElementById('left-resizer');
-const rightResizer = document.getElementById('right-resizer');
-const leftPanel = document.getElementById('left-panel');
-const rightPanel = document.getElementById('right-panel');
-
-let isResizingLeft = false;
-let isResizingRight = false;
-let lastLeftPanelWidth = '260px'; // Default width
-let lastRightPanelWidth = '320px'; // Default width
-
-// FIX: Set the initial grid layout when the script loads
-mainLayout.style.gridTemplateColumns = `${lastLeftPanelWidth} 5px 1fr 5px ${lastRightPanelWidth}`;
-
-function initResizer(resizer, panel, resizeFlagSetter, lastWidthTracker) {
-    resizer.addEventListener('mousedown', (e) => {
-        e.preventDefault();
-        resizeFlagSetter(true);
-        document.body.style.cursor = 'col-resize';
-        document.body.style.userSelect = 'none';
-    });
-
-    document.addEventListener('mousemove', (e) => {
-        if (resizeFlagSetter() === false) return;
-        const mainRect = mainLayout.getBoundingClientRect();
-        
-        if (resizer === leftResizer) {
-            const newLeftWidth = e.clientX - mainRect.left;
-            if (newLeftWidth > 100 && newLeftWidth < mainRect.width / 2) {
-                mainLayout.style.gridTemplateColumns = `${newLeftWidth}px 5px 1fr 5px ${mainLayout.style.gridTemplateColumns.split(' ')[4]}`;
-                lastLeftPanelWidth = `${newLeftWidth}px`;
+        const checkSnap = (targetPoint, objPoint, axis) => {
+            if (Math.abs(targetPoint - objPoint) < snapThreshold) {
+                const snapValue = (axis === 'X') ? snapX : snapY;
+                if (snapValue === null || Math.abs(targetPoint - objPoint) < Math.abs(snapValue.targetPoint - snapValue.objPoint)) {
+                    if (axis === 'X') snapX = { targetPoint, objPoint }; else snapY = { targetPoint, objPoint };
+                }
             }
-        } else if (resizer === rightResizer) {
-            const newRightWidth = mainRect.right - e.clientX;
-            if (newRightWidth > 100 && newRightWidth < mainRect.width / 2) {
-                 mainLayout.style.gridTemplateColumns = `${mainLayout.style.gridTemplateColumns.split(' ')[0]} 5px 1fr 5px ${newRightWidth}px`;
-                 lastRightPanelWidth = `${newRightWidth}px`;
-            }
+        };
+
+        // Page Center Snapping
+        if (pageRect) {
+            const pageCenter = pageRect.getCenterPoint();
+            checkSnap(targetCenter.x, pageCenter.x, 'X');
+            checkSnap(targetCenter.y, pageCenter.y, 'Y');
         }
-         canvas.setWidth(canvasWrapper.getBoundingClientRect().width);
-         canvas.renderAll();
-    });
 
-    document.addEventListener('mouseup', () => {
-        if (resizeFlagSetter() === true) {
-            resizeFlagSetter(false);
-            document.body.style.cursor = 'default';
-            document.body.style.userSelect = 'auto';
-        }
-    });
-}
-initResizer(leftResizer, leftPanel, (val) => { if(val !== undefined) isResizingLeft=val; return isResizingLeft; }, (val) => { if(val !== undefined) lastLeftPanelWidth=val; return lastLeftPanelWidth; });
-initResizer(rightResizer, rightPanel, (val) => { if(val !== undefined) isResizingRight=val; return isResizingRight; }, (val) => { if(val !== undefined) lastRightPanelWidth=val; return lastRightPanelWidth; });
-
-// Helper function to resize the canvas
-function refreshCanvasSize() {
-    // Use a small timeout to allow the browser to reflow the layout first
-    setTimeout(() => {
-        const canvasWrapper = document.querySelector('.canvas-wrap');
-        const { width, height } = canvasWrapper.getBoundingClientRect();
-        canvas.setWidth(width);
-        canvas.setHeight(height);
-        canvas.renderAll();
-        // Optionally, recenter the view after resize
-        centerAndFitPage();
-    }, 50); // 50ms is usually enough
-}
-
-document.getElementById('left-panel-toggle').addEventListener('click', () => {
-    const mainLayout = document.getElementById('main-layout');
-    const toggleBtn = document.getElementById('left-panel-toggle');
-    const currentCols = mainLayout.style.gridTemplateColumns.split(' ');
-
-    if (currentCols[0] !== '0px') {
-        lastLeftPanelWidth = currentCols[0];
-        // Hide panel and its resizer
-        mainLayout.style.gridTemplateColumns = `0px 0px 1fr 5px ${currentCols[4]}`;
-        // Update button icon/text for "show" state
-        toggleBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>`;
-
-    } else {
-        // Show panel and its resizer
-        mainLayout.style.gridTemplateColumns = `${lastLeftPanelWidth} 5px 1fr 5px ${currentCols[4]}`;
-        // Update button icon/text for "hide" state
-        toggleBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>`;
-    }
-    // Crucial fix: Refresh the canvas size after toggling
-    refreshCanvasSize();
-});
-
-document.getElementById('right-panel-toggle').addEventListener('click', () => {
-    const mainLayout = document.getElementById('main-layout');
-    const toggleBtn = document.getElementById('right-panel-toggle');
-    const currentCols = mainLayout.style.gridTemplateColumns.split(' ');
-
-    if (currentCols[4] !== '0px') {
-        lastRightPanelWidth = currentCols[4];
-        // Hide panel and its resizer
-        mainLayout.style.gridTemplateColumns = `${currentCols[0]} 5px 1fr 0px 0px`;
-        // Update button icon/text for "show" state
-        toggleBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>`;
-    } else {
-        // Show panel and its resizer
-        mainLayout.style.gridTemplateColumns = `${currentCols[0]} 5px 1fr 5px ${lastRightPanelWidth}`;
-        // Update button icon/text for "hide" state
-        toggleBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>`;
-    }
-    // Crucial fix: Refresh the canvas size after toggling
-    refreshCanvasSize();
-});
-
-// --- SNAPPING TO GRID & PAGE CENTER ---
-
-const snapThreshold = 15;
-let centerLineV, centerLineH;
-
-function removeCenterLines() {
-  if (centerLineV) { canvas.remove(centerLineV); centerLineV = null; }
-  if (centerLineH) { canvas.remove(centerLineH); centerLineH = null; }
-}
-
-canvas.on('object:moving', (options) => {
-  if (!pageRect) return;
-
-  const target = options.target;
-  const pageCenter = {
-    x: pageRect.left + (pageRect.width * pageRect.scaleX) / 2,
-    y: pageRect.top + (pageRect.height * pageRect.scaleY) / 2
-  };
-
-  let snappedToV = false;
-  let snappedToH = false;
-
-  if (Math.abs(target.left - pageCenter.x) < snapThreshold) {
-    target.set({ left: pageCenter.x });
-    snappedToV = true;
-    if (!centerLineV) {
-      centerLineV = new fabric.Line([pageCenter.x, pageRect.top, pageCenter.x, pageRect.top + (pageRect.height*pageRect.scaleY)], { stroke: 'rgba(255, 0, 0, 0.75)', strokeWidth: 1, selectable: false, evented: false, excludeFromExport: true });
-      canvas.add(centerLineV);
-    }
-  } else if (centerLineV) {
-    removeCenterLines();
-  }
-
-  if (Math.abs(target.top - pageCenter.y) < snapThreshold) {
-    target.set({ top: pageCenter.y });
-    snappedToH = true;
-    if (!centerLineH) {
-      centerLineH = new fabric.Line([pageRect.left, pageCenter.y, pageRect.left + (pageRect.width*pageRect.scaleX), pageCenter.y], { stroke: 'rgba(255, 0, 0, 0.75)', strokeWidth: 1, selectable: false, evented: false, excludeFromExport: true });
-      canvas.add(centerLineH);
-    }
-  } else if (centerLineH) {
-    removeCenterLines();
-  }
-
-  if (snapEnabled) {
-    if (!snappedToV) {
-      const pageLeft = pageRect.left;
-      const snapLeft = Math.round((target.left - pageLeft) / gridCellSize) * gridCellSize + pageLeft;
-      target.set({ left: snapLeft });
-    }
-    if (!snappedToH) {
-      const pageTop = pageRect.top;
-      const snapTop = Math.round((target.top - pageTop) / gridCellSize) * gridCellSize + pageTop;
-      target.set({ top: snapTop });
-    }
-  }
-
-  target.setCoords();
-  canvas.renderAll();
-});
-
-function onInteractionEnd() {
-  removeCenterLines();
-  canvas.renderAll();
-}
-
-canvas.on('object:modified', onInteractionEnd);
-canvas.on('mouse:up', onInteractionEnd);
-// --- NEW: SETTINGS & API KEY MODAL LOGIC ---
-
-// Get Modal Elements
-const settingsBtn = $('#settingsBtn');
-const settingsModal = $('#settingsModal');
-const closeSettingsModalBtn = $('#closeSettingsModal');
-const settingsContent = $('#settingsContent');
-
-// Show/Hide Modal
-settingsBtn.addEventListener('click', openSettingsModal);
-closeSettingsModalBtn.addEventListener('click', () => settingsModal.style.display = 'none');
-settingsModal.addEventListener('click', (e) => {
-    if (e.target === settingsModal) {
-        settingsModal.style.display = 'none';
-    }
-});
-
-const openCustomerPortal = async () => {
-    const btn = document.querySelector('#manageSubscriptionBtn'); // Use a standard selector
-    if (btn) {
-        btn.disabled = true;
-        btn.textContent = 'Generating link...';
-    }
-
-    try {
-        // This function invokes your Supabase Edge Function
-        const { data, error } = await supabase.functions.invoke('lemonsqueezy-sub-manager', {
-            body: { action: 'getPortalLink' } 
+        // Object-to-Object Snapping
+        otherObjects.forEach(obj => {
+            const objCenter = obj.getCenterPoint(); const objBoundingRect = obj.getBoundingRect();
+            // Vertical checks (X-axis)
+            //checkSnap(targetBoundingRect.left, objBoundingRect.left, 'X');
+            //checkSnap(targetBoundingRect.left, objBoundingRect.left + objBoundingRect.width, 'X');
+            checkSnap(targetCenter.x, objCenter.x, 'X');
+            checkSnap(targetCenter.x, objCenter.x + objBoundingRect.width, 'X');
+            checkSnap(targetCenter.x, objCenter.x - objBoundingRect.width, 'X');
+            //checkSnap(targetBoundingRect.left + targetBoundingRect.width, objBoundingRect.left, 'X');
+            //checkSnap(targetBoundingRect.left + targetBoundingRect.width, objBoundingRect.left + objBoundingRect.width, 'X');
+            // Horizontal checks (Y-axis)
+            //checkSnap(targetBoundingRect.top, objBoundingRect.top, 'Y');
+            //checkSnap(targetBoundingRect.top, objBoundingRect.top + objBoundingRect.height, 'Y');
+            checkSnap(targetCenter.y, objCenter.y, 'Y');
+            checkSnap(targetCenter.y, objCenter.y + objBoundingRect.height, 'Y');
+            checkSnap(targetCenter.y, objCenter.y - objBoundingRect.height, 'Y');
+            //checkSnap(targetBoundingRect.top + targetBoundingRect.height, objBoundingRect.top, 'Y');
+            //checkSnap(targetBoundingRect.top + targetBoundingRect.height, objBoundingRect.top + objBoundingRect.height, 'Y');
         });
 
-        if (error) throw error;
-
-        if (data && data.url) {
-            window.open(data.url, '_blank'); // Open the portal in a new tab
-        } else {
-            throw new Error('Could not generate the portal link.');
+        if (snapX !== null) {
+            target.left -= (snapX.targetPoint - snapX.objPoint);
+            drawSnapLine({ x1: snapX.objPoint, y1: -5000, x2: snapX.objPoint, y2: 5000 });
         }
-
-    } catch (error) {
-        alert(`Error: ${error.message}`); // Use the standard alert
-    } finally {
-        if (btn) {
-            btn.disabled = false;
-            btn.textContent = 'Manage Subscription';
+        if (snapY !== null) {
+            target.top -= (snapY.targetPoint - snapY.objPoint);
+            drawSnapLine({ y1: snapY.objPoint, x1: -5000, y2: snapY.objPoint, x2: 5000 });
         }
-    }
-};
-
-async function openSettingsModal() {
-    const settingsContent = $('#settingsContent');
-    settingsContent.innerHTML = '<p class="muted">Loading account details...</p>';
-    settingsModal.style.display = 'flex';
-
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-        settingsContent.innerHTML = '<p>Please log in to manage your settings.</p>';
-        return;
-    }
-
-    const { data: profile, error } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .single();
-
-    if (error || !profile) {
-        settingsContent.innerHTML = '<p class="error">Could not load your profile.</p>';
-        return;
-    }
-
-    // --- Build the HTML for the modal ---
-    const currentTheme = localStorage.getItem('csvlink-theme') || 'dark';
-    let modalHTML = `
-        <!-- Section 1: Appearance (for everyone) -->
-        <div class="settings-section stack">
-            <h4>Appearance</h4>
-            <button id="themeToggleBtn" class="btn ghost" style="width: 100%;">${currentTheme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}</button>
-        </div>
-
-        <!-- Section 2: Account (for everyone) -->
-        <div class="settings-section stack" style="gap: 16px;">
-            <h4>Account</h4>
-            <div class="stack">
-                <label for="newPassword">New Password</label>
-                <input type="password" id="newPassword" placeholder="Enter new password">
-            </div>
-            <div class="stack">
-                <label for="confirmPassword">Confirm Password</label>
-                <input type="password" id="confirmPassword" placeholder="Confirm new password">
-            </div>
-            <button id="changePasswordBtn" class="btn">Update Password</button>
-            <p id="passwordMessage" class="muted" style="text-align:center; margin-top: 4px;"></p>
-        </div>
-    `;
-
-    // --- Section 3: Subscription (Conditional) ---
-    if (profile.role === 'pro' || profile.role === 'admin') {
-       modalHTML += `
-            <div class="settings-section stack">
-                <h4>Subscription</h4>
-                <p class="muted">You are currently on the Pro plan.</p>
-                <button id="manageSubscriptionBtn" class="btn ghost" style="width: 100%;">Manage Subscription</button>
-            </div>
-        `;
-    } else {
-        modalHTML += `
-            <div class="settings-section stack">
-                <h4>Upgrade to Pro</h4>
-                <p class="muted">To get API access and unlimited templates, upgrade your account.</p>
-                <a href="/#pricing" class="btn" style="text-decoration: none;">View Pricing Plans</a>
-            </div>
-        `;
-    }
-
-    // --- Section 4: Developer API Keys (Conditional) ---
-    if (profile.role === 'pro' || profile.role === 'admin') {
-        modalHTML += `
-            <div class="settings-section stack" style="gap: 16px;">
-                <h4>Developer API Keys</h4>
-                <div id="newKeyContainer" class="stack" style="display:none;">
-                    <h5>Your New API Key</h5>
-                    <p class="muted">Copy this key and store it safely. <strong>You will not see it again.</strong></p>
-                    <div id="newKeyDisplay"></div>
-                </div>
-                <div class="stack">
-                    <h5>Your Existing Keys</h5>
-                    <div id="existingKeysList" class="stack">Loading...</div>
-                </div>
-                <button id="generateKeyBtn" class="btn">Generate New API Key</button>
-                <p id="keyMessage" class="muted" style="text-align:center; margin-top: 4px;"></p>
-            </div>
-        `;
-    }
-
-    // --- Render the final HTML and attach event listeners ---
-    settingsContent.innerHTML = modalHTML;
-    attachSettingsEventListeners(user.id, profile.role);
-}
-
-function attachSettingsEventListeners(userId, role) {
-    // Theme toggle
-    $('#themeToggleBtn').addEventListener('click', toggleTheme);
-    
-    // Change password
-    $('#changePasswordBtn').addEventListener('click', async () => {
-        const newPassword = $('#newPassword').value;
-        const confirmPassword = $('#confirmPassword').value;
-        const msgEl = $('#passwordMessage');
-
-        if (!newPassword || newPassword !== confirmPassword) {
-            msgEl.textContent = 'Passwords do not match or are empty.';
-            return;
-        }
-
-        msgEl.textContent = 'Updating...';
-        const { error } = await supabase.auth.updateUser({ password: newPassword });
-
-        if (error) {
-            msgEl.textContent = `Error: ${error.message}`;
-        } else {
-            msgEl.textContent = 'Password updated successfully!';
-            $('#newPassword').value = '';
-            $('#confirmPassword').value = '';
-        }
-    });
-
-    // API Keys (if the elements exist)
-    if (role === 'pro' || role === 'admin') {
-        $('#generateKeyBtn').addEventListener('click', handleGenerateKey);
-        loadAndDisplayKeys(userId); // This is your existing function
-        
-        const manageSubscriptionBtn = $('#manageSubscriptionBtn');
-        if (manageSubscriptionBtn) {
-            manageSubscriptionBtn.addEventListener('click', openCustomerPortal);
-        }
+        target.setCoords();
     }
 }
+function drawSnapLine(coords) { const line = new fabric.Line([coords.x1, coords.y1, coords.x2, coords.y2], { stroke: snapColor, strokeWidth: 1, selectable: false, evented: false, isSnapLine: true, excludeFromExport: true}); snapLines.push(line); canvas.add(line); line.bringToFront(); }
+function clearSnapLines() { snapLines.forEach(line => canvas.remove(line)); snapLines = []; }
+canvas.on('object:modified', clearSnapLines); canvas.on('mouse:up', clearSnapLines);
 
-function applyTheme(theme) {
-    if (theme === 'light') {
-        document.body.classList.add('light-mode');
-    } else {
-        document.body.classList.remove('light-mode');
-    }
-    localStorage.setItem('csvlink-theme', theme);
-}
 
-function toggleTheme() {
-    const currentTheme = localStorage.getItem('csvlink-theme') || 'dark';
-    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-    applyTheme(newTheme);
-    // We also need to update the button text inside the modal if it's open
-    const themeBtn = $('#themeToggleBtn');
-    if (themeBtn) {
-        themeBtn.textContent = newTheme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode';
-    }
-}
+// --- SETTINGS & API KEY MODAL ---
+const settingsBtn = $('#settingsBtn'); const settingsModal = $('#settingsModal'); const closeSettingsModalBtn = $('#closeSettingsModal');
+settingsBtn.addEventListener('click', openSettingsModal); closeSettingsModalBtn.addEventListener('click', () => settingsModal.style.display = 'none'); settingsModal.addEventListener('click', (e) => { if (e.target === settingsModal) { settingsModal.style.display = 'none'; } });
+const openCustomerPortal = async () => { const btn = $('#manageSubscriptionBtn'); if (btn) { btn.disabled = true; btn.textContent = 'Generating link...'; } try { const { data, error } = await supabase.functions.invoke('lemonsqueezy-sub-manager', { body: { action: 'getPortalLink' } }); if (error) throw error; if (data && data.url) window.open(data.url, '_blank'); else throw new Error('Could not generate portal link.'); } catch (error) { alert(`Error: ${error.message}`); } finally { if (btn) { btn.disabled = false; btn.textContent = 'Manage Subscription'; } } };
+async function openSettingsModal() { const settingsContent = $('#settingsContent'); settingsContent.innerHTML = '<p class="muted">Loading account details...</p>'; settingsModal.style.display = 'flex'; const { data: { user } } = await supabase.auth.getUser(); if (!user) { settingsContent.innerHTML = '<p>Please log in to manage your settings.</p>'; return; } const { data: profile, error } = await supabase.from('profiles').select('role').eq('id', user.id).single(); if (error || !profile) { settingsContent.innerHTML = '<p class="error">Could not load your profile.</p>'; return; } const currentTheme = localStorage.getItem('csvlink-theme') || 'dark'; let modalHTML = `<div class="settings-section stack"><h4>Appearance</h4><button id="themeToggleBtn" class="btn ghost" style="width: 100%;">${currentTheme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}</button></div><div class="settings-section stack" style="gap: 16px;"><h4>Account</h4><div class="stack"><label for="newPassword">New Password</label><input type="password" id="newPassword" placeholder="Enter new password"></div><div class="stack"><label for="confirmPassword">Confirm Password</label><input type="password" id="confirmPassword" placeholder="Confirm new password"></div><button id="changePasswordBtn" class="btn">Update Password</button><p id="passwordMessage" class="muted" style="text-align:center; margin-top: 4px;"></p></div>`; if (profile.role === 'pro' || profile.role === 'admin') { modalHTML += `<div class="settings-section stack"><h4>Subscription</h4><p class="muted">You are on the Pro plan.</p><button id="manageSubscriptionBtn" class="btn ghost" style="width: 100%;">Manage Subscription</button></div>`; } else { modalHTML += `<div class="settings-section stack"><h4>Upgrade to Pro</h4><p class="muted">Upgrade for API access and unlimited templates.</p><a href="/#pricing" class="btn" style="text-decoration: none;">View Pricing Plans</a></div>`; } if (profile.role === 'pro' || profile.role === 'admin') { modalHTML += `<div class="settings-section stack" style="gap: 16px;"><h4>Developer API Keys</h4><div id="newKeyContainer" class="stack" style="display:none;"><h5>Your New API Key</h5><p class="muted">Copy this key and store it safely. <strong>You will not see it again.</strong></p><div id="newKeyDisplay"></div></div><div class="stack"><h5>Your Existing Keys</h5><div id="existingKeysList" class="stack">Loading...</div></div><button id="generateKeyBtn" class="btn">Generate New API Key</button><p id="keyMessage" class="muted" style="text-align:center; margin-top: 4px;"></p></div>`; } settingsContent.innerHTML = modalHTML; attachSettingsEventListeners(user.id, profile.role); }
+function attachSettingsEventListeners(userId, role) { $('#themeToggleBtn').addEventListener('click', toggleTheme); $('#changePasswordBtn').addEventListener('click', async () => { const newPassword = $('#newPassword').value, confirmPassword = $('#confirmPassword').value, msgEl = $('#passwordMessage'); if (!newPassword || newPassword !== confirmPassword) { msgEl.textContent = 'Passwords do not match or are empty.'; return; } msgEl.textContent = 'Updating...'; const { error } = await supabase.auth.updateUser({ password: newPassword }); if (error) { msgEl.textContent = `Error: ${error.message}`; } else { msgEl.textContent = 'Password updated successfully!'; $('#newPassword').value = ''; $('#confirmPassword').value = ''; } }); if (role === 'pro' || role === 'admin') { $('#generateKeyBtn').addEventListener('click', handleGenerateKey); loadAndDisplayKeys(userId); if ($('#manageSubscriptionBtn')) $('#manageSubscriptionBtn').addEventListener('click', openCustomerPortal); } }
+function applyTheme(theme) { document.body.classList.toggle('light-mode', theme === 'light'); localStorage.setItem('csvlink-theme', theme); }
+function toggleTheme() { const newTheme = (localStorage.getItem('csvlink-theme') || 'dark') === 'dark' ? 'light' : 'dark'; applyTheme(newTheme); const themeBtn = $('#themeToggleBtn'); if (themeBtn) { themeBtn.textContent = newTheme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'; } }
+async function loadAndDisplayKeys(userId) { const list = $('#existingKeysList'); const { data: keys, error } = await supabase.from('api_keys').select('api_key, created_at').eq('user_id', userId); if (error) { list.innerHTML = '<p class="error">Could not load keys.</p>'; return; } if (keys.length === 0) { list.innerHTML = '<p class="muted">No API keys generated.</p>'; } else { list.innerHTML = keys.map(k => `<div class="api-key-item"><span>${k.api_key.substring(0, 11)}...${k.api_key.substring(k.api_key.length - 4)}</span><span class="muted">Created: ${new Date(k.created_at).toLocaleDateString()}</span></div>`).join(''); } }
+async function handleGenerateKey() { const btn = $('#generateKeyBtn'), msg = $('#keyMessage'), container = $('#newKeyContainer'), display = $('#newKeyDisplay'); btn.disabled = true; btn.textContent = 'Generating...'; msg.textContent = ''; container.style.display = 'none'; try { const { data, error } = await supabase.functions.invoke('generate-api-key'); if (error) throw error; display.textContent = data.apiKey; container.style.display = 'block'; const { data: { user } } = await supabase.auth.getUser(); loadAndDisplayKeys(user.id); } catch (error) { msg.textContent = `Error: ${error.message}`; } finally { btn.disabled = false; btn.textContent = 'Generate New API Key'; } }
 
-async function loadAndDisplayKeys(userId) {
-    const existingKeysList = $('#existingKeysList');
-    const { data: keys, error } = await supabase
-        .from('api_keys')
-        .select('api_key, created_at')
-        .eq('user_id', userId);
-
-    if (error) {
-        existingKeysList.innerHTML = '<p class="error">Could not load keys.</p>';
-        return;
-    }
-    
-    if (keys.length === 0) {
-        existingKeysList.innerHTML = '<p class="muted">You have not generated any API keys yet.</p>';
-    } else {
-        existingKeysList.innerHTML = keys.map(key => `
-            <div class="api-key-item">
-                <span>${key.api_key.substring(0, 11)}...${key.api_key.substring(key.api_key.length - 4)}</span>
-                <span class="muted">Created: ${new Date(key.created_at).toLocaleDateString()}</span>
-            </div>
-        `).join('');
-    }
-}
-
-async function handleGenerateKey() {
-    const generateBtn = $('#generateKeyBtn');
-    const keyMessage = $('#keyMessage');
-    const newKeyContainer = $('#newKeyContainer');
-    const newKeyDisplay = $('#newKeyDisplay');
-
-    // Provide user feedback
-    generateBtn.disabled = true;
-    generateBtn.textContent = 'Generating...';
-    keyMessage.textContent = '';
-    newKeyContainer.style.display = 'none';
-
-    try {
-        // Securely call the Edge Function
-        const { data, error } = await supabase.functions.invoke('generate-api-key');
-
-        if (error) {
-            throw error;
-        }
-
-        // Display the new key to the user ONCE
-        newKeyDisplay.textContent = data.apiKey;
-        newKeyContainer.style.display = 'block';
-        
-        // Refresh the list of keys to show the new one (partially hidden)
-        const { data: { user } } = await supabase.auth.getUser();
-        loadAndDisplayKeys(user.id);
-
-    } catch (error) {
-        keyMessage.textContent = `Error: ${error.message}`;
-    } finally {
-        generateBtn.disabled = false;
-        generateBtn.textContent = 'Generate New API Key';
-    }
-}
-
-// --- INSPECTOR ---
+// --- INSPECTOR & HELPERS ---
 const inspector = $('#inspector'); const multiInspector = $('#multiSelectInspector');
-canvas.on('selection:created', (e) => { refreshInspector(e); renderLayers(); });
-canvas.on('selection:updated', (e) => { refreshInspector(e); renderLayers(); });
-canvas.on('selection:cleared', () => { $('#noSelection').style.display='block'; inspector.style.display='none'; multiInspector.style.display='none'; renderPageInspector(); renderLayers(); });
+canvas.on('selection:created', (e) => { refreshInspector(e); renderLayers(); }); canvas.on('selection:updated', (e) => { refreshInspector(e); renderLayers(); }); canvas.on('selection:cleared', () => { $('#noSelection').style.display='block'; inspector.style.display='none'; multiInspector.style.display='none'; renderPageInspector(); renderLayers(); });
 function updateLiveInspector(options) { const target = options.target; if (!target || target.type === 'activeSelection') return; const updateValue = (id, value) => { const el = document.getElementById(id); if (el) el.value = value; }; updateValue('inspector-pos-x', Math.round(target.left)); updateValue('inspector-pos-y', Math.round(target.top)); updateValue('inspector-dim-w', Math.round(target.getScaledWidth())); updateValue('inspector-dim-h', Math.round(target.getScaledHeight())); updateValue('inspector-opacity-slider', target.opacity); updateValue('inspector-opacity-input', target.opacity); updateValue('inspector-stroke-width-slider', target.strokeWidth); updateValue('inspector-stroke-width-input', target.strokeWidth); if (target.rx !== undefined) { updateValue('inspector-corner-radius-slider', target.rx); updateValue('inspector-corner-radius-input', target.rx); } }
 function refreshInspector(e) { const target = e.target || canvas.getActiveObject(); if (!target) return; if (target.type === 'activeSelection') { inspector.style.display = 'none'; multiInspector.style.display = 'grid'; $('#noSelection').style.display = 'none'; renderMultiSelectInspector(target); } else { multiInspector.style.display = 'none'; inspector.style.display = 'grid'; $('#noSelection').style.display = 'none'; renderSingleObjectInspector(target); } }
 function getCommonPropertyValue(objects, property) { const firstValue = objects[0][property]; for (let i = 1; i < objects.length; i++) { if (objects[i][property] !== firstValue) return ''; } return firstValue; }
 function setCommonPropertyValue(objects, property, value) { objects.forEach(obj => obj.set(property, value)); canvas.renderAll(); saveState(); }
-function renderMultiSelectInspector(selection) {
-    multiInspector.innerHTML = ''; const objects = selection.getObjects();
-    const actions = document.createElement('div'); actions.className = 'action-buttons';
-    actions.innerHTML = `<button id="copyBtn" class="btn ghost">Copy</button><button id="cutBtn" class="btn ghost">Cut</button><button id="pasteBtn" class="btn ghost">Paste</button>`;
-    multiInspector.appendChild(actions);
-    const removeBtn = document.createElement('button'); removeBtn.className = 'btn ghost'; removeBtn.style.backgroundColor = '#ad0000'; removeBtn.textContent = 'Remove'; multiInspector.appendChild(removeBtn);
-    actions.querySelector('#copyBtn').onclick = copy; actions.querySelector('#cutBtn').onclick = cut; actions.querySelector('#pasteBtn').onclick = paste; $('#pasteBtn').disabled = !_clipboard;
-    removeBtn.onclick = () => { objects.forEach(obj => canvas.remove(obj)); canvas.discardActiveObject().renderAll(); canvas.fire('selection:cleared'); };
-    const commonProps = [ sliderRow('Opacity', getCommonPropertyValue(objects, 'opacity') ?? 1, (v) => setCommonPropertyValue(objects, 'opacity', v), { min: 0, max: 1, step: 0.01 }), colorInputRow('Stroke Color', getCommonPropertyValue(objects, 'stroke') ?? '', v => setCommonPropertyValue(objects, 'stroke', v)), sliderRow('Stroke Width', getCommonPropertyValue(objects, 'strokeWidth') ?? 0, (v) => setCommonPropertyValue(objects, 'strokeWidth', v), { min: 0, max: 50, step: 1 }) ];
-    multiInspector.appendChild(section('Common', commonProps));
-    const shapeObjects = objects.filter(o => ['rect', 'circle', 'triangle', 'polygon', 'path'].includes(o.type));
-    if (shapeObjects.length === objects.length && shapeObjects.length > 0) multiInspector.appendChild(section('Shape Properties', [ colorInputRow('Fill', getCommonPropertyValue(shapeObjects, 'fill'), v => setCommonPropertyValue(shapeObjects, 'fill', v)) ]));
-    const textObjects = objects.filter(o => o.type === 'textbox');
-    if (textObjects.length === objects.length && textObjects.length > 0) multiInspector.appendChild(section('Text', [ inputRow('Font Size', getCommonPropertyValue(textObjects, 'fontSize'), v => setCommonPropertyValue(textObjects, 'fontSize', parseFloat(v))), selectRow('Font Family', FONT_LIST, getCommonPropertyValue(textObjects, 'fontFamily'), v => setCommonPropertyValue(textObjects, 'fontFamily', v)), colorInputRow('Fill Color', getCommonPropertyValue(textObjects, 'fill'), v => setCommonPropertyValue(textObjects, 'fill', v)), selectRow('Alignment', ['left','center','right','justify'], getCommonPropertyValue(textObjects, 'textAlign'), v => setCommonPropertyValue(textObjects, 'textAlign', v)) ]));
-    multiInspector.appendChild(section('Align', [alignToPageButtons()]));
-}
+function renderMultiSelectInspector(selection) { multiInspector.innerHTML = ''; const objects = selection.getObjects(); multiInspector.appendChild(section('Actions', [ buttonRow('Group', () => { if(selection.size() > 1) selection.toGroup(); canvas.requestRenderAll(); }), buttonRow('Remove', () => { objects.forEach(obj => canvas.remove(obj)); canvas.discardActiveObject().renderAll(); }) ])); multiInspector.appendChild(section('Common', [ sliderRow('Opacity', getCommonPropertyValue(objects, 'opacity') ?? 1, (v) => setCommonPropertyValue(objects, 'opacity', v), { min: 0, max: 1, step: 0.01 }), colorInputRow('Stroke Color', getCommonPropertyValue(objects, 'stroke') ?? '', v => setCommonPropertyValue(objects, 'stroke', v)), sliderRow('Stroke Width', getCommonPropertyValue(objects, 'strokeWidth') ?? 0, (v) => setCommonPropertyValue(objects, 'strokeWidth', v), { min: 0, max: 50, step: 1 }) ])); multiInspector.appendChild(section('Align', [alignToPageButtons()])); }
 function renderSingleObjectInspector(o) {
-    inspector.innerHTML = ''; const actions = document.createElement('div'); actions.className = 'action-buttons';
-    actions.innerHTML = `<button id="copyBtn" class="btn ghost">Copy</button><button id="cutBtn" class="btn ghost">Cut</button><button id="pasteBtn" class="btn ghost">Paste</button>`;
-    inspector.appendChild(actions);
-    const removeBtn = document.createElement('button'); removeBtn.className = 'btn ghost'; removeBtn.style.backgroundColor = '#ad0000'; removeBtn.textContent = 'Remove'; inspector.appendChild(removeBtn);
+    inspector.innerHTML = ''; 
+    const actions = [];
+    if (o.type === 'group') actions.push(buttonRow('Ungroup', () => o.toActiveSelection()));
+    actions.push(buttonRow('Remove', () => canvas.remove(o)));
+    inspector.appendChild(section('Actions', actions));
     inspector.appendChild(section('Data Links', [ buttonRow(`Manage Links (${getBindingsFor(o).length})`, () => { selectedObjectForManager = o; openDataLinksManager(); }) ]));
-    actions.querySelector('#copyBtn').onclick = copy; actions.querySelector('#cutBtn').onclick = cut; actions.querySelector('#pasteBtn').onclick = paste; $('#pasteBtn').disabled = !_clipboard;
-    removeBtn.onclick = () => canvas.remove(canvas.getActiveObject());
-    if (['rect', 'image', 'circle', 'triangle', 'polygon', 'path'].includes(o.type)) {
-        const shapeProps = [];
-        if (['rect', 'image'].includes(o.type)) shapeProps.push(sliderRow('Corner Radius', o.rx ?? 0, (v) => o.set({rx: v, ry: v}), {min: 0, max: Math.min(o.width, o.height)/2, step: 1}));
-        inspector.appendChild(section('Shape Properties', shapeProps));
-    }
-    if (['rect', 'triangle', 'circle', 'polygon', 'path'].includes(o.type)) {
-    const fillProps = [];
-    
-    // If the fill is an image pattern, show the "Edit Fill" button
-    if (o.fill instanceof fabric.Pattern && o.fill.source) {
-        fillProps.push(buttonRow('Edit Image Fill', () => openImageFillEditor(o)));
-        fillProps.push(buttonRow('Replace Image', () => $('#imageFillUpload').click()));
-        fillProps.push(buttonRow('Remove Image Fill', () => {
-            o.set({ fill: '#f0f0f0' }); // Reset to a default color
-            canvas.renderAll();
-            saveState();
-            refreshInspector({ target: o }); // Refresh inspector to show color input again
-        }));
-    } else {
-        // Otherwise, show the standard color and image fill buttons
-        fillProps.push(colorInputRow('Color', o.fill, v => o.set({ fill: v })));
-        fillProps.push(buttonRow('Fill with Image', () => $('#imageFillUpload').click()));
-    }
-
-    inspector.appendChild(section('Fill', fillProps));
-
-    // This onchange logic should be defined once
-    $('#imageFillUpload').onchange = e => {
-        if (!e.target.files?.[0]) return;
-        const reader = new FileReader();
-        reader.onload = ev => {
-            fabric.Image.fromURL(ev.target.result, img => {
-                const pattern = new fabric.Pattern({
-                    source: img.getElement(),
-                    repeat: 'no-repeat',
-                });
-                o.set('fill', pattern);
-                // Initialize the transform matrix for the new pattern
-                pattern.patternTransform = [1, 0, 0, 1, 0, 0];
-                canvas.renderAll();
-                saveState();
-                refreshInspector({ target: o }); // Refresh to show the "Edit" button
-            }, { crossOrigin: 'anonymous' });
-        };
-        reader.readAsDataURL(e.target.files[0]);
-        e.target.value = ''; // Clear input for next use
-    };
-}
-    if (o.isTable) inspector.appendChild(section('Table', [ colorInputRow('Stroke Color', o.getObjects()[0].stroke, v => o.forEachObject(cell => cell.set({stroke:v}))), sliderRow('Stroke Width', o.getObjects()[0].strokeWidth, v => o.forEachObject(cell => cell.set({strokeWidth:v})), {min:0, max: 20, step: 0.5}), sliderRow('Stroke Opacity', o.getObjects()[0].opacity, v => o.forEachObject(cell => cell.set({opacity:v})), {min:0, max: 1, step: 0.01}), buttonRow('Remove Strokes', () => o.forEachObject(cell => cell.set({strokeWidth:0}))) ]));
+    if (o.type === 'image') inspector.appendChild(section('Image', [buttonRow('Crop Image', () => openVisualCropper(o))]));
+    if (['rect', 'image', 'circle', 'triangle', 'polygon', 'path'].includes(o.type)) { const shapeProps = []; if (['rect', 'image'].includes(o.type)) shapeProps.push(sliderRow('Corner Radius', o.rx ?? 0, (v) => o.set({rx: v, ry: v}), {min: 0, max: Math.min(o.width, o.height)/2, step: 1})); inspector.appendChild(section('Shape Properties', shapeProps)); }
+    if (['rect', 'triangle', 'circle', 'polygon', 'path'].includes(o.type)) { inspector.appendChild(section('Fill', [colorInputRow('Color', o.fill, v => o.set({ fill: v })), buttonRow('Fill with Image', () => { editingFillObject = o; $('#imageFillUpload').click(); })])); $('#imageFillUpload').onchange = e => { if (!e.target.files?.[0] || !editingFillObject) return; const reader = new FileReader(); reader.onload = ev => { fabric.Image.fromURL(ev.target.result, img => { editingFillObject.set('fill', new fabric.Pattern({ source: img.getElement(), repeat: 'repeat' })); canvas.renderAll(); saveState(); }, { crossOrigin: 'anonymous' }); }; reader.readAsDataURL(e.target.files[0]); e.target.value = ''; }; }
+    if (o.isTable) inspector.appendChild(section('Table', [ colorInputRow('Stroke Color', o.getObjects()[0].stroke, v => o.forEachObject(cell => cell.set({stroke:v}))), sliderRow('Stroke Width', o.getObjects()[0].strokeWidth, v => o.forEachObject(cell => cell.set({strokeWidth:v})), {min:0, max: 20, step: 0.5}) ]));
     if (o.type === 'textbox') inspector.appendChild(section('Text', [ inputRow('Content', o.text, v => o.set({text:v}), 'textarea'), inputRow('Font Size', o.fontSize, v => o.set({fontSize:parseFloat(v)})), selectRow('Font Family', FONT_LIST, o.fontFamily, v => o.set({fontFamily:v})), colorInputRow('Fill Color', o.fill, v => o.set({fill:v})), selectRow('Alignment', ['left','center','right','justify'], o.textAlign, v => o.set({textAlign:v})) ]));
     inspector.appendChild(section('Common', [ xyInputRow('Position', {x: o.left, y: o.top}, (p) => o.set({left: p.x, top: p.y})), xyInputRow('Dimensions', {w: o.getScaledWidth(), h: o.getScaledHeight()}, (d) => {o.scaleToWidth(d.w); o.scaleToHeight(d.h);}), sliderRow('Opacity', o.opacity ?? 1, (v) => o.set({opacity: v}), {min: 0, max: 1, step: 0.01}), colorInputRow('Stroke Color', o.stroke ?? '', v => o.set({stroke: v})), sliderRow('Stroke Width', o.strokeWidth ?? 0, (v) => o.set({strokeWidth: v}), {min: 0, max: 50, step: 1}), ]));
     inspector.appendChild(section('Align to Page', [alignToPageButtons()]));
 }
-function renderPageInspector() { if (!pageRect) pageRect = canvas.getObjects().find(o => o.oid === 'pageRect'); if (!pageRect) return; const container = $('#pageInspector'); container.innerHTML = ''; const pageProps = section('Page Style', [ colorInputRow('Background Color', pageRect.fill, v => pageRect.set({fill: v})), buttonRow('Set Background Image', () => $('#imageFillUpload').click()) ]); $('#imageFillUpload').onchange = e => { if(!e.target.files?.[0]) return; const reader = new FileReader(); reader.onload = ev => { fabric.Image.fromURL(ev.target.result, img => { pageRect.set('fill', new fabric.Pattern({source:img.getElement(), repeat: 'repeat'})); canvas.renderAll(); saveState(); }, {crossOrigin:'anonymous'}); }; reader.readAsDataURL(e.target.files[0]); e.target.value = ''; }; container.appendChild(pageProps); }
-$('#loadTemplateBtnPage').onclick = () => { /* This button is now vestigial, can be removed */ };
-
-// --- INSPECTOR HELPER FUNCTIONS ---
+function renderPageInspector() { if (!pageRect) pageRect = canvas.getObjects().find(o => o.oid === 'pageRect'); if (!pageRect) return; const container = $('#pageInspector'); container.innerHTML = ''; const pageProps = section('Page Style', [ colorInputRow('Background Color', pageRect.fill, v => pageRect.set({fill: v})), buttonRow('Set Background Image', () => { editingFillObject = pageRect; $('#imageFillUpload').click(); }) ]); container.appendChild(pageProps); }
+$('#loadTemplateBtnPage').onclick = () => {};
 function section(title, rows){ const w=document.createElement('div'); w.className='stack'; w.innerHTML=`<h3>${title}</h3>`; const g=document.createElement('div'); g.className='prop-grid'; rows.forEach(r => g.appendChild(r)); w.appendChild(g); return w; }
-
-function inputRow(label, value, onChange, type = 'text') {
-    const w = document.createElement('div');
-    w.className = 'stack full-width';
-    w.innerHTML = `<label>${label}</label>`;
-    
-    // Create the correct element type
-    const i = document.createElement(type === 'textarea' ? 'textarea' : 'input');
-
-    // MODIFIED: Only set the 'type' attribute for <input> elements
-    if (type !== 'textarea') {
-        i.type = type;
-    }
-
-    i.value = value ?? '';
-    i.oninput = () => {
-        onChange(i.value);
-        canvas.requestRenderAll();
-    };
-    i.onchange = () => {
-        saveState(); // Save history on blur/enter
-    };
-    
-    if (type === 'textarea') {
-        i.rows = 3;
-    }
-    
-    w.appendChild(i);
-    return w;
-}
-
-function xyInputRow(label, values, onChange) {
-    const w = document.createElement('div'); w.className = 'stack full-width';
-    w.innerHTML = `<label>${label}</label>`;
-    const r = document.createElement('div'); r.className = 'row';
-    const x = document.createElement('input'); x.type = 'number'; x.value = Math.round(values.x ?? values.w ?? 0);
-    const y = document.createElement('input'); y.type = 'number'; y.value = Math.round(values.y ?? values.h ?? 0);
-    if (label === 'Position') { x.id = 'inspector-pos-x'; y.id = 'inspector-pos-y'; }
-    else if (label === 'Dimensions') { x.id = 'inspector-dim-w'; y.id = 'inspector-dim-h'; }
-
-    const update = () => {
-        const v = label === 'Position' ? { x: parseFloat(x.value), y: parseFloat(y.value) } : { w: parseFloat(x.value), h: parseFloat(y.value) };
-        onChange(v);
-        canvas.requestRenderAll();
-        updateLiveInspector({ target: canvas.getActiveObject() });
-    };
-    const finalUpdate = () => {
-        update();
-        saveState();
-    };
-
-    x.oninput = update;
-    y.oninput = update;
-    x.onchange = finalUpdate;
-    y.onchange = finalUpdate;
-    r.append(x, y);
-    w.appendChild(r);
-    return w;
-}
-
-function sliderRow(label, value, onChange, {min=0, max=100, step=1}, idPrefix = null) {
-    const w = document.createElement('div'); w.className = 'stack full-width';
-    w.innerHTML = `<label>${label}</label>`;
-    const r = document.createElement('div'); r.className = 'slider-wrapper';
-    const s = document.createElement('input'); s.type = 'range'; s.min = min; s.max = max; s.step = step; s.value = value;
-    const n = document.createElement('input'); n.type = 'number'; n.min = min; n.max = max; n.step = step; n.value = value;
-    // Use the prefix if provided, otherwise generate one from the label
-    const idBase = idPrefix || 'inspector-' + label.toLowerCase().replace(/\s+/g, '-');
-    s.id = idBase + '-slider'; n.id = idBase + '-input';
-
-    const update = (val) => {
-        onChange(val); // In the new editor, this will just be a function reference
-        canvas.requestRenderAll();
-    };
-
-    s.oninput = () => { n.value = s.value; update(parseFloat(s.value)); };
-    n.oninput = () => { s.value = n.value; update(parseFloat(n.value)); };
-    
-    // For the main inspector, we still want to save state on change
-    if (!idPrefix) {
-        s.onchange = () => saveState();
-        n.onchange = () => saveState();
-    }
-
-    r.append(s, n);
-    w.appendChild(r);
-    return w;
-}
-
-function selectRow(label, opts, val, onChange) {
-    const w=document.createElement('div'); w.className='stack full-width';
-    w.innerHTML=`<label>${label}</label>`;
-    const s=document.createElement('select');
-    opts.forEach(opt=>s.innerHTML+=`<option value="${opt}" ${opt==val?'selected':''}>${opt}</option>`);
-    s.onchange=e=>{
-        onChange(e.target.value);
-        canvas.renderAll();
-        saveState();
-    };
-    w.appendChild(s);
-    return w;
-}
-
+function inputRow(label, value, onChange, type = 'text') { const w = document.createElement('div'); w.className = 'stack full-width'; w.innerHTML = `<label>${label}</label>`; const i = document.createElement(type === 'textarea' ? 'textarea' : 'input'); if (type !== 'textarea') i.type = type; i.value = value ?? ''; i.oninput = () => { onChange(i.value); canvas.requestRenderAll(); }; i.onchange = () => saveState(); if (type === 'textarea') i.rows = 3; w.appendChild(i); return w; }
+function xyInputRow(label, values, onChange) { const w = document.createElement('div'); w.className = 'stack full-width'; w.innerHTML = `<label>${label}</label>`; const r = document.createElement('div'); r.className = 'row'; const x = document.createElement('input'); x.type = 'number'; x.value = Math.round(values.x ?? values.w ?? 0); const y = document.createElement('input'); y.type = 'number'; y.value = Math.round(values.y ?? values.h ?? 0); if (label === 'Position') { x.id = 'inspector-pos-x'; y.id = 'inspector-pos-y'; } else if (label === 'Dimensions') { x.id = 'inspector-dim-w'; y.id = 'inspector-dim-h'; } const update = () => { const v = label === 'Position' ? { x: parseFloat(x.value), y: parseFloat(y.value) } : { w: parseFloat(x.value), h: parseFloat(y.value) }; onChange(v); canvas.requestRenderAll(); updateLiveInspector({ target: canvas.getActiveObject() }); }; const finalUpdate = () => { update(); saveState(); }; x.oninput = update; y.oninput = update; x.onchange = finalUpdate; y.onchange = finalUpdate; r.append(x, y); w.appendChild(r); return w; }
+function sliderRow(label, value, onChange, {min=0, max=100, step=1}, idPrefix = null) { const w = document.createElement('div'); w.className = 'stack full-width'; w.innerHTML = `<label>${label}</label>`; const r = document.createElement('div'); r.className = 'slider-wrapper'; const s = document.createElement('input'); s.type = 'range'; s.min = min; s.max = max; s.step = step; s.value = value; const n = document.createElement('input'); n.type = 'number'; n.min = min; n.max = max; n.step = step; n.value = value; const idBase = idPrefix || 'inspector-' + label.toLowerCase().replace(/\s+/g, '-'); s.id = idBase + '-slider'; n.id = idBase + '-input'; const update = (val) => { onChange(val); canvas.requestRenderAll(); }; s.oninput = () => { n.value = s.value; update(parseFloat(s.value)); }; n.oninput = () => { s.value = n.value; update(parseFloat(n.value)); }; if (!idPrefix) { s.onchange = () => saveState(); n.onchange = () => saveState(); } r.append(s, n); w.appendChild(r); return w; }
+function selectRow(label, opts, val, onChange) { const w=document.createElement('div'); w.className='stack full-width'; w.innerHTML=`<label>${label}</label>`; const s=document.createElement('select'); opts.forEach(opt=>s.innerHTML+=`<option value="${opt}" ${opt==val?'selected':''}>${opt}</option>`); s.onchange=e=>{ onChange(e.target.value); canvas.renderAll(); saveState(); }; w.appendChild(s); return w; }
 function buttonRow(label, onClick) { const w=document.createElement('div');w.className='full-width'; const b=document.createElement('button');b.className='btn ghost'; b.textContent=label; b.onclick=onClick; b.style.width='100%'; w.appendChild(b); return w;}
+function colorInputRow(label, value, onChange) { const w = document.createElement('div'); w.className = 'stack full-width'; w.innerHTML = `<label>${label}</label>`; const r = document.createElement('div'); r.className = 'color-picker-wrapper'; const t = document.createElement('input'); t.type = 'text'; t.value = value; const c = document.createElement('input'); c.type = 'color'; c.value = value; const update = (val) => { onChange(val); canvas.requestRenderAll(); }; t.oninput = () => { c.value = t.value; update(t.value); }; c.oninput = () => { t.value = c.value; update(c.value); }; t.onchange = () => saveState(); c.onchange = () => saveState(); r.append(t, c); w.appendChild(r); return w; }
 
-function colorInputRow(label, value, onChange) {
-    const w = document.createElement('div'); w.className = 'stack full-width';
-    w.innerHTML = `<label>${label}</label>`;
-    const r = document.createElement('div'); r.className = 'color-picker-wrapper';
-    const t = document.createElement('input'); t.type = 'text'; t.value = value;
-    const c = document.createElement('input'); c.type = 'color'; c.value = value;
+// --- VISUAL CROPPER ---
+function initializeVisualCropper() { const modal = $('#visualCropModal'); const container = $('#visualCropContainer'); cropCanvas = new fabric.Canvas('cropCanvas', { selection: false, backgroundColor: '#222' }); new ResizeObserver(() => { const { width, height } = container.getBoundingClientRect(); cropCanvas.setWidth(width).setHeight(height); }).observe(container); $('#closeVisualCropModal').addEventListener('click', closeVisualCropper); $('#cancelCropBtn').addEventListener('click', closeVisualCropper); $('#applyCropBtn').addEventListener('click', applyCrop); }
+function openVisualCropper(imageObject) { croppingImage = imageObject; const modal = $('#visualCropModal'); modal.style.display = 'flex'; cropCanvas.clear(); const { width: cW, height: cH } = $('#visualCropContainer').getBoundingClientRect(); cropCanvas.setWidth(cW).setHeight(cH); const imgEl = croppingImage.getElement(); const scale = Math.min(cW / imgEl.naturalWidth, cH / imgEl.naturalHeight) * 0.8; const imgInstance = new fabric.Image(imgEl, { selectable: false, evented: false, scaleX: scale, scaleY: scale }); cropCanvas.add(imgInstance); cropCanvas.centerObject(imgInstance); cropCanvas.add(new fabric.Rect({ fill: 'rgba(0,0,0,0.3)', width: cW, height: cH, selectable: false, evented: false })); const cropBox = new fabric.Rect({ left: imgInstance.left, top: imgInstance.top, width: imgInstance.getScaledWidth(), height: imgInstance.getScaledHeight(), fill: 'transparent', stroke: '#fff', strokeWidth: 2, cornerColor: '#fff', cornerSize: 12, transparentCorners: false, }); cropCanvas.add(cropBox); cropCanvas.setActiveObject(cropBox); cropCanvas.renderAll(); }
+function closeVisualCropper() { $('#visualCropModal').style.display = 'none'; croppingImage = null; cropCanvas.clear(); }
+function applyCrop() { if (!croppingImage || !cropCanvas.getActiveObject()) return; const cropBox = cropCanvas.getActiveObject(); const imgInstance = cropCanvas.getObjects('image')[0]; const cropX = (cropBox.left - imgInstance.left) / imgInstance.scaleX; const cropY = (cropBox.top - imgInstance.top) / imgInstance.scaleY; const width = cropBox.getScaledWidth() / imgInstance.scaleX; const height = cropBox.getScaledHeight() / imgInstance.scaleY; croppingImage.set({ cropX, cropY, width, height }); croppingImage.scaleToWidth(cropBox.getScaledWidth()); canvas.renderAll(); saveState(); closeVisualCropper(); }
 
-    const update = (val) => {
-        onChange(val);
-        canvas.requestRenderAll();
-    };
-
-    t.oninput = () => { c.value = t.value; update(t.value); };
-    c.oninput = () => { t.value = c.value; update(c.value); };
-    t.onchange = () => saveState();
-    c.onchange = () => saveState();
-
-    r.append(t, c);
-    w.appendChild(r);
-    return w;
-}
-
-// --- IMAGE FILL EDITOR LOGIC ---
-function initializeImageFillEditor() {
-    imageFillPreviewCanvas = new fabric.StaticCanvas('imageFillPreviewCanvas', {
-        width: PREVIEW_SIZE,
-        height: PREVIEW_SIZE,
-    });
-
-    $('#confirmFillEdit').addEventListener('click', () => {
-        if (!editingFillObject) return;
-        saveState(); // Save the final state
-        closeImageFillEditor();
-    });
-
-    $('#cancelFillEdit').addEventListener('click', () => {
-        if (!editingFillObject || !originalPatternState) return;
-        // Restore the original state
-        editingFillObject.fill.patternTransform = originalPatternState;
-        canvas.renderAll();
-        closeImageFillEditor();
-    });
-    
-    $('#resetFillTransform').addEventListener('click', () => {
-        const controls = $('#imageFillControls');
-        controls.querySelector('#fill-scale-input').value = 1;
-        controls.querySelector('#fill-offset-x-input').value = 0;
-        controls.querySelector('#fill-offset-y-input').value = 0;
-        // Manually trigger an input event to apply the reset
-        controls.querySelector('#fill-scale-input').dispatchEvent(new Event('input'));
-    });
-
-    $('#closeImageFillEditor').addEventListener('click', closeImageFillEditor);
-}
-
-function openImageFillEditor(object) {
-    editingFillObject = object;
-    const pattern = object.fill;
-    // Store the original state in case of cancellation
-    originalPatternState = [...pattern.patternTransform || [1, 0, 0, 1, 0, 0]];
-    
-    const controlsContainer = $('#imageFillControls');
-    controlsContainer.innerHTML = ''; // Clear previous controls
-
-    // Get current values from the transform matrix [scaleX, skewY, skewX, scaleY, offsetX, offsetY]
-    const [scaleX, , , , offsetX, offsetY] = originalPatternState;
-
-    // Create and append controls
-    controlsContainer.appendChild(sliderRow('Scale', scaleX, updateFillTransform, { min: 0.1, max: 5, step: 0.05 }, 'fill-scale'));
-    controlsContainer.appendChild(sliderRow('Offset X', offsetX, updateFillTransform, { min: -object.width, max: object.width, step: 1 }, 'fill-offset-x'));
-    controlsContainer.appendChild(sliderRow('Offset Y', offsetY, updateFillTransform, { min: -object.height, max: object.height, step: 1 }, 'fill-offset-y'));
-    
-    // Update the preview
-    updatePreview();
-
-    $('#imageFillEditorModal').style.display = 'flex';
-}
-
-function closeImageFillEditor() {
-    $('#imageFillEditorModal').style.display = 'none';
-    editingFillObject = null;
-    originalPatternState = null;
-}
-
-function updateFillTransform() {
-    if (!editingFillObject) return;
-    
-    const scale = parseFloat($('#fill-scale-input').value);
-    const offsetX = parseFloat($('#fill-offset-x-input').value);
-    const offsetY = parseFloat($('#fill-offset-y-input').value);
-    
-    // Create the new transformation matrix
-    editingFillObject.fill.patternTransform = [scale, 0, 0, scale, offsetX, offsetY];
-    
-    // Update the main canvas in real-time
-    canvas.renderAll();
-    
-    // Update the preview canvas
-    updatePreview();
-}
-
-function updatePreview() {
-    if (!editingFillObject) return;
-    
-    const previewObject = new fabric.Rect({
-        width: PREVIEW_SIZE,
-        height: PREVIEW_SIZE,
-        fill: editingFillObject.fill, // Use the exact same pattern object
-        originX: 'center',
-        originY: 'center',
-        left: PREVIEW_SIZE / 2,
-        top: PREVIEW_SIZE / 2,
-    });
-
-    imageFillPreviewCanvas.clear();
-    imageFillPreviewCanvas.add(previewObject);
-    imageFillPreviewCanvas.renderAll();
-}
-
-// --- ALIGNMENT & DISTRIBUTION ---
+// --- ALIGNMENT & DATA BINDING ---
 function alignToPageButtons() { const container = document.createElement('div'); container.className = 'align-buttons full-width'; const icons = { left: '<svg viewBox="0 0 24 24"><path d="M18 21V3h2v18h-2zm-4 0V3h2v18h-2zM4 21h6V3H4v18z" fill="currentColor"/></svg>', h_center: '<svg viewBox="0 0 24 24"><path d="M4 21V3h2v18H4zm14 0V3h2v18h-2zM9 21V3h6v18H9z" fill="currentColor"/></svg>', right: '<svg viewBox="0 0 24 24"><path d="M4 21V3h2v18H4zm4 0V3h2v18H8zm12 0h-6V3h6v18z" fill="currentColor"/></svg>', top: '<svg viewBox="0 0 24 24" transform="rotate(90)"><path d="M18 21V3h2v18h-2zm-4 0V3h2v18h-2zM4 21h6V3H4v18z" fill="currentColor"/></svg>', v_center: '<svg viewBox="0 0 24 24" transform="rotate(90)"><path d="M4 21V3h2v18H4zm14 0V3h2v18h-2zM9 21V3h6v18H9z" fill="currentColor"/></svg>', bottom: '<svg viewBox="0 0 24 24" transform="rotate(90)"><path d="M4 21V3h2v18H4zm4 0V3h2v18H8zm12 0h-6V3h6v18z" fill="currentColor"/></svg>' }; const actions = { left: o => o.set({ originX: 'left', left: pageRect.left }), h_center: o => o.set({ originX: 'center', left: pageRect.left + pageRect.width / 2 }), right: o => o.set({ originX: 'left', left: pageRect.left + pageRect.width - o.getScaledWidth() }), top: o => o.set({ originY: 'top', top: pageRect.top }), v_center: o => o.set({ originY: 'center', top: pageRect.top + pageRect.height / 2 }), bottom: o => o.set({ originY: 'top', top: pageRect.top + pageRect.height - o.getScaledHeight() }) }; Object.keys(icons).forEach(key => { const btn = document.createElement('button'); btn.className = 'btn ghost'; btn.innerHTML = icons[key]; btn.onclick = () => { const active = canvas.getActiveObject(); if (active && pageRect) { actions[key](active); active.setCoords(); canvas.renderAll(); saveState(); } }; container.appendChild(btn); }); return container; }
-
-// --- DATA BINDING & EXPORT ---
 function propertyOptionsFor(o){ const common=['Opacity','Stroke Color','Stroke Width']; if(o.isTable) return ['Stroke Color', 'Stroke Width']; if(o.type==='textbox')return['Text Content','Font Family','Font Size','Fill Color',...common]; if(['rect','image'].includes(o.type))common.push('Corner Radius'); if(['rect','circle','triangle','polygon','path'].includes(o.type))return['Color','Image Fill URL',...common]; return common; }
 function defaultPropertyFor(o){ return o.type==='textbox'?'Text Content':'Color';}
 function getBindingsFor(o){ const id=ensureId(o); if(!bindings.has(id)) bindings.set(id,[]); return bindings.get(id); }
@@ -2295,32 +1095,16 @@ function saveBinding(o,b){ const arr=getBindingsFor(o); if(!arr.includes(b)) arr
 function removeBinding(o,b){ const arr=getBindingsFor(o); const i=arr.indexOf(b); if(i>-1) arr.splice(i,1); }
 function ensureId(o){ if(!o.oid) o.oid=`obj_${Date.now()}_${Math.random()}`; return o.oid; }
 canvas.on('object:added', (e) => ensureId(e.target));
-const modal = $('#modalBackdrop');
-function openModal(){ if(!workbook){ alert('Load a data file first.'); return; } modal.style.display='flex'; renderColumnList(); }
-function closeModal(){ modal.style.display='none'; }
-$('#closeModal').addEventListener('click', closeModal);
-$('#columnSearch').addEventListener('input', renderColumnList);
-$('#confirmColumn').addEventListener('click', () => { const sel = $('.col-item[aria-selected="true"]'); if (!sel) return alert('Select a column.'); const col = sel.dataset.name; $('#startCell').value = $('#modalStartCell').value; if (selectedColumn) { selectedColumn.binding.column = col; if (dataLinksManagerModal.style.display === 'flex') renderDataLinksManager(); } closeModal(); });
+const modal = $('#modalBackdrop'); function openModal(){ if(!workbook){ alert('Load a data file first.'); return; } modal.style.display='flex'; renderColumnList(); } function closeModal(){ modal.style.display='none'; } $('#closeModal').addEventListener('click', closeModal); $('#columnSearch').addEventListener('input', renderColumnList); $('#confirmColumn').addEventListener('click', () => { const sel = $('.col-item[aria-selected="true"]'); if (!sel) return alert('Select a column.'); const col = sel.dataset.name; $('#startCell').value = $('#modalStartCell').value; if (selectedColumn) { selectedColumn.binding.column = col; if (dataLinksManagerModal.style.display === 'flex') renderDataLinksManager(); } closeModal(); });
 function renderColumnList(){ const list=$('#colList'); list.innerHTML=''; const q=($('#columnSearch').value||'').toLowerCase(); headers.filter(h=>h.toLowerCase().includes(q)).forEach(h=>{ const item=document.createElement('div'); item.className='col-item'; item.dataset.name=h; const samples=dataRows.slice(0,5).map(r=>r[h]).filter(Boolean).slice(0,3).join(' · '); item.innerHTML=`<b>${h}</b><div class="muted">Samples: ${samples||'—'}</div>`; item.onclick=()=>{document.querySelectorAll('.col-item').forEach(x=>x.removeAttribute('aria-selected')); item.setAttribute('aria-selected','true');}; list.appendChild(item); }); }
 const dataLinksManagerModal = $('#dataLinksManagerModal'); const openDataLinksManagerBtn = $('#openDataLinksManagerBtn'); const closeDataLinksManagerModalBtn = $('#closeDataLinksManagerModal'); let selectedObjectForManager = null;
-function openDataLinksManager() { renderDataLinksManager(); dataLinksManagerModal.style.display = 'flex'; }
-function closeDataLinksManager() { dataLinksManagerModal.style.display = 'none'; selectedObjectForManager = null; }
+function openDataLinksManager() { renderDataLinksManager(); dataLinksManagerModal.style.display = 'flex'; } function closeDataLinksManager() { dataLinksManagerModal.style.display = 'none'; selectedObjectForManager = null; }
 openDataLinksManagerBtn.addEventListener('click', openDataLinksManager); closeDataLinksManagerModalBtn.addEventListener('click', closeDataLinksManager);
-function renderDataLinksManager() {
-    const objectsList = $('#dataLinksObjectsList'); objectsList.innerHTML = ''; const objects = canvas.getObjects().filter(o => o.oid !== 'pageRect' && !o.excludeFromExport);
-    if (objects.length === 0) { objectsList.innerHTML = '<p class="muted" style="font-size:12px; text-align:center;">No objects on canvas.</p>'; $('#dataLinksEditorContent').innerHTML = '<p class="muted" style="text-align:center; padding-top: 24px;">Add an object to the canvas to create a data link.</p>'; return; }
-    objects.forEach(obj => {
-        const item = document.createElement('div'); item.className = 'data-links-object-item'; item.setAttribute('data-oid', ensureId(obj)); let name = obj.type;
-        if (obj.type === 'textbox') name = obj.text.substring(0, 25) || 'Textbox'; if (obj.isTable) name = `Table (${obj.rows}x${cols})`; const bindingCount = getBindingsFor(obj).length;
-        item.innerHTML = `<strong>${name}</strong> <br> <span class="muted">${bindingCount} link(s)</span>`;
-        item.addEventListener('click', () => { selectedObjectForManager = obj; document.querySelectorAll('.data-links-object-item').forEach(el => el.removeAttribute('aria-selected')); item.setAttribute('aria-selected', 'true'); renderBindingsForObject(obj); });
-        objectsList.appendChild(item);
-    });
-    if (selectedObjectForManager) { const selectedItem = objectsList.querySelector(`[data-oid="${selectedObjectForManager.oid}"]`); if (selectedItem) selectedItem.setAttribute('aria-selected', 'true'); else selectedObjectForManager = null; }
-    if (selectedObjectForManager) renderBindingsForObject(selectedObjectForManager); else $('#dataLinksEditorContent').innerHTML = '<p class="muted" style="text-align:center; padding-top: 24px;">Select an object from the left to manage its data links.</p>';
-}
+function renderDataLinksManager() { const objectsList = $('#dataLinksObjectsList'); objectsList.innerHTML = ''; const objects = canvas.getObjects().filter(o => o.oid !== 'pageRect' && !o.excludeFromExport); if (objects.length === 0) { objectsList.innerHTML = '<p class="muted" style="font-size:12px; text-align:center;">No objects on canvas.</p>'; $('#dataLinksEditorContent').innerHTML = '<p class="muted" style="text-align:center; padding-top: 24px;">Add an object to the canvas to create a data link.</p>'; return; } objects.forEach(obj => { const item = document.createElement('div'); item.className = 'data-links-object-item'; item.setAttribute('data-oid', ensureId(obj)); let name = obj.type; if (obj.type === 'textbox') name = obj.text.substring(0, 25) || 'Textbox'; if (obj.isTable) name = `Table (${obj.rows}x${obj.cols})`; const bindingCount = getBindingsFor(obj).length; item.innerHTML = `<strong>${name}</strong> <br> <span class="muted">${bindingCount} link(s)</span>`; item.addEventListener('click', () => { selectedObjectForManager = obj; document.querySelectorAll('.data-links-object-item').forEach(el => el.removeAttribute('aria-selected')); item.setAttribute('aria-selected', 'true'); renderBindingsForObject(obj); }); objectsList.appendChild(item); }); if (selectedObjectForManager) { const selectedItem = objectsList.querySelector(`[data-oid="${selectedObjectForManager.oid}"]`); if (selectedItem) selectedItem.setAttribute('aria-selected', 'true'); else selectedObjectForManager = null; } if (selectedObjectForManager) renderBindingsForObject(selectedObjectForManager); else $('#dataLinksEditorContent').innerHTML = '<p class="muted" style="text-align:center; padding-top: 24px;">Select an object from the left to manage its data links.</p>'; }
 function renderBindingsForObject(obj) { const container = $('#dataLinksEditorContent'); container.innerHTML = ''; const linksWrapper = document.createElement('div'); linksWrapper.className = 'links-list-wrapper'; const header = document.createElement('h4'); header.textContent = 'Active Links'; linksWrapper.appendChild(header); const objectBindings = getBindingsFor(obj); if (objectBindings.length === 0) { linksWrapper.innerHTML += '<p class="muted" style="text-align:center; padding: 16px 0;">No data links configured for this object.</p>'; } else { objectBindings.forEach(b => linksWrapper.appendChild(bindingEditorRow(obj, b))); } const buttonWrapper = document.createElement('div'); buttonWrapper.className = 'add-link-button-wrapper'; const addButton = document.createElement('button'); addButton.className = 'btn'; addButton.textContent = 'Add New Link'; addButton.style.width = '100%'; addButton.onclick = () => { const newBinding = { column: '', property: defaultPropertyFor(obj) }; saveBinding(obj, newBinding); saveState(); renderDataLinksManager(); }; buttonWrapper.appendChild(addButton); container.append(linksWrapper, buttonWrapper); }
 function bindingEditorRow(o, b) { const box = document.createElement('div'); box.className = 'stack'; box.style.cssText = 'border:1px solid var(--border);padding:8px;border-radius:8px;margin-top:8px;'; box.appendChild(selectRow('Property', propertyOptionsFor(o), b.property, v => { b.property = v; saveState(); })); const info = document.createElement('div'); info.className = 'muted'; info.textContent = `Linked to: ${b.column || '—'}`; info.style.fontSize = '12px'; const linkBtn = document.createElement('button'); linkBtn.className = 'btn'; linkBtn.textContent = 'Link Column'; linkBtn.onclick = () => { selectedColumn = { object: o, binding: b }; openModal(); }; const delBtn = document.createElement('button'); delBtn.className = 'btn ghost'; delBtn.textContent = 'Remove'; delBtn.onclick = () => { removeBinding(o, b); saveState(); renderDataLinksManager(); }; const btnGroup = document.createElement('div'); btnGroup.className = 'row'; btnGroup.style.marginTop = '8px'; btnGroup.append(linkBtn, delBtn); box.append(info, btnGroup); return box; }
+
+// --- EXPORT ---
 async function exportAllRows({asZip, asSinglePdf}) {
     if (!pageRect) pageRect = canvas.getObjects().find(o => o.oid === 'pageRect'); if (!pageRect) { alert('Error: Page object not found. Cannot export.'); return; }
     const startOffset = Math.max(0, parseInt(($('#startCell').value.match(/\d+$/) || [2])[0], 10) - 2);
@@ -2437,25 +1221,23 @@ async function generateCanvasForRow(row) {
 }
 function parseDims(s){ const m=String(s).match(/^(\d+)[xX](\d+)$/i); return m?{w:+m[1],h:+m[2]}:null; }
 function applyBinding(o,prop,val){ val=String(val).trim(); const numVal=parseFloat(val); switch(prop){ case'Text Content':if(o.type==='textbox')o.set({text:val});break; case'Font Family':if(o.type==='textbox')o.set({fontFamily:val});break; case'Font Size':if(o.type==='textbox')o.set({fontSize:numVal});break; case'Fill Color':case'Color':o.set({fill:val});break; case'Opacity':o.set({opacity:numVal});break; case'Dimensions':{const d=parseDims(val);if(d){o.scaleToWidth(d.w);o.scaleToHeight(d.h);}break;} case'Stroke Color':o.set({stroke:val});break; case'Stroke Width':o.set({strokeWidth:numVal});break; case'Corner Radius':if('rx'in o)o.set({rx:numVal,ry:numVal});break; case'Image Fill URL':fabric.Image.fromURL(val,img=>o.set('fill',new fabric.Pattern({source:img.getElement()})),{crossOrigin:'anonymous'});break; } }
-// --- HISTORY (UNDO/REDO) ---
+
+// --- HISTORY & UTILS ---
 function undo() { if (historyIndex > 0) { historyLocked = true; historyIndex--; canvas.loadFromJSON(historyStack[historyIndex], restoreCanvasStateAfterLoad); updateHistoryButtons(); } }
 function redo() { if (historyIndex < historyStack.length - 1) { historyLocked = true; historyIndex++; canvas.loadFromJSON(historyStack[historyIndex], restoreCanvasStateAfterLoad); updateHistoryButtons(); } }
 function updateHistoryButtons(){ $('#undoBtn').disabled=historyIndex<=0; $('#redoBtn').disabled=historyIndex>=historyStack.length-1; }
 $('#undoBtn').onclick=undo; $('#redoBtn').onclick=redo;
 function restoreCanvasStateAfterLoad() { pageRect = canvas.getObjects().find(o => o.oid === 'pageRect'); if (pageRect) { pageRect.set({ selectable: false, evented: false, hasControls: false, hasBorders: false, lockMovementX: true, lockMovementY: true, lockScalingX: true, lockScalingY: true, lockRotation: true }); } drawGrid(); renderLayers(); canvas.renderAll(); historyLocked = false; }
-// --- COPY / CUT / PASTE ---
-function updatePasteButton() { document.querySelectorAll('#pasteBtn').forEach(btn => btn.disabled = !_clipboard); }
-function copy() { const activeObject = canvas.getActiveObject(); if (!activeObject) return; activeObject.clone(cloned => { _clipboard = cloned; updatePasteButton(); }, ['oid']); }
+function copy() { const activeObject = canvas.getActiveObject(); if (!activeObject) return; activeObject.clone(cloned => { _clipboard = cloned; }, ['oid']); }
 function cut() { copy(); const activeObjects = canvas.getActiveObjects(); if (activeObjects.length) { activeObjects.forEach(obj => canvas.remove(obj)); canvas.discardActiveObject().renderAll(); } }
 function paste() { if (!_clipboard) return; _clipboard.clone(clonedObj => { canvas.discardActiveObject(); clonedObj.set({ left: clonedObj.left + 20, top: clonedObj.top + 20, evented: true, }); if (clonedObj.type === 'activeSelection') { clonedObj.canvas = canvas; clonedObj.forEachObject(obj => { obj.oid = `obj_${Date.now()}_${Math.random()}`; canvas.add(obj); }); clonedObj.setCoords(); } else { clonedObj.oid = `obj_${Date.now()}_${Math.random()}`; canvas.add(clonedObj); } canvas.setActiveObject(clonedObj); canvas.requestRenderAll(); saveState(); }, ['oid']); }
-// --- LAYERS PANEL ---
-function renderLayers() { const list = $('#layersList'); if (!list) return; list.innerHTML = ''; const activeObj = canvas.getActiveObject(); const objects = canvas.getObjects().filter(o => o.oid !== 'pageRect' && !o.excludeFromExport); objects.slice().reverse().forEach(obj => { const item = document.createElement('div'); item.className = 'layer-item'; if (obj === activeObj || (activeObj?.type === 'activeSelection' && activeObj.getObjects().includes(obj))) { item.classList.add('active'); } item.onclick = () => { canvas.setActiveObject(obj).renderAll(); }; let name = obj.type; if (obj.type === 'textbox') name = obj.text.substring(0, 20) || 'Textbox'; if (obj.isTable) name = `Table (${obj.rows}x${obj.cols})`; item.innerHTML = `<span>${name}</span><div class="layer-actions"><button title="Bring Forward" class="btn ghost btn-fwd"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 15l6-6 6 6"/></svg></button><button title="Send Backward" class="btn ghost btn-bwd"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg></button><button title="Bring to Front" class="btn ghost btn-front"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 12l6-6 6 6 M6 19l6-6 6 6"/></svg></button><button title="Send to Back" class="btn ghost btn-back"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 12l6 6 6-6 M6 5l6 6 6-6"/></svg></button></div>`; item.querySelector('.btn-front').onclick = (e) => { e.stopPropagation(); canvas.bringToFront(obj); renderLayers(); saveState(); }; item.querySelector('.btn-back').onclick = (e) => { e.stopPropagation(); canvas.sendToBack(obj); canvas.getObjects('line').forEach(line => canvas.sendToBack(line)); canvas.sendToBack(pageRect); renderLayers(); saveState(); }; item.querySelector('.btn-fwd').onclick = (e) => { e.stopPropagation(); canvas.bringForward(obj); renderLayers(); saveState(); }; item.querySelector('.btn-bwd').onclick = (e) => { e.stopPropagation(); canvas.sendBackwards(obj); renderLayers(); saveState(); }; list.appendChild(item); }); }
-// --- VIEWPORT & KEYBOARD ---
+function renderLayers() { const list = $('#layersList'); if (!list) return; list.innerHTML = ''; const activeObj = canvas.getActiveObject(); const objects = canvas.getObjects().filter(o => o.oid !== 'pageRect' && !o.excludeFromExport && !o.isSnapLine); objects.slice().reverse().forEach(obj => { const item = document.createElement('div'); item.className = 'layer-item'; item.dataset.locked = !!obj.locked; if (obj === activeObj || (activeObj?.type === 'activeSelection' && activeObj.getObjects().includes(obj))) { item.classList.add('active'); } item.onclick = () => { if (!obj.locked) canvas.setActiveObject(obj).renderAll(); }; let name = obj.type; if (obj.type === 'textbox') name = obj.text.substring(0, 20) || 'Textbox'; if (obj.isTable) name = `Table (${obj.rows}x${obj.cols})`; item.innerHTML = `<span>${name}</span><div class="layer-actions"><button title="Lock/Unlock" class="btn ghost btn-lock"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">${obj.locked ? '<rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path>' : '<rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 9.9-1"></path>'}</svg></button><button title="Bring Forward" class="btn ghost btn-fwd"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 15l6-6 6 6"/></svg></button><button title="Send Backward" class="btn ghost btn-bwd"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg></button></div>`; item.querySelector('.btn-lock').onclick = (e) => { e.stopPropagation(); toggleLock(obj); }; item.querySelector('.btn-fwd').onclick = (e) => { e.stopPropagation(); canvas.bringForward(obj); renderLayers(); saveState(); }; item.querySelector('.btn-bwd').onclick = (e) => { e.stopPropagation(); canvas.sendBackwards(obj); renderLayers(); saveState(); }; list.appendChild(item); }); }
+function toggleLock(obj) { obj.locked = !obj.locked; obj.selectable = !obj.locked; obj.evented = !obj.locked; if(obj.locked) canvas.discardActiveObject(); canvas.renderAll(); renderLayers(); saveState(); }
 function centerAndFitPage(){ if(!pageRect)return; const{width:wrapperW,height:wrapperH}=canvasWrapper.getBoundingClientRect(); const pageW=pageRect.width; const pageH=pageRect.height; const zoom=Math.min(wrapperW/pageW,wrapperH/pageH)*0.95; canvas.setZoom(zoom); const center=pageRect.getCenterPoint(); const vpt=[zoom,0,0,zoom,(wrapperW/2)-center.x*zoom,(wrapperH/2)-center.y*zoom]; canvas.setViewportTransform(vpt); $('#zoomLevel').textContent=`Zoom: ${Math.round(zoom*100)}%`; canvas.renderAll(); }
 $('#centerViewBtn').onclick=centerAndFitPage;
-window.addEventListener('keydown', e=>{ if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA')return; const isCtrl=e.ctrlKey||e.metaKey; if(isCtrl&&e.key==='z'){e.preventDefault();undo();} if(isCtrl&&e.key==='y'){e.preventDefault();redo();} if(isCtrl&&e.key==='c'){e.preventDefault();copy();} if(isCtrl&&e.key==='x'){e.preventDefault();cut();} if(isCtrl&&e.key==='v'){e.preventDefault();paste();} if(e.key==='Delete'||e.key==='Backspace'){ const activeObjects=canvas.getActiveObjects(); if(activeObjects.length){ activeObjects.forEach(obj=>canvas.remove(obj)); canvas.discardActiveObject().renderAll(); } } });
-$('#exportZipBtn').addEventListener('click',()=>exportAllRows({asZip:true})); $('#exportSinglePdfBtn').addEventListener('click',()=>exportAllRows({asSinglePdf:true}));
-$('#exportPngBtn').addEventListener('click', exportAsPNG);
+window.addEventListener('keydown', e=>{ if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA')return; const isCtrl=e.ctrlKey||e.metaKey; const activeObj = canvas.getActiveObject(); if(isCtrl&&e.key==='z'){e.preventDefault();undo();} if(isCtrl&&e.key==='y'){e.preventDefault();redo();} if(isCtrl&&e.key==='c'){e.preventDefault();copy();} if(isCtrl&&e.key==='x'){e.preventDefault();cut();} if(isCtrl&&e.key==='v'){e.preventDefault();paste();} if(isCtrl&&e.key.toLowerCase()==='g'){ e.preventDefault(); if(activeObj && activeObj.type === 'activeSelection') activeObj.toGroup(); } if(isCtrl&&e.shiftKey&&e.key.toLowerCase()==='g'){ e.preventDefault(); if(activeObj && activeObj.type === 'group') activeObj.toActiveSelection(); } if (e.key.startsWith('Arrow') && activeObj) { e.preventDefault(); const amount = e.shiftKey ? 10 : 1; switch(e.key) { case 'ArrowUp': activeObj.top -= amount; break; case 'ArrowDown': activeObj.top += amount; break; case 'ArrowLeft': activeObj.left -= amount; break; case 'ArrowRight': activeObj.left += amount; break; } activeObj.setCoords(); canvas.renderAll(); } if(e.key==='Delete'||e.key==='Backspace'){ const activeObjects=canvas.getActiveObjects(); if(activeObjects.length){ activeObjects.forEach(obj=>canvas.remove(obj)); canvas.discardActiveObject().renderAll(); } } });
+window.addEventListener('keyup', e => { if (e.key.startsWith('Arrow') && canvas.getActiveObject()) { saveState(); } });
+$('#exportZipBtn').addEventListener('click',()=>exportAllRows({asZip:true})); $('#exportSinglePdfBtn').addEventListener('click',()=>exportAllRows({asSinglePdf:true})); $('#exportPngBtn').addEventListener('click', exportAsPNG);
 
 // --- AI ASSISTANT ---
 const aiBubble = $('#ai-bubble'); 
@@ -2738,189 +1520,50 @@ try {
 }
 });
 
+// --- LEFT PANEL TABS & ELEMENTS ---
+function initializeLeftPanelTabs() {
+    const tabButtons = document.querySelectorAll('.panel-tab-btn');
+    const tabContents = document.querySelectorAll('.panel-tab-content');
 
-// --- NEW: INTERACTIVE TOUR LOGIC ---
-const tourModal = $('#tour-modal');
-const tourHighlight = $('#tour-highlight');
-let currentTourStep = 0;
+    tabButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            // Deactivate all tabs and content panels
+            tabButtons.forEach(b => b.classList.remove('active'));
+            tabContents.forEach(c => c.classList.remove('active'));
 
-const tourSteps = [
-    {
-        title: "How to Structure Your Data",
-        content: `<p>Before importing, make sure your data is structured correctly in a .csv or .xlsx file.</p>
-                  <ul>
-                    <li>Column names should start in cell <b>A1</b>.</li>
-                    <li>Each new row will be treated as a different file or page.</li>
-                  </ul>`,
-        element: null // No specific element to highlight
-    },
-    {
-        title: "How to Import Your Data",
-        content: `<p>Press the <b>Load Data</b> button to open the file picker.</p>
-                  <p>Valid formats are <b>.xlsx</b> and <b>.csv</b>.</p>`,
-        element: 'label[for="csvInput"]'
-    },
-    {
-        title: "How to Generate with AI",
-        content: `<p>Press the AI bubble to open the assistant.`,
-        element: '#ai-bubble',
-        action: () => {
-            $('#dataLinksManagerModal').style.display = 'none';
-            $('#aiModalBackdrop').style.display = 'none'
-        }
-    },
-    {
-        title: "How to Generate with AI",
-        content: `You will need a <a href="https://aistudio.google.com/apikey" target="_blank">Google AI Studio API key</a>.</p>
-                    <ul>
-                        <li>Login to you Google Account.</li>
-                        <li>Click on "+ Create API Key"</li>
-                        <li>Copy the key and paste it here</li> 
-                    </ul>`,
-        action: () => {
-            $('#dataLinksManagerModal').style.display = 'none';
-            $('#aiModalBackdrop').style.display = 'flex'
-        }
-    },
-        {
-        title: "How to Generate with AI",
-        content: `Now, enter your request in the prompt box and press "Send Request".</p>
-                  <p><b>Tips:</b></p>
-                  <ul>
-                    <li>You can paste an image into the prompt to help with your idea.</li>
-                    <li>Specify your column names in the prompt and the AI will try to link them automatically.</li>
-                  </ul>`,
-        element: '#aiPrompt',
-        action: () => {
-            $('#dataLinksManagerModal').style.display = 'none';
-            $('#aiModalBackdrop').style.display = 'flex'
-        }
-    },
-    {
-        title: "How to Link Your Data",
-        content: `<p>First, make sure you have imported your data.</p>
-                  <p>Press <b>Data Links</b> to open the manager.</p>`,
-        element: '#openDataLinksManagerBtn',
-        action: () => {
-            $('#aiModalBackdrop').style.display = 'none';
-            $('#dataLinksManagerModal').style.display = 'none';
-        }
-    },
-    {
-        title: "How to Link Your Data",
-        content: `<p>From there, you can select an object, choose a column from your data, and link it to a property like 'Text Content' or 'Color'.</p>`,
-        action: () => {
-            $('#aiModalBackdrop').style.display = 'none';
-            $('#dataLinksManagerModal').style.display = 'flex';
-        }
-    },
-    {
-        title: "Tour Complete!",
-        content: `<p>You now know the basics! Start creating your templates.</p>`,
-        element: null,
-        action: () => {
-            $('#dataLinksManagerModal').style.display = 'none'; // Close data links modal
-        }
+            // Activate the clicked tab
+            btn.classList.add('active');
+
+            // Find and activate the correct content panel using the robust data-target attribute
+            const targetId = btn.dataset.target;
+            const targetContent = document.getElementById(targetId);
+            if (targetContent) {
+                targetContent.classList.add('active');
+            } else {
+                console.error(`Tab content panel with ID "${targetId}" not found.`);
+            }
+        });
+    });
+
+    const searchInput = $('#element-search');
+    if (searchInput) {
+        const debouncedSearch = debounce(searchElements, 300);
+        searchInput.addEventListener('input', () => debouncedSearch(searchInput.value));
     }
-];
 
-function startTour() {
-    currentTourStep = 0;
-    tourModal.style.display = 'flex';
-    goToStep(currentTourStep);
+    // Initial load of elements
+    searchElements('');
 }
+async function searchElements(query) { if (!supabase) return; const grid = $('#elements-grid'); grid.innerHTML = '<p class="muted">Loading...</p>'; let queryBuilder = supabase.from('elements').select('id, name, image_url, tags'); if (query) { queryBuilder = queryBuilder.or(`name.ilike.%${query}%,tags.cs.{${query}}`); } const { data, error } = await queryBuilder.limit(100); if (error) { grid.innerHTML = '<p class="muted">Error loading elements.</p>'; console.error('Element search error:', error); return; } if (!data || data.length === 0) { grid.innerHTML = '<p class="muted">No elements found.</p>'; return; } grid.innerHTML = ''; data.forEach(el => { const chip = document.createElement('div'); chip.className = 'element-chip'; chip.draggable = true; chip.innerHTML = `<img src="${el.image_url}" alt="${el.name}" />`; chip.addEventListener('dragstart', e => { e.dataTransfer.setData('text/plain', `element:${JSON.stringify(el)}`); }); chip.addEventListener('click', () => { const {x, y} = canvas.getVpCenter(); adders.image(x, y, el.image_url, { oid: el.id }); }); grid.appendChild(chip); }); }
 
-function endTour() {
-    tourModal.style.display = 'none';
-    tourHighlight.style.display = 'none';
-    localStorage.setItem('hasSeenTour', 'true');
-}
-
-function goToStep(stepIndex) {
-    const step = tourSteps[stepIndex];
-    if (!step) {
-        endTour();
-        return;
-    }
-    
-    // Close any previously opened modals if the new step doesn't have an action
-    if(!step.action) {
-         $('.modal-backdrop.active')?.classList.remove('active');
-         document.querySelectorAll('.modal-backdrop').forEach(m => m.style.display = 'none');
-    }
-
-    // Update modal content
-    $('#tour-modal-title').textContent = step.title;
-    $('#tour-modal-content').innerHTML = step.content;
-    $('#tour-step-counter').textContent = `${stepIndex + 1} / ${tourSteps.length}`;
-
-    // Update nav buttons
-    $('#tour-prev-btn').disabled = stepIndex === 0;
-    $('#tour-next-btn').style.display = stepIndex === tourSteps.length - 1 ? 'none' : 'inline-flex';
-    $('#tour-finish-btn').style.display = stepIndex === tourSteps.length - 1 ? 'inline-flex' : 'none';
-
-    // Highlight and position
-    const targetEl = step.element ? $(step.element) : null;
-    if (targetEl) {
-        const rect = targetEl.getBoundingClientRect();
-        tourHighlight.style.display = 'block';
-        tourHighlight.style.width = `${rect.width + 10}px`;
-        tourHighlight.style.height = `${rect.height + 10}px`;
-        tourHighlight.style.top = `${rect.top - 5}px`;
-        tourHighlight.style.left = `${rect.left - 5}px`;
-
-        // Position modal near the element
-        const modalRect = tourModal.getBoundingClientRect();
-        let modalTop = rect.top + 30;
-        let modalLeft = rect.right + modalRect.width; // Default to the right
-
-        // If it goes off-screen to the right, place it on the left
-        if (modalLeft + modalRect.width > window.innerWidth) {
-            modalLeft = rect.left - modalRect.width + 100;
-        }
-        // If it goes off-screen to the bottom, adjust top
-        if(modalTop + modalRect.height > window.innerHeight) {
-            modalTop = window.innerHeight - modalRect.height - 30;
-        }
-         // Clamp to be on screen
-        modalTop = Math.max(15, modalTop);
-        modalLeft = Math.max(15, modalLeft);
-
-        tourModal.style.top = `${modalTop}px`;
-        tourModal.style.left = `${modalLeft}px`;
-
-    } else {
-        tourHighlight.style.display = 'none';
-        // Center the modal if no element is targeted
-        tourModal.style.top = '50%';
-        tourModal.style.left = '50%';
-        tourModal.style.transform = 'translate(-50%, -50%)';
-    }
-    
-    // Perform an action for the step, like opening a modal
-    if(step.action) {
-        step.action();
-    }
-}
-
-// Event Listeners for the tour
-$('#start-tour-btn').addEventListener('click', startTour);
-$('#tour-close-btn').addEventListener('click', endTour);
-$('#tour-finish-btn').addEventListener('click', endTour);
-
-$('#tour-next-btn').addEventListener('click', () => {
-    currentTourStep++;
-    goToStep(currentTourStep);
-});
-$('#tour-prev-btn').addEventListener('click', () => {
-    currentTourStep--;
-    goToStep(currentTourStep);
-});
-
+// --- INTERACTIVE TOUR ---
+const tourModal = $('#tour-modal'); const tourHighlight = $('#tour-highlight'); let currentTourStep = 0; const tourSteps = [ { title: "How to Structure Your Data", content: `<p>Before importing, make sure your data is structured correctly in a .csv or .xlsx file.</p><ul><li>Column names should start in cell <b>A1</b>.</li><li>Each new row will be treated as a different file or page.</li></ul>`, element: null }, { title: "How to Import Your Data", content: `<p>Press the <b>Load Data</b> button to open the file picker.</p><p>Valid formats are <b>.xlsx</b> and <b>.csv</b>.</p>`, element: 'label[for="csvInput"]' }, { title: "How to Generate with AI", content: `<p>Press the AI bubble to open the assistant.`, element: '#ai-bubble', action: () => { $('#dataLinksManagerModal').style.display = 'none'; $('#aiModalBackdrop').style.display = 'none' } }, { title: "How to Generate with AI", content: `You will need a <a href="https://aistudio.google.com/apikey" target="_blank">Google AI Studio API key</a>.</p><ul><li>Login to you Google Account.</li><li>Click on "+ Create API Key"</li><li>Copy the key and paste it here</li> </ul>`, action: () => { $('#dataLinksManagerModal').style.display = 'none'; $('#aiModalBackdrop').style.display = 'flex' } }, { title: "How to Generate with AI", content: `Now, enter your request in the prompt box and press "Send Request".</p><p><b>Tips:</b></p><ul><li>You can paste an image into the prompt to help with your idea.</li><li>Specify your column names in the prompt and the AI will try to link them automatically.</li></ul>`, element: '#aiPrompt', action: () => { $('#dataLinksManagerModal').style.display = 'none'; $('#aiModalBackdrop').style.display = 'flex' } }, { title: "How to Link Your Data", content: `<p>First, make sure you have imported your data.</p><p>Press <b>Data Links</b> to open the manager.</p>`, element: '#openDataLinksManagerBtn', action: () => { $('#aiModalBackdrop').style.display = 'none'; $('#dataLinksManagerModal').style.display = 'none'; } }, { title: "How to Link Your Data", content: `<p>From there, you can select an object, choose a column from your data, and link it to a property like 'Text Content' or 'Color'.</p>`, action: () => { $('#aiModalBackdrop').style.display = 'none'; $('#dataLinksManagerModal').style.display = 'flex'; } }, { title: "Tour Complete!", content: `<p>You now know the basics! Start creating your templates.</p>`, element: null, action: () => { $('#dataLinksManagerModal').style.display = 'none'; } } ];
+function startTour() { currentTourStep = 0; tourModal.style.display = 'flex'; goToStep(currentTourStep); } function endTour() { tourModal.style.display = 'none'; tourHighlight.style.display = 'none'; localStorage.setItem('hasSeenTour', 'true'); }
+function goToStep(stepIndex) { const step = tourSteps[stepIndex]; if (!step) { endTour(); return; } if(!step.action) { document.querySelectorAll('.modal-backdrop').forEach(m => m.style.display = 'none'); } $('#tour-modal-title').textContent = step.title; $('#tour-modal-content').innerHTML = step.content; $('#tour-step-counter').textContent = `${stepIndex + 1} / ${tourSteps.length}`; $('#tour-prev-btn').disabled = stepIndex === 0; $('#tour-next-btn').style.display = stepIndex === tourSteps.length - 1 ? 'none' : 'inline-flex'; $('#tour-finish-btn').style.display = stepIndex === tourSteps.length - 1 ? 'inline-flex' : 'none'; const targetEl = step.element ? $(step.element) : null; if (targetEl) { const rect = targetEl.getBoundingClientRect(); tourHighlight.style.display = 'block'; tourHighlight.style.width = `${rect.width + 10}px`; tourHighlight.style.height = `${rect.height + 10}px`; tourHighlight.style.top = `${rect.top - 5}px`; tourHighlight.style.left = `${rect.left - 5}px`; const modalRect = tourModal.getBoundingClientRect(); let modalTop = rect.top + 30, modalLeft = rect.right + modalRect.width; if (modalLeft + modalRect.width > window.innerWidth) modalLeft = rect.left - modalRect.width + 100; if(modalTop + modalRect.height > window.innerHeight) modalTop = window.innerHeight - modalRect.height - 30; modalTop = Math.max(15, modalTop); modalLeft = Math.max(15, modalLeft); tourModal.style.top = `${modalTop}px`; tourModal.style.left = `${modalLeft}px`; } else { tourHighlight.style.display = 'none'; tourModal.style.top = '50%'; tourModal.style.left = '50%'; tourModal.style.transform = 'translate(-50%, -50%)'; } if(step.action) { step.action(); } }
+$('#start-tour-btn').addEventListener('click', startTour); $('#tour-close-btn').addEventListener('click', endTour); $('#tour-finish-btn').addEventListener('click', endTour); $('#tour-next-btn').addEventListener('click', () => { currentTourStep++; goToStep(currentTourStep); }); $('#tour-prev-btn').addEventListener('click', () => { currentTourStep--; goToStep(currentTourStep); });
 
 // --- INITIALIZE ---
-initializeEditor();
-
+window.addEventListener('DOMContentLoaded', initializeEditor);
 </script>
 
 </body>
