@@ -382,6 +382,73 @@ body.light-mode {
     height: 18px;
 }
 
+  /* === NEW: TOUR STYLES === */
+  #start-tour-btn {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    padding: 0;
+    font-size: 18px;
+    font-weight: bold;
+  }
+  #tour-modal {
+    position: fixed;
+    z-index: 1001;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    width: 300px;
+    box-shadow: 0 8px 24px rgba(0,0,0,.4);
+    display: none; /* Hidden by default */
+    flex-direction: column;
+    transition: all 0.4s ease-in-out;
+  }
+  #tour-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+    cursor: move;
+  }
+  #tour-modal-header h4 {
+    margin: 0;
+    font-size: 14px;
+  }
+  #tour-modal-controls button {
+    padding: 4px;
+    line-height: 0;
+  }
+  #tour-modal-content {
+    padding: 12px;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+  #tour-modal-content p {
+      margin: 0 0 10px;
+  }
+   #tour-modal-content ul {
+    margin: 0; padding-left: 18px;
+   }
+  #tour-modal-nav {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px;
+    margin-top: auto;
+    border-top: 1px solid var(--border);
+  }
+  #tour-highlight {
+    position: fixed;
+    z-index: 1000;
+    background: rgba(0, 150, 255, 0.15);
+    border: 2px solid #0099ff;
+    border-radius: 8px;
+    box-shadow: 0 0 0 9999px rgba(0,0,0,0.5);
+    pointer-events: none;
+    display: none;
+    transition: all 0.4s ease-in-out;
+  }
+
 </style>
 </head>
 <body>
@@ -415,12 +482,13 @@ body.light-mode {
     </div>
     <div class="toolbar" style="margin-left: auto;">
         <span id="saveStatus" class="muted" style="margin-right: 16px;"></span>
+        <button id="start-tour-btn" class="btn ghost" title="Start Tutorial">?</button> <!-- NEW TOUR BUTTON -->
         <label for="csvInput" class="btn ghost">Load Data</label>
         <input id="csvInput" type="file" accept=".csv,.xlsx,.xls" style="display:none;"/>
         <span id="fileName" class="muted" style="max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">No file selected</span>
         <input hidden id="startCell" type="text" placeholder="Starting cell" value="A1" style="width: 100px;"/>
         <button id="settingsBtn" class="btn ghost" title="Settings">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 0 2l-.15.08a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1 0-2l.15.08a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 0 2l-.15.08a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1 0 2l.15.08a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
         </button>
     </div>
   </header>
@@ -628,6 +696,27 @@ body.light-mode {
     </div>
 </div>
 
+<!-- === NEW: TOUR MODAL & HIGHLIGHTER === -->
+<div id="tour-highlight"></div>
+<div id="tour-modal">
+    <div id="tour-modal-header">
+        <h4 id="tour-modal-title">Welcome!</h4>
+        <div id="tour-modal-controls" class="row">
+            <button id="tour-close-btn" class="btn ghost" title="Close Tutorial">&times;</button>
+        </div>
+    </div>
+    <div id="tour-modal-content">
+        <p>This is an interactive tour to guide you through the main features of the editor.</p>
+    </div>
+    <div id="tour-modal-nav">
+        <button id="tour-prev-btn" class="btn ghost">Previous</button>
+        <div id="tour-step-counter" class="muted"></div>
+        <button id="tour-next-btn" class="btn">Next</button>
+        <button id="tour-finish-btn" class="btn" style="display: none;">Finish</button>
+    </div>
+</div>
+
+
 <script type="module" src="assets/js/supabase-client.js"></script>
 <script type="module" src="assets/js/auth.js"></script>
 
@@ -720,6 +809,10 @@ async function initializeEditor() {
         centerAndFitPage(); // Center the default page for guests
     } else {
         centerAndFitPage(); // Center for logged-in user with new template
+    }
+
+    if (!localStorage.getItem('hasSeenTour')) {
+        startTour();
     }
 }
 
@@ -1041,8 +1134,7 @@ $('#titleInput').addEventListener("input", () => { saveState(); });
 $('#pageWidth').addEventListener('input', setPageDimensions, saveState());
 $('#pageHeight').addEventListener('input', setPageDimensions, saveState());
 
-// ... PASTE THE REST OF YOUR ORIGINAL JAVASCRIPT LOGIC HERE ...
-// (from drawGrid() all the way to the end)
+// ... (The rest of your original JavaScript from drawGrid() onwards remains here) ...
 
 function drawGrid() {
     canvas.remove(...canvas.getObjects('line').filter(o => o.excludeFromExport));
@@ -2219,7 +2311,7 @@ function renderDataLinksManager() {
     if (objects.length === 0) { objectsList.innerHTML = '<p class="muted" style="font-size:12px; text-align:center;">No objects on canvas.</p>'; $('#dataLinksEditorContent').innerHTML = '<p class="muted" style="text-align:center; padding-top: 24px;">Add an object to the canvas to create a data link.</p>'; return; }
     objects.forEach(obj => {
         const item = document.createElement('div'); item.className = 'data-links-object-item'; item.setAttribute('data-oid', ensureId(obj)); let name = obj.type;
-        if (obj.type === 'textbox') name = obj.text.substring(0, 25) || 'Textbox'; if (obj.isTable) name = `Table (${obj.rows}x${obj.cols})`; const bindingCount = getBindingsFor(obj).length;
+        if (obj.type === 'textbox') name = obj.text.substring(0, 25) || 'Textbox'; if (obj.isTable) name = `Table (${obj.rows}x${cols})`; const bindingCount = getBindingsFor(obj).length;
         item.innerHTML = `<strong>${name}</strong> <br> <span class="muted">${bindingCount} link(s)</span>`;
         item.addEventListener('click', () => { selectedObjectForManager = obj; document.querySelectorAll('.data-links-object-item').forEach(el => el.removeAttribute('aria-selected')); item.setAttribute('aria-selected', 'true'); renderBindingsForObject(obj); });
         objectsList.appendChild(item);
@@ -2583,78 +2675,37 @@ The overall design is professional and adheres to the user's request.
 
 User Request: "${userPrompt}""
 `;
-    // const fullPrompt = [
-    //   "You are an AI assistant for a web-based template editor.",
-    //   "Your task is to modify a canvas layout based on user requests.",
-    //   "The canvas is represented by a Fabric.js JSON object.",
-    //   "You will receive the current state of the canvas and a user's request for changes.",
-    //   "You MUST respond ONLY with the updated Fabric.js JSON object that reflects the requested changes.",
-    //   "Do not add any explanatory text, markdown formatting, code block fences (```json), or anything else outside of the pure JSON structure.",
-    //   "",
-    //   "This is the general JSON structure to follow. Ensure each title, subtitle, and section is a separate text box, for example if Title: This is title, Title and This is title are two separate text boxes.",
-    //   "Using the following template, create a JSON file that aligns with the user requests. ONLY REPLY WITH THE JSON.",
-    //   templateStructure,
-    //   "",
-    //   "Here is the current canvas state:",
-    //   currentCanvasJson,
-    //   "",
-    //   `Based on the user's following request, modify the current canvas state above and provide the complete, updated JSON object as your response.`,
-    //   `User Request: "${userPrompt}"`
-    // ].join("\n");
 
 try {
-    // 1. Define the parts of the multi-modal prompt
-    const parts = [
-        { text: fullPrompt }
-    ];
-
-    // 2. If an image was pasted, add it to the parts array
+    const parts = [ { text: fullPrompt } ];
     if (pastedImageData) {
         parts.push({
             inline_data: {
-                // Dynamically get the mime type (e.g., 'image/png', 'image/jpeg') from the base64 string
                 mime_type: pastedImageData.match(/data:([a-zA-Z0-9]+\/[a-zA-Z0-9-.+]+).*,.*/)[1],
-                // Get only the base64 data part of the string
                 data: pastedImageData.split(',')[1]
             }
         });
     }
-
-    // 3. Send the request with the combined parts
     const response = await fetch(
         "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
         {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "X-goog-api-key": apiKey,
-            },
-            // The body now correctly includes both text and image parts
-            body: JSON.stringify({
-                contents: [{ parts: parts }]
-            }),
+            headers: { "Content-Type": "application/json", "X-goog-api-key": apiKey, },
+            body: JSON.stringify({ contents: [{ parts: parts }] }),
         }
     );
-
     if (!response.ok) {
         const errorData = await response.json();
         throw new Error(`API Error: ${response.status} - ${errorData.error?.message || "Unknown error"}`);
     }
-
     const data = await response.json();
     let aiResponseText = data.candidates[0].content.parts[0].text;
-
-    // Remove code fences and whitespace
     aiResponseText = aiResponseText.replace(/^```json\s*|```$/g, "").trim();
-
     const newCanvasState = JSON.parse(aiResponseText);
-    
     if (newCanvasState.page) {
         $('#titleInput').value = newCanvasState.page.title || 'Untitled Template';
         $('#pageWidth').value = newCanvasState.page.width || 768;
         $('#pageHeight').value = newCanvasState.page.height || 1024;
-        
-        // Ensure the actual page object on the canvas is also resized
         if (typeof pageRect !== 'undefined' && pageRect) {
             pageRect.set({
                 width: parseInt(newCanvasState.page.width, 10),
@@ -2662,13 +2713,10 @@ try {
             });
         }
     }
-    
-    // Also update bindings from the AI response
     if (newCanvasState.bindings) {
         bindings = new Map(newCanvasState.bindings);
     }
     const canvasDataToLoad = newCanvasState.canvas || newCanvasState;
-
     historyLocked = true;
     canvas.loadFromJSON(canvasDataToLoad, () => {
         restoreCanvasStateAfterLoad();
@@ -2677,22 +2725,198 @@ try {
         saveState();
         aiModal.style.display = "none";
     });
-
 } catch (error) {
     console.error("AI Assistant Error:", error);
     alert(`An error occurred: ${error.message}`);
 } finally {
-    // Reset the UI state correctly
     aiSendBtn.disabled = false;
     aiSendBtnText.style.display = 'inline-block';
     aiLoadingSpinner.style.display = 'none';
-    
-    // Hide and clean up the image preview to prevent errors
     pastedImageContainer.style.display = 'none';
-    pastedImage.removeAttribute('src'); // Correctly remove the src to avoid "Bad value" error
+    pastedImage.removeAttribute('src');
     pastedImageData = null;
 }
 });
+
+
+// --- NEW: INTERACTIVE TOUR LOGIC ---
+const tourModal = $('#tour-modal');
+const tourHighlight = $('#tour-highlight');
+let currentTourStep = 0;
+
+const tourSteps = [
+    {
+        title: "How to Structure Your Data",
+        content: `<p>Before importing, make sure your data is structured correctly in a .csv or .xlsx file.</p>
+                  <ul>
+                    <li>Column names should start in cell <b>A1</b>.</li>
+                    <li>Each new row will be treated as a different file or page.</li>
+                  </ul>`,
+        element: null // No specific element to highlight
+    },
+    {
+        title: "How to Import Your Data",
+        content: `<p>Press the <b>Load Data</b> button to open the file picker.</p>
+                  <p>Valid formats are <b>.xlsx</b> and <b>.csv</b>.</p>`,
+        element: 'label[for="csvInput"]'
+    },
+    {
+        title: "How to Generate with AI",
+        content: `<p>Press the AI bubble to open the assistant.`,
+        element: '#ai-bubble',
+        action: () => {
+            $('#dataLinksManagerModal').style.display = 'none';
+            $('#aiModalBackdrop').style.display = 'none'
+        }
+    },
+    {
+        title: "How to Generate with AI",
+        content: `You will need a <a href="https://aistudio.google.com/apikey" target="_blank">Google AI Studio API key</a>.</p>
+                    <ul>
+                        <li>Login to you Google Account.</li>
+                        <li>Click on "+ Create API Key"</li>
+                        <li>Copy the key and paste it here</li> 
+                    </ul>`,
+        action: () => {
+            $('#dataLinksManagerModal').style.display = 'none';
+            $('#aiModalBackdrop').style.display = 'flex'
+        }
+    },
+        {
+        title: "How to Generate with AI",
+        content: `Now, enter your request in the prompt box and press "Send Request".</p>
+                  <p><b>Tips:</b></p>
+                  <ul>
+                    <li>You can paste an image into the prompt to help with your idea.</li>
+                    <li>Specify your column names in the prompt and the AI will try to link them automatically.</li>
+                  </ul>`,
+        element: '#aiPrompt',
+        action: () => {
+            $('#dataLinksManagerModal').style.display = 'none';
+            $('#aiModalBackdrop').style.display = 'flex'
+        }
+    },
+    {
+        title: "How to Link Your Data",
+        content: `<p>First, make sure you have imported your data.</p>
+                  <p>Press <b>Data Links</b> to open the manager.</p>`,
+        element: '#openDataLinksManagerBtn',
+        action: () => {
+            $('#aiModalBackdrop').style.display = 'none';
+            $('#dataLinksManagerModal').style.display = 'none';
+        }
+    },
+    {
+        title: "How to Link Your Data",
+        content: `<p>From there, you can select an object, choose a column from your data, and link it to a property like 'Text Content' or 'Color'.</p>`,
+        action: () => {
+            $('#aiModalBackdrop').style.display = 'none';
+            $('#dataLinksManagerModal').style.display = 'flex';
+        }
+    },
+    {
+        title: "Tour Complete!",
+        content: `<p>You now know the basics! Close any open modals and start creating your templates.</p>`,
+        element: null,
+        action: () => {
+            $('#dataLinksManagerModal').style.display = 'none'; // Close data links modal
+        }
+    }
+];
+
+function startTour() {
+    currentTourStep = 0;
+    tourModal.style.display = 'flex';
+    goToStep(currentTourStep);
+}
+
+function endTour() {
+    tourModal.style.display = 'none';
+    tourHighlight.style.display = 'none';
+    localStorage.setItem('hasSeenTour', 'true');
+}
+
+function goToStep(stepIndex) {
+    const step = tourSteps[stepIndex];
+    if (!step) {
+        endTour();
+        return;
+    }
+    
+    // Close any previously opened modals if the new step doesn't have an action
+    if(!step.action) {
+         $('.modal-backdrop.active')?.classList.remove('active');
+         document.querySelectorAll('.modal-backdrop').forEach(m => m.style.display = 'none');
+    }
+
+    // Update modal content
+    $('#tour-modal-title').textContent = step.title;
+    $('#tour-modal-content').innerHTML = step.content;
+    $('#tour-step-counter').textContent = `${stepIndex + 1} / ${tourSteps.length}`;
+
+    // Update nav buttons
+    $('#tour-prev-btn').disabled = stepIndex === 0;
+    $('#tour-next-btn').style.display = stepIndex === tourSteps.length - 1 ? 'none' : 'inline-flex';
+    $('#tour-finish-btn').style.display = stepIndex === tourSteps.length - 1 ? 'inline-flex' : 'none';
+
+    // Highlight and position
+    const targetEl = step.element ? $(step.element) : null;
+    if (targetEl) {
+        const rect = targetEl.getBoundingClientRect();
+        tourHighlight.style.display = 'block';
+        tourHighlight.style.width = `${rect.width + 10}px`;
+        tourHighlight.style.height = `${rect.height + 10}px`;
+        tourHighlight.style.top = `${rect.top - 5}px`;
+        tourHighlight.style.left = `${rect.left - 5}px`;
+
+        // Position modal near the element
+        const modalRect = tourModal.getBoundingClientRect();
+        let modalTop = rect.top + 30;
+        let modalLeft = rect.right + modalRect.width; // Default to the right
+
+        // If it goes off-screen to the right, place it on the left
+        if (modalLeft + modalRect.width > window.innerWidth) {
+            modalLeft = rect.left - modalRect.width + 100;
+        }
+        // If it goes off-screen to the bottom, adjust top
+        if(modalTop + modalRect.height > window.innerHeight) {
+            modalTop = window.innerHeight - modalRect.height - 30;
+        }
+         // Clamp to be on screen
+        modalTop = Math.max(15, modalTop);
+        modalLeft = Math.max(15, modalLeft);
+
+        tourModal.style.top = `${modalTop}px`;
+        tourModal.style.left = `${modalLeft}px`;
+
+    } else {
+        tourHighlight.style.display = 'none';
+        // Center the modal if no element is targeted
+        tourModal.style.top = '50%';
+        tourModal.style.left = '50%';
+        tourModal.style.transform = 'translate(-50%, -50%)';
+    }
+    
+    // Perform an action for the step, like opening a modal
+    if(step.action) {
+        step.action();
+    }
+}
+
+// Event Listeners for the tour
+$('#start-tour-btn').addEventListener('click', startTour);
+$('#tour-close-btn').addEventListener('click', endTour);
+$('#tour-finish-btn').addEventListener('click', endTour);
+
+$('#tour-next-btn').addEventListener('click', () => {
+    currentTourStep++;
+    goToStep(currentTourStep);
+});
+$('#tour-prev-btn').addEventListener('click', () => {
+    currentTourStep--;
+    goToStep(currentTourStep);
+});
+
 
 // --- INITIALIZE ---
 initializeEditor();
