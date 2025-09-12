@@ -1455,6 +1455,27 @@ Text objects have an empty styles array ([]).
 The bindings array is correctly populated if the user specified column names.
 The overall design is professional and adheres to the user's request.
 
+## 6. Icons
+
+You have access to the full [Lucide](https://lucide.dev) icon set.  
+All icons are available in Supabase storage at:
+
+**Base URL**  
+https://mzdhdmfjwdpolrxraqtv.supabase.co/storage/v1/object/public/elements/icons/
+
+**File pattern**  
+Each icon corresponds to its Lucide filename (kebab-case) with .svg extension.  
+
+Examples:  
+- arrow-right → https://mzdhdmfjwdpolrxraqtv.supabase.co/storage/v1/object/public/elements/icons/arrow-right.svg  
+- check → https://mzdhdmfjwdpolrxraqtv.supabase.co/storage/v1/object/public/elements/icons/check.svg  
+- star → https://mzdhdmfjwdpolrxraqtv.supabase.co/storage/v1/object/public/elements/icons/star.svg  
+
+**Usage rules**  
+- Treat all icons as SVGs.  
+- Use the full URL as the src when creating an icon object.  
+- Icons are monochrome by default; apply fill or stroke styles to match design.  
+
 User Request: "${userPrompt}""
 `;
 
