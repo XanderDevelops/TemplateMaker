@@ -503,6 +503,9 @@ async function initializeEditor() {
     const urlParams = new URLSearchParams(window.location.search);
     const templateId = urlParams.get('id');
 
+    const tableResizer = new TableResizer(canvas);
+    tableResizer.init();
+
     initializeCanvas(); 
     initializeVisualCropper();
     renderPageInspector();
@@ -721,7 +724,7 @@ const adders = {
         const cols = parseInt($('#tableCols').value, 10) || 3;
         if (rows <= 0 || cols <= 0) return;
 
-        const cellWidth = 100, cellHeight = 40;
+        const cellWidth = 120, cellHeight = 50;
         const tableItems = [];
         const colWidths = Array(cols).fill(cellWidth);
         const rowHeights = Array(rows).fill(cellHeight);
@@ -732,6 +735,7 @@ const adders = {
                     left: 0, top: 0,
                     width: cellWidth, height: cellHeight,
                     fill: 'transparent', stroke: '#333', strokeWidth: 1,
+                    selectable: false, evented: false,
                 });
                 tableItems.push(cell);
             }
@@ -742,17 +746,23 @@ const adders = {
             originX: 'center', originY: 'center',
             isTable: true,
             rows, cols, colWidths, rowHeights,
-            // Use a border to indicate selection
+            originalColWidths: [...colWidths],
+            originalRowHeights: [...rowHeights],
+            hasControls: true,
             hasBorders: true,
-            // FIX: Add padding to the selection area
-            padding: 10,
-            // Prevent rendering artifacts during resize
-            objectCaching: false,
+            cornerColor: '#4285F4',
+            cornerStyle: 'circle',
+            transparentCorners: false,
+            borderColor: '#4285F4',
+            borderScaleFactor: 2,
+            objectCaching: false, 
+            lockScalingFlip: true,
         });
         
         updateTableLayout(table);
 
         canvas.add(table).setActiveObject(table);
+        canvas.requestRenderAll();
         closeTableModal();
     };
 
@@ -769,19 +779,13 @@ const adders = {
   }
 };
 
-/**
- * Recalculates and applies the layout for a table group.
- * @param {fabric.Group} table The table object.
- */
 function updateTableLayout(table) {
     if (!table || !table.isTable) return;
 
-    // Calculate total dimensions from the width/height arrays
     const totalWidth = table.colWidths.reduce((sum, w) => sum + w, 0);
     const totalHeight = table.rowHeights.reduce((sum, h) => sum + h, 0);
 
     let currentY = -totalHeight / 2;
-
     for (let r = 0; r < table.rows; r++) {
         let currentX = -totalWidth / 2;
         for (let c = 0; c < table.cols; c++) {
@@ -790,169 +794,258 @@ function updateTableLayout(table) {
             const width = table.colWidths[c];
             const height = table.rowHeights[r];
 
-            // Set cell size and position relative to the group's center
             cell.set({ width, height, left: currentX, top: currentY });
             currentX += width;
         }
         currentY += table.rowHeights[r];
     }
     
-    // Update the group's dimensions to match the cells' total size
     table.width = totalWidth;
     table.height = totalHeight;
-
-    // This is crucial to update the group's bounding box and controls.
     table.setCoords(); 
-    canvas.requestRenderAll();
 }
 
+class TableResizer {
 
-// --- Global variables for tracking table resizing state ---
-let isResizing = false;
-let resizeInfo = {
-    table: null,
-    type: null, // 'col' or 'row'
-    index: -1,  // The index of the line being dragged
-    startX: 0,
-    startY: 0,
-    originalWidths: [],
-    originalHeights: []
-};
-// Defines the clickable area around a line
-const resizeHandleSize = 15; 
-const minCellSize = 20;
+    constructor(canvas) {
+        this.canvas = canvas;
+        this.state = {};
+        this.resetState();
 
-
-// --- Canvas Event Listeners for Table Resizing ---
-
-canvas.on('mouse:down', (options) => {
-    // Start resizing only if the cursor is a resize cursor and a table is the target
-    if (canvas.defaultCursor.includes('resize') && options.target && options.target.isTable) {
-        isResizing = true;
-        const pointer = canvas.getPointer(options.e);
-        const table = options.target;
-
-        resizeInfo.table = table;
-        resizeInfo.startX = pointer.x;
-        resizeInfo.startY = pointer.y;
-        
-        // Store original sizes to calculate changes against
-        resizeInfo.originalWidths = [...table.colWidths];
-        resizeInfo.originalHeights = [...table.rowHeights];
-
-        // Prevent the table from being dragged while resizing a cell
-        table.lockMovementX = true;
-        table.lockMovementY = true;
+        this.RESIZE_HANDLE_AREA = 12;
+        this.MIN_CELL_SIZE = 25;
     }
-});
 
-canvas.on('mouse:move', (options) => {
-    const pointer = canvas.getPointer(options.e);
+    resetState() {
+        if (this.state.target) {
+            this.state.target.lockMovementX = false;
+            this.state.target.lockMovementY = false;
+        }
+        this.state = {
+            isResizing: false,
+            target: null, 
+            type: null,  
+            index: -1, 
+            startX: 0,
+            startY: 0,
+            originalPos: { x: 0, y: 0 },
+            originalWidths: [],
+            originalHeights: [],
+        };
+        this.canvas.defaultCursor = 'default';
+    }
+
+    init() {
+        this.canvas.on('mouse:down', this.handleMouseDown.bind(this));
+        this.canvas.on('mouse:move', this.handleMouseMove.bind(this));
+        this.canvas.on('mouse:up', this.handleMouseUp.bind(this));
+        this.canvas.on('object:scaling', this.handleObjectScaling.bind(this));
+    }
     
-    if (isResizing && resizeInfo.table) {
-        const table = resizeInfo.table;
-        const dx = pointer.x - resizeInfo.startX;
-        const dy = pointer.y - resizeInfo.startY;
+    handleObjectScaling(options) {
+        const table = options.target;
+        if (!table || !table.isTable) return;
 
-        if (resizeInfo.type === 'col') {
-            const colIndex = resizeInfo.index;
-            const adjacentColIndex = colIndex + 1;
-
-            const originalWidth = resizeInfo.originalWidths[colIndex];
-            const adjacentOriginalWidth = resizeInfo.originalWidths[adjacentColIndex];
-
-            // Calculate new widths based on mouse movement
-            let newWidth = originalWidth + dx;
-            let adjacentNewWidth = adjacentOriginalWidth - dx;
-
-            // Enforce minimum cell size
-            if (newWidth >= minCellSize && adjacentNewWidth >= minCellSize) {
-                table.colWidths[colIndex] = newWidth;
-                table.colWidths[adjacentColIndex] = adjacentNewWidth;
-            }
-            
-        } else if (resizeInfo.type === 'row') {
-            const rowIndex = resizeInfo.index;
-            const adjacentRowIndex = rowIndex + 1;
-
-            const originalHeight = resizeInfo.originalHeights[rowIndex];
-            const adjacentOriginalHeight = resizeInfo.originalHeights[adjacentRowIndex];
-            
-            // Calculate new heights based on mouse movement
-            let newHeight = originalHeight + dy;
-            let adjacentNewHeight = adjacentOriginalHeight - dy;
-
-            // Enforce minimum cell size
-            if (newHeight >= minCellSize && adjacentNewHeight >= minCellSize) {
-                table.rowHeights[rowIndex] = newHeight;
-                table.rowHeights[adjacentRowIndex] = adjacentNewHeight;
-            }
+        const { scaleX, scaleY } = table;
+        
+        let totalWidth = 0;
+        for (let i = 0; i < table.colWidths.length; i++) {
+            const newWidth = table.originalColWidths[i] * scaleX;
+            table.colWidths[i] = Math.max(this.MIN_CELL_SIZE, newWidth);
+            totalWidth += table.colWidths[i];
         }
         
-        updateTableLayout(table);
+        let totalHeight = 0;
+        for (let i = 0; i < table.rowHeights.length; i++) {
+            const newHeight = table.originalRowHeights[i] * scaleY;
+            table.rowHeights[i] = Math.max(this.MIN_CELL_SIZE, newHeight);
+            totalHeight += table.rowHeights[i];
+        }
         
-    } else {
-        // --- HOVER DETECTION FOR SETTING CURSOR ---
-        const target = options.target;
-        if (!target || !target.isTable) {
-            canvas.defaultCursor = 'default';
+        table.width = totalWidth;
+        table.height = totalHeight;
+        table.scaleX = 1;
+        table.scaleY = 1;
+
+        updateTableLayout(table);
+    }
+
+    handleMouseDown(options) {
+        if (options.target && options.target.isTable) {
+            options.target.originalColWidths = [...options.target.colWidths];
+            options.target.originalRowHeights = [...options.target.rowHeights];
+        }
+
+        if (!this.canvas.defaultCursor.includes('resize') || !options.target || !options.target.isTable) {
             return;
         }
 
-        const table = target;
-        const localPoint = table.toLocalPoint(pointer, 'center', 'center');
-        
-        let onBoundary = false;
+        const pointer = this.canvas.getPointer(options.e);
+        const table = options.target;
 
-        // Check vertical column boundaries
-        let currentX = -table.width / 2;
-        for (let c = 0; c < table.cols - 1; c++) {
-            currentX += table.colWidths[c];
-            if (Math.abs(localPoint.x - currentX) < resizeHandleSize) {
-                canvas.defaultCursor = 'ew-resize';
-                resizeInfo.type = 'col';
-                resizeInfo.index = c;
-                onBoundary = true;
+        this.state.isResizing = true;
+        this.state.target = table;
+        this.state.startX = pointer.x;
+        this.state.startY = pointer.y;
+        this.state.originalPos = { x: table.left, y: table.top };
+        this.state.originalWidths = [...table.colWidths];
+        this.state.originalHeights = [...table.rowHeights];
+
+        table.lockMovementX = true;
+        table.lockMovementY = true;
+    }
+
+    handleMouseMove(options) {
+        if (this.state.isResizing) {
+            this.performResize(options);
+        } else {
+            this.detectHover(options);
+        }
+    }
+
+    performResize(options) {
+        const pointer = this.canvas.getPointer(options.e);
+        const { target, type, index, startX, startY, originalPos } = this.state;
+        const dx = pointer.x - startX;
+        const dy = pointer.y - startY;
+
+        switch (type) {
+            // --- INTERNAL RESIZING (PUSH/PULL) ---
+            case 'col': {
+                const newWidth = this.state.originalWidths[index] + dx;
+                const adjacentNewWidth = this.state.originalWidths[index + 1] - dx;
+                if (newWidth >= this.MIN_CELL_SIZE && adjacentNewWidth >= this.MIN_CELL_SIZE) {
+                    target.colWidths[index] = newWidth;
+                    target.colWidths[index + 1] = adjacentNewWidth;
+                }
+                break;
+            }
+            case 'row': {
+                const newHeight = this.state.originalHeights[index] + dy;
+                const adjacentNewHeight = this.state.originalHeights[index + 1] - dy;
+                if (newHeight >= this.MIN_CELL_SIZE && adjacentNewHeight >= this.MIN_CELL_SIZE) {
+                    target.rowHeights[index] = newHeight;
+                    target.rowHeights[index + 1] = adjacentNewHeight;
+                }
+                break;
+            }
+            // --- EDGE RESIZING (PIVOT LOGIC) ---
+            case 'edge-right': {
+                const newWidth = this.state.originalWidths[index] + dx;
+                if (newWidth >= this.MIN_CELL_SIZE) {
+                    target.colWidths[index] = newWidth;
+                    // [FIX] Move the table's center by HALF the delta to keep the left edge anchored.
+                    target.left = originalPos.x + dx / 2;
+                }
+                break;
+            }
+             case 'edge-left': {
+                const newWidth = this.state.originalWidths[index] - dx;
+                if (newWidth >= this.MIN_CELL_SIZE) {
+                    target.colWidths[index] = newWidth;
+                    // Move the table's center by HALF the delta to keep the right edge anchored.
+                    target.left = originalPos.x + dx / 2;
+                }
+                break;
+            }
+            case 'edge-bottom': {
+                const newHeight = this.state.originalHeights[index] + dy;
+                if (newHeight >= this.MIN_CELL_SIZE) {
+                    target.rowHeights[index] = newHeight;
+                    // [FIX] Move the table's center by HALF the delta to keep the top edge anchored.
+                    target.top = originalPos.y + dy / 2;
+                }
+                break;
+            }
+            case 'edge-top': {
+                const newHeight = this.state.originalHeights[index] - dy;
+                if (newHeight >= this.MIN_CELL_SIZE) {
+                    target.rowHeights[index] = newHeight;
+                     // Move the table's center by HALF the delta to keep the bottom edge anchored.
+                    target.top = originalPos.y + dy / 2;
+                }
                 break;
             }
         }
+        
+        // This function recalculates total dimensions and repositions internal cells.
+        updateTableLayout(target);
+        
+        // We must re-render the canvas to see the changes.
+        this.canvas.requestRenderAll();
+    }
+    
+    detectHover(options) {
+        const target = this.canvas.findTarget(options.e);
+        if (!target || !target.isTable || !target.hasControls) {
+            if (this.canvas.defaultCursor !== 'default') this.canvas.defaultCursor = 'default';
+            if (this.canvas.hoverCursor !== 'default') this.canvas.hoverCursor = 'default';
+            return;
+        }
 
-        // Check horizontal row boundaries
+        const pointer = this.canvas.getPointer(options.e);
+        const table = target;
+        const localPoint = table.toLocalPoint(new fabric.Point(pointer.x, pointer.y), 'center', 'center');
+        
+        let onBoundary = false;
+
+        let currentX = -table.width / 2;
+        for (let c = 0; c < table.cols; c++) {
+            if (c === 0 && Math.abs(localPoint.x - currentX) < this.RESIZE_HANDLE_AREA) {
+                this.canvas.defaultCursor = 'ew-resize';
+                this.canvas.hoverCursor = 'ew-resize';
+                this.state.type = 'edge-left';
+                this.state.index = 0;
+                onBoundary = true; break;
+            }
+            currentX += table.colWidths[c];
+            if (Math.abs(localPoint.x - currentX) < this.RESIZE_HANDLE_AREA) {
+                this.canvas.defaultCursor = 'ew-resize';
+                this.canvas.hoverCursor = 'ew-resize';
+                this.state.type = (c === table.cols - 1) ? 'edge-right' : 'col';
+                this.state.index = c;
+                onBoundary = true; break;
+            }
+        }
+
         if (!onBoundary) {
             let currentY = -table.height / 2;
-            for (let r = 0; r < table.rows - 1; r++) {
+            for (let r = 0; r < table.rows; r++) {
+                if (r === 0 && Math.abs(localPoint.y - currentY) < this.RESIZE_HANDLE_AREA) {
+                    this.canvas.defaultCursor = 'ns-resize';
+                    this.canvas.hoverCursor = 'ns-resize';
+                    this.state.type = 'edge-top';
+                    this.state.index = 0;
+                    onBoundary = true; break;
+                }
                 currentY += table.rowHeights[r];
-                if (Math.abs(localPoint.y - currentY) < resizeHandleSize) {
-                    canvas.defaultCursor = 'ns-resize';
-                    resizeInfo.type = 'row';
-                    resizeInfo.index = r;
-                    onBoundary = true;
-                    break;
+                if (Math.abs(localPoint.y - currentY) < this.RESIZE_HANDLE_AREA) {
+                    this.canvas.defaultCursor = 'ns-resize';
+                    this.canvas.hoverCursor = 'ns-resize';
+                    this.state.type = (r === table.rows - 1) ? 'edge-bottom' : 'row';
+                    this.state.index = r;
+                    onBoundary = true; break;
                 }
             }
         }
         
-        // If not on any boundary, revert to the default cursor
         if (!onBoundary) {
-            canvas.defaultCursor = 'default';
+            this.canvas.defaultCursor = 'default';
+            this.canvas.hoverCursor = 'default';
         }
     }
-});
 
-canvas.on('mouse:up', () => {
-    if (isResizing) {
-        if(resizeInfo.table){
-            // Re-enable table movement
-            resizeInfo.table.lockMovementX = false;
-            resizeInfo.table.lockMovementY = false;
+    handleMouseUp() {
+        if (this.state.isResizing) {
+            if (this.state.target) {
+                this.state.target.originalColWidths = [...this.state.target.colWidths];
+                this.state.target.originalRowHeights = [...this.state.target.rowHeights];
+            }
+            this.resetState();
+            this.canvas.requestRenderAll();
         }
-        // Clear all resizing state
-        isResizing = false;
-        resizeInfo = { table: null, type: null, index: -1, startX: 0, startY: 0, originalWidths: [], originalHeights: [] };
-        canvas.defaultCursor = 'default';
-        canvas.requestRenderAll(); // Perform a final render
     }
-});
+}
 
 document.getElementById('imageUpload').addEventListener('change', e => { if (!e.target.files || !e.target.files[0]) return; const reader = new FileReader(); reader.onload = (ev) => { const {x, y} = canvas.getVpCenter(); adders.image(x, y, ev.target.result); e.target.value = ''; }; reader.readAsDataURL(e.target.files[0]); });
 document.querySelectorAll('.shape-chip').forEach(chip => { const type = chip.getAttribute('data-add'); chip.addEventListener('dragstart', e => { e.dataTransfer.setData('text/plain', `component:${type}`); }); chip.addEventListener('click', () => { if (!adders[type]) return; if (type === 'image') { $('#imageUpload').click(); return; } const center = canvas.getVpCenter(); adders[type](center.x, center.y); }); });
