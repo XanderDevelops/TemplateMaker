@@ -119,7 +119,11 @@ nav .nav-links .btn:hover {
 
   /* Custom Scrollbar Styling */
   #inspectorWrap, .left-panel-content, #components-content, #elements-content, #layers-content {
-    overflow-y:auto; flex:1; min-height:0; padding-right: 8px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    flex: 1;
+    min-height: 0;
+    padding-right: 8px;
   }
   ::-webkit-scrollbar { width: 8px; }
   ::-webkit-scrollbar-track { background: transparent; }
@@ -574,35 +578,7 @@ function saveState(){ if (historyLocked) return; historyStack.splice(historyInde
 function initializeCanvas() {
     fabric.Object.prototype.set({ transparentCorners: false, cornerStyle: 'circle', cornerColor: '#000000', cornerSize: 10, borderColor: '#000000', borderScaleFactor: 1, padding: 10 });
     fabric.ActiveSelection.prototype.set({ cornerStyle: 'circle', cornerColor: '#000000', borderColor: 'black' });
-        const resizeCanvas = () => {
-        // Get the device's pixel ratio, defaulting to 1 for standard displays
-        const pixelRatio = window.devicePixelRatio || 1;
-
-        // Get the dimensions the canvas should appear on the screen (CSS pixels)
-        const { width, height } = canvasWrapper.getBoundingClientRect();
-
-        // Get the actual canvas element that Fabric.js uses
-        const canvasEl = canvas.getElement();
-
-        // --- HIGH DPI FIX ---
-        // 1. Set the canvas backing store size to match the high resolution
-        canvasEl.width = width * pixelRatio;
-        canvasEl.height = height * pixelRatio;
-        
-        // 2. Set the canvas CSS size to fit the container
-        canvasEl.style.width = `${width}px`;
-        canvasEl.style.height = `${height}px`;
-
-        // 3. Tell Fabric the logical (CSS) size of the canvas
-        canvas.setWidth(width);
-        canvas.setHeight(height);
-
-        // 4. Scale the canvas context to draw everything at the correct resolution
-        canvas.getContext().setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
-
-        // 5. Re-render all objects on the high-quality canvas
-        canvas.renderAll();
-    };
+    const resizeCanvas = () => { const { width, height } = canvasWrapper.getBoundingClientRect(); canvas.setWidth(width); canvas.setHeight(height); canvas.renderAll(); };
     pageRect = new fabric.Rect({ left: 0, top: 0, width: 768, height: 1024, fill: '#fff', stroke: 'transparent', strokeWidth: 0, selectable: false, evented: false, hasControls: false, hasBorders: false, lockMovementX: true, lockMovementY: true, lockScalingX: true, lockScalingY: true, lockRotation: true, oid: 'pageRect' });
     canvas.add(pageRect); resizeCanvas(); drawGrid(); new ResizeObserver(resizeCanvas).observe(canvasWrapper);
     canvas.on({ 'object:added': () => { saveState(); renderLayers(); if (dataLinksManagerModal.style.display === 'flex') renderDataLinksManager(); }, 'object:removed': () => { saveState(); renderLayers(); if (dataLinksManagerModal.style.display === 'flex') renderDataLinksManager(); }, 'object:modified': (e) => { saveState(); if (e.target) { refreshInspector({target: e.target}); } }, 'object:moving': handleSmartSnapping, 'object:scaling': updateLiveInspector, 'object:rotating': updateLiveInspector });
@@ -713,6 +689,30 @@ const adders = {
   square: (x, y) => adders.rect({x, y, asSquare: true}),
   arrow: (x, y) => canvas.add(new fabric.Path('M 0 20 L 60 20 L 60 0 L 100 30 L 60 60 L 60 40 L 0 40 Z', { left: x, top: y, fill: '#f0f0f0', stroke: '#333', strokeWidth: 2, originX: 'center', originY: 'center' })).setActiveObject(canvas.getObjects().pop()),
   image: (x, y, url, elementData = {}) => { fabric.Image.fromURL(url, (img) => { img.set({ left: x, top: y, scaleX: 0.5, scaleY: 0.5, originX: 'center', originY: 'center', ...elementData }); canvas.add(img).setActiveObject(img); }, { crossOrigin: 'anonymous' }); },
+  svg: (x, y, url, elementData = {}) => {
+        const fillColor = elementData.fill || '#f0f0f0';
+        const strokeColor = elementData.stroke || '#333';
+        const strokeWidth = elementData.strokeWidth ?? 2;
+
+        fabric.loadSVGFromURL(url, (objects, options) => {
+            if (!objects || objects.length === 0) return;
+
+            const group = new fabric.Group(objects, {
+                ...options,
+                ...elementData,
+                left: x,
+                top: y,
+                originX: 'center',
+                originY: 'center'
+            });
+
+            // Scale to a standard size
+            group.scaleToWidth(150);
+
+            canvas.add(group).setActiveObject(canvas.getObjects().pop());
+            canvas.renderAll();
+        }, null, { crossOrigin: 'anonymous' });
+    },
   table: (x, y) => {
     tableCreatorModal.style.display = 'flex';
 
@@ -965,7 +965,7 @@ dropTarget.addEventListener('drop', (e) => {
 });
 
 // --- SIDEBAR RESIZING & TOGGLING ---
-const mainLayout = document.getElementById('main-layout'); const leftResizer = document.getElementById('left-resizer'); const rightResizer = document.getElementById('right-resizer'); let isResizingLeft = false, isResizingRight = false; let lastLeftPanelWidth = '260px', lastRightPanelWidth = '320px'; mainLayout.style.gridTemplateColumns = `${lastLeftPanelWidth} 5px 1fr 5px ${lastRightPanelWidth}`;
+const mainLayout = document.getElementById('main-layout'); const leftResizer = document.getElementById('left-resizer'); const rightResizer = document.getElementById('right-resizer'); let isResizingLeft = false, isResizingRight = false; let lastLeftPanelWidth = '300px', lastRightPanelWidth = '300px'; mainLayout.style.gridTemplateColumns = `${lastLeftPanelWidth} 5px 1fr 5px ${lastRightPanelWidth}`;
 function initResizer(resizer, resizeFlagSetter, panelSide) { resizer.addEventListener('mousedown', (e) => { e.preventDefault(); resizeFlagSetter(true); document.body.style.cursor = 'col-resize'; document.body.style.userSelect = 'none'; }); document.addEventListener('mousemove', (e) => { if (!resizeFlagSetter()) return; const mainRect = mainLayout.getBoundingClientRect(); if (panelSide === 'left') { const newWidth = e.clientX - mainRect.left; if (newWidth > 150 && newWidth < mainRect.width / 2) { mainLayout.style.gridTemplateColumns = `${newWidth}px 5px 1fr 5px ${mainLayout.style.gridTemplateColumns.split(' ')[4]}`; lastLeftPanelWidth = `${newWidth}px`; } } else { const newWidth = mainRect.right - e.clientX; if (newWidth > 200 && newWidth < mainRect.width / 2) { mainLayout.style.gridTemplateColumns = `${mainLayout.style.gridTemplateColumns.split(' ')[0]} 5px 1fr 5px ${newWidth}px`; lastRightPanelWidth = `${newWidth}px`; } } canvas.setWidth(canvasWrapper.getBoundingClientRect().width); canvas.renderAll(); }); document.addEventListener('mouseup', () => { if (resizeFlagSetter()) { resizeFlagSetter(false); document.body.style.cursor = 'default'; document.body.style.userSelect = 'auto'; } }); }
 initResizer(leftResizer, (v) => { if(v !== undefined) isResizingLeft=v; return isResizingLeft; }, 'left'); initResizer(rightResizer, (v) => { if(v !== undefined) isResizingRight=v; return isResizingRight; }, 'right');
 function refreshCanvasSize() { setTimeout(() => { const { width, height } = canvasWrapper.getBoundingClientRect(); canvas.setWidth(width); canvas.setHeight(height); canvas.renderAll(); centerAndFitPage(); }, 50); }
@@ -1063,8 +1063,8 @@ function renderSingleObjectInspector(o) {
     inspector.appendChild(section('Actions', actions));
     inspector.appendChild(section('Data Links', [ buttonRow(`Manage Links (${getBindingsFor(o).length})`, () => { selectedObjectForManager = o; openDataLinksManager(); }) ]));
     if (o.type === 'image') inspector.appendChild(section('Image', [buttonRow('Crop Image', () => openVisualCropper(o))]));
-    if (['rect', 'image', 'circle', 'triangle', 'polygon', 'path'].includes(o.type)) { const shapeProps = []; if (['rect', 'image'].includes(o.type)) shapeProps.push(sliderRow('Corner Radius', o.rx ?? 0, (v) => o.set({rx: v, ry: v}), {min: 0, max: Math.min(o.width, o.height)/2, step: 1})); inspector.appendChild(section('Shape Properties', shapeProps)); }
-    if (['rect', 'triangle', 'circle', 'polygon', 'path'].includes(o.type)) { inspector.appendChild(section('Fill', [colorInputRow('Color', o.fill, v => o.set({ fill: v })), buttonRow('Fill with Image', () => { editingFillObject = o; $('#imageFillUpload').click(); })])); $('#imageFillUpload').onchange = e => { if (!e.target.files?.[0] || !editingFillObject) return; const reader = new FileReader(); reader.onload = ev => { fabric.Image.fromURL(ev.target.result, img => { editingFillObject.set('fill', new fabric.Pattern({ source: img.getElement(), repeat: 'repeat' })); canvas.renderAll(); saveState(); }, { crossOrigin: 'anonymous' }); }; reader.readAsDataURL(e.target.files[0]); e.target.value = ''; }; }
+    if (['rect', 'image', 'circle', 'triangle', 'polygon', 'svg', 'path'].includes(o.type)) { const shapeProps = []; if (['rect', 'image'].includes(o.type)) shapeProps.push(sliderRow('Corner Radius', o.rx ?? 0, (v) => o.set({rx: v, ry: v}), {min: 0, max: Math.min(o.width, o.height)/2, step: 1})); inspector.appendChild(section('Shape Properties', shapeProps)); }
+    if (['rect', 'triangle', 'circle', 'polygon', 'path', 'svg'].includes(o.type)) { inspector.appendChild(section('Fill', [colorInputRow('Color', o.fill, v => o.set({ fill: v })), buttonRow('Fill with Image', () => { editingFillObject = o; $('#imageFillUpload').click(); })])); $('#imageFillUpload').onchange = e => { if (!e.target.files?.[0] || !editingFillObject) return; const reader = new FileReader(); reader.onload = ev => { fabric.Image.fromURL(ev.target.result, img => { editingFillObject.set('fill', new fabric.Pattern({ source: img.getElement(), repeat: 'repeat' })); canvas.renderAll(); saveState(); }, { crossOrigin: 'anonymous' }); }; reader.readAsDataURL(e.target.files[0]); e.target.value = ''; }; }
     if (o.isTable) inspector.appendChild(section('Table', [ colorInputRow('Stroke Color', o.getObjects()[0].stroke, v => o.forEachObject(cell => cell.set({stroke:v}))), sliderRow('Stroke Width', o.getObjects()[0].strokeWidth, v => o.forEachObject(cell => cell.set({strokeWidth:v})), {min:0, max: 20, step: 0.5}) ]));
     if (o.type === 'textbox') inspector.appendChild(section('Text', [ inputRow('Content', o.text, v => o.set({text:v}), 'textarea'), inputRow('Font Size', o.fontSize, v => o.set({fontSize:parseFloat(v)})), selectRow('Font Family', FONT_LIST, o.fontFamily, v => o.set({fontFamily:v})), colorInputRow('Fill Color', o.fill, v => o.set({fill:v})), selectRow('Alignment', ['left','center','right','justify'], o.textAlign, v => o.set({textAlign:v})) ]));
     inspector.appendChild(section('Common', [ xyInputRow('Position', {x: o.left, y: o.top}, (p) => o.set({left: p.x, top: p.y})), xyInputRow('Dimensions', {w: o.getScaledWidth(), h: o.getScaledHeight()}, (d) => {o.scaleToWidth(d.w); o.scaleToHeight(d.h);}), sliderRow('Opacity', o.opacity ?? 1, (v) => o.set({opacity: v}), {min: 0, max: 1, step: 0.01}), colorInputRow('Stroke Color', o.stroke ?? '', v => o.set({stroke: v})), sliderRow('Stroke Width', o.strokeWidth ?? 0, (v) => o.set({strokeWidth: v}), {min: 0, max: 50, step: 1}), ]));
@@ -1231,7 +1231,7 @@ function restoreCanvasStateAfterLoad() { pageRect = canvas.getObjects().find(o =
 function copy() { const activeObject = canvas.getActiveObject(); if (!activeObject) return; activeObject.clone(cloned => { _clipboard = cloned; }, ['oid']); }
 function cut() { copy(); const activeObjects = canvas.getActiveObjects(); if (activeObjects.length) { activeObjects.forEach(obj => canvas.remove(obj)); canvas.discardActiveObject().renderAll(); } }
 function paste() { if (!_clipboard) return; _clipboard.clone(clonedObj => { canvas.discardActiveObject(); clonedObj.set({ left: clonedObj.left + 20, top: clonedObj.top + 20, evented: true, }); if (clonedObj.type === 'activeSelection') { clonedObj.canvas = canvas; clonedObj.forEachObject(obj => { obj.oid = `obj_${Date.now()}_${Math.random()}`; canvas.add(obj); }); clonedObj.setCoords(); } else { clonedObj.oid = `obj_${Date.now()}_${Math.random()}`; canvas.add(clonedObj); } canvas.setActiveObject(clonedObj); canvas.requestRenderAll(); saveState(); }, ['oid']); }
-function renderLayers() { const list = $('#layersList'); if (!list) return; list.innerHTML = ''; const activeObj = canvas.getActiveObject(); const objects = canvas.getObjects().filter(o => o.oid !== 'pageRect' && !o.excludeFromExport && !o.isSnapLine); objects.slice().reverse().forEach(obj => { const item = document.createElement('div'); item.className = 'layer-item'; item.dataset.locked = !!obj.locked; if (obj === activeObj || (activeObj?.type === 'activeSelection' && activeObj.getObjects().includes(obj))) { item.classList.add('active'); } item.onclick = () => { if (!obj.locked) canvas.setActiveObject(obj).renderAll(); }; let name = obj.type; if (obj.type === 'textbox') name = obj.text.substring(0, 20) || 'Textbox'; if (obj.isTable) name = `Table (${obj.rows}x${obj.cols})`; item.innerHTML = `<span>${name}</span><div class="layer-actions"><button title="Lock/Unlock" class="btn ghost btn-lock"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">${obj.locked ? '<rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path>' : '<rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 9.9-1"></path>'}</svg></button><button title="Bring Forward" class="btn ghost btn-fwd"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 15l6-6 6 6"/></svg></button><button title="Send Backward" class="btn ghost btn-bwd"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg></button></div>`; item.querySelector('.btn-lock').onclick = (e) => { e.stopPropagation(); toggleLock(obj); }; item.querySelector('.btn-fwd').onclick = (e) => { e.stopPropagation(); canvas.bringForward(obj); renderLayers(); saveState(); }; item.querySelector('.btn-bwd').onclick = (e) => { e.stopPropagation(); canvas.sendBackwards(obj); renderLayers(); saveState(); }; list.appendChild(item); }); }
+function renderLayers() { const list = $('#layersList'); if (!list) return; list.innerHTML = ''; const activeObj = canvas.getActiveObject(); const objects = canvas.getObjects().filter(o => o.oid !== 'pageRect' && !o.excludeFromExport && !o.isSnapLine);  if (objects.length === 0) {list.innerHTML = '<p class="muted" style="text-align: center; padding: 24px 0; font-size: 13px;">Add an object to the canvas to see the layers.</p>'; return;} objects.slice().reverse().forEach(obj => { const item = document.createElement('div'); item.className = 'layer-item'; item.dataset.locked = !!obj.locked; if (obj === activeObj || (activeObj?.type === 'activeSelection' && activeObj.getObjects().includes(obj))) { item.classList.add('active'); } item.onclick = () => { if (!obj.locked) canvas.setActiveObject(obj).renderAll(); }; let name = obj.type; if (obj.type === 'textbox') name = obj.text.substring(0, 20) || 'Textbox'; if (obj.isTable) name = `Table (${obj.rows}x${obj.cols})`; item.innerHTML = `<span>${name}</span><div class="layer-actions"><button title="Lock/Unlock" class="btn ghost btn-lock"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">${obj.locked ? '<rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path>' : '<rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 9.9-1"></path>'}</svg></button><button title="Bring Forward" class="btn ghost btn-fwd"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 15l6-6 6 6"/></svg></button><button title="Send Backward" class="btn ghost btn-bwd"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg></button></div>`; item.querySelector('.btn-lock').onclick = (e) => { e.stopPropagation(); toggleLock(obj); }; item.querySelector('.btn-fwd').onclick = (e) => { e.stopPropagation(); canvas.bringForward(obj); renderLayers(); saveState(); }; item.querySelector('.btn-bwd').onclick = (e) => { e.stopPropagation(); canvas.sendBackwards(obj); renderLayers(); saveState(); }; list.appendChild(item); }); }
 function toggleLock(obj) { obj.locked = !obj.locked; obj.selectable = !obj.locked; obj.evented = !obj.locked; if(obj.locked) canvas.discardActiveObject(); canvas.renderAll(); renderLayers(); saveState(); }
 function centerAndFitPage(){ if(!pageRect)return; const{width:wrapperW,height:wrapperH}=canvasWrapper.getBoundingClientRect(); const pageW=pageRect.width; const pageH=pageRect.height; const zoom=Math.min(wrapperW/pageW,wrapperH/pageH)*0.95; canvas.setZoom(zoom); const center=pageRect.getCenterPoint(); const vpt=[zoom,0,0,zoom,(wrapperW/2)-center.x*zoom,(wrapperH/2)-center.y*zoom]; canvas.setViewportTransform(vpt); $('#zoomLevel').textContent=`Zoom: ${Math.round(zoom*100)}%`; canvas.renderAll(); }
 $('#centerViewBtn').onclick=centerAndFitPage;
@@ -1554,7 +1554,185 @@ function initializeLeftPanelTabs() {
     // Initial load of elements
     searchElements('');
 }
-async function searchElements(query) { if (!supabase) return; const grid = $('#elements-grid'); grid.innerHTML = '<p class="muted">Loading...</p>'; let queryBuilder = supabase.from('elements').select('id, name, image_url, tags'); if (query) { queryBuilder = queryBuilder.or(`name.ilike.%${query}%,tags.cs.{${query}}`); } const { data, error } = await queryBuilder.limit(100); if (error) { grid.innerHTML = '<p class="muted">Error loading elements.</p>'; console.error('Element search error:', error); return; } if (!data || data.length === 0) { grid.innerHTML = '<p class="muted">No elements found.</p>'; return; } grid.innerHTML = ''; data.forEach(el => { const chip = document.createElement('div'); chip.className = 'element-chip'; chip.draggable = true; chip.innerHTML = `<img src="${el.image_url}" alt="${el.name}" />`; chip.addEventListener('dragstart', e => { e.dataTransfer.setData('text/plain', `element:${JSON.stringify(el)}`); }); chip.addEventListener('click', () => { const {x, y} = canvas.getVpCenter(); adders.image(x, y, el.image_url, { oid: el.id }); }); grid.appendChild(chip); }); }
+let currentPage = 0;
+let isLoading = false; // Prevents fetching multiple pages at once
+let currentQuery = ''; // Tracks the active search query
+
+const ELEMENTS_PER_PAGE = 50;
+
+/**
+ * A helper function to shuffle an array in place using the Fisher-Yates algorithm.
+ * @param {Array} array The array to be shuffled.
+ */
+function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]]; // Swap elements
+    }
+}
+
+/**
+ * Fetches and displays elements from Supabase with infinite scroll and randomization.
+ * @param {string} query The search query.
+ * @param {boolean} isNewSearch If true, resets pagination and clears the grid.
+ */
+async function searchElements(query, isNewSearch = true) {
+    if (!supabase || isLoading) return;
+
+    const grid = document.getElementById('elements-grid');
+    if (!grid) return;
+
+    // --- Reset for a new search ---
+    if (isNewSearch) {
+        currentQuery = query;
+        currentPage = 0;
+        grid.innerHTML = '';
+        // Clean up any existing IntersectionObserver
+        if (grid.observer) {
+            grid.observer.disconnect();
+        }
+    }
+
+    isLoading = true;
+
+    // --- Loading Indicator ---
+    const loadingIndicator = document.createElement('p');
+    loadingIndicator.className = 'muted';
+    loadingIndicator.textContent = 'Loading...';
+    grid.appendChild(loadingIndicator);
+
+    // --- Supabase Query with Pagination ---
+    const from = currentPage * ELEMENTS_PER_PAGE;
+    const to = from + ELEMENTS_PER_PAGE - 1;
+
+    let queryBuilder = supabase.from('elements').select('id, name, image_url, tags');
+    if (currentQuery) {
+        queryBuilder = queryBuilder.or(`name.ilike.%${currentQuery}%,tags.cs.{${currentQuery}}`);
+    }
+
+    // Fetch in a consistent order (e.g., by ID) for stable pagination results.
+    const { data, error } = await queryBuilder.order('id').range(from, to);
+
+    // Always remove the loading indicator after the fetch attempt.
+    grid.removeChild(loadingIndicator);
+    isLoading = false;
+
+    if (error) {
+        console.error('Element search error:', error);
+        grid.innerHTML = '<p class="muted">Error loading elements.</p>';
+        return;
+    }
+
+    // Handle no results
+    if (!data || data.length === 0) {
+        if (isNewSearch) {
+            grid.innerHTML = '<p class="muted">No elements found.</p>';
+        }
+        // Stop here; no more data to load.
+        return;
+    }
+
+    // --- RANDOMIZE THE BATCH ---
+    shuffleArray(data);
+
+    // --- Element Rendering Loop ---
+    for (const el of data) {
+        const chip = document.createElement('div');
+        chip.className = 'element-chip';
+        chip.draggable = true;
+
+        const img = document.createElement('img');
+        img.alt = el.name;
+        img.loading = 'lazy'; // Defer loading off-screen images
+
+        const isSvg = el.image_url.toLowerCase().endsWith('.svg');
+        const imageUrlWithCacheBust = `${el.image_url}?t=${Date.now()}`;
+
+        // Asynchronously load the image to avoid blocking the loop
+        (async () => {
+            try {
+                if (isSvg) {
+                    const response = await fetch(imageUrlWithCacheBust);
+                    const blob = await response.blob();
+                    const svgBlob = blob.type === 'image/svg+xml' ?
+                        blob :
+                        new Blob([await blob.text()], { type: 'image/svg+xml' });
+                    img.src = URL.createObjectURL(svgBlob);
+                } else {
+                    img.src = imageUrlWithCacheBust;
+                }
+            } catch (err) {
+                console.error(`Failed to load image for ${el.name}:`, err);
+                chip.innerHTML = `<span class="muted" style="font-size: 10px; text-align: center;">Load Error</span>`;
+                chip.draggable = false;
+            }
+        })();
+
+        img.onerror = () => {
+            chip.innerHTML = `<span class="muted" style="font-size: 10px; text-align: center;">Load Error</span>`;
+            chip.title = `Error loading: ${el.name}`;
+            chip.draggable = false;
+        };
+
+        chip.appendChild(img);
+
+        // --- Drag Support (Handles all image types) ---
+        chip.addEventListener('dragend', e => {
+            if (!(img.complete && img.naturalHeight !== 0)) return;
+
+            // Get mouse position relative to the canvas
+            const canvasRect = canvas.upperCanvasEl.getBoundingClientRect();
+            const mouseX = e.clientX - canvasRect.left;
+            const mouseY = e.clientY - canvasRect.top;
+
+            // Convert to Fabric coordinates considering zoom/pan
+            const pointer = canvas.getPointer({ clientX: e.clientX, clientY: e.clientY });
+
+            if (isSvg) {
+                adders.svg(pointer.x, pointer.y, img.src, { oid: el.id });
+            } else {
+                adders.image(pointer.x, pointer.y, img.src, { oid: el.id });
+            }
+        });
+
+        // --- Click Support ---
+        chip.addEventListener('click', () => {
+            if (img.complete && img.naturalHeight !== 0) {
+                const { x, y } = canvas.getVpCenter();
+                // Logic correctly distinguishes between SVG and raster images
+                if (isSvg) {
+                    adders.svg(x, y, img.src, { oid: el.id }); // img.src is the blob URL here
+                } else {
+                    adders.image(x, y, img.src, { oid: el.id });
+                }
+            }
+        });
+
+        grid.appendChild(chip);
+    }
+
+    // Prepare for the next page
+    currentPage++;
+
+    // --- Intersection Observer Setup ---
+    // If we loaded a full page, there might be more results.
+    // Set up the observer on the last element to trigger loading the next page.
+    if (data.length === ELEMENTS_PER_PAGE) {
+        const lastElement = grid.lastElementChild;
+        if (lastElement) {
+            const observer = new IntersectionObserver((entries) => {
+                if (entries[0].isIntersecting) {
+                    observer.disconnect(); // Important: Stop observing the current last element
+                    // Load the next page for the same query
+                    searchElements(currentQuery, false);
+                }
+            }, { threshold: 0.5 }); // Trigger when 50% of the element is visible
+
+            observer.observe(lastElement);
+            grid.observer = observer; // Store for cleanup
+        }
+    }
+}
 
 // --- INTERACTIVE TOUR ---
 const tourModal = $('#tour-modal'); const tourHighlight = $('#tour-highlight'); let currentTourStep = 0; const tourSteps = [ { title: "How to Structure Your Data", content: `<p>Before importing, make sure your data is structured correctly in a .csv or .xlsx file.</p><ul><li>Column names should start in cell <b>A1</b>.</li><li>Each new row will be treated as a different file or page.</li></ul>`, element: null }, { title: "How to Import Your Data", content: `<p>Press the <b>Load Data</b> button to open the file picker.</p><p>Valid formats are <b>.xlsx</b> and <b>.csv</b>.</p>`, element: 'label[for="csvInput"]' }, { title: "How to Generate with AI", content: `<p>Press the AI bubble to open the assistant.`, element: '#ai-bubble', action: () => { $('#dataLinksManagerModal').style.display = 'none'; $('#aiModalBackdrop').style.display = 'none' } }, { title: "How to Generate with AI", content: `You will need a <a href="https://aistudio.google.com/apikey" target="_blank">Google AI Studio API key</a>.</p><ul><li>Login to you Google Account.</li><li>Click on "+ Create API Key"</li><li>Copy the key and paste it here</li> </ul>`, action: () => { $('#dataLinksManagerModal').style.display = 'none'; $('#aiModalBackdrop').style.display = 'flex' } }, { title: "How to Generate with AI", content: `Now, enter your request in the prompt box and press "Send Request".</p><p><b>Tips:</b></p><ul><li>You can paste an image into the prompt to help with your idea.</li><li>Specify your column names in the prompt and the AI will try to link them automatically.</li></ul>`, element: '#aiPrompt', action: () => { $('#dataLinksManagerModal').style.display = 'none'; $('#aiModalBackdrop').style.display = 'flex' } }, { title: "How to Link Your Data", content: `<p>First, make sure you have imported your data.</p><p>Press <b>Data Links</b> to open the manager.</p>`, element: '#openDataLinksManagerBtn', action: () => { $('#aiModalBackdrop').style.display = 'none'; $('#dataLinksManagerModal').style.display = 'none'; } }, { title: "How to Link Your Data", content: `<p>From there, you can select an object, choose a column from your data, and link it to a property like 'Text Content' or 'Color'.</p>`, action: () => { $('#aiModalBackdrop').style.display = 'none'; $('#dataLinksManagerModal').style.display = 'flex'; } }, { title: "Tour Complete!", content: `<p>You now know the basics! Start creating your templates.</p>`, element: null, action: () => { $('#dataLinksManagerModal').style.display = 'none'; } } ];
