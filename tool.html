@@ -429,7 +429,7 @@ body.light-mode { --bg:#f5f5f5; --fg:#111; --muted:#555; --panel:#fff; --panel-2
   <div class="modal" style="width: 500px;">
     <div class="row" style="justify-content:space-between;align-items:center;gap:12px;"><h3>AI Template Assistant</h3><button id="aiCloseModal" class="btn ghost" style="padding: 4px 8px; line-height: 1;">&times;</button></div>
     <div class="stack" style="margin-top: 16px; gap: 12px;">
-       <div class="stack"><label for="aiApiKey">Google AI Studio API Key <a href="https://aistudio.google.com/apikey" target="_blank">(Get it)</a></label><input type="password" id="aiApiKey" placeholder="Enter your API key"></div>
+       <div class="stack"><label for="aiApiKey">Google AI Studio API Key <a href="https://aistudio.google.com/apikey" target="_blank" id="get-it-btn">(Get it)</a></label><input type="password" id="aiApiKey" placeholder="Enter your API key"></div>
       <div class="stack"><label for="aiPrompt">Request</label><textarea id="aiPrompt" rows="4" placeholder="e.g., 'Create an invoice template with fields for item, quantity, price, and total.'"></textarea></div>
       <div id="pasted-image-container" style="display: none; text-align: center;"><label>Pasted Image Preview:</label><img id="pasted-image" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="Pasted Image" style="max-width: 100%; max-height: 150px; border: 1px solid #ccc; padding: 5px; margin-top: 5px; object-fit: contain;"></div>
     </div>
@@ -1849,9 +1849,64 @@ async function searchElements(query, isNewSearch = true) {
 }
 
 // --- INTERACTIVE TOUR ---
-const tourModal = $('#tour-modal'); const tourHighlight = $('#tour-highlight'); let currentTourStep = 0; const tourSteps = [ { title: "How to Structure Your Data", content: `<p>Before importing, make sure your data is structured correctly in a .csv or .xlsx file.</p><ul><li>Column names should start in cell <b>A1</b>.</li><li>Each new row will be treated as a different file or page.</li></ul>`, element: null }, { title: "How to Import Your Data", content: `<p>Press the <b>Load Data</b> button to open the file picker.</p><p>Valid formats are <b>.xlsx</b> and <b>.csv</b>.</p>`, element: 'label[for="csvInput"]' }, { title: "How to Generate with AI", content: `<p>Press the AI bubble to open the assistant.`, element: '#ai-bubble', action: () => { $('#dataLinksManagerModal').style.display = 'none'; $('#aiModalBackdrop').style.display = 'none' } }, { title: "How to Generate with AI", content: `You will need a <a href="https://aistudio.google.com/apikey" target="_blank">Google AI Studio API key</a>.</p><ul><li>Login to you Google Account.</li><li>Click on "+ Create API Key"</li><li>Copy the key and paste it here</li> </ul>`, action: () => { $('#dataLinksManagerModal').style.display = 'none'; $('#aiModalBackdrop').style.display = 'flex' } }, { title: "How to Generate with AI", content: `Now, enter your request in the prompt box and press "Send Request".</p><p><b>Tips:</b></p><ul><li>You can paste an image into the prompt to help with your idea.</li><li>Specify your column names in the prompt and the AI will try to link them automatically.</li></ul>`, element: '#aiPrompt', action: () => { $('#dataLinksManagerModal').style.display = 'none'; $('#aiModalBackdrop').style.display = 'flex' } }, { title: "How to Link Your Data", content: `<p>First, make sure you have imported your data.</p><p>Press <b>Data Links</b> to open the manager.</p>`, element: '#openDataLinksManagerBtn', action: () => { $('#aiModalBackdrop').style.display = 'none'; $('#dataLinksManagerModal').style.display = 'none'; } }, { title: "How to Link Your Data", content: `<p>From there, you can select an object, choose a column from your data, and link it to a property like 'Text Content' or 'Color'.</p>`, action: () => { $('#aiModalBackdrop').style.display = 'none'; $('#dataLinksManagerModal').style.display = 'flex'; } }, { title: "Tour Complete!", content: `<p>You now know the basics! Start creating your templates.</p>`, element: null, action: () => { $('#dataLinksManagerModal').style.display = 'none'; } } ];
+const tourModal = $('#tour-modal'); const tourHighlight = $('#tour-highlight'); let currentTourStep = 0; const tourSteps = [ { title: "How to Structure Your Data", content: `<p>Before importing, make sure your data is structured correctly in a .csv or .xlsx file.</p><img src="assets/images/data-structure-example.png" alt="Example data structure" style="max-width:100%; margin-bottom:1rem;" /><ul><li>Column names should start in cell <b>A1</b>.</li><li>Each new row will be treated as a different file or page.</li></ul>`, element: null }, { title: "How to Import Your Data", content: `<p>Press the <b>Load Data</b> button to open the file picker.</p><p>Valid formats are <b>.xlsx</b> and <b>.csv</b>.</p>`, element: 'label[for="csvInput"]' }, { title: "How to Generate with AI", content: `<p>Press the AI bubble to open the assistant.`, element: '#ai-bubble', action: () => { $('#dataLinksManagerModal').style.display = 'none'; $('#aiModalBackdrop').style.display = 'none' } }, { title: "How to Generate with AI", content: `You will need a <a href="https://aistudio.google.com/apikey" target="_blank">Google AI Studio API key</a>.</p><ul><li>Login to you Google Account.</li><li>Click on "+ Create API Key"</li><li>Copy the key and paste it here</li> </ul>`, element: '#aiApiKey', action: () => { $('#dataLinksManagerModal').style.display = 'none'; $('#aiModalBackdrop').style.display = 'flex' } }, { title: "How to Generate with AI", content: `Now, enter your request in the prompt box and press "Send Request".</p><p><b>Tips:</b></p><ul><li>You can paste an image into the prompt to help with your idea.</li><li>Specify your column names in the prompt and the AI will try to link them automatically.</li></ul>`, element: '#aiPrompt', action: () => { $('#dataLinksManagerModal').style.display = 'none'; $('#aiModalBackdrop').style.display = 'flex' } }, { title: "How to Link Your Data", content: `<p>First, make sure you have imported your data.</p><p>Press <b>Data Links</b> to open the manager.</p>`, element: '#openDataLinksManagerBtn', action: () => { $('#aiModalBackdrop').style.display = 'none'; $('#dataLinksManagerModal').style.display = 'none'; } }, { title: "How to Link Your Data", content: `<p>From there, you can select an object, choose a column from your data, and link it to a property like 'Text Content' or 'Color'.</p>`, element: '.objects-list-container', action: () => { $('#aiModalBackdrop').style.display = 'none'; $('#dataLinksManagerModal').style.display = 'flex'; } }, { title: "Tour Complete!", content: `<p>You now know the basics! Start creating your templates.</p>`, element: null, action: () => { $('#dataLinksManagerModal').style.display = 'none'; } } ];
 function startTour() { currentTourStep = 0; tourModal.style.display = 'flex'; goToStep(currentTourStep); } function endTour() { tourModal.style.display = 'none'; tourHighlight.style.display = 'none'; localStorage.setItem('hasSeenTour', 'true'); }
-function goToStep(stepIndex) { const step = tourSteps[stepIndex]; if (!step) { endTour(); return; } if(!step.action) { document.querySelectorAll('.modal-backdrop').forEach(m => m.style.display = 'none'); } $('#tour-modal-title').textContent = step.title; $('#tour-modal-content').innerHTML = step.content; $('#tour-step-counter').textContent = `${stepIndex + 1} / ${tourSteps.length}`; $('#tour-prev-btn').disabled = stepIndex === 0; $('#tour-next-btn').style.display = stepIndex === tourSteps.length - 1 ? 'none' : 'inline-flex'; $('#tour-finish-btn').style.display = stepIndex === tourSteps.length - 1 ? 'inline-flex' : 'none'; const targetEl = step.element ? $(step.element) : null; if (targetEl) { const rect = targetEl.getBoundingClientRect(); tourHighlight.style.display = 'block'; tourHighlight.style.width = `${rect.width + 10}px`; tourHighlight.style.height = `${rect.height + 10}px`; tourHighlight.style.top = `${rect.top - 5}px`; tourHighlight.style.left = `${rect.left - 5}px`; const modalRect = tourModal.getBoundingClientRect(); let modalTop = rect.top + 30, modalLeft = rect.right + modalRect.width; if (modalLeft + modalRect.width > window.innerWidth) modalLeft = rect.left - modalRect.width + 100; if(modalTop + modalRect.height > window.innerHeight) modalTop = window.innerHeight - modalRect.height - 30; modalTop = Math.max(15, modalTop); modalLeft = Math.max(15, modalLeft); tourModal.style.top = `${modalTop}px`; tourModal.style.left = `${modalLeft}px`; } else { tourHighlight.style.display = 'none'; tourModal.style.top = '50%'; tourModal.style.left = '50%'; tourModal.style.transform = 'translate(-50%, -50%)'; } if(step.action) { step.action(); } }
+function goToStep(stepIndex) {
+    const step = tourSteps[stepIndex];
+    if (!step) {
+        endTour();
+        return;
+    }
+
+    // Execute the action first to ensure the element is visible
+    if(step.action) {
+        step.action();
+    }
+
+    if(!step.action) {
+        document.querySelectorAll('.modal-backdrop').forEach(m => m.style.display = 'none');
+    }
+
+    $('#tour-modal-title').textContent = step.title;
+    $('#tour-modal-content').innerHTML = step.content;
+    $('#tour-step-counter').textContent = `${stepIndex + 1} / ${tourSteps.length}`;
+    $('#tour-prev-btn').disabled = stepIndex === 0;
+    $('#tour-next-btn').style.display = stepIndex === tourSteps.length - 1 ? 'none' : 'inline-flex';
+    $('#tour-finish-btn').style.display = stepIndex === tourSteps.length - 1 ? 'inline-flex' : 'none';
+
+    const targetEl = step.element ? $(step.element) : null;
+    if (targetEl) {
+        // Now getBoundingClientRect will have the correct dimensions
+        const rect = targetEl.getBoundingClientRect();
+        tourHighlight.style.display = 'block';
+        tourHighlight.style.width = `${rect.width + 10}px`;
+        tourHighlight.style.height = `${rect.height + 10}px`;
+        tourHighlight.style.top = `${rect.top - 5}px`;
+        tourHighlight.style.left = `${rect.left - 5}px`;
+
+        const modalRect = tourModal.getBoundingClientRect();
+        let modalTop = rect.top + 30,
+            modalLeft = rect.right + modalRect.width;
+
+        if (modalLeft + modalRect.width > window.innerWidth) {
+            modalLeft = rect.left - modalRect.width + 100;
+        }
+        if(modalTop + modalRect.height > window.innerHeight) {
+            modalTop = window.innerHeight - modalRect.height - 30;
+        }
+
+        modalTop = Math.max(15, modalTop);
+        modalLeft = Math.max(15, modalLeft);
+
+        tourModal.style.top = `${modalTop}px`;
+        tourModal.style.left = `${modalLeft}px`;
+    } else {
+        tourHighlight.style.display = 'none';
+        tourModal.style.top = '50%';
+        tourModal.style.left = '50%';
+        tourModal.style.transform = 'translate(-50%, -50%)';
+    }
+}
 $('#start-tour-btn').addEventListener('click', startTour); $('#tour-close-btn').addEventListener('click', endTour); $('#tour-finish-btn').addEventListener('click', endTour); $('#tour-next-btn').addEventListener('click', () => { currentTourStep++; goToStep(currentTourStep); }); $('#tour-prev-btn').addEventListener('click', () => { currentTourStep--; goToStep(currentTourStep); });
 
 // --- INITIALIZE ---
