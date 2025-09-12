@@ -1151,7 +1151,7 @@ function renderMultiSelectInspector(selection) { multiInspector.innerHTML = ''; 
 function renderSingleObjectInspector(o) {
     inspector.innerHTML = ''; 
     const actions = [];
-    if (o.type === 'group') actions.push(buttonRow('Ungroup', () => o.toActiveSelection()));
+    if (o.type === 'group' && !o.isTable) actions.push(buttonRow('Ungroup', () => o.toActiveSelection()));
     actions.push(buttonRow('Remove', () => canvas.remove(o)));
     inspector.appendChild(section('Actions', actions));
     inspector.appendChild(section('Data Links', [ buttonRow(`Manage Links (${getBindingsFor(o).length})`, () => { selectedObjectForManager = o; openDataLinksManager(); }) ]));
