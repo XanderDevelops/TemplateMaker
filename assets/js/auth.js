@@ -116,8 +116,12 @@ if (forgotPasswordLink) {
             return;
         }
 
+        // --- ADD THIS LINE FOR DEBUGGING ---
+        const redirectToUrl = window.location.origin + '/reset-password.html';
+        console.log("Generated Redirect URL:", redirectToUrl); // This will show the exact URL
+
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
-            redirectTo: window.location.origin + '/reset-password'
+            redirectTo: redirectToUrl
         });
 
         if (error) {
