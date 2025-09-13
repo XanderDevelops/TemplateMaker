@@ -1085,70 +1085,166 @@ initResizer(leftResizer, (v) => { if(v !== undefined) isResizingLeft=v; return i
 function refreshCanvasSize() { setTimeout(() => { const { width, height } = canvasWrapper.getBoundingClientRect(); canvas.setWidth(width); canvas.setHeight(height); canvas.renderAll(); centerAndFitPage(); }, 50); }
 document.getElementById('left-panel-toggle').addEventListener('click', () => { const btn = document.getElementById('left-panel-toggle'); const cols = mainLayout.style.gridTemplateColumns.split(' '); if (cols[0] !== '0px') { lastLeftPanelWidth = cols[0]; mainLayout.style.gridTemplateColumns = `0px 0px 1fr 5px ${cols[4]}`; btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>`; } else { mainLayout.style.gridTemplateColumns = `${lastLeftPanelWidth} 5px 1fr 5px ${cols[4]}`; btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>`; } refreshCanvasSize(); });
 document.getElementById('right-panel-toggle').addEventListener('click', () => { const btn = document.getElementById('right-panel-toggle'); const cols = mainLayout.style.gridTemplateColumns.split(' '); if (cols[4] !== '0px') { lastRightPanelWidth = cols[4]; mainLayout.style.gridTemplateColumns = `${cols[0]} 5px 1fr 0px 0px`; btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>`; } else { mainLayout.style.gridTemplateColumns = `${cols[0]} 5px 1fr 5px ${lastRightPanelWidth}`; btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>`; } refreshCanvasSize(); });
-
 // --- REBUILT: SNAPPING GUIDES ---
 const snapThreshold = 20, snapColor = '#FFC107';
-let snapLines = [];
-function handleSmartSnapping(options) {
-    if (!snapEnabled) return; const target = options.target; if (!target.isLocked) {
-        clearSnapLines();
-        const targetCenter = target.getCenterPoint();
-        const targetBoundingRect = target.getBoundingRect();
-        let snapX = null, snapY = null;
-        const otherObjects = canvas.getObjects().filter(o => o.visible && o.evented && o !== target && !o.excludeFromExport && !o.isSnapLine);
+let snapLines = [], snapHighlightBox = null;
 
-        const checkSnap = (targetPoint, objPoint, axis) => {
-            if (Math.abs(targetPoint - objPoint) < snapThreshold) {
-                const snapValue = (axis === 'X') ? snapX : snapY;
-                if (snapValue === null || Math.abs(targetPoint - objPoint) < Math.abs(snapValue.targetPoint - snapValue.objPoint)) {
-                    if (axis === 'X') snapX = { targetPoint, objPoint }; else snapY = { targetPoint, objPoint };
+function handleSmartSnapping(options) {
+    if (!snapEnabled) return;
+
+    const target = options.target;
+    if (!target.isLocked) {
+        clearSnapLines();
+        clearSnapHighlight();
+
+        const zoom = canvas.getZoom();
+
+        const targetCenter = target.getCenterPoint();
+        const targetHalfWidth = (target.width * target.scaleX) / 2;
+        const targetHalfHeight = (target.height * target.scaleY) / 2;
+
+        let snapX = null, snapY = null, snapObject = null;
+
+        const otherObjects = canvas.getObjects().filter(o =>
+            o.visible && o.evented && o !== target &&
+            !o.excludeFromExport && !o.isSnapLine
+        );
+
+        const checkSnap = (targetPoint, objPoint, axis, obj) => {
+            if (Math.abs(targetPoint - objPoint) < snapThreshold / zoom) {
+                const snapValue = axis === 'X' ? snapX : snapY;
+                if (!snapValue || Math.abs(targetPoint - objPoint) < Math.abs(snapValue.targetPoint - snapValue.objPoint)) {
+                    if (axis === 'X') snapX = { targetPoint, objPoint };
+                    else snapY = { targetPoint, objPoint };
+                    snapObject = obj;
                 }
             }
         };
 
-        // Page Center Snapping
+        // Compute object edges & center
+        const getEdges = (obj) => {
+            const center = obj.getCenterPoint();
+            const halfW = (obj.width * obj.scaleX) / 2;
+            const halfH = (obj.height * obj.scaleY) / 2;
+            return {
+                left: center.x - halfW,
+                right: center.x + halfW,
+                top: center.y - halfH,
+                bottom: center.y + halfH,
+                centerX: center.x,
+                centerY: center.y
+            };
+        };
+
+        const targetEdges = getEdges(target);
+
+        // Page center snap
         if (pageRect) {
-            const pageCenter = pageRect.getCenterPoint();
-            checkSnap(targetCenter.x, pageCenter.x, 'X');
-            checkSnap(targetCenter.y, pageCenter.y, 'Y');
+            const pageEdges = getEdges(pageRect);
+            checkSnap(targetEdges.centerX, pageEdges.centerX, 'X', pageRect);
+            checkSnap(targetEdges.left, pageEdges.left, 'X', pageRect);
+            checkSnap(targetEdges.right, pageEdges.right, 'X', pageRect);
+
+            checkSnap(targetEdges.centerY, pageEdges.centerY, 'Y', pageRect);
+            checkSnap(targetEdges.top, pageEdges.top, 'Y', pageRect);
+            checkSnap(targetEdges.bottom, pageEdges.bottom, 'Y', pageRect);
         }
 
-        // Object-to-Object Snapping
+        // Snap to other objects
         otherObjects.forEach(obj => {
-            const objCenter = obj.getCenterPoint(); const objBoundingRect = obj.getBoundingRect();
-            // Vertical checks (X-axis)
-            //checkSnap(targetBoundingRect.left, objBoundingRect.left, 'X');
-            //checkSnap(targetBoundingRect.left, objBoundingRect.left + objBoundingRect.width, 'X');
-            checkSnap(targetCenter.x, objCenter.x, 'X');
-            checkSnap(targetCenter.x, objCenter.x + objBoundingRect.width, 'X');
-            checkSnap(targetCenter.x, objCenter.x - objBoundingRect.width, 'X');
-            //checkSnap(targetBoundingRect.left + targetBoundingRect.width, objBoundingRect.left, 'X');
-            //checkSnap(targetBoundingRect.left + targetBoundingRect.width, objBoundingRect.left + objBoundingRect.width, 'X');
-            // Horizontal checks (Y-axis)
-            //checkSnap(targetBoundingRect.top, objBoundingRect.top, 'Y');
-            //checkSnap(targetBoundingRect.top, objBoundingRect.top + objBoundingRect.height, 'Y');
-            checkSnap(targetCenter.y, objCenter.y, 'Y');
-            checkSnap(targetCenter.y, objCenter.y + objBoundingRect.height, 'Y');
-            checkSnap(targetCenter.y, objCenter.y - objBoundingRect.height, 'Y');
-            //checkSnap(targetBoundingRect.top + targetBoundingRect.height, objBoundingRect.top, 'Y');
-            //checkSnap(targetBoundingRect.top + targetBoundingRect.height, objBoundingRect.top + objBoundingRect.height, 'Y');
+            const edges = getEdges(obj);
+
+            // X-axis (vertical snap lines)
+            [edges.left, edges.centerX, edges.right].forEach(x => {
+                checkSnap(targetEdges.left, x, 'X', obj);
+                checkSnap(targetEdges.centerX, x, 'X', obj);
+                checkSnap(targetEdges.right, x, 'X', obj);
+            });
+
+            // Y-axis (horizontal snap lines)
+            [edges.top, edges.centerY, edges.bottom].forEach(y => {
+                checkSnap(targetEdges.top, y, 'Y', obj);
+                checkSnap(targetEdges.centerY, y, 'Y', obj);
+                checkSnap(targetEdges.bottom, y, 'Y', obj);
+            });
         });
 
-        if (snapX !== null) {
-            target.left -= (snapX.targetPoint - snapX.objPoint);
-            drawSnapLine({ x1: snapX.objPoint, y1: -5000, x2: snapX.objPoint, y2: 5000 });
-        }
-        if (snapY !== null) {
-            target.top -= (snapY.targetPoint - snapY.objPoint);
-            drawSnapLine({ y1: snapY.objPoint, x1: -5000, y2: snapY.objPoint, x2: 5000 });
-        }
+        // Apply snapping offsets
+        if (snapX !== null) target.left -= (snapX.targetPoint - snapX.objPoint);
+        if (snapY !== null) target.top -= (snapY.targetPoint - snapY.objPoint);
+
         target.setCoords();
+
+        // Draw snap lines for X-axis
+        if (snapX) drawSnapLine({ x1: snapX.objPoint, y1: -5000, x2: snapX.objPoint, y2: 5000 });
+        // Draw snap lines for Y-axis
+        if (snapY) drawSnapLine({ y1: snapY.objPoint, x1: -5000, y2: snapY.objPoint, x2: 5000 });
+
+        // Highlight the snapped object
+        if (snapObject) drawSnapHighlight(snapObject);
     }
 }
-function drawSnapLine(coords) { const line = new fabric.Line([coords.x1, coords.y1, coords.x2, coords.y2], { stroke: snapColor, strokeWidth: 1, selectable: false, evented: false, isSnapLine: true, excludeFromExport: true}); snapLines.push(line); canvas.add(line); line.bringToFront(); }
-function clearSnapLines() { snapLines.forEach(line => canvas.remove(line)); snapLines = []; }
-canvas.on('object:modified', clearSnapLines); canvas.on('mouse:up', clearSnapLines);
 
+function drawSnapLine(coords) {
+    const line = new fabric.Line([coords.x1, coords.y1, coords.x2, coords.y2], {
+        stroke: snapColor,
+        strokeWidth: 1,
+        selectable: false,
+        evented: false,
+        isSnapLine: true,
+        excludeFromExport: true
+    });
+    snapLines.push(line);
+    canvas.add(line);
+    line.bringToFront();
+}
+
+function drawSnapHighlight(obj) {
+    if (!obj) return;
+
+    obj.setCoords(); // update object coordinates
+
+    // get bounding rect in canvas space
+    const rect = obj.getBoundingRect(true); // pass `true` to get absolute coordinates including transformations
+
+    clearSnapHighlight();
+
+    snapHighlightBox = new fabric.Rect({
+        left: rect.left,
+        top: rect.top,
+        width: rect.width,
+        height: rect.height,
+        originX: 'left',
+        originY: 'top',
+        selectable: false,
+        evented: false,
+        fill: 'transparent',
+        stroke: snapColor,
+        strokeWidth: 1,
+        isSnapLine: true,
+        excludeFromExport: true,
+        strokeDashArray: [4, 4],
+    });
+
+    canvas.add(snapHighlightBox);
+    snapHighlightBox.bringToFront();
+}
+
+function clearSnapLines() {
+    snapLines.forEach(line => canvas.remove(line));
+    snapLines = [];
+    clearSnapHighlight();
+}
+
+function clearSnapHighlight() {
+    if (snapHighlightBox) {
+        canvas.remove(snapHighlightBox);
+        snapHighlightBox = null;
+    }
+}
+
+canvas.on('object:modified', clearSnapLines);
+canvas.on('mouse:up', clearSnapLines);
 
 // --- SETTINGS & API KEY MODAL ---
 const settingsBtn = $('#settingsBtn'); const settingsModal = $('#settingsModal'); const closeSettingsModalBtn = $('#closeSettingsModal');
