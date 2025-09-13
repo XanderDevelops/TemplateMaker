@@ -17,6 +17,7 @@
     { "source": "/refunds", "destination": "/refunds.html" },
     { "source": "/terms", "destination": "/terms.html" },
     { "source": "/dashboard", "destination": "/dashboard.html" },
+    { "source": "/store", "destination": "/store.html" },
     { "source": "/tool", "destination": "/tool.html" },
     { "source": "/login", "destination": "/login.html" },
     { "source": "/api-documentation", "destination": "/api-documentation.html" },

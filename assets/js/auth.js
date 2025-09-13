@@ -18,17 +18,17 @@ const renderNav = (user) => {
     // MODIFICATION: Added the pricing link here
     let linksHtml = `
         <a href="/#pricing">Pricing</a>
-        <a href="/store.html">Store</a>
+        <a href="/store">Store</a>
     `;
 
     if (user) {
         linksHtml += `
-            <a href="/dashboard.html">Dashboard</a>
+            <a href="/dashboard">Dashboard</a>
             <a href="#" id="logout-btn">Logout</a>
         `;
     } else {
         linksHtml += `
-            <a href="/login.html" class="btn">Login</a>
+            <a href="/login" class="btn">Login</a>
         `;
     }
     navLinksContainer.innerHTML = linksHtml;
@@ -61,7 +61,7 @@ if (loginForm) {
         if (response.error) {
             authError.textContent = response.error.message;
         } else {
-            window.location.href = '/dashboard.html';
+            window.location.href = '/dashboard';
         }
     });
 }
@@ -71,6 +71,7 @@ if (googleLoginBtn) {
     googleLoginBtn.addEventListener('click', async () => {
         const { error } = await supabase.auth.signInWithOAuth({
             provider: 'google',
+            redirectTo: window.location.origin + '/dashboard'
         });
         if (error) {
             authError.textContent = error.message;
@@ -142,8 +143,8 @@ const checkUser = async () => {
     renderNav(user);
     
     // Redirect if user is on login page but already logged in
-    if (user && window.location.pathname.includes('login.html')) {
-        window.location.href = '/dashboard.html';
+    if (user && window.location.pathname.includes('login')) {
+        window.location.href = '/dashboard';
     }
     
     return user;

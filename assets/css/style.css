@@ -54,6 +54,21 @@ nav a:hover {
     color: var(--accent);
 }
 
+        .logo {
+            display: flex;
+            align-items: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .logo-icon {
+            width: 24px;   /* tweak size */
+            height: 24px;
+            margin-right: 8px;
+        }
+
 /* --- Buttons --- */
 .btn {
     background: var(--accent);
