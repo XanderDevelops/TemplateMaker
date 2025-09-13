@@ -71,7 +71,9 @@ if (googleLoginBtn) {
     googleLoginBtn.addEventListener('click', async () => {
         const { error } = await supabase.auth.signInWithOAuth({
             provider: 'google',
-            redirectTo: window.location.origin + '/dashboard'
+            options: {
+                redirectTo: window.location.origin + '/dashboard'
+            }
         });
         if (error) {
             authError.textContent = error.message;
