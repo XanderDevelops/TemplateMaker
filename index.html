@@ -636,7 +636,7 @@
             <!-- 4. Modified Hero Text -->
             <h1>Link Data, Generate Documents in Bulk</h1>
             <p>Connect your data from a CSV or Excel file to any template and generate hundreds of personalized documents with a single click.</p>
-            <a href="/tool.html" class="btn">Try It Now</a>
+            <a href="/tool" class="btn">Try It Now</a>
             <p style="font-size: 1rem; color: #888; margin-top: 1rem; margin-bottom: 2rem;">Free to use.<br>No login required to try the tool.</p>
             <a href="#first-feature" class="scroll-down-arrow" aria-label="Scroll down">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
@@ -724,7 +724,7 @@
                         </ul>
                     </div>
                     <div class="card-footer">
-                        <a href="/tool.html" class="btn">Get Started</a>
+                        <a href="/tool" class="btn">Get Started</a>
                     </div>
                 </div>
                 <div class="pricing-card recommended">
@@ -769,9 +769,9 @@
     
     <footer>
         <div class="footer-links">
-            <a href="terms.html">Terms of Service</a>
-            <a href="privacy.html">Privacy Policy</a>
-            <a href="refunds.html">Refund Policy</a>
+            <a href="terms">Terms of Service</a>
+            <a href="privacy">Privacy Policy</a>
+            <a href="refunds">Refund Policy</a>
         </div>
         <div class="copyright">
             <p>&copy; 2025 AtomLink. All Rights Reserved.</p>
@@ -809,7 +809,7 @@
                 }
                 templates.forEach(template => {
                     const card = document.createElement('a');
-                    card.href = `/tool.html?id=${template.id}&public=true`;
+                    card.href = `/tool?id=${template.id}&public=true`;
                     card.className = 'template-card';
                     card.title = `Use ${template.title}`;
                     const canvasId = `preview-canvas-${template.id}`;
