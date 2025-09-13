@@ -273,11 +273,15 @@ body.light-mode { --bg:#f5f5f5; --fg:#111; --muted:#555; --panel:#fff; --panel-2
 </style>
 </head>
 <body>
-<nav>
-    <img src="assets/images/android-chrome-512x512.png" alt="CSVLink Logo" class="logo-icon">
-    <a href="/" class="logo">CSVLink</a>
-    <div class="nav-links" id="nav-links"><!-- Auth links will be injected here --></div>
-</nav>
+    <nav>
+        <a href="/" class="logo">
+            <img src="assets/images/android-chrome-512x512.png" alt="CSVLink Logo" class="logo-icon">
+            <span>CSVLink</span>
+        </a>
+        <div class="nav-links" id="nav-links">
+            <!-- Auth links will be injected here by JS -->
+        </div>
+    </nav>
 
 <input type="file" id="imageUpload" accept="image/*" style="display:none;" />
 <input type="file" id="imageFillUpload" accept="image/*" style="display:none;" />
