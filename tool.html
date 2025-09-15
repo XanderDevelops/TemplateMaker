@@ -18,7 +18,7 @@
 <style>
   :root{
     --bg:#111; --fg:#fff; --muted:#888; --panel:#1a1a1a; --panel-2:#222;
-    --border:#333; --accent:#fff; --primary-accent: #4285F4;
+    --border:#333; --accent:#fff; --primary-accent: #0f7bff;
   }
   *{ box-sizing: border-box; }
   .app{ display:grid; grid-template-rows:auto 1fr auto; flex-grow: 1; min-height: 0; }
@@ -742,6 +742,12 @@ function initializeCanvas() {
     });
     requestSaveState(); renderLayers();
 }
+
+function keepPageRectAtBack() {
+    if (!pageRect) return;
+    canvas.sendToBack(pageRect);
+}
+
 window.addEventListener('paste', (e) => {
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return; const items = e.clipboardData.items; if (!items) return;
     for (let i = 0; i < items.length; i++) {
@@ -2129,7 +2135,7 @@ function renderLayers(e) {
 
         item.querySelector('.btn-lock').onclick = (e) => { e.stopPropagation(); toggleLock(obj); };
         item.querySelector('.btn-front').onclick = (e) => { e.stopPropagation(); canvas.bringToFront(obj); renderLayers(); requestSaveState(); };
-        item.querySelector('.btn-back').onclick = (e) => { e.stopPropagation(); canvas.sendToBack(obj); renderLayers(); requestSaveState(); };
+        item.querySelector('.btn-back').onclick = (e) => { e.stopPropagation(); canvas.sendToBack(obj); keepPageRectAtBack(); renderLayers(); requestSaveState(); };
         item.querySelector('.btn-fwd').onclick = (e) => { e.stopPropagation(); canvas.bringForward(obj); renderLayers(); requestSaveState(); };
         item.querySelector('.btn-bwd').onclick = (e) => { e.stopPropagation(); canvas.sendBackwards(obj); renderLayers(); requestSaveState(); };
         list.appendChild(item);
