@@ -7,6 +7,8 @@ const toggleSignupLink = document.getElementById('toggle-signup');
 const authError = document.getElementById('auth-error');
 const forgotPasswordLink = document.getElementById('forgot-password');
 const forgotPasswordContainer = document.getElementById('forgot-password-container');
+const params = new URLSearchParams(window.location.search);
+const redirectTo = params.get("redirect") || "/dashboard.html";
 
 let isSignup = false;
 

@@ -5,6 +5,8 @@ const loginForm = document.getElementById('login-form');
 const googleLoginBtn = document.getElementById('google-login-btn');
 const toggleSignupLink = document.getElementById('toggle-signup');
 const authError = document.getElementById('auth-error');
+const params = new URLSearchParams(window.location.search);
+const redirectTo = params.get("redirect") || "/dashboard.html";
 
 let isSignup = false;
 
@@ -57,22 +59,23 @@ if (loginForm) {
         if (response.error) {
             authError.textContent = response.error.message;
         } else {
-            window.location.href = '/dashboard.html';
+            window.location.href = redirectTo;
         }
     });
 }
 
-// --- Handle Google Auth ---
-if (googleLoginBtn) {
+// --- Handle Google Auth ---if (googleLoginBtn) {
     googleLoginBtn.addEventListener('click', async () => {
         const { error } = await supabase.auth.signInWithOAuth({
             provider: 'google',
+            options: {
+                redirectTo: window.location.origin + '/login.html?redirect=' + encodeURIComponent(redirectTo)
+            }
         });
         if (error) {
             authError.textContent = error.message;
         }
     });
-}
 
 
 // --- Toggle between Login and Signup view ---
@@ -107,7 +110,7 @@ const checkUser = async () => {
     
     // Redirect if user is on login page but already logged in
     if (user && window.location.pathname.includes('login.html')) {
-        window.location.href = '/dashboard.html';
+        window.location.href = redirectTo;
     }
     
     return user;

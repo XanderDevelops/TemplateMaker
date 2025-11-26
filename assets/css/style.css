@@ -54,20 +54,21 @@ nav a:hover {
     color: var(--accent);
 }
 
-        .logo {
-            display: flex;
-            align-items: center;
-            font-size: 1.5rem;
-            font-weight: bold;
-            text-decoration: none;
-            color: inherit;
-        }
+.logo {
+    display: flex;
+    align-items: center;
+    font-size: 1.5rem;
+    font-weight: bold;
+    text-decoration: none;
+    color: inherit;
+}
 
-        .logo-icon {
-            width: 24px;   /* tweak size */
-            height: 24px;
-            margin-right: 8px;
-        }
+.logo-icon {
+    width: 24px;
+    /* tweak size */
+    height: 24px;
+    margin-right: 8px;
+}
 
 /* --- Buttons --- */
 .btn {
@@ -137,6 +138,7 @@ nav a:hover {
     text-align: center;
     color: #888;
 }
+
 .form-container a {
     color: var(--accent);
     cursor: pointer;
@@ -151,15 +153,18 @@ footer {
     background-color: #1a1a1a;
     color: #888;
 }
+
 .footer-links a {
     color: #aaa;
     text-decoration: none;
     margin: 0 1rem;
     transition: color 0.3s ease;
 }
+
 .footer-links a:hover {
     color: #4facfe;
 }
+
 .copyright {
     margin-top: 1rem;
     font-size: 0.9rem;
