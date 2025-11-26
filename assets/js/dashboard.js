@@ -5,7 +5,6 @@ const tabs = document.querySelectorAll('.tab');
 const deleteSelectedBtn = document.getElementById('delete-selected-btn');
 const selectBtn = document.getElementById('select-btn');
 const cancelSelectionBtn = document.getElementById('cancel-selection-btn');
-// NEW: Reference to the counter element
 const templateCounterEl = document.getElementById('template-counter');
 
 let currentTab = 'created';
@@ -62,7 +61,6 @@ const renderTemplates = (templates) => {
             card.dataset.id = template.id;
             const canvasId = `preview-canvas-${template.id}`;
 
-            // --- MODIFIED HTML: Added the selection-indicator div ---
             card.innerHTML = `
                 <div class="selection-indicator"></div>
                 <a href="/tool.html?id=${template.id}" class="card-link"></a>
@@ -88,7 +86,15 @@ const renderTemplates = (templates) => {
             `;
             templateGrid.appendChild(card);
 
-            if (template.preview_url && typeof template.preview_url === 'object' && template.preview_url.objects) {
+            // Determine which data to use for preview
+            let canvasData = null;
+            if (template.template_data && template.template_data.canvas) {
+                canvasData = template.template_data.canvas;
+            } else if (template.preview_url && typeof template.preview_url === 'object' && template.preview_url.objects) {
+                canvasData = template.preview_url;
+            }
+
+            if (canvasData) {
                 const previewCanvasEl = document.getElementById(canvasId);
                 const previewContainer = previewCanvasEl.parentElement;
 
@@ -97,7 +103,7 @@ const renderTemplates = (templates) => {
                     height: previewContainer.clientHeight,
                 });
 
-                staticCanvas.loadFromJSON(template.preview_url, () => {
+                staticCanvas.loadFromJSON(canvasData, () => {
                     const objects = staticCanvas.getObjects();
                     if (objects.length === 0) {
                         staticCanvas.renderAll();
@@ -178,7 +184,7 @@ const attachActionListeners = () => {
 
             const id = buttonEl.dataset.id;
 
-            // --- NEW: Check Limit Before Duplicating ---
+            // Limit Check
             const { data: { user } } = await supabase.auth.getUser();
             const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
             const isPro = profile && (profile.role === 'pro' || profile.role === 'admin');
@@ -186,12 +192,11 @@ const attachActionListeners = () => {
             if (!isPro) {
                 const { count } = await supabase.from('templates').select('*', { count: 'exact', head: true }).eq('user_id', user.id);
                 if (count >= 5) {
-                    alert('Free account limit (5 templates) reached. Upgrade to Pro to create more.');
+                    showLimitModal();
                     buttonEl.disabled = false;
                     return;
                 }
             }
-            // --- END: Check Limit ---
 
             const { data: originalTemplate, error } = await supabase
                 .from('templates')
@@ -298,7 +303,6 @@ function showConfirm(message) {
     });
 }
 
-// MODIFIED: This function now handles showing/hiding the counter
 const loadTemplates = async (tab) => {
     templateGrid.innerHTML = '<p>Loading templates...</p>';
     const { data: { user } } = await supabase.auth.getUser();
@@ -312,7 +316,7 @@ const loadTemplates = async (tab) => {
         selectBtn.style.display = 'block';
         const { data, error } = await supabase
             .from('templates')
-            .select('id, title, preview_url')
+            .select('id, title, template_data, preview_url')
             .eq('user_id', user.id)
             .order('updated_at', { ascending: false });
         if (error) {
@@ -321,7 +325,6 @@ const loadTemplates = async (tab) => {
             templates = data;
         }
 
-        // --- NEW: Template Counter Logic ---
         const { data: profile } = await supabase
             .from('profiles')
             .select('role')
@@ -336,11 +339,9 @@ const loadTemplates = async (tab) => {
             templateCounterEl.textContent = `Templates: ${count} / ${limit}`;
             templateCounterEl.style.display = 'inline-block';
         }
-        // --- END: Template Counter Logic ---
 
     } else if (tab === 'purchased') {
         selectBtn.style.display = 'none';
-        // NEW: Hide the counter when not on the "created" tab
         if (templateCounterEl) {
             templateCounterEl.style.display = 'none';
         }
@@ -368,17 +369,14 @@ tabs.forEach(tab => {
     });
 });
 
-// Initial load
 loadTemplates(currentTab);
 
-// --- NEW: Handle "Create New Template" button click to enforce limit ---
 const createBtn = document.querySelector('a[href="/tool.html"]');
 if (createBtn) {
     createBtn.addEventListener('click', async (e) => {
         e.preventDefault();
 
         const { data: { user } } = await supabase.auth.getUser();
-        // If not logged in, allow (guest mode) - or dashboard will redirect anyway
         if (!user) {
             window.location.href = '/tool.html';
             return;
@@ -390,11 +388,63 @@ if (createBtn) {
         if (!isPro) {
             const { count } = await supabase.from('templates').select('*', { count: 'exact', head: true }).eq('user_id', user.id);
             if (count >= 5) {
-                alert('Free account limit (5 templates) reached. Upgrade to Pro to create more.');
+                showLimitModal();
                 return;
             }
         }
 
         window.location.href = '/tool.html';
     });
+}
+
+function showLimitModal() {
+    const backdrop = document.createElement('div');
+    backdrop.style.cssText = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); display:flex; align-items:center; justify-content:center; z-index:100;';
+
+    const modal = document.createElement('div');
+    modal.style.cssText = 'background:var(--panel); padding:24px; border-radius:12px; max-width:400px; text-align:center; border:1px solid var(--border); box-shadow: 0 4px 20px rgba(0,0,0,0.5);';
+
+    const icon = document.createElement('div');
+    icon.innerHTML = '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#e53e3e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>';
+    icon.style.marginBottom = '16px';
+
+    const title = document.createElement('h3');
+    title.textContent = 'Limit Reached';
+    title.style.marginBottom = '8px';
+    title.style.color = 'var(--fg)';
+
+    const msg = document.createElement('p');
+    msg.textContent = 'You have reached the limit of 5 templates for the free plan. Upgrade to Pro to create unlimited templates.';
+    msg.style.marginBottom = '24px';
+    msg.style.color = 'var(--muted)';
+    msg.style.lineHeight = '1.5';
+
+    const btnGroup = document.createElement('div');
+    btnGroup.style.display = 'flex';
+    btnGroup.style.gap = '12px';
+    btnGroup.style.justifyContent = 'center';
+
+    const btnUpgrade = document.createElement('a');
+    btnUpgrade.href = '/#pricing';
+    btnUpgrade.textContent = 'Upgrade to Pro';
+    btnUpgrade.className = 'btn primary';
+    btnUpgrade.style.textDecoration = 'none';
+
+    const btnCancel = document.createElement('button');
+    btnCancel.textContent = 'Close';
+    btnCancel.className = 'btn ghost';
+
+    btnGroup.append(btnCancel, btnUpgrade);
+    modal.append(icon, title, msg, btnGroup);
+    backdrop.appendChild(modal);
+    document.body.appendChild(backdrop);
+
+    btnCancel.onclick = () => {
+        document.body.removeChild(backdrop);
+    };
+
+    // Close on backdrop click
+    backdrop.onclick = (e) => {
+        if (e.target === backdrop) document.body.removeChild(backdrop);
+    };
 }
