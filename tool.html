@@ -135,6 +135,11 @@ nav .nav-links .btn.ghost:hover { background: var(--panel-2); }
     cursor: grab;
   }
   .canvas-wrap:active { cursor: grabbing; }
+  /* Light mode canvas */
+  body.light-mode .canvas-wrap {
+    background-color: #ffffff;
+    background-image: radial-gradient(#ddd 1px, transparent 0);
+  }
 
   .right{ gap:12px; }
   .stack{ display:grid; gap:8px; }
@@ -172,6 +177,7 @@ nav .nav-links .btn.ghost:hover { background: var(--panel-2); }
   font-size: 14px;
 }
   footer{ display:flex; justify-content:space-between; align-items:center; padding:12px 16px; background:var(--panel); border-top:1px solid var(--border); }
+  #zoomLevel { color: var(--fg); }
   .toolbar-group { display: flex; align-items: center; gap: 8px; padding: 4px 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel-2); }
 
   /* Components Grid */
@@ -199,7 +205,33 @@ nav .nav-links .btn.ghost:hover { background: var(--panel-2); }
   .prop-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   .prop-grid .full-width { grid-column: 1 / -1; }
   .slider-wrapper { display: flex; align-items: center; gap: 8px; }
-  .slider-wrapper input[type="range"] { flex-grow: 1; }
+  .slider-wrapper input[type="range"] { 
+    flex-grow: 1; 
+    height: 4px; 
+    -webkit-appearance: none; 
+    appearance: none; 
+    background: #333;
+    border-radius: 2px;
+    outline: none;
+  }
+  .slider-wrapper input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    background: #000;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    cursor: pointer;
+  }
+  .slider-wrapper input[type="range"]::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    background: #000;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    cursor: pointer;
+  }
   .slider-wrapper input[type="number"] { width: 60px; text-align: right; }
   .action-buttons { display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 8px; }
   .align-buttons { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; }
@@ -643,15 +675,70 @@ async function initializeEditor() {
     renderPageInspector();
     await loadCachedData(); 
 
+    // Check if user just logged in and has unsaved work
+    const guestTemplate = localStorage.getItem('csvlink-guest-template');
+    if (currentUser && guestTemplate) {
+        const shouldLoad = confirm('You have unsaved work from before logging in. Would you like to restore it?');
+        if (shouldLoad) {
+            try {
+                const template = JSON.parse(guestTemplate);
+                $('#titleInput').value = template.title || 'Untitled_Template';
+                $('#pageWidth').value = template.page.width || 768;
+                $('#pageHeight').value = template.page.height || 1024;
+                if (pageRect) {
+                    pageRect.set({ width: parseInt(template.page.width), height: parseInt(template.page.height) });
+                }
+                if (template.bindings) bindings = new Map(template.bindings);
+                canvas.loadFromJSON(template.canvas, () => {
+                    restoreCanvasStateAfterLoad();
+                    centerAndFitPage();
+                    requestSaveState();
+                    saveStatusEl.textContent = 'Restored from guest session. Saving...';
+                });
+            } catch (err) {
+                console.error('Failed to restore guest template:', err);
+            }
+        }
+        localStorage.removeItem('csvlink-guest-template');
+    }
+
     if (templateId) { await loadTemplateFromDB(templateId); } 
-    else if (!currentUser) { showGuestWarning(); centerAndFitPage(); } 
+    else if (!currentUser) { 
+        showGuestWarning(); 
+        centerAndFitPage(); 
+        // Auto-save guest work to localStorage every 10 seconds
+        setInterval(saveGuestTemplate, 10000);
+    } 
     else { centerAndFitPage(); }
 
     if (!localStorage.getItem('hasSeenTour')) startTour();
     initializeLeftPanelTabs();
 }
 
-function showGuestWarning() { saveStatusEl.textContent = "Log in to save your work."; }
+function showGuestWarning() { saveStatusEl.textContent = "Log in to save your work."; saveStatusEl.style.color = '#ff9800'; }
+
+function saveGuestTemplate() {
+    if (currentUser) return; // Only save if guest
+    const objects = canvas.getObjects().filter(o => o.oid !== 'pageRect' && !o.excludeFromExport);
+    if (objects.length === 0) return; // Don't save empty canvas
+    
+    const guestTemplate = {
+        title: $('#titleInput').value,
+        canvas: canvas.toJSON(['oid', 'name', 'isTable', 'isSvgGroup', 'rows', 'cols', 'colWidths', 'rowHeights', 'locked']),
+        page: {
+            width: $('#pageWidth').value,
+            height: $('#pageHeight').value
+        },
+        bindings: Array.from(bindings.entries())
+    };
+    
+    try {
+        localStorage.setItem('csvlink-guest-template', JSON.stringify(guestTemplate));
+        saveStatusEl.textContent = "Guest work auto-saved locally. Log in to save to cloud.";
+    } catch (err) {
+        console.error('Failed to save guest template:', err);
+    }
+}
 async function loadTemplateFromDB(templateId, options = {}) {
     saveStatusEl.textContent = 'Loading...';
     const isPublic = options.public;
@@ -714,7 +801,10 @@ const debouncedSave = debounce(async () => {
 
 const requestSaveState = debounce(() => {
     if (historyLocked) return;
-    historyStack.splice(historyIndex + 1);
+    // Only clear redo history if we're not at the end of the stack
+    if (historyIndex < historyStack.length - 1) {
+        historyStack.splice(historyIndex + 1);
+    }
     historyStack.push(canvas.toJSON(['oid', 'name', 'isTable', 'isSvgGroup', 'rows', 'cols', 'colWidths', 'rowHeights', 'locked']));
     historyIndex = historyStack.length - 1;
     updateHistoryButtons();
@@ -726,7 +816,7 @@ const requestSaveState = debounce(() => {
 
 // --- CANVAS & PAGE SETUP ---
 function initializeCanvas() {
-    fabric.Object.prototype.set({ transparentCorners: false, cornerStyle: 'circle', cornerColor: '#000000', cornerSize: 10, borderColor: '#000000', borderScaleFactor: 1, padding: 10 });
+    fabric.Object.prototype.set({ transparentCorners: false, cornerStyle: 'circle', cornerColor: '#000000', cornerSize: 10, borderColor: '#000000', borderScaleFactor: 1, padding: 10, strokeUniform: true });
     fabric.ActiveSelection.prototype.set({ cornerStyle: 'circle', cornerColor: '#000000', borderColor: 'black' });
     const resizeCanvas = () => { const { width, height } = canvasWrapper.getBoundingClientRect(); canvas.setWidth(width); canvas.setHeight(height); canvas.renderAll(); };
     pageRect = new fabric.Rect({ left: 0, top: 0, width: 768, height: 1024, fill: '#fff', stroke: 'transparent', strokeWidth: 0, selectable: false, evented: false, hasControls: false, hasBorders: false, lockMovementX: true, lockMovementY: true, lockScalingX: true, lockScalingY: true, lockRotation: true, oid: 'pageRect' });
@@ -897,14 +987,14 @@ function getUniqueName(baseName) {
 }
 
 const adders = {
-  text: (x, y, content = 'Sample Text') => canvas.add(new fabric.Textbox(content, { left: x, top: y, fontSize: 28, fill: '#000', fontFamily: 'Arial', originX: 'center', originY: 'center', styles: [], padding: 10, name: getUniqueName('text') })).setActiveObject(canvas.getObjects().pop()),
-  rect: ({x, y, asSquare=true}={}) => canvas.add(new fabric.Rect({ left: x, top: y, width: asSquare?150:220, height: 150, fill: '#f0f0f0', stroke: '#333', strokeWidth: 2, originX: 'center', originY: 'center', name: getUniqueName(asSquare ? 'square' : 'rectangle') })).setActiveObject(canvas.getObjects().pop()),
-  circle: (x, y) => canvas.add(new fabric.Circle({ left: x, top: y, radius: 75, fill: '#f0f0f0', stroke: '#333', strokeWidth: 2, originX: 'center', originY: 'center', name: getUniqueName('circle') })).setActiveObject(canvas.getObjects().pop()),
-  triangle: (x, y) => canvas.add(new fabric.Triangle({ left: x, top: y, width: 150, height: 130, fill: '#f0f0f0', stroke: '#333', strokeWidth: 2, originX: 'center', originY: 'center', name: getUniqueName('triangle') })).setActiveObject(canvas.getObjects().pop()),
-  line: (x, y) => canvas.add(new fabric.Line([-75, 0, 75, 0], { left: x, top: y, stroke: '#333', strokeWidth: 2, originX: 'center', originY: 'center', padding: 10, name: getUniqueName('line') })).setActiveObject(canvas.getObjects().pop()),
-  star: (x, y) => { const pts = (n, oR, iR) => { const p=[]; let a=-Math.PI/2; const s=(Math.PI*2)/n; for(let i=0;i<n;i++){p.push({x:oR*Math.cos(a),y:oR*Math.sin(a)});a+=s/2;p.push({x:iR*Math.cos(a),y:iR*Math.sin(a)});a+=s/2;} return p;}; canvas.add(new fabric.Polygon(pts(5, 75, 35), { left: x, top: y, fill: '#f0f0f0', stroke: '#333', strokeWidth: 2, originX: 'center', originY: 'center', name: getUniqueName('star') })).setActiveObject(canvas.getObjects().pop()); },
+  text: (x, y, content = 'Sample Text') => canvas.add(new fabric.Textbox(content, { left: x, top: y, fontSize: 28, fill: '#000000', fontFamily: 'Arial', originX: 'center', originY: 'center', styles: [], padding: 10, name: getUniqueName('text') })).setActiveObject(canvas.getObjects().pop()),
+  rect: ({x, y, asSquare=true}={}) => canvas.add(new fabric.Rect({ left: x, top: y, width: asSquare?150:220, height: 150, fill: '#ffffff', stroke: '#000000', strokeWidth: 2, strokeUniform: true, originX: 'center', originY: 'center', name: getUniqueName(asSquare ? 'square' : 'rectangle') })).setActiveObject(canvas.getObjects().pop()),
+  circle: (x, y) => canvas.add(new fabric.Circle({ left: x, top: y, radius: 75, fill: '#ffffff', stroke: '#000000', strokeWidth: 2, strokeUniform: true, originX: 'center', originY: 'center', name: getUniqueName('circle') })).setActiveObject(canvas.getObjects().pop()),
+  triangle: (x, y) => canvas.add(new fabric.Triangle({ left: x, top: y, width: 150, height: 130, fill: '#ffffff', stroke: '#000000', strokeWidth: 2, strokeUniform: true, originX: 'center', originY: 'center', name: getUniqueName('triangle') })).setActiveObject(canvas.getObjects().pop()),
+  line: (x, y) => canvas.add(new fabric.Line([-75, 0, 75, 0], { left: x, top: y, stroke: '#000000', strokeWidth: 2, strokeUniform: true, originX: 'center', originY: 'center', padding: 10, name: getUniqueName('line') })).setActiveObject(canvas.getObjects().pop()),
+  star: (x, y) => { const pts = (n, oR, iR) => { const p=[]; let a=-Math.PI/2; const s=(Math.PI*2)/n; for(let i=0;i<n;i++){p.push({x:oR*Math.cos(a),y:oR*Math.sin(a)});a+=s/2;p.push({x:iR*Math.cos(a),y:iR*Math.sin(a)});a+=s/2;} return p;}; canvas.add(new fabric.Polygon(pts(5, 75, 35), { left: x, top: y, fill: '#ffffff', stroke: '#000000', strokeWidth: 2, strokeUniform: true, originX: 'center', originY: 'center', name: getUniqueName('star') })).setActiveObject(canvas.getObjects().pop()); },
   square: (x, y) => adders.rect({x, y, asSquare: true}),
-  arrow: (x, y) => canvas.add(new fabric.Path('M 0 20 L 60 20 L 60 0 L 100 30 L 60 60 L 60 40 L 0 40 Z', { left: x, top: y, fill: '#f0f0f0', stroke: '#333', strokeWidth: 2, originX: 'center', originY: 'center', name: getUniqueName('arrow') })).setActiveObject(canvas.getObjects().pop()),
+  arrow: (x, y) => canvas.add(new fabric.Path('M 0 20 L 60 20 L 60 0 L 100 30 L 60 60 L 60 40 L 0 40 Z', { left: x, top: y, fill: '#ffffff', stroke: '#000000', strokeWidth: 2, strokeUniform: true, originX: 'center', originY: 'center', name: getUniqueName('arrow') })).setActiveObject(canvas.getObjects().pop()),
   image: (x, y, url, elementData = {}) => { fabric.Image.fromURL(url, (img) => { img.set({ left: x, top: y, scaleX: 0.5, scaleY: 0.5, originX: 'center', originY: 'center', name: getUniqueName('image'), ...elementData }); canvas.add(img).setActiveObject(img); }, { crossOrigin: 'anonymous' }); },
   svg: (x, y, url, elementData = {}) => {
         fabric.loadSVGFromURL(url, (objects, options) => {
@@ -1497,7 +1587,46 @@ function xyInputRow(label, values, onChange) { const w = document.createElement(
 function sliderRow(label, value, onChange, {min=0, max=100, step=1}, idPrefix = null) { const w = document.createElement('div'); w.className = 'stack full-width'; w.innerHTML = `<label>${label}</label>`; const r = document.createElement('div'); r.className = 'slider-wrapper'; const s = document.createElement('input'); s.type = 'range'; s.min = min; s.max = max; s.step = step; s.value = value; const n = document.createElement('input'); n.type = 'number'; n.min = min; n.max = max; n.step = step; n.value = value; const idBase = idPrefix || 'inspector-' + label.toLowerCase().replace(/\s+/g, '-'); s.id = idBase + '-slider'; n.id = idBase + '-input'; const update = (val) => { onChange(val); canvas.requestRenderAll(); }; s.oninput = () => { n.value = s.value; update(parseFloat(s.value)); }; n.oninput = () => { s.value = n.value; update(parseFloat(n.value)); }; s.onchange = () => requestSaveState(); n.onchange = () => requestSaveState(); r.append(s, n); w.appendChild(r); return w; }
 function selectRow(label, opts, val, onChange) { const w=document.createElement('div'); w.className='stack full-width'; w.innerHTML=`<label>${label}</label>`; const s=document.createElement('select'); opts.forEach(opt=>s.innerHTML+=`<option value="${opt}" ${opt==val?'selected':''}>${opt}</option>`); s.onchange=e=>{ onChange(e.target.value); canvas.renderAll(); requestSaveState(); }; w.appendChild(s); return w; }
 function buttonRow(label, onClick) { const w=document.createElement('div');w.className='full-width'; const b=document.createElement('button');b.className='btn ghost'; b.textContent=label; b.onclick=onClick; b.style.width='100%'; w.appendChild(b); return w;}
-function colorInputRow(label, value, onChange) { const w = document.createElement('div'); w.className = 'stack full-width'; w.innerHTML = `<label>${label}</label>`; const r = document.createElement('div'); r.className = 'color-picker-wrapper'; const t = document.createElement('input'); t.type = 'text'; t.value = value; const c = document.createElement('input'); c.type = 'color'; c.value = value; const update = (val) => { onChange(val); canvas.requestRenderAll(); }; t.oninput = () => { c.value = t.value; update(t.value); }; c.oninput = () => { t.value = c.value; update(c.value); }; t.onchange = () => requestSaveState(); c.onchange = () => requestSaveState(); r.append(t, c); w.appendChild(r); return w; }
+function colorInputRow(label, value, onChange) { 
+    const w = document.createElement('div'); 
+    w.className = 'stack full-width'; 
+    w.innerHTML = `<label>${label}</label>`; 
+    const r = document.createElement('div'); 
+    r.className = 'color-picker-wrapper'; 
+    
+    const t = document.createElement('input'); 
+    t.type = 'text'; 
+    t.value = value || ''; 
+    t.placeholder = 'No color';
+    
+    const c = document.createElement('input'); 
+    c.type = 'color'; 
+    c.value = value || '#000000'; 
+    
+    // "Clear Color" button
+    const clearBtn = document.createElement('button');
+    clearBtn.className = 'btn ghost';
+    clearBtn.textContent = '×';
+    clearBtn.title = 'Clear color (set to null)';
+    clearBtn.style.cssText = 'padding: 4px 8px; font-size: 16px; line-height: 1;';
+    clearBtn.onclick = (e) => { 
+        e.preventDefault();
+        t.value = ''; 
+        onChange(null); 
+        canvas.requestRenderAll(); 
+        requestSaveState(); 
+    };
+    
+    const update = (val) => { onChange(val); canvas.requestRenderAll(); }; 
+    t.oninput = () => { if(t.value) c.value = t.value; update(t.value || null); }; 
+    c.oninput = () => { t.value = c.value; update(c.value); }; 
+    t.onchange = () => requestSaveState(); 
+    c.onchange = () => requestSaveState(); 
+    
+    r.append(t, c, clearBtn); 
+    w.appendChild(r); 
+    return w; 
+}
 function buttonGroupRow(label, options, value, onChange) {
     const w = document.createElement('div'); w.className = 'stack full-width';
     w.innerHTML = `<label>${label}</label>`;
@@ -2073,8 +2202,28 @@ function applyBinding(o,prop,val){
 }
 
 // --- HISTORY & UTILS ---
-function undo() { if (historyIndex > 0) { historyLocked = true; historyIndex--; canvas.loadFromJSON(historyStack[historyIndex], restoreCanvasStateAfterLoad); updateHistoryButtons(); } }
-function redo() { if (historyIndex < historyStack.length - 1) { historyLocked = true; historyIndex++; canvas.loadFromJSON(historyStack[historyIndex], restoreCanvasStateAfterLoad); updateHistoryButtons(); } }
+function undo() { 
+    if (historyIndex > 0) { 
+        historyLocked = true; 
+        historyIndex--; 
+        canvas.loadFromJSON(historyStack[historyIndex], () => {
+            restoreCanvasStateAfterLoad();
+            historyLocked = false;
+            updateHistoryButtons();
+        });
+    } 
+}
+function redo() { 
+    if (historyIndex < historyStack.length - 1) { 
+        historyLocked = true; 
+        historyIndex++; 
+        canvas.loadFromJSON(historyStack[historyIndex], () => {
+            restoreCanvasStateAfterLoad();
+            historyLocked = false;
+            updateHistoryButtons();
+        });
+    } 
+}
 function updateHistoryButtons(){ $('#undoBtn').disabled=historyIndex<=0; $('#redoBtn').disabled=historyIndex>=historyStack.length-1; }
 $('#undoBtn').onclick=undo; $('#redoBtn').onclick=redo;
 function restoreCanvasStateAfterLoad(callback) {
@@ -2085,8 +2234,7 @@ function restoreCanvasStateAfterLoad(callback) {
     drawGrid();
     renderLayers();
     canvas.renderAll();
-    historyLocked = false;
-    // Restore selection
+    // historyLocked will be set to false by the caller (undo/redo)
     if (typeof callback === 'function') {
         callback();
     }
