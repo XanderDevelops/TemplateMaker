@@ -670,47 +670,71 @@ async function initializeEditor() {
     const urlParams = new URLSearchParams(window.location.search);
     const templateId = urlParams.get('id');
 
-    initializeCanvas(); 
+    initializeCanvas();
     initializeVisualCropper();
     renderPageInspector();
-    await loadCachedData(); 
+    await loadCachedData();
 
-    // Check if user just logged in and has unsaved work
     const guestTemplate = localStorage.getItem('csvlink-guest-template');
-    if (currentUser && guestTemplate) {
-        // Auto-load guest work without asking
+
+    /* 1) PRIORITY: Template ID from URL always wins */
+    if (templateId) {
+        await loadTemplateFromDB(templateId);
+        centerAndFitPage();
+    }
+
+    /* 2) User logged in → try restore guest work */
+    else if (currentUser && guestTemplate) {
         try {
             const template = JSON.parse(guestTemplate);
+
+            // Restore basic fields
             $('#titleInput').value = template.title || 'Untitled_Template';
             $('#pageWidth').value = template.page.width || 768;
             $('#pageHeight').value = template.page.height || 1024;
+
             if (pageRect) {
-                pageRect.set({ width: parseInt(template.page.width), height: parseInt(template.page.height) });
+                pageRect.set({
+                    width: parseInt(template.page.width),
+                    height: parseInt(template.page.height)
+                });
             }
-            if (template.bindings) bindings = new Map(template.bindings);
-            historyLocked = true; // Prevent history during restore
+
+            if (template.bindings) {
+                bindings = new Map(template.bindings);
+            }
+
+            historyLocked = true;
+
             canvas.loadFromJSON(template.canvas, () => {
                 restoreCanvasStateAfterLoad();
                 historyLocked = false;
                 centerAndFitPage();
-                requestSaveState(); // Now save to cloud
+                requestSaveState(); // Save to cloud now
                 saveStatusEl.textContent = 'Restored from guest session. Saving...';
             });
+
         } catch (err) {
             console.error('Failed to restore guest template:', err);
         }
+
+        // Cleanup so it doesn't load again
         localStorage.removeItem('csvlink-guest-template');
     }
 
-    if (templateId) { await loadTemplateFromDB(templateId); } 
-    else if (!currentUser) { 
-        showGuestWarning(); 
-        centerAndFitPage(); 
-        // Auto-save guest work to localStorage every 10 seconds
+    /* 3) Guest user with no templateId → autosave guest mode */
+    else if (!currentUser) {
+        showGuestWarning();
+        centerAndFitPage();
         setInterval(saveGuestTemplate, 10000);
-    } 
-    else { centerAndFitPage(); }
+    }
 
+    /* 4) Logged in user, blank editor */
+    else {
+        centerAndFitPage();
+    }
+
+    /* Other UI initialization */
     if (!localStorage.getItem('hasSeenTour')) startTour();
     initializeLeftPanelTabs();
 }
@@ -2234,7 +2258,7 @@ async function generateCanvasDataURL(format = 'jpeg', quality = 0.9) {
     const dataURL = tempCanvas.toDataURL({
         format: format,
         quality: quality,
-        multiplier: multiplier
+        multiplier: 3
     });
 
     // Clean up the temporary canvas
