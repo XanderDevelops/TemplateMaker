@@ -678,26 +678,26 @@ async function initializeEditor() {
     // Check if user just logged in and has unsaved work
     const guestTemplate = localStorage.getItem('csvlink-guest-template');
     if (currentUser && guestTemplate) {
-        const shouldLoad = confirm('You have unsaved work from before logging in. Would you like to restore it?');
-        if (shouldLoad) {
-            try {
-                const template = JSON.parse(guestTemplate);
-                $('#titleInput').value = template.title || 'Untitled_Template';
-                $('#pageWidth').value = template.page.width || 768;
-                $('#pageHeight').value = template.page.height || 1024;
-                if (pageRect) {
-                    pageRect.set({ width: parseInt(template.page.width), height: parseInt(template.page.height) });
-                }
-                if (template.bindings) bindings = new Map(template.bindings);
-                canvas.loadFromJSON(template.canvas, () => {
-                    restoreCanvasStateAfterLoad();
-                    centerAndFitPage();
-                    requestSaveState();
-                    saveStatusEl.textContent = 'Restored from guest session. Saving...';
-                });
-            } catch (err) {
-                console.error('Failed to restore guest template:', err);
+        // Auto-load guest work without asking
+        try {
+            const template = JSON.parse(guestTemplate);
+            $('#titleInput').value = template.title || 'Untitled_Template';
+            $('#pageWidth').value = template.page.width || 768;
+            $('#pageHeight').value = template.page.height || 1024;
+            if (pageRect) {
+                pageRect.set({ width: parseInt(template.page.width), height: parseInt(template.page.height) });
             }
+            if (template.bindings) bindings = new Map(template.bindings);
+            historyLocked = true; // Prevent history during restore
+            canvas.loadFromJSON(template.canvas, () => {
+                restoreCanvasStateAfterLoad();
+                historyLocked = false;
+                centerAndFitPage();
+                requestSaveState(); // Now save to cloud
+                saveStatusEl.textContent = 'Restored from guest session. Saving...';
+            });
+        } catch (err) {
+            console.error('Failed to restore guest template:', err);
         }
         localStorage.removeItem('csvlink-guest-template');
     }
@@ -1543,7 +1543,64 @@ function updateLiveInspector(options) { const target = options.target; if (!targ
 function refreshInspector(e) { const target = e.target || canvas.getActiveObject(); if (!target) return; if (target.type === 'activeSelection') { inspector.style.display = 'none'; multiInspector.style.display = 'grid'; $('#noSelection').style.display = 'none'; renderMultiSelectInspector(target); } else { multiInspector.style.display = 'none'; inspector.style.display = 'grid'; $('#noSelection').style.display = 'none'; renderSingleObjectInspector(target); } }
 function getCommonPropertyValue(objects, property) { const firstValue = objects[0][property]; for (let i = 1; i < objects.length; i++) { if (objects[i][property] !== firstValue) return ''; } return firstValue; }
 function setCommonPropertyValue(objects, property, value) { objects.forEach(obj => obj.set(property, value)); canvas.renderAll(); requestSaveState(); }
-function renderMultiSelectInspector(selection) { multiInspector.innerHTML = ''; const objects = selection.getObjects(); multiInspector.appendChild(section('Actions', [ buttonRow('Group', () => { if(selection.size() > 1) selection.toGroup(); canvas.requestRenderAll(); }), buttonRow('Remove', () => { objects.forEach(obj => canvas.remove(obj)); canvas.discardActiveObject().renderAll(); }) ])); multiInspector.appendChild(section('Common', [ sliderRow('Opacity', getCommonPropertyValue(objects, 'opacity') ?? 1, (v) => setCommonPropertyValue(objects, 'opacity', v), { min: 0, max: 1, step: 0.01 }), colorInputRow('Stroke Color', getCommonPropertyValue(objects, 'stroke') ?? '', v => setCommonPropertyValue(objects, 'stroke', v)), sliderRow('Stroke Width', getCommonPropertyValue(objects, 'strokeWidth') ?? 0, (v) => setCommonPropertyValue(objects, 'strokeWidth', v), { min: 0, max: 50, step: 1 }) ]));  }
+function renderMultiSelectInspector(selection) { 
+    multiInspector.innerHTML = ''; 
+    const objects = selection.getObjects();
+    
+    // Check if all selected objects are text
+    const allText = objects.every(obj => obj.type === 'textbox');
+    
+    multiInspector.appendChild(section('Actions', [ 
+        buttonRow('Group', () => { if(selection.size() > 1) selection.toGroup(); canvas.requestRenderAll(); }), 
+        buttonRow('Remove', () => { objects.forEach(obj => canvas.remove(obj)); canvas.discardActiveObject().renderAll(); }) 
+    ]));
+    
+    // Alignment for multiple objects
+    multiInspector.appendChild(section('Align Objects', [alignMultipleObjectsButtons()]));
+    multiInspector.appendChild(section('Align to Page', [alignToPageButtons(true)]));
+    
+    // If all selected are text, show text formatting
+    if (allText) {
+        const commonFontSize = getCommonPropertyValue(objects, 'fontSize');
+        const commonFontFamily = getCommonPropertyValue(objects, 'fontFamily');
+        const commonFill = getCommonPropertyValue(objects, 'fill');
+        const commonTextAlign = getCommonPropertyValue(objects, 'textAlign');
+        const commonFontWeight = getCommonPropertyValue(objects, 'fontWeight');
+        const commonFontStyle = getCommonPropertyValue(objects, 'fontStyle');
+        const commonUnderline = getCommonPropertyValue(objects, 'underline');
+        
+        multiInspector.appendChild(section('Text Formatting', [
+            inputRow('Font Size', commonFontSize || '', v => setCommonPropertyValue(objects, 'fontSize', parseFloat(v) || 14)),
+            selectRow('Font Family', FONT_LIST, commonFontFamily || 'Arial', v => setCommonPropertyValue(objects, 'fontFamily', v)),
+            colorInputRow('Text Color', commonFill || '#000000', v => setCommonPropertyValue(objects, 'fill', v)),
+            buttonGroupRow('Text Style', [
+                {value: 'bold', label: 'B', active: commonFontWeight === 'bold'},
+                {value: 'italic', label: 'I', active: commonFontStyle === 'italic'},
+                {value: 'underline', label: 'U', active: commonUnderline === true}
+            ], null, (v) => {
+                objects.forEach(obj => {
+                    if (v === 'bold') obj.set('fontWeight', obj.fontWeight === 'bold' ? 'normal' : 'bold');
+                    else if (v === 'italic') obj.set('fontStyle', obj.fontStyle === 'italic' ? 'normal' : 'italic');
+                    else if (v === 'underline') obj.set('underline', !obj.underline);
+                });
+                canvas.renderAll();
+                requestSaveState();
+                refreshInspector({target: selection});
+            }),
+            buttonGroupRow('Alignment', ['left','center','right','justify'], commonTextAlign || 'left', v => {
+                objects.forEach(obj => { obj.set({textAlign: v}); obj.initDimensions(); });
+                canvas.requestRenderAll();
+                requestSaveState();
+            })
+        ]));
+    }
+    
+    multiInspector.appendChild(section('Common', [ 
+        sliderRow('Opacity', getCommonPropertyValue(objects, 'opacity') ?? 1, (v) => setCommonPropertyValue(objects, 'opacity', v), { min: 0, max: 1, step: 0.01 }), 
+        colorInputRow('Stroke Color', getCommonPropertyValue(objects, 'stroke') ?? '', v => setCommonPropertyValue(objects, 'stroke', v)), 
+        sliderRow('Stroke Width', getCommonPropertyValue(objects, 'strokeWidth') ?? 0, (v) => setCommonPropertyValue(objects, 'strokeWidth', v), { min: 0, max: 50, step: 1 }) 
+    ]));
+}
 function renderSingleObjectInspector(o) {
     inspector.innerHTML = ''; 
     const actions = [];
@@ -1572,7 +1629,27 @@ function renderSingleObjectInspector(o) {
         ]));
     }
     
-    if (o.type === 'textbox') inspector.appendChild(section('Text', [ inputRow('Content', o.text, v => o.set({text:v}), 'textarea'), inputRow('Font Size', o.fontSize, v => o.set({fontSize:parseFloat(v)})), selectRow('Font Family', FONT_LIST, o.fontFamily, v => o.set({fontFamily:v})), colorInputRow('Fill Color', o.fill, v => o.set({fill:v})), buttonGroupRow('Alignment', ['left','center','right','justify'], o.textAlign, v => { o.set({textAlign:v}); o.initDimensions(); canvas.requestRenderAll(); }) ])); 
+    if (o.type === 'textbox') {
+        inspector.appendChild(section('Text', [ 
+            inputRow('Content', o.text, v => o.set({text:v}), 'textarea'), 
+            inputRow('Font Size', o.fontSize, v => o.set({fontSize:parseFloat(v)})), 
+            selectRow('Font Family', FONT_LIST, o.fontFamily, v => o.set({fontFamily:v})), 
+            colorInputRow('Fill Color', o.fill, v => o.set({fill:v})),
+            buttonGroupRow('Text Style', [
+                {value: 'bold', label: 'B', active: o.fontWeight === 'bold'},
+                {value: 'italic', label: 'I', active: o.fontStyle === 'italic'},
+                {value: 'underline', label: 'U', active: o.underline === true}
+            ], null, (v) => {
+                if (v === 'bold') o.set('fontWeight', o.fontWeight === 'bold' ? 'normal' : 'bold');
+                else if (v === 'italic') o.set('fontStyle', o.fontStyle === 'italic' ? 'normal' : 'italic');
+                else if (v === 'underline') o.set('underline', !o.underline);
+                canvas.renderAll();
+                requestSaveState();
+                refreshInspector({target: o});
+            }),
+            buttonGroupRow('Alignment', ['left','center','right','justify'], o.textAlign, v => { o.set({textAlign:v}); o.initDimensions(); canvas.requestRenderAll(); }) 
+        ])); 
+    }
     inspector.appendChild(section('Common', [ xyInputRow('Position', {x: o.left, y: o.top}, (p) => o.set({left: p.x, top: p.y})), xyInputRow('Dimensions', {w: o.getScaledWidth(), h: o.getScaledHeight()}, (d) => {o.scaleToWidth(d.w); o.scaleToHeight(d.h);}), sliderRow('Opacity', o.opacity ?? 1, (v) => o.set({opacity: v}), {min: 0, max: 1, step: 0.01}), colorInputRow('Stroke Color', o.stroke ?? '', v => o.set({stroke: v})), sliderRow('Stroke Width', o.strokeWidth ?? 0, (v) => o.set({strokeWidth: v}), {min: 0, max: 50, step: 1}), ]));
     inspector.appendChild(section('Align to Page', [alignToPageButtons()]));
 }
@@ -1628,27 +1705,47 @@ function colorInputRow(label, value, onChange) {
     return w; 
 }
 function buttonGroupRow(label, options, value, onChange) {
-    const w = document.createElement('div'); w.className = 'stack full-width';
+    const w = document.createElement('div'); 
+    w.className = 'stack full-width';
     w.innerHTML = `<label>${label}</label>`;
     const r = document.createElement('div');
     r.className = 'align-buttons';
+    r.style.gridTemplateColumns = `repeat(${options.length}, 1fr)`;
+    
     const icons = {
         left: '<svg fill="currentColor" viewBox="0 0 24 24"><path d="M15 15H3v2h12v-2zm0-8H3v2h12V7zM3 13h18v-2H3v2zm0 8h18v-2H3v2zM3 3v2h18V3H3z"/></svg>',
         center: '<svg fill="currentColor" viewBox="0 0 24 24"><path d="M7 15v2h10v-2H7zm-4 6h18v-2H3v2zm0-8h18v-2H3v2zm4-6v2h10V7H7zM3 3v2h18V3H3z"/></svg>',
         right: '<svg fill="currentColor" viewBox="0 0 24 24"><path d="M9 15v2h12v-2H9zm-6 6h18v-2H3v2zm6-8h12v-2H9v2zM3 7v2h18V7H3zM3 3v2h18V3H3z"/></svg>',
         justify: '<svg fill="currentColor" viewBox="0 0 24 24"><path d="M3 21h18v-2H3v2zm0-4h18v-2H3v2zm0-4h18v-2H3v2zm0-4h18V7H3v2zm0-6v2h18V3H3z"/></svg>'
     };
+    
     options.forEach(opt => {
-        const val = typeof opt === 'string' ? opt : opt.value;
+        const isObject = typeof opt === 'object';
+        const val = isObject ? opt.value : opt;
+        const label = isObject ? opt.label : opt;
+        const isActive = isObject ? opt.active : (val === value);
+        
         const btn = document.createElement('button');
         btn.className = 'btn ghost';
-        if (val === value) btn.classList.add('active');
-        btn.innerHTML = icons[val];
+        if (isActive) btn.classList.add('active');
+        
+        // Use icon if available, otherwise use label
+        if (icons[val]) {
+            btn.innerHTML = icons[val];
+        } else {
+            btn.textContent = label;
+            btn.style.fontWeight = val === 'bold' ? 'bold' : 'normal';
+            btn.style.fontStyle = val === 'italic' ? 'italic' : 'normal';
+            btn.style.textDecoration = val === 'underline' ? 'underline' : 'none';
+        }
+        
         btn.onclick = () => {
             onChange(val);
-            r.querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            requestSaveState();
+            // For toggle buttons (bold, italic, underline), don't clear others
+            if (!isObject || !opt.hasOwnProperty('active')) {
+                r.querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            }
         };
         r.appendChild(btn);
     });
@@ -1663,7 +1760,108 @@ function closeVisualCropper() { $('#visualCropModal').style.display = 'none'; cr
 function applyCrop() { if (!croppingImage || !cropCanvas.getActiveObject()) return; const cropBox = cropCanvas.getActiveObject(); const imgInstance = cropCanvas.getObjects('image')[0]; const cropX = (cropBox.left - imgInstance.left) / imgInstance.scaleX; const cropY = (cropBox.top - imgInstance.top) / imgInstance.scaleY; const width = cropBox.getScaledWidth() / imgInstance.scaleX; const height = cropBox.getScaledHeight() / imgInstance.scaleY; croppingImage.set({ cropX, cropY, width, height }); croppingImage.scaleToWidth(cropBox.getScaledWidth()); canvas.renderAll(); requestSaveState(); closeVisualCropper(); }
 
 // --- ALIGNMENT & DATA BINDING ---
-function alignToPageButtons() { const container = document.createElement('div'); container.className = 'align-buttons full-width'; const icons = { left: '<svg viewBox="0 0 24 24"><path d="M18 21V3h2v18h-2zm-4 0V3h2v18h-2zM4 21h6V3H4v18z" fill="currentColor"/></svg>', h_center: '<svg viewBox="0 0 24 24"><path d="M4 21V3h2v18H4zm14 0V3h2v18h-2zM9 21V3h6v18H9z" fill="currentColor"/></svg>', right: '<svg viewBox="0 0 24 24"><path d="M4 21V3h2v18H4zm4 0V3h2v18H8zm12 0h-6V3h6v18z" fill="currentColor"/></svg>', top: '<svg viewBox="0 0 24 24" transform="rotate(90)"><path d="M18 21V3h2v18h-2zm-4 0V3h2v18h-2zM4 21h6V3H4v18z" fill="currentColor"/></svg>', v_center: '<svg viewBox="0 0 24 24" transform="rotate(90)"><path d="M4 21V3h2v18H4zm14 0V3h2v18h-2zM9 21V3h6v18H9z" fill="currentColor"/></svg>', bottom: '<svg viewBox="0 0 24 24" transform="rotate(90)"><path d="M4 21V3h2v18H4zm4 0V3h2v18H8zm12 0h-6V3h6v18z" fill="currentColor"/></svg>' }; const actions = { left: o => o.set({ originX: 'left', left: pageRect.left }), h_center: o => o.set({ originX: 'center', left: pageRect.left + pageRect.width / 2 }), right: o => o.set({ originX: 'left', left: pageRect.left + pageRect.width - o.getScaledWidth() }), top: o => o.set({ originY: 'top', top: pageRect.top }), v_center: o => o.set({ originY: 'center', top: pageRect.top + pageRect.height / 2 }), bottom: o => o.set({ originY: 'top', top: pageRect.top + pageRect.height - o.getScaledHeight() }) }; Object.keys(icons).forEach(key => { const btn = document.createElement('button'); btn.className = 'btn ghost'; btn.innerHTML = icons[key]; btn.onclick = () => { const active = canvas.getActiveObject(); if (active && pageRect) { actions[key](active); active.setCoords(); canvas.renderAll(); saveState(); } }; container.appendChild(btn); }); return container; }
+function alignToPageButtons(isMultiSelect = false) { 
+    const container = document.createElement('div'); 
+    container.className = 'align-buttons full-width'; 
+    const icons = { 
+        left: '<svg viewBox="0 0 24 24"><path d="M18 21V3h2v18h-2zm-4 0V3h2v18h-2zM4 21h6V3H4v18z" fill="currentColor"/></svg>', 
+        h_center: '<svg viewBox="0 0 24 24"><path d="M4 21V3h2v18H4zm14 0V3h2v18h-2zM9 21V3h6v18H9z" fill="currentColor"/></svg>', 
+        right: '<svg viewBox="0 0 24 24"><path d="M4 21V3h2v18H4zm4 0V3h2v18H8zm12 0h-6V3h6v18z" fill="currentColor"/></svg>', 
+        top: '<svg viewBox="0 0 24 24" transform="rotate(90)"><path d="M18 21V3h2v18h-2zm-4 0V3h2v18h-2zM4 21h6V3H4v18z" fill="currentColor"/></svg>', 
+        v_center: '<svg viewBox="0 0 24 24" transform="rotate(90)"><path d="M4 21V3h2v18H4zm14 0V3h2v18h-2zM9 21V3h6v18H9z" fill="currentColor"/></svg>', 
+        bottom: '<svg viewBox="0 0 24 24" transform="rotate(90)"><path d="M4 21V3h2v18H4zm4 0V3h2v18H8zm12 0h-6V3h6v18z" fill="currentColor"/></svg>' 
+    }; 
+    const actions = { 
+        left: o => o.set({ originX: 'left', left: pageRect.left }), 
+        h_center: o => o.set({ originX: 'center', left: pageRect.left + pageRect.width / 2 }), 
+        right: o => o.set({ originX: 'left', left: pageRect.left + pageRect.width - o.getScaledWidth() }), 
+        top: o => o.set({ originY: 'top', top: pageRect.top }), 
+        v_center: o => o.set({ originY: 'center', top: pageRect.top + pageRect.height / 2 }), 
+        bottom: o => o.set({ originY: 'top', top: pageRect.top + pageRect.height - o.getScaledHeight() }) 
+    }; 
+    Object.keys(icons).forEach(key => { 
+        const btn = document.createElement('button'); 
+        btn.className = 'btn ghost'; 
+        btn.innerHTML = icons[key]; 
+        btn.title = `Align ${key.replace('_', ' ')}`;
+        btn.onclick = () => { 
+            const active = canvas.getActiveObject(); 
+            if (active && pageRect) { 
+                if (isMultiSelect && active.type === 'activeSelection') {
+                    active.forEachObject(obj => actions[key](obj));
+                    active.setCoords();
+                } else {
+                    actions[key](active); 
+                    active.setCoords(); 
+                }
+                canvas.renderAll(); 
+                requestSaveState(); 
+            } 
+        }; 
+        container.appendChild(btn); 
+    }); 
+    return container; 
+}
+
+function alignMultipleObjectsButtons() {
+    const container = document.createElement('div'); 
+    container.className = 'align-buttons full-width'; 
+    container.style.gridTemplateColumns = 'repeat(6, 1fr)';
+    
+    const alignments = [
+        {key: 'left', icon: '<svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="3" y2="18" stroke="currentColor" stroke-width="2"/><rect x="6" y="4" width="6" height="4" fill="currentColor"/><rect x="6" y="10" width="10" height="4" fill="currentColor"/><rect x="6" y="16" width="8" height="4" fill="currentColor"/></svg>', title: 'Align left edges'},
+        {key: 'h_center', icon: '<svg viewBox="0 0 24 24"><line x1="12" y1="2" x2="12" y2="22" stroke="currentColor" stroke-width="2"/><rect x="8" y="4" width="8" height="4" fill="currentColor"/><rect x="6" y="10" width="12" height="4" fill="currentColor"/><rect x="7" y="16" width="10" height="4" fill="currentColor"/></svg>', title: 'Align centers horizontally'},
+        {key: 'right', icon: '<svg viewBox="0 0 24 24"><line x1="21" y1="6" x2="21" y2="18" stroke="currentColor" stroke-width="2"/><rect x="9" y="4" width="6" height="4" fill="currentColor"/><rect x="5" y="10" width="10" height="4" fill="currentColor"/><rect x="7" y="16" width="8" height="4" fill="currentColor"/></svg>', title: 'Align right edges'},
+        {key: 'top', icon: '<svg viewBox="0 0 24 24"><line x1="6" y1="3" x2="18" y2="3" stroke="currentColor" stroke-width="2"/><rect x="4" y="6" width="4" height="6" fill="currentColor"/><rect x="10" y="6" width="4" height="10" fill="currentColor"/><rect x="16" y="6" width="4" height="8" fill="currentColor"/></svg>', title: 'Align top edges'},
+        {key: 'v_center', icon: '<svg viewBox="0 0 24 24"><line x1="2" y1="12" x2="22" y2="12" stroke="currentColor" stroke-width="2"/><rect x="4" y="8" width="4" height="8" fill="currentColor"/><rect x="10" y="6" width="4" height="12" fill="currentColor"/><rect x="16" y="7" width="4" height="10" fill="currentColor"/></svg>', title: 'Align centers vertically'},
+        {key: 'bottom', icon: '<svg viewBox="0 0 24 24"><line x1="6" y1="21" x2="18" y2="21" stroke="currentColor" stroke-width="2"/><rect x="4" y="9" width="4" height="6" fill="currentColor"/><rect x="10" y="5" width="4" height="10" fill="currentColor"/><rect x="16" y="7" width="4" height="8" fill="currentColor"/></svg>', title: 'Align bottom edges'}
+    ];
+    
+    alignments.forEach(({key, icon, title}) => {
+        const btn = document.createElement('button'); 
+        btn.className = 'btn ghost'; 
+        btn.innerHTML = icon; 
+        btn.title = title;
+        btn.onclick = () => { 
+            const active = canvas.getActiveObject(); 
+            if (!active || active.type !== 'activeSelection') return;
+            
+            const objects = active.getObjects();
+            if (objects.length < 2) return;
+            
+            // Calculate alignment reference
+            let refValue;
+            if (key === 'left') {
+                refValue = Math.min(...objects.map(o => o.left - o.getScaledWidth()/2));
+                objects.forEach(o => o.set({left: refValue + o.getScaledWidth()/2}));
+            } else if (key === 'right') {
+                refValue = Math.max(...objects.map(o => o.left + o.getScaledWidth()/2));
+                objects.forEach(o => o.set({left: refValue - o.getScaledWidth()/2}));
+            } else if (key === 'h_center') {
+                const lefts = objects.map(o => o.left);
+                refValue = (Math.min(...lefts) + Math.max(...lefts)) / 2;
+                objects.forEach(o => o.set({left: refValue}));
+            } else if (key === 'top') {
+                refValue = Math.min(...objects.map(o => o.top - o.getScaledHeight()/2));
+                objects.forEach(o => o.set({top: refValue + o.getScaledHeight()/2}));
+            } else if (key === 'bottom') {
+                refValue = Math.max(...objects.map(o => o.top + o.getScaledHeight()/2));
+                objects.forEach(o => o.set({top: refValue - o.getScaledHeight()/2}));
+            } else if (key === 'v_center') {
+                const tops = objects.map(o => o.top);
+                refValue = (Math.min(...tops) + Math.max(...tops)) / 2;
+                objects.forEach(o => o.set({top: refValue}));
+            }
+            
+            objects.forEach(o => o.setCoords());
+            canvas.renderAll(); 
+            requestSaveState(); 
+        }; 
+        container.appendChild(btn); 
+    });
+    
+    return container;
+}
 function getBindingsFor(o){ const id=ensureId(o); if(!bindings.has(id)) bindings.set(id,[]); return bindings.get(id); }
 function saveBinding(o,b){ const arr=getBindingsFor(o); if(!arr.find(i => i.property === b.property)) arr.push(b); else Object.assign(arr.find(i => i.property === b.property), b); requestSaveState(); }
 function removeBinding(o,b){ const arr=getBindingsFor(o); const i=arr.indexOf(b); if(i>-1) arr.splice(i,1); requestSaveState(); }
