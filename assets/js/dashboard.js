@@ -25,7 +25,7 @@ const exitSelectionMode = () => {
     templateGrid.classList.remove('selection-active');
     selectBtn.style.display = 'block';
     cancelSelectionBtn.style.display = 'none';
-    
+
     selectedTemplates.clear();
     updateSelectionUI();
 };
@@ -91,7 +91,7 @@ const renderTemplates = (templates) => {
             if (template.preview_url && typeof template.preview_url === 'object' && template.preview_url.objects) {
                 const previewCanvasEl = document.getElementById(canvasId);
                 const previewContainer = previewCanvasEl.parentElement;
-                
+
                 const staticCanvas = new fabric.StaticCanvas(canvasId, {
                     width: previewContainer.clientWidth,
                     height: previewContainer.clientHeight,
@@ -104,16 +104,16 @@ const renderTemplates = (templates) => {
                         return;
                     }
                     const group = new fabric.Group(objects);
-                    
+
                     const scaleX = staticCanvas.width / group.width;
                     const scaleY = staticCanvas.height / group.height;
-                    const scale = Math.min(scaleX, scaleY) * 0.95; 
+                    const scale = Math.min(scaleX, scaleY) * 0.95;
 
-                    staticCanvas.setViewportTransform([scale, 0, 0, scale, 
-                        (staticCanvas.width - group.width * scale) / 2, 
+                    staticCanvas.setViewportTransform([scale, 0, 0, scale,
+                        (staticCanvas.width - group.width * scale) / 2,
                         (staticCanvas.height - group.height * scale) / 2
                     ]);
-                    
+
                     group.setPositionByOrigin(new fabric.Point(group.width / 2, group.height / 2), 'center', 'center');
                     group.destroy();
                     staticCanvas.renderAll();
@@ -137,7 +137,7 @@ const attachActionListeners = () => {
             if (selectionMode) {
                 e.preventDefault();
                 const id = card.dataset.id;
-                
+
                 if (selectedTemplates.has(id)) {
                     selectedTemplates.delete(id);
                 } else {
@@ -177,6 +177,22 @@ const attachActionListeners = () => {
             buttonEl.disabled = true;
 
             const id = buttonEl.dataset.id;
+
+            // --- NEW: Check Limit Before Duplicating ---
+            const { data: { user } } = await supabase.auth.getUser();
+            const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+            const isPro = profile && (profile.role === 'pro' || profile.role === 'admin');
+
+            if (!isPro) {
+                const { count } = await supabase.from('templates').select('*', { count: 'exact', head: true }).eq('user_id', user.id);
+                if (count >= 5) {
+                    alert('Free account limit (5 templates) reached. Upgrade to Pro to create more.');
+                    buttonEl.disabled = false;
+                    return;
+                }
+            }
+            // --- END: Check Limit ---
+
             const { data: originalTemplate, error } = await supabase
                 .from('templates')
                 .select('title, template_data, preview_url')
@@ -194,7 +210,6 @@ const attachActionListeners = () => {
             const newTemplateData = originalTemplate.template_data;
             newTemplateData.page.title = newTitle;
 
-            const { data: { user } } = await supabase.auth.getUser();
             const { error: insertError } = await supabase
                 .from('templates')
                 .insert({
@@ -203,7 +218,7 @@ const attachActionListeners = () => {
                     template_data: newTemplateData,
                     preview_url: originalTemplate.preview_url,
                 });
-            
+
             if (insertError) {
                 alert('Failed to duplicate template.');
                 console.error(insertError);
@@ -240,47 +255,47 @@ deleteSelectedBtn.addEventListener('click', async () => {
 });
 
 function showConfirm(message) {
-  return new Promise(resolve => {
-    const backdrop = document.createElement('div');
-    backdrop.style.cssText = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); display:flex; align-items:center; justify-content:center; z-index:100;';
-    
-    const modal = document.createElement('div');
-    modal.style.cssText = 'background:var(--panel); padding:24px; border-radius:12px; max-width:400px; text-align:center; border:1px solid var(--border);';
-    
-    const msg = document.createElement('p');
-    msg.textContent = message;
-    msg.style.marginBottom = '24px';
-    
-    const btnGroup = document.createElement('div');
-    btnGroup.style.display = 'flex';
-    btnGroup.style.gap = '8px';
-    btnGroup.style.justifyContent = 'flex-end';
+    return new Promise(resolve => {
+        const backdrop = document.createElement('div');
+        backdrop.style.cssText = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); display:flex; align-items:center; justify-content:center; z-index:100;';
 
-    const btnConfirm = document.createElement('button');
-    btnConfirm.textContent = 'Delete';
-    btnConfirm.className = 'btn';
-    btnConfirm.style.backgroundColor = '#e53e3e';
-    btnConfirm.style.color = '#fff';
+        const modal = document.createElement('div');
+        modal.style.cssText = 'background:var(--panel); padding:24px; border-radius:12px; max-width:400px; text-align:center; border:1px solid var(--border);';
 
-    const btnCancel = document.createElement('button');
-    btnCancel.textContent = 'Cancel';
-    btnCancel.className = 'btn ghost';
+        const msg = document.createElement('p');
+        msg.textContent = message;
+        msg.style.marginBottom = '24px';
 
-    btnGroup.append(btnCancel, btnConfirm);
-    modal.append(msg, btnGroup);
-    backdrop.appendChild(modal);
-    document.body.appendChild(backdrop);
+        const btnGroup = document.createElement('div');
+        btnGroup.style.display = 'flex';
+        btnGroup.style.gap = '8px';
+        btnGroup.style.justifyContent = 'flex-end';
 
-    btnConfirm.onclick = () => {
-      document.body.removeChild(backdrop);
-      resolve(true);
-    };
+        const btnConfirm = document.createElement('button');
+        btnConfirm.textContent = 'Delete';
+        btnConfirm.className = 'btn';
+        btnConfirm.style.backgroundColor = '#e53e3e';
+        btnConfirm.style.color = '#fff';
 
-    btnCancel.onclick = () => {
-      document.body.removeChild(backdrop);
-      resolve(false);
-    };
-  });
+        const btnCancel = document.createElement('button');
+        btnCancel.textContent = 'Cancel';
+        btnCancel.className = 'btn ghost';
+
+        btnGroup.append(btnCancel, btnConfirm);
+        modal.append(msg, btnGroup);
+        backdrop.appendChild(modal);
+        document.body.appendChild(backdrop);
+
+        btnConfirm.onclick = () => {
+            document.body.removeChild(backdrop);
+            resolve(true);
+        };
+
+        btnCancel.onclick = () => {
+            document.body.removeChild(backdrop);
+            resolve(false);
+        };
+    });
 }
 
 // MODIFIED: This function now handles showing/hiding the counter
@@ -334,11 +349,11 @@ const loadTemplates = async (tab) => {
             .from('purchased_templates')
             .select(`store_templates ( id, title, description, preview_url )`)
             .eq('user_id', user.id);
-        
+
         if (error) console.error('Error fetching purchased templates:', error);
         else templates = data.map(item => item.store_templates);
     }
-    
+
     renderTemplates(templates);
 };
 
@@ -347,7 +362,7 @@ tabs.forEach(tab => {
         tabs.forEach(t => t.classList.remove('active'));
         tab.classList.add('active');
         currentTab = tab.dataset.tab;
-        
+
         exitSelectionMode();
         loadTemplates(currentTab);
     });
@@ -355,3 +370,31 @@ tabs.forEach(tab => {
 
 // Initial load
 loadTemplates(currentTab);
+
+// --- NEW: Handle "Create New Template" button click to enforce limit ---
+const createBtn = document.querySelector('a[href="/tool.html"]');
+if (createBtn) {
+    createBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
+
+        const { data: { user } } = await supabase.auth.getUser();
+        // If not logged in, allow (guest mode) - or dashboard will redirect anyway
+        if (!user) {
+            window.location.href = '/tool.html';
+            return;
+        }
+
+        const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+        const isPro = profile && (profile.role === 'pro' || profile.role === 'admin');
+
+        if (!isPro) {
+            const { count } = await supabase.from('templates').select('*', { count: 'exact', head: true }).eq('user_id', user.id);
+            if (count >= 5) {
+                alert('Free account limit (5 templates) reached. Upgrade to Pro to create more.');
+                return;
+            }
+        }
+
+        window.location.href = '/tool.html';
+    });
+}
