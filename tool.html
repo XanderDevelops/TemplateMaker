@@ -16,356 +16,684 @@
 <!-- jsPDF -->
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <style>
-  :root{
-    --bg:#111; --fg:#fff; --muted:#888; --panel:#1a1a1a; --panel-2:#222;
-    --border:#333; --accent:#fff; --primary-accent: #0f7bff;
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+  :root {
+    /* -- ANTIGRAVITY DARK THEME (Deepest Blue) -- */
+    --bg: #030508;       /* Almost black blue */
+    --fg: #e2e8f0;       /* Light cool gray */
+    --muted: #64748b;    /* Muted cool gray */
+    
+    --panel: #0b1121;    /* Very dark deep blue */
+    --panel-2: #151e32;  /* Lighter deep blue for secondary inputs/hover */
+    
+    --border: #1e293b;   /* Subtle blue-gray border */
+    
+    --accent: #3b82f6;   /* Electric Blue */
+    --accent-hover: #2563eb;
+    --accent-fg: #ffffff;
+    
+    --success: #10b981;
+    --danger: #ef4444;
+    
+    --font: 'Inter', system-ui, -apple-system, sans-serif;
+    --radius: 8px; /* Slightly rounder for modern feel */
+    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
   }
-  *{ box-sizing: border-box; }
-  .app{ display:grid; grid-template-rows:auto 1fr auto; flex-grow: 1; min-height: 0; }
-  header{ display:flex; gap:16px; align-items:center; padding:12px 16px; background:var(--panel); border-bottom:1px solid var(--border); flex-wrap:wrap; }
-  .title{ font-weight:700; font-size:16px; margin-right: auto; }
-  /* 1. REMOVED width: 100% */
-  input[type="text"], input[type="search"], input[type="number"], input[type="password"], select, textarea {
-    background:var(--panel-2); color:var(--fg); border:1px solid var(--border);
-    padding:8px 10px; border-radius:8px; outline:none; transition: border-color .2s;
-    font-family: inherit;
+  
+  body.light-mode {
+    --bg: #f8fafc;
+    --fg: #0f172a;
+    --muted: #64748b;
+    --panel: #ffffff;
+    --panel-2: #f1f5f9;
+    --border: #e2e8f0;
+    --accent: #2563eb;
+    --accent-hover: #1d4ed8;
+    --accent-fg: #ffffff;
+    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
   }
-html {
-    height: 100%;
-    background: var(--bg);
-}
-body {
-    height: 100%;
+
+  * { box-sizing: border-box; }
+  
+  body {
+    height: 100vh;
     margin: 0;
     color: var(--fg);
-    font: 14px/1.4 system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif;
+    background: var(--bg);
+    font-family: var(--font);
+    font-size: 13px;
     display: flex;
     flex-direction: column;
     overflow: hidden;
-}
-nav {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 12px 16px;
-    background: var(--panel);
-    border-bottom: 1px solid var(--border);
-    flex-shrink: 0;
-}
-nav .logo {
-    font-weight: 700;
-    font-size: 16px;
-    color: var(--fg);
-    text-decoration: none;
-}
-nav .nav-links {
-    display: flex;
-    gap: 16px;
-    align-items: center;
-}
-nav .nav-links a {
-    text-decoration: none;
-    color: var(--muted);
-    font-weight: 500;
-    transition: color .2s;
-    font-size: 14px;
-}
-nav .nav-links a:hover {
-    color: var(--fg);
-}
-nav .nav-links .btn {
-    background: var(--accent);
-    color: var(--bg);
-    padding: 8px 14px;
-    font-size: 14px;
-    border-radius: 8px;
-}
-nav .nav-links .btn:hover {
-    background: #ccc;
-}
-nav .nav-links .btn.ghost {
-    background: transparent; color: var(--fg); border: 1px solid var(--border);
-}
-nav .nav-links .btn.ghost:hover { background: var(--panel-2); }
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  
+  /* Typography */
+  h3, h4, h5 { margin: 0 0 10px; font-weight: 600; color: var(--fg); letter-spacing: -0.01em; }
+  h3 { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 700; }
+  p { margin: 0 0 10px; }
+  label { font-size: 11px; color: var(--muted); display: block; margin-bottom: 4px; font-weight: 500;}
+  
+  /* Buttons & Inputs */
+  .btn {
+    appearance: none; background: var(--panel-2); color: var(--fg); border: 1px solid var(--border);
+    padding: 0 14px; border-radius: var(--radius); cursor: pointer; font-size: 13px; font-weight: 500;
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    transition: all .2s ease; text-decoration: none; height: 32px; white-space: nowrap;
+    user-select: none;
+  }
+  .btn:hover { background: var(--border); border-color: var(--muted); color: #fff; transform: translateY(-1px); }
+  .btn:active { transform: translateY(0); }
+  .btn:disabled { opacity: 0.3; cursor: not-allowed; pointer-events: none; }
+  
+  .btn.primary { background: var(--accent); color: var(--accent-fg); border-color: transparent; box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3); }
+  .btn.primary:hover { background: var(--accent-hover); box-shadow: 0 4px 8px rgba(59, 130, 246, 0.4); }
+  
+  .btn.ghost { background: transparent; border-color: transparent; color: var(--muted); }
+  .btn.ghost:hover { background: var(--panel-2); color: var(--fg); }
+  .btn.ghost.active { background: rgba(59, 130, 246, 0.1); color: var(--accent); }
+  
+  input[type="text"], input[type="search"], input[type="number"], input[type="password"], select, textarea {
+    background: var(--bg); color: var(--fg); border: 1px solid var(--border);
+    padding: 0 10px; border-radius: var(--radius); outline: none; font-family: inherit; font-size: 13px;
+    transition: all .2s; width: 100%; height: 32px;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2); }
+  textarea { height: auto; padding: 8px; resize: vertical; }
 
+  /* Layout */
+  .app { display: grid; grid-template-rows: auto 1fr auto; flex-grow: 1; min-height: 0; }
+  .main { display: grid; grid-template-columns: 260px 1fr 280px; gap: 0; padding: 0; min-height: 0; overflow: hidden; background: var(--bg); }
+  
+  /* Header */
+  nav {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 0 16px; height: 56px; background: var(--panel); border-bottom: 1px solid var(--border);
+    flex-shrink: 0; backdrop-filter: blur(8px);
+  }
+  .logo { display: flex; align-items: center; gap: 10px; font-weight: 700; color: var(--fg); text-decoration: none; font-size: 16px; letter-spacing: -0.02em; }
+  .logo-icon { width: 24px; height: 24px; object-fit: contain; }
+  .nav-links { display: flex; gap: 16px; align-items: center; }
+  .nav-links a { color: var(--muted); text-decoration: none; font-weight: 500; transition: color .15s; font-size: 13px; }
+  .nav-links a:hover { color: var(--fg); }
+  
+  /* Toolbar */
+  header { 
+    display: flex; gap: 8px; align-items: center; 
+    padding: 6px 12px; background: var(--panel); border-bottom: 1px solid var(--border); 
+    height: 44px; flex-shrink: 0;
+  }
+  .toolbar { display: flex; gap: 6px; align-items: center; }
+  .toolbar-group { display: flex; gap: 4px; padding: 2px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); align-items: center; }
 
-.logo {
-    display: flex;
-    align-items: center;
-    font-size: 1.5rem;
-    font-weight: bold;
-    text-decoration: none;
-    color: inherit;
-}
-
-.logo-icon {
-    width: 24px;   /* tweak size */
-    height: 24px;
-    margin-right: 8px;
-}
-
-  textarea { resize: vertical; }
-  input[type="text"]:focus, input[type="number"]:focus, input[type="password"]:focus, select:focus, textarea:focus { border-color: #555; }
-  .btn{ background:var(--accent); color: var(--bg); border:none; padding:9px 16px; border-radius:8px; cursor:pointer; font-weight:600; display:inline-flex; align-items:center; justify-content:center; gap: 8px; transition: background .2s; }
-  .btn.primary { background: var(--primary-accent); color: #fff; }
-  .btn.primary:hover { background: #5a95f5; }
-  .btn:hover{ background: #ccc; }
-  .btn:disabled{ opacity:.4; cursor:not-allowed; }
-  .btn.ghost{ background:transparent; color:var(--fg); border:1px solid var(--border); }
-  .btn.ghost:hover{ background: var(--panel-2); }
-  .toolbar{ display:flex; gap:12px; align-items:center; }
-  .main{ display:grid; grid-template-columns: 260px 1fr 320px; gap:12px; padding:12px; min-height:0; }
-  .panel{ background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:12px; min-height:0; display:flex; flex-direction:column; position:relative; }
-
-  /* Canvas and Page Styling */
-  .canvas-container-wrapper {
+  /* Panels */
+  .panel { 
+    background: var(--panel); 
+    display: flex; flex-direction: column; min-width: 0; 
     position: relative;
+    z-index: 10;
+  }
+  /* BORDERS: Only minimal separator lines */
+  .panel.left { border-right: 1px solid var(--border); }
+  .panel.right { border-left: 1px solid var(--border); }
+  
+  /* Panel Content - FIXED SCROLLING */
+  .left-panel-content, #inspectorWrap { 
+    padding: 12px; 
+    overflow-y: auto; 
+    flex: 1 1 0; 
+    min-height: 0; /* Critical for flex scroll */
+  }
+
+  /* Tabs */
+  .panel-tabs { display: flex; border-bottom: 1px solid var(--border); margin: 0 -16px 16px; padding: 0 16px; gap: 20px; }
+  .panel-tab-btn {
+    background: none; border: none; padding: 12px 0; color: var(--muted); 
+    font-size: 12px; font-weight: 600; text-transform: uppercase; cursor: pointer; letter-spacing: 0.02em;
+    border-bottom: 2px solid transparent; transition: all .2s;
+  }
+  .panel-tab-btn:hover { color: var(--fg); }
+  .panel-tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .panel-tab-content { display: none; flex-direction: column; animation: fadeIn 0.2s ease; }
+  .panel-tab-content.active { display: flex; }
+  
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* Canvas Area */
+  .canvas-container-wrapper {
+    position: relative; width: 100%; height: 100%; overflow: hidden; background: var(--bg);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .canvas-wrap { 
+    box-shadow: 0 20px 40px rgba(0,0,0,0.5); 
+    background-color: #0a0e1a;
+    background-image: radial-gradient(rgba(59, 130, 246, 0.12) 1px, transparent 0);
+    background-size: 20px 20px;
+    width: 100%; height: 100%;
+  }
+
+  /* Footer */
+  footer {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 16px; background: var(--panel); border-top: 1px solid var(--border);
+    font-size: 12px; height: 48px; color: var(--muted);
+  }
+
+  /* Sidebar Toggles Improved */
+  .panel-toggle {
+    position: absolute; 
+    top: 50%; 
+    width: 24px; 
+    height: 48px; 
+    background: var(--panel); 
+    border: 1px solid var(--border); 
+    display: flex; align-items: center; justify-content: center; cursor: pointer;
+    z-index: 50; color: var(--muted); 
+    transform: translateY(-50%);
+    transition: all 0.2s;
+  }
+  .panel-toggle:hover { color: var(--accent); background: var(--panel-2); }
+  
+  #left-panel-toggle { right: -24px; left: auto; border-left: none; border-radius: 0 8px 8px 0; box-shadow: 4px 0 8px rgba(0,0,0,0.1); }
+  #right-panel-toggle { left: -24px; right: auto; border-right: none; border-radius: 8px 0 0 8px; box-shadow: -4px 0 8px rgba(0,0,0,0.1); }
+
+  /* Floating Linker Modernized */
+  #floating-linker {
+    position: fixed !important; 
+    z-index: 9999;
+    background: rgba(11, 17, 33, 0.95); /* Semi-transparent background */
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: var(--shadow-lg);
+    display: none;
+    flex-direction: column; 
+    gap: 8px;
+    padding: 8px;
+    animation: popIn 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  @keyframes popIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+  
+  .floating-linker-actions { display: flex; gap: 8px; }
+  
+  /* Components Grid */
+  .components-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .shape-chip {
+    background: var(--panel-2); border: 1px solid transparent; border-radius: var(--radius);
+    padding: 16px; display: flex; flex-direction: column; align-items: center; gap: 8px;
+    cursor: grab; transition: all .2s;
+  }
+  .shape-chip:hover { border-color: var(--accent); background: #1e293b; transform: translateY(-2px); box-shadow: var(--shadow); }
+  .shape-chip svg { width: 28px; height: 28px; stroke: var(--fg); stroke-width: 1.5; fill: none; opacity: 0.8; }
+  .shape-chip:hover svg { stroke: var(--accent); opacity: 1; }
+  .shape-chip span { font-size: 11px; color: var(--muted); font-weight: 500; }
+  
+  /* Layers List - Compact & Draggable */
+  .layers-list { min-height: 100px; }
+  .layers-list .layer-item {
+    display: flex; align-items: center; gap: 6px; padding: 4px 8px;
+    border-radius: 6px; border: 1px solid transparent; 
+    margin-bottom: 2px; cursor: grab; font-size: 11px; transition: all .15s;
+    background: var(--panel-2); min-height: 28px;
+  }
+  .layers-list .layer-item:hover { background: var(--border); }
+  .layers-list .layer-item.active { background: rgba(59, 130, 246, 0.2); border-color: rgba(59, 130, 246, 0.4); color: var(--accent); }
+  .layers-list .layer-item.dragging { opacity: 0.4; border: 1px dashed var(--accent); }
+  .layers-list .layer-item.drag-over { border-top: 2px solid var(--accent); }
+  .layer-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-transform: capitalize; }
+  .layer-actions { display: flex; gap: 2px; }
+  .layer-actions .btn { padding: 2px; height: 20px; width: 20px; }
+  
+  /* Toast Notification */
+  #toast-container {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 20000;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      pointer-events: none;
+  }
+  .toast {
+      background: var(--panel);
+      color: var(--fg);
+      padding: 12px 20px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      animation: toastIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      pointer-events: auto;
+      min-width: 250px;
+  }
+  .toast.success { border-left: 4px solid var(--success); }
+  .toast.error { border-left: 4px solid var(--danger); }
+  .toast.info { border-left: 4px solid var(--accent); }
+  
+  @keyframes toastIn {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+  }
+  .toast.fade-out {
+      opacity: 0;
+      transform: translateY(10px);
+      transition: all 0.3s ease;
+  }
+  
+  /* AI Bubble */
+  .ai-bubble {
+    position: absolute; bottom: 24px; right: 24px; width: 56px; height: 56px;
+    background: linear-gradient(135deg, var(--accent), #60a5fa); 
+    color: white; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 8px 24px rgba(37, 99, 235, 0.4); cursor: pointer;
+    transition: transform .2s; z-index: 20;
+  }
+  .ai-bubble:hover { transform: scale(1.1); box-shadow: 0 12px 32px rgba(37, 99, 235, 0.6); }
+
+  /* Modals - HIGH z-index to be above everything */
+  .modal-backdrop { 
+    position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(6px);
+    display: none; align-items: center; justify-content: center; z-index: 10000; 
+  }
+  .modal { 
+    background: var(--panel); border: 1px solid var(--border); border-radius: 16px; 
+    padding: 24px; box-shadow: 0 25px 50px rgba(0,0,0,0.5); max-width: 90vw; max-height: 85vh; 
+    overflow-y: auto; color: var(--fg); z-index: 10001;
+    animation: popIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .modal h2, .modal h3 { margin: 0 0 16px; font-size: 16px; }
+  .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+  .modal-close { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 20px; }
+  .modal-close:hover { color: var(--fg); }
+
+  /* Column list (Data linking) */
+  .col-list { display: flex; flex-direction: column; gap: 8px; max-height: 360px; overflow: auto; padding: 2px; }
+  .col-item { background: var(--panel-2); border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; cursor: pointer; }
+  .col-item:hover { border-color: var(--accent); }
+  .col-item[aria-selected="true"] { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(59,130,246,0.25); }
+  
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+  
+  /* Utils */
+  .hidden { display: none !important; }
+  .muted { color: var(--muted); }
+  
+  /* Save status - golden yellow instead of orange */
+  #saveStatus { color: #fbbf24 !important; font-weight: 500; }
+  .stack { display: flex; flex-direction: column; gap: 12px; }
+  .row { display: flex; gap: 10px; align-items: center; }
+  .prop-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+  .full-width { grid-column: 1 / -1; }
+  
+  #noSelection { 
+    border: 2px dashed var(--border); 
+    border-radius: 12px; 
+    padding: 32px 16px; 
+    text-align: center; 
+    background: rgba(255,255,255,0.01);
+  }
+  
+  /* Color Picker Fix */
+  .color-picker-wrapper { display: flex; align-items: center; gap: 6px; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 4px; }
+  
+  /* Align Buttons Grid */
+  .align-buttons { display: grid; grid-template-columns: repeat(6, 32px); gap: 4px; background: var(--bg); padding: 4px; border-radius: var(--radius); border: 1px solid var(--border); }
+  .align-buttons .btn { border: none; background: transparent; padding: 4px; height: 28px; color: var(--muted); }
+  .align-buttons .btn:hover { background: var(--panel-2); color: var(--fg); }
+
+
+  /* --- Restored Tutorial Styles --- */
+  #tour-modal { 
+    position: fixed; z-index: 30000; background: var(--panel); border: 1px solid var(--border); 
+    border-radius: 12px; width: 320px; box-shadow: var(--shadow-lg); display: none; 
+    flex-direction: column; transition: all 0.3s ease;
+    left: 50%; top: 50%; transform: translate(-50%, -50%); /* Default centered, but moved by JS */
+  }
+  #tour-modal-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--border); cursor: move; }
+  #tour-modal-header h4 { margin: 0; font-size: 14px; font-weight: 600; color: var(--fg); }
+  #tour-modal-controls button { padding: 4px; line-height: 0; }
+  
+  #tour-modal-content { padding: 16px; font-size: 13px; line-height: 1.6; color: var(--fg); }
+  #tour-modal-content p { margin: 0 0 12px; }
+  #tour-modal-content ul { margin: 0; padding-left: 18px; }
+  #tour-modal-content li { margin-bottom: 6px; }
+  
+  #tour-modal-nav { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; margin-top: auto; border-top: 1px solid var(--border); background: var(--panel-2); border-radius: 0 0 12px 12px; }
+  #tour-step-counter { font-size: 11px; font-weight: 500; }
+  
+  #tour-highlight { 
+    position: fixed; z-index: 1000; background: rgba(59, 130, 246, 0.1); 
+    border: 2px solid var(--accent); border-radius: 6px; 
+    box-shadow: 0 0 0 9999px rgba(0,0,0,0.7); pointer-events: none; 
+    display: none; transition: all 0.3s ease-in-out; 
+  }
+
+  /* --- Restored Loader Modal Grid --- */
+  #template-loader-modal {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: var(--shadow-lg);
+    z-index: 10002;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+  }
+  .template-modal-tabs {
+    display: flex;
+    background: var(--panel-2);
+    border-bottom: 1px solid var(--border);
+    padding: 4px;
+    gap: 4px;
+  }
+  .template-modal-tab {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    padding: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.2s;
+  }
+  .template-modal-tab:hover { color: var(--fg); background: rgba(255,255,255,0.05); }
+  .template-modal-tab.active { background: var(--panel); color: var(--accent); box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+
+  #template-loader-modal .template-grid { 
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px; 
+      max-height: 400px;
+      overflow-y: auto;
+      padding: 12px;
+  }
+  #template-loader-modal .template-item { 
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      cursor: pointer; 
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      aspect-ratio: 4/3;
+  }
+  #template-loader-modal .template-item:hover {
+      border-color: var(--accent);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  }
+  .template-thumb {
+      flex: 1;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      background-color: #000;
+      border-bottom: 1px solid var(--border);
+      position: relative;
+  }
+  .template-thumb::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to bottom, transparent 60%, rgba(0,0,0,0.6));
+      opacity: 0;
+      transition: opacity 0.2s;
+  }
+  .template-item:hover .template-thumb::after { opacity: 1; }
+  
+  .template-title {
+      padding: 8px 10px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--fg);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      background: var(--panel-2);
+  }
+  
+  /* --- Restored Visual Crop Styles --- */
+  #visualCropModal .modal { width: 90vw; height: 90vh; max-width: 1400px; display: flex; flex-direction: column; }
+  #visualCropContainer { flex-grow: 1; position: relative; background: #000; border-radius: 8px; overflow: hidden; margin: 16px 0; }
+
+  /* --- FIX: Toolbar Layout --- */
+  .toolbar { display: flex; gap: 6px; align-items: center; }
+  #pageWidth, #pageHeight { width: 65px !important; text-align: center; height: 28px !important; } 
+  #titleInput { width: 130px !important; height: 28px !important; }
+  
+  /* Elements Grid */
+  #elements-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+    gap: 8px;
+    padding: 8px 0;
+  }
+  #elements-grid .element-chip {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--panel-2);
+    border: 1px solid transparent;
+    border-radius: 6px;
+    cursor: grab;
+    transition: all 0.15s;
+    padding: 8px;
+  }
+  #elements-grid .element-chip:hover {
+    border-color: var(--accent);
+    background: var(--border);
+  }
+  #elements-grid .element-chip svg, #elements-grid .element-chip img {
     width: 100%;
     height: 100%;
-    overflow: hidden;
-    border-radius: 12px;
-  }
-  .canvas-wrap{
-    position: absolute;
-    inset: 0;
-    overflow: hidden;
-    background-color: #2a2a2a;
-    background-image: radial-gradient(#444 1px, transparent 0);
-    background-size: 16px 16px;
-    cursor: grab;
-  }
-  .canvas-wrap:active { cursor: grabbing; }
-  /* Light mode canvas */
-  body.light-mode .canvas-wrap {
-    background-color: #ffffff;
-    background-image: radial-gradient(#ddd 1px, transparent 0);
+    object-fit: contain;
   }
 
-  .right{ gap:12px; }
-  .stack{ display:grid; gap:8px; }
-  .row{ display:flex; gap:8px; align-items:center; }
-  h3{ margin:0 0 8px; font-size:13px; color:#ddd; text-transform:uppercase; letter-spacing:.1em; }
-  label{ font-size:12px; color:var(--muted); }
-
-  /* Custom Scrollbar Styling */
-  #inspectorWrap, .left-panel-content, #components-content, #elements-content, #layers-content {
-    overflow-y: auto;
-    overflow-x: hidden;
-    flex: 1;
-    min-height: 0;
-    padding-right: 8px;
-  }
-  ::-webkit-scrollbar { width: 8px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 4px; }
-  ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.3); }
-
-  #inspector, #multiSelectInspector{ display:grid; gap:16px; }
-  .inspector-panel {
-  display: grid;
-  gap: 16px;
-  align-content: start;
-}
-  #noSelection {
-  border: 1px dashed var(--border);
-  border-radius: 12px;
-  padding: 24px;
-  text-align: center;
-}
-#noSelection h4 {
-  margin: 0 0 12px;
-  font-size: 14px;
-}
-  footer{ display:flex; justify-content:space-between; align-items:center; padding:12px 16px; background:var(--panel); border-top:1px solid var(--border); }
-  #zoomLevel { color: var(--fg); }
-  .toolbar-group { display: flex; align-items: center; gap: 8px; padding: 4px 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel-2); }
-
-  /* Components Grid */
-  .components-grid { display:grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  .shape-chip { background: var(--panel-2); border:1px solid var(--border); border-radius: 8px; padding: 12px; cursor:grab; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; transition: border-color .2s; user-select:none; }
-  .shape-chip:hover { border-color:#555; }
-  .shape-chip svg { width: 32px; height: 32px; stroke: #fff; stroke-width: 1.5px; fill: transparent; }
-  .shape-chip span { font-size: 12px; color: var(--muted); }
-
-  /* Modal */
-  .modal-backdrop{ position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,.6); z-index:50; }
-  .modal{ width:720px; max-width:95vw; background:var(--panel); border:1px solid var(--border); border-radius:16px; padding:16px; display:flex; flex-direction:column; max-height:80vh; overflow: scroll;}
-  .col-list{ max-height:46vh; overflow:auto; display:grid; gap:8px; margin-top:8px; }
-  .col-item{ border:1px solid var(--border); border-radius:12px; padding:8px; cursor:pointer; }
-  .col-item[aria-selected="true"]{ border-color:#444; background:#121212; }
-
-  .toolbar-group .btn.active { background: var(--accent); color: var(--bg); }
-  .color-picker-wrapper { display: flex; align-items: center; gap: 8px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; padding-right: 8px; }
-  .color-picker-wrapper input[type="text"] { border: none; flex-grow: 1; }
-  .color-picker-wrapper input[type="color"] { -webkit-appearance: none; -moz-appearance: none; appearance: none; width: 28px; height: 28px; background-color: transparent; border: none; cursor: pointer; }
-  .color-picker-wrapper input[type="color"]::-webkit-color-swatch { border-radius: 6px; border: 1px solid var(--border); }
-  .color-picker-wrapper input[type="color"]::-moz-color-swatch { border-radius: 6px; border: 1px solid var(--border); }
-
-  /* === NEW/MODIFIED: Inspector & Layer Styles === */
-  .prop-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  .prop-grid .full-width { grid-column: 1 / -1; }
-  .slider-wrapper { display: flex; align-items: center; gap: 8px; }
-  .slider-wrapper input[type="range"] { 
-    flex-grow: 1; 
-    height: 4px; 
-    -webkit-appearance: none; 
-    appearance: none; 
-    background: #333;
-    border-radius: 2px;
-    outline: none;
-  }
-  .slider-wrapper input[type="range"]::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 14px;
-    height: 14px;
-    background: #000;
-    border: 2px solid #fff;
-    border-radius: 50%;
-    cursor: pointer;
-  }
-  .slider-wrapper input[type="range"]::-moz-range-thumb {
-    width: 14px;
-    height: 14px;
-    background: #000;
-    border: 2px solid #fff;
-    border-radius: 50%;
-    cursor: pointer;
-  }
-  .slider-wrapper input[type="number"] { width: 60px; text-align: right; }
-  .action-buttons { display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 8px; }
-  .align-buttons { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; }
-  .align-buttons .btn { padding: 8px; }
-  .align-buttons .btn.active { background: var(--panel-2); }
-  .align-buttons .btn svg { width: 18px; height: 18px; }
-  #multiSelectInspector .btn-group { display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 16px; }
-
-  .layers-list .layer-item { display: flex; align-items: center; gap: 8px; padding: 8px; border-radius: 6px; border: 1px solid var(--border); background: var(--panel-2); font-size: 12px; cursor: pointer; }
-  .layers-list .layer-item.active { border-color: var(--accent); background: #2a2a2a; }
-  .layers-list .layer-item .layer-name { flex-grow: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 4px 0;}
-  .layers-list .layer-item .layer-actions { display: flex; gap: 4px; }
-  .layers-list .layer-item .layer-actions button { padding: 4px; line-height: 0; }
-  .layers-list .layer-item[data-locked="true"] { opacity: 0.6; }
-
-.data-links-object-item {
-    padding: 8px 12px;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 13px;
-    transition: background .2s, border-color .2s;
-    height: 72px;
+  /* --- COMPACT INSPECTOR STYLES --- */
+  #inspector, #multiSelectInspector {
     display: flex;
     flex-direction: column;
-    justify-content: flex-start;
+    gap: 8px;
+  }
+  #inspector h3, #multiSelectInspector h3 {
+    margin: 0 0 4px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+    font-size: 10px;
+  }
+  
+  /* Reduce stack gaps */
+  .stack { gap: 6px !important; margin-bottom: 8px; }
+  .prop-grid { gap: 6px; margin-bottom: 8px; }
+  
+  /* Compact prop rows */
+  .prop-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 4px;
+  }
+  .prop-row label {
+    flex: 0 0 60px;
+    font-size: 10px;
+    color: var(--muted);
+    margin: 0;
+  }
+  .prop-row input, .prop-row select {
+    flex: 1;
+    height: 26px;
+    font-size: 11px;
+  }
+  
+  /* Slider rows */
+  .slider-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+  }
+  .slider-wrapper input[type="range"] {
+    flex: 1;
+    height: 3px;
+    border-radius: 2px;
+    accent-color: var(--accent);
+  }
+  .slider-wrapper input[type="number"] {
+    width: 44px;
+    text-align: center;
+    height: 24px;
+  }
+  
+  /* Section dividers - more compact */
+  .inspector-section {
+    padding: 8px;
+    background: var(--bg);
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    margin-bottom: 6px;
+  }
+  .inspector-section h4 {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+    margin: 0 0 8px;
+  }
+  
+  /* Color picker compact */
+  .color-picker-wrapper {
+    height: 26px;
+  }
+  .color-picker-wrapper input[type="color"] {
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    border: none;
+    cursor: pointer;
+  }
+  .color-picker-wrapper input[type="text"] {
+    height: 22px;
+    border: none;
+    background: transparent;
+    padding: 0 4px;
+    font-size: 11px;
+  }
+  
+  /* Buttons in inspector */
+  #inspector .btn, #multiSelectInspector .btn {
+    height: 28px;
+    font-size: 11px;
+    padding: 0 10px;
+  }
+  
+  /* noSelection compact */
+  #noSelection {
+    padding: 16px 12px;
+  }
+  #noSelection h4 { font-size: 12px; margin-bottom: 8px; }
+  #noSelection p { font-size: 11px; margin-bottom: 8px; }
+
+
+
+/* --- UI/UX polish patch (2026-01-16) --- */
+:root{
+  --canvas-bg:#0a0e1a;
+  --canvas-dot:rgba(59,130,246,.12);
+  --page-outline:rgba(255,255,255,.10);
+}
+body.light-mode{
+  --canvas-bg:#f1f5f9;
+  --canvas-dot:rgba(37,99,235,.10);
+  --page-outline:rgba(15,23,42,.12);
 }
 
-.data-links-object-item:hover { background: var(--panel-2); }
-.data-links-object-item[aria-selected="true"] { background: #2a2a2a; border-color: var(--accent); }
-.data-links-object-item .muted { font-size: 11px; }
-.bindings-editor-container { display: flex; flex-direction: column; }
-#dataLinksEditorContent { display: flex; flex-direction: column; flex-grow: 1; min-height: 0; }
-.links-list-wrapper { flex-grow: 1; overflow-y: auto; padding-right: 8px; }
-.add-link-button-wrapper { flex-shrink: 0; padding-top: 12px; margin-top: 8px; border-top: 1px solid var(--border); }
-.ai-bubble { position: absolute; bottom: 24px; right: 24px; width: 56px; height: 56px; background: var(--accent); color: var(--bg); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,.3); z-index: 20; transition: transform .2s ease-in-out; }
-.ai-bubble:hover { transform: scale(1.1); }
-#aiLoadingSpinner { display: inline-flex; align-items: flex-end; gap: 2px; }
-#aiLoadingSpinner span { animation: blink 1.2s infinite; font-size: 24px; line-height: 1; }
-#aiLoadingSpinner span:nth-child(2) { animation-delay: 0.2s; }
-#aiLoadingSpinner span:nth-child(3) { animation-delay: 0.4s; }
-@keyframes blink { 0%, 100% { opacity: 0.2; } 50% { opacity: 1; } }
-#newKeyDisplay { background: var(--bg); padding: 1rem; border-radius: 8px; border: 1px solid var(--border); font-family: monospace; word-break: break-all; }
-.api-key-item { display: flex; justify-content: space-between; align-items: center; background: var(--panel-2); padding: 8px 12px; border-radius: 8px; font-family: monospace; }
-body.light-mode { --bg:#f5f5f5; --fg:#111; --muted:#555; --panel:#fff; --panel-2:#f0f0f0; --border:#ddd; --accent:#111; color: white; }
-.settings-section { border: 1px solid var(--border); border-radius: 12px; height: fit-content; padding: 16px; }
-.settings-section h4 { margin: 0 0 12px; font-size: 14px; text-transform: uppercase; letter-spacing: .05em; color: var(--fg); }
-.main { display: grid; grid-template-columns: minmax(200px, 1fr) 5px 6fr 5px minmax(260px, 1.5fr); gap: 0; padding: 12px; min-height: 0; }
-.resizer { background: var(--border); cursor: col-resize; z-index: 10; }
-.panel-toggle { position: absolute; top: 50%; z-index: 20; width: 28px; height: 28px; padding: 0; border: 1px solid var(--border); background: var(--panel-2); color: var(--fg); cursor: pointer; border-radius: 50%; box-shadow: 0 2px 8px rgba(0,0,0,.2); transform: translateY(-50%); display: flex; align-items: center; justify-content: center; transition: background .2s, transform .2s ease-in-out; }
-.panel-toggle:hover { background: var(--panel); transform: translateY(-50%) scale(1.1); }
-#left-panel-toggle { left: 100%; margin-left: -14px; }
-#right-panel-toggle { right: 100%; margin-right: -14px; }
-.panel-toggle svg { width: 18px; height: 18px; }
-#start-tour-btn { width: 38px; height: 38px; border-radius: 50%; padding: 0; font-size: 18px; font-weight: bold; }
-#tour-modal { position: fixed; z-index: 1001; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; width: 300px; box-shadow: 0 8px 24px rgba(0,0,0,.4); display: none; flex-direction: column; transition: all 0.4s ease-in-out; }
-#tour-modal-header { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-bottom: 1px solid var(--border); cursor: move; }
-#tour-modal-header h4 { margin: 0; font-size: 14px; }
-#tour-modal-controls button { padding: 4px; line-height: 0; }
-#tour-modal-content { padding: 12px; font-size: 13px; line-height: 1.5; }
-#tour-modal-content p { margin: 0 0 10px; }
-#tour-modal-content ul { margin: 0; padding-left: 18px; }
-#tour-modal-nav { display: flex; justify-content: space-between; padding: 12px; margin-top: auto; border-top: 1px solid var(--border); }
-#tour-highlight { position: fixed; z-index: 1000; background: rgba(0, 150, 255, 0.15); border: 2px solid #0099ff; border-radius: 8px; box-shadow: 0 0 0 9999px rgba(0,0,0,0.5); pointer-events: none; display: none; transition: all 0.4s ease-in-out; }
-  
-  /* NEW: Left Panel Tabs - H3 Style */
-  .panel-tabs { display: flex; gap: 16px; border-bottom: 1px solid var(--border); margin: 0 -12px 12px -12px; padding: 0 12px;}
-  .panel-tab-btn { flex: 0; border: none; background: transparent; padding: 0 0 8px 0; cursor: pointer; margin:0; font-size:12px; color: var(--muted); text-transform:uppercase; letter-spacing:.1em; font-weight: 600; border-bottom: 2px solid transparent; transition: color .2s, border-color .2s; }
-  .panel-tab-btn.active { color: var(--fg); border-bottom-color: var(--accent); }
-  .panel-tab-btn:hover { color: var(--fg); }
-  .panel-tab-content { display: none; flex-direction: column; min-height: 0; flex: 1; }
-  .panel-tab-content.active { display: flex; }
+.canvas-wrap{
+  background-color:var(--canvas-bg) !important;
+  background-image:radial-gradient(var(--canvas-dot) 1px, transparent 0) !important;
+}
 
-  #elements-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 8px; margin-top: 8px; }
-  .element-chip { background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; padding: 8px; cursor: grab; user-select: none; transition: border-color .2s; }
-  .element-chip:hover { border-color: #555; }
-  .element-chip img { width: 100%; height: auto; object-fit: contain; }
+/* Make number inputs look modern (hide default spinners) */
+input[type="number"]{
+  -moz-appearance:textfield;
+}
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button{
+  -webkit-appearance:none;
+  margin:0;
+  background:transparent;
+}
 
-  #visualCropModal .modal { width: 80vw; height: 85vh; max-width: 1200px; }
-  #visualCropContainer { flex-grow: 1; position: relative; background: var(--bg); border-radius: 8px; overflow: hidden; }
+/* Modern color picker */
+.color-picker-wrapper{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  height:32px;
+  padding:0 8px;
+  background:var(--panel-2);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+}
+.color-picker-wrapper input[type="text"]{
+  height:28px;
+  border:none;
+  background:transparent;
+  padding:0;
+  font-size:12px;
+}
+.color-picker-wrapper input[type="color"]{
+  width:28px;
+  height:28px;
+  border:none;
+  background:transparent;
+  padding:0;
+  border-radius:8px;
+  cursor:pointer;
+}
+.color-picker-wrapper input[type="color"]::-webkit-color-swatch-wrapper{ padding:0; }
+.color-picker-wrapper input[type="color"]::-webkit-color-swatch{ border:none; border-radius:8px; }
 
-  /* NEW: Floating Modals */
-  .floating-modal {
-    position: fixed; /* 10. Fix positioning */
-    display: none; z-index: 60;
-    background: var(--panel); border: 1px solid var(--border);
-    border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,.4);
-    padding: 8px; max-height: 400px; overflow-y: auto;
-  }
-  #template-loader-modal .template-grid {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
-  }
-  #template-loader-modal .template-item {
-    padding: 12px; border: 1px solid var(--border); border-radius: 8px;
-    cursor: pointer; background: var(--panel-2); text-align: center;
-  }
-  #template-loader-modal .template-item:hover { border-color: #555; }
-  .template-modal-tabs { display: flex; gap: 8px; border-bottom: 1px solid var(--border); margin-bottom: 8px;}
-  .template-modal-tab { flex: 1; text-align: center; background: none; border: none; color: var(--muted); padding: 8px; cursor: pointer; border-bottom: 2px solid transparent; }
-  .template-modal-tab.active { color: var(--fg); border-bottom-color: var(--accent); }
+/* Tutorial always above everything */
+#tour-highlight{ z-index: 10050 !important; }
+#tour-modal{ z-index: 10060 !important; }
 
-  /* 8. Floating Linker Style */
-  #floating-linker {
-    position: fixed; /* Use fixed for viewport positioning */
-    display: none; z-index: 30;
-    background: var(--panel); padding: 8px; border-radius: 8px;
-    border: 1px solid var(--border); box-shadow: 0 4px 12px rgba(0,0,0,.3);
-    flex-direction: column; gap: 8px;
-  }
-  .floating-linker-actions { display: flex; gap: 4px; }
-  .floating-linker-actions .btn { padding: 6px; }
+/* Template loader should float */
+#template-loader-modal{ position: fixed !important; z-index: 10040 !important; }
 
-  /* 4. In-app Notification Modal */
-  #notification-modal {
-    position: fixed; top: -100px; left: 50%;
-    transform: translateX(-50%);
-    background: var(--panel); border: 1px solid var(--border);
-    padding: 12px 24px; border-radius: 12px;
-    box-shadow: 0 8px 24px rgba(0,0,0,.4);
-    z-index: 100;
-    transition: top 0.4s ease-in-out;
-  }
+/* Page outline visible even on white */
 
-  /* 5. Unload Data Button */
-  #unloadDataBtn {
-      cursor: pointer; margin-left: 8px; font-weight: bold; color: var(--muted);
-  }
-  #unloadDataBtn:hover { color: var(--fg); }
+/* Smaller align buttons */
+.align-btn{ width:32px !important; height:32px !important; padding:0 !important; }
+
+/* Ensure hidden panels don't peek */
+.panel.left, .panel.right{ overflow:hidden; }
+.panel.collapsed{ width:0 !important; min-width:0 !important; border:none !important; }
 
 </style>
 </head>
 <body>
     <nav>
-        <a href="/" class="logo">
+        <a href="dashboard.html" class="logo">
             <img src="assets/images/android-chrome-512x512.png" alt="CSVLink Logo" class="logo-icon">
             <span>CSVLink</span>
         </a>
@@ -376,32 +704,44 @@ body.light-mode { --bg:#f5f5f5; --fg:#111; --muted:#555; --panel:#fff; --panel-2
 
 <input type="file" id="imageUpload" accept="image/*" style="display:none;" />
 <input type="file" id="imageFillUpload" accept="image/*" style="display:none;" />
+<input type="file" id="fontUpload" accept=".ttf,.otf,.woff,.woff2" style="display:none;" />
 <input type="file" id="jsonUpload" accept=".json" style="display:none;" />
 
 
 <div class="app">
   <header>
-    <div class="toolbar">
-      <input id="titleInput" type="text" placeholder="Untitled_Template" value="Untitled_Template" style="min-width: 200px;"/>
-      <div class="row" title="Page Dimensions (W x H)">
-            <input id="pageWidth" type="number" value="768" min="100" max="10000" style="width:90px;"/>
-            <span class="muted">x</span>
-            <input id="pageHeight" type="number" value="1024" min="100" max="10000" style="width:90px;"/>
-        </div>
+    <input id="titleInput" type="text" placeholder="Untitled" value="Untitled_Template"/>
+    <input id="pageWidth" type="number" value="768" min="100" max="10000" title="Width"/>
+    <span class="muted">×</span>
+    <input id="pageHeight" type="number" value="1024" min="100" max="10000" title="Height"/>
+    
+    <div class="toolbar-group">
+      <button id="undoBtn" class="btn ghost" title="Undo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3l3 2.7"/></svg></button>
+      <button id="redoBtn" class="btn ghost" title="Redo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l-3 2.7"/></svg></button>
     </div>
-      <div class="toolbar-group">
-        <button id="undoBtn" class="btn ghost" title="Undo (Ctrl+Z)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3l3 2.7"/></svg></button>
-        <button id="redoBtn" class="btn ghost" title="Redo (Ctrl+Y)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l-3 2.7"/></svg></button>
+
+    <div class="toolbar-group">
+      <button id="toolbarLoadTemplateBtn" class="btn ghost"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg> Templates</button>
     </div>
-    <div class="toolbar" style="margin-left: auto;">
-        <span id="saveStatus" class="muted" style="margin-right: 16px;"></span>
-        <button id="start-tour-btn" class="btn ghost" title="Start Tutorial">?</button>
-        <label for="csvInput" class="btn ghost">Load Data</label>
-        <input id="csvInput" type="file" accept=".csv,.xlsx,.xls" style="display:none;"/>
-        <span id="fileName" class="muted" style="max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">No file selected</span>
-        <span id="unloadDataBtn" title="Unload data file" style="display:none;">&times;</span>
-        <button id="settingsBtn" class="btn ghost" title="Settings"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 0 2l-.15.08a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l-.22-.38a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1 0 2l.15.08a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg></button>
-    </div>
+    
+    <div style="flex: 1;"></div>
+    
+    <span id="saveStatus" class="muted" style="font-size: 11px;"></span>
+    <button id="start-tour-btn" class="btn ghost" title="Tutorial">?</button>
+    <label for="csvInput" class="btn ghost" style="font-size: 11px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> Load Data</label>
+    <button id="csvViewBtn" class="btn ghost" title="View/Edit data" style="font-size: 11px;">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h18v18H3z"></path><path d="M3 9h18"></path><path d="M9 21V9"></path></svg>
+      CSV Data
+    </button>
+    <input id="csvInput" type="file" accept=".csv,.xlsx,.xls" style="display:none;"/>
+    <span id="fileName" class="muted" style="max-width: 80px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 10px;"></span>
+    <span id="unloadDataBtn" title="Unload" style="display:none; cursor: pointer;">&times;</span>
+    <button id="settingsBtn" class="btn ghost" title="Settings"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 0 2l-.15.08a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l-.22-.38a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1 0 2l.15.08a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/></svg></button>
+      <button id="themeIconBtn" class="btn ghost icon-only" title="Toggle theme" aria-label="Toggle theme">
+        <svg id="themeIconSvg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+      </button>
   </header>
 
   <main class="main" id="main-layout">
@@ -425,6 +765,13 @@ body.light-mode { --bg:#f5f5f5; --fg:#111; --muted:#555; --panel:#fff; --panel-2
                 <div class="shape-chip" draggable="true" data-add="arrow"><svg viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7" fill="none"></path></svg><span>Arrow</span></div>
                 <div class="shape-chip" draggable="true" data-add="table"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="3" y1="15" x2="21" y2="15"></line><line x1="9" y1="3" x2="9" y2="21"></line><line x1="15" y1="3" x2="15" y2="21"></line></svg><span>Table</span></div>
                 <div class="shape-chip" draggable="true" data-add="line"><svg viewBox="0 0 24 24"> <path d="M4 12h16" fill="none"></path> </svg> <span>Line</span></div>
+            </div>
+        </div>
+        
+        <div id="templates-content" class="panel-tab-content">
+            <div id="sidebar-templates-grid" class="stack" style="gap:12px; padding: 4px;">
+                <p class="muted" style="font-size: 11px; text-align: center; padding: 20px;">Open the template library to browse and load professional designs.</p>
+                <button id="openLoaderFromSidebar" class="btn primary" style="width: 100%;">Open Template Library</button>
             </div>
         </div>
 
@@ -455,9 +802,6 @@ body.light-mode { --bg:#f5f5f5; --fg:#111; --muted:#555; --panel:#fff; --panel-2
             <div class="stack" id="pageInspector">
                 <p class="muted" style="margin:0 0 12px; font-size:13px; text-align:center;">Select an element to edit its properties or modify the page below.</p>
             </div>
-            <div style="position: relative;">
-              <button id="loadTemplateBtnPage" class="btn ghost" style="width:100%; margin-top:12px;">Load Template</button>
-            </div>
         </div>
         <div id="inspector" style="display:none;"></div>
         <div id="multiSelectInspector" style="display:none;"></div>
@@ -469,8 +813,8 @@ body.light-mode { --bg:#f5f5f5; --fg:#111; --muted:#555; --panel:#fff; --panel-2
       <div class="toolbar-group">
         <select id="exportFormatSelect">
             <option value="pdf">PDF</option>
-            <option value="png">PNG</option>
-            <option value="jpg">JPG</option>
+            <option value="png">PNG ★</option>
+            <option value="jpg">JPG ★</option>
             <option value="json">JSON</option>
         </select>
         <button id="exportBtn" class="btn">Export</button>
@@ -495,8 +839,10 @@ body.light-mode { --bg:#f5f5f5; --fg:#111; --muted:#555; --panel:#fff; --panel-2
 <div id="floating-linker">
     <div class="floating-linker-actions">
         <button id="floatingLinkBtn" class="btn ghost"></button>
-        <button id="duplicateBtn" title="Duplicate" class="btn ghost"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>
-        <button id="deleteBtn" title="Delete" class="btn ghost"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>
+        <button id="bringToFrontBtn" title="Bring to Front" class="btn ghost"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5l6 6m-6-6l-6 6M12 19V5"/></svg></button>
+        <button id="sendToBackBtn" title="Send to Back" class="btn ghost"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19l-6-6m6 6l6-6M12 5v14"/></svg></button>
+        <button id="duplicateBtn" title="Duplicate" class="btn ghost"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>
+        <button id="deleteBtn" title="Delete" class="btn ghost"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>
     </div>
     <div id="floatingColumnList" class="floating-modal" style="position: static; display: none; width: 200px;">
         <input type="search" id="floatingColumnSearch" placeholder="Search..." style="margin-bottom: 8px; width: 100%;">
@@ -504,7 +850,7 @@ body.light-mode { --bg:#f5f5f5; --fg:#111; --muted:#555; --panel:#fff; --panel-2
     </div>
 </div>
 
-<div id="notification-modal"></div>
+<div id="toast-container"></div>
 
 <div id="proLimitModal" class="modal-backdrop">
     <div class="modal" style="width: 420px;">
@@ -582,8 +928,9 @@ body.light-mode { --bg:#f5f5f5; --fg:#111; --muted:#555; --panel:#fff; --panel-2
   <div class="modal" style="width: 500px;">
     <div class="row" style="justify-content:space-between;align-items:center;gap:12px;"><h3>AI Template Assistant</h3><button id="aiCloseModal" class="btn ghost" style="padding: 4px 8px; line-height: 1;">&times;</button></div>
     <div class="stack" style="margin-top: 16px; gap: 12px;">
-       <div class="stack"><label for="aiApiKey">Google AI Studio API Key <a href="https://aistudio.google.com/apikey" target="_blank" id="get-it-btn">(Get it)</a></label><input type="password" id="aiApiKey" placeholder="Enter your API key"></div>
-      <div class="stack"><label for="aiPrompt">Request</label><textarea id="aiPrompt" rows="4" placeholder="e.g., 'Create an invoice template with fields for item, quantity, price, and total.'"></textarea></div>
+       <div class="stack"><label for="aiApiKey">Google AI Studio API Key <a href="https://aistudio.google.com/apikey" target="_blank" id="get-it-btn">(Get it)</a></label><form autocomplete="off" onsubmit="return false;"><input type="password" id="aiApiKey" placeholder="Enter your API key"></form></div>
+      <div class="stack"><label>Mode</label><div class="row" style="gap:8px"><label style="display:flex; gap:6px; align-items:center; font-size:12px; color:var(--fg)"><input id="aiModeNew" type="radio" name="aiMode" value="new" checked> New template</label><label style="display:flex; gap:6px; align-items:center; font-size:12px; color:var(--fg)"><input id="aiModeModify" type="radio" name="aiMode" value="modify"> Modify current</label></div></div>
+<div class="stack"><label for="aiPrompt">Request</label><textarea id="aiPrompt" rows="4" placeholder="e.g., 'Create an invoice template with fields for item, quantity, price, and total.'"></textarea></div>
       <div id="pasted-image-container" style="display: none; text-align: center;"><label>Pasted Image Preview:</label><img id="pasted-image" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="Pasted Image" style="max-width: 100%; max-height: 150px; border: 1px solid #ccc; padding: 5px; margin-top: 5px; object-fit: contain;"></div>
     </div>
     <div class="row" style="margin-top:16px; justify-content:flex-end;"><button id="aiSendBtn" class="btn" style="background-color: white; color: black;"><span id="aiSendBtnText">Send Request</span><span id="aiLoadingSpinner" style="display: none;"><span>.</span><span>.</span><span>.</span></span></button></div>
@@ -595,6 +942,48 @@ body.light-mode { --bg:#f5f5f5; --fg:#111; --muted:#555; --panel:#fff; --panel-2
         <div class="row" style="justify-content:space-between;align-items:center;gap:12px;"><h3>Settings & API Keys</h3><button id="closeSettingsModal" class="btn ghost">&times;</button></div>
         <div id="settingsContent" class="stack" style="margin-top: 16px; gap: 12px;"></div>
     </div>
+ </div>
+
+<div id="csvViewModal" class="modal-backdrop">
+  <div class="modal" style="width: 1000px; max-width: calc(100vw - 40px); height: 85vh; display: flex; flex-direction: column;">
+    <div class="row" style="justify-content:space-between;align-items:center;gap:12px; padding-bottom: 12px; border-bottom: 1px solid var(--border);">
+      <div class="row" style="gap: 12px; align-items: center;">
+        <h3 style="margin: 0;">Data Manager</h3>
+        <span id="csvViewMeta" class="muted" style="font-size: 11px;"></span>
+      </div>
+      <div class="row" style="gap: 8px;">
+        <button id="clearDataBtn" class="btn ghost" style="color:var(--danger)">Clear All</button>
+        <button id="closeCsvView" class="btn ghost" style="font-size: 20px;">&times;</button>
+      </div>
+    </div>
+    
+    <div class="row" style="margin-top:16px; gap:120px; align-items:center;">
+      <div style="position: relative; flex: 1;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--muted);"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        <input id="csvViewSearch" type="text" placeholder="Search data..." style="width: 100%; padding-left: 32px;" />
+      </div>
+      <div class="row" style="gap: 10px;">
+        <button id="addRowBtn" class="btn primary"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg> Add Row</button>
+        <button id="addColBtn" class="btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg> Add Column</button>
+        <label for="csvInput" class="btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> Import File</button>
+      </div>
+    </div>
+
+    <div id="csvDropZone" style="flex: 1; border: 2px dashed var(--border); border-radius: 12px; margin-top: 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; background: rgba(255,255,255,0.02); transition: all 0.2s;">
+        <div style="width: 64px; height: 64px; border-radius: 50%; background: var(--panel-2); display: flex; align-items: center; justify-content: center; color: var(--accent);">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        </div>
+        <div style="text-align: center;">
+            <h4 style="margin-bottom: 4px;">Import your data</h4>
+            <p class="muted">Drag & drop CSV or Excel file here, or paste from clipboard.</p>
+        </div>
+        <button class="btn" onclick="document.getElementById('csvInput').click()">Browse Files</button>
+    </div>
+
+    <div id="csvViewContent" style="display: none; flex: 1; margin-top:16px; overflow:auto; border:1px solid var(--border); border-radius: var(--radius); position: relative;">
+        <!-- Table will be injected here -->
+    </div>
+  </div>
 </div>
 
 <div id="tour-highlight"></div>
@@ -613,18 +1002,27 @@ import { supabase } from './assets/js/supabase-client.js';
 
 // --- UTILITIES & SETUP ---
 const $ = (sel) => document.querySelector(sel);
+const $$ = (sel) => Array.from(document.querySelectorAll(sel));
+const on = (sel, evt, handler, opts) => { const el = $(sel); if (!el) return null; el.addEventListener(evt, handler, opts); return el; };
+const onClick = (sel, handler) => { const el = $(sel); if (!el) return null; el.addEventListener('click', handler); return el; };
+const setText = (sel, value) => { const el = $(sel); if (el) el.textContent = value; };
+
 const { jsPDF } = window.jspdf;
 
 // --- STATE ---
 const canvasWrapper = $('.canvas-wrap');
 // 9. Preserve layer stacking
 const canvas = new fabric.Canvas('c', { backgroundColor: 'transparent', selection: true, preserveObjectStacking: true });
+// High-quality rendering (avoid blurry output)
+canvas.enableRetinaScaling = true;
+canvas.imageSmoothingEnabled = true;
 let pageRect;
 let bindings = new Map();
 let workbook, worksheet, headers = [], dataRows = [];
 let gridEnabled = false, snapEnabled = true;
 let gridCellSize = 32;
-let historyStack = [];
+let historyStack = [];// history snapshots
+let lastHistorySig = null;
 let historyIndex = -1;
 let historyLocked = false;
 let _clipboard = null;
@@ -640,6 +1038,224 @@ LemonSqueezy.Setup({ eventHandler: (event) => { if (event.event === 'Checkout.Su
 // --- DEBOUNCE UTILITY ---
 function debounce(func, delay = 1500) { let timeout; const debounced = (...args) => { clearTimeout(timeout); timeout = setTimeout(() => { func.apply(this, args); }, delay); }; debounced.clear = () => { clearTimeout(timeout); }; return debounced; }
 
+const escapeHtml = (str) => {
+    if (typeof str !== 'string') return str;
+    return str.replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+};
+
+function renderCsvView(filterText = '') {
+  const wrap = $('#csvViewContent');
+  const dropZone = $('#csvDropZone');
+  const meta = $('#csvViewMeta');
+  if(!wrap) return;
+
+  if(!headers || headers.length===0 || !dataRows || dataRows.length===0){
+    wrap.style.display = 'none';
+    if(dropZone) dropZone.style.display = 'flex';
+    if(meta) meta.textContent = '';
+    return;
+  }
+  
+  if(dropZone) dropZone.style.display = 'none';
+  wrap.style.display = 'block';
+
+  const q = (filterText || '').toLowerCase().trim();
+  const visibleIndices = [];
+  dataRows.forEach((r, i) => {
+    if(!q || headers.some(h => String(r[h]??'').toLowerCase().includes(q))) visibleIndices.push(i);
+  });
+  
+  if(meta) meta.textContent = `${dataRows.length.toLocaleString()} row(s) • ${headers.length} column(s)`;
+
+  const maxRows = Math.min(200, visibleIndices.length);
+  let html = `<table style="width:100%; border-collapse:collapse; font-size:12px; border-style: hidden;">`;
+  
+  // Headers
+  html += '<thead><tr>';
+  headers.forEach((h, i) => {
+      html += `<th style="position:sticky; top:0; background:var(--panel-2); border-bottom:1px solid var(--border); border-right:1px solid var(--border); padding:0; text-align:left; min-width:140px; z-index: 10;">
+        <div style="display:flex; align-items:center; group">
+          <div contenteditable="true" onblur="updateHeader(${i}, this.innerText)" style="flex:1; padding:12px; outline:none; font-weight: 600; color: var(--fg); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(String(h))}</div>
+          <button onclick="deleteColumn(${i})" style="background:none; border:none; color:var(--muted); cursor:pointer; padding:8px 12px; font-size:16px; transition: color 0.2s;" onmouseover="this.style.color='var(--danger)'" onmouseout="this.style.color='var(--muted)'" title="Delete Column">&times;</button>
+        </div>
+      </th>`;
+  });
+  // Add column button in header
+  html += `<th style="position:sticky; top:0; background:var(--panel-2); border-bottom:1px solid var(--border); width:50px; text-align:center; z-index: 10;">
+    <button onclick="document.getElementById('addColBtn').click()" class="btn ghost" style="width:32px; height:32px; padding:0; border-radius:50%; border: 1px dashed var(--border); color: var(--muted);" title="Add Column">+</button>
+  </th>`;
+  html += '</tr></thead>';
+
+  html += '<tbody>';
+  for(let i=0; i<maxRows; i++){
+    const dataIndex = visibleIndices[i];
+    const row = dataRows[dataIndex] || {};
+    html += `<tr style="transition: background 0.1s;" onmouseover="this.style.background='rgba(59,130,246,0.03)'" onmouseout="this.style.background='transparent'">` + headers.map((h, colIndex) => {
+        const val = escapeHtml(String(row[h]??''));
+        return `<td contenteditable="true" 
+            onblur="updateCsvCell(${dataIndex}, '${escapeHtml(h)}', this.innerText)" 
+            style="border-bottom:1px solid var(--border); border-right:1px solid var(--border); padding:10px 12px; color:var(--fg); outline:none; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${val}</td>`;
+    }).join('') + `
+      <td style="border-bottom:1px solid var(--border); text-align:center;">
+        <button onclick="deleteRow(${dataIndex})" style="background:none; border:none; color:var(--muted); cursor:pointer; font-size:18px; padding: 4px 10px; transition: color 0.2s;" onmouseover="this.style.color='var(--danger)'" onmouseout="this.style.color='var(--muted)'" title="Delete Row">&times;</button>
+      </td>
+    </tr>`;
+  }
+  
+  // Last row for "Add Row" button
+  html += `<tr>
+    <td colspan="${headers.length}" style="padding: 0; border-bottom:1px solid var(--border);">
+      <button onclick="document.getElementById('addRowBtn').click()" style="width:100%; height:44px; background:transparent; border:none; color:var(--muted); cursor:pointer; font-size:13px; font-weight:500; transition: all 0.2s; display: flex; align-items:center; justify-content:center; gap: 8px;" onmouseover="this.style.background='rgba(59,130,246,0.05)'; this.style.color='var(--accent)'" onmouseout="this.style.background='transparent'; this.style.color='var(--muted)'"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg> Add Row</button>
+    </td>
+    <td style="border-bottom:1px solid var(--border);"></td>
+  </tr>`;
+
+  html += '</tbody></table>';
+  
+  if(visibleIndices.length > maxRows){
+    html += `<div class="muted" style="padding:16px; text-align:center; background: var(--panel); border-top: 1px solid var(--border);">Showing first ${maxRows} rows of ${visibleIndices.length.toLocaleString()}. Use search to refine.</div>`;
+  }
+  wrap.innerHTML = html;
+}
+
+window.updateCsvCell = (rowIndex, colKey, newVal) => {
+    if (dataRows[rowIndex]) {
+        dataRows[rowIndex][colKey] = newVal;
+        requestSaveState(); 
+    }
+};
+
+window.updateHeader = (index, newVal) => {
+    const oldVal = headers[index];
+    if (oldVal === newVal || !newVal.trim()) return;
+    newVal = newVal.trim();
+    headers[index] = newVal;
+    dataRows.forEach(row => {
+        row[newVal] = row[oldVal];
+        delete row[oldVal];
+    });
+    bindings.forEach((b) => { if (b.column === oldVal) b.column = newVal; });
+    renderCsvView();
+    requestSaveState();
+};
+
+window.deleteRow = (index) => {
+    dataRows.splice(index, 1);
+    renderCsvView($('#csvViewSearch')?.value);
+    requestSaveState();
+};
+
+window.deleteColumn = (index) => {
+    const colName = headers[index];
+    if(confirm(`Delete column "${colName}" and all its data?`)) {
+        headers.splice(index, 1);
+        dataRows.forEach(row => delete row[colName]);
+        // Also remove bindings
+        bindings.forEach((bArr, oid) => {
+            const filtered = bArr.filter(b => b.column !== colName);
+            bindings.set(oid, filtered);
+        });
+        renderCsvView($('#csvViewSearch')?.value);
+        requestSaveState();
+    }
+};
+
+on('#addRowBtn', 'click', () => {
+    if (!headers.length) headers = ['Column 1', 'Column 2', 'Column 3'];
+    const newRow = {};
+    headers.forEach(h => newRow[h] = '');
+    dataRows.push(newRow);
+    renderCsvView($('#csvViewSearch')?.value);
+    requestSaveState();
+});
+
+on('#addColBtn', 'click', () => {
+    const newColName = prompt('Enter new column name:', `Column ${headers.length + 1}`);
+    if(!newColName) return;
+    if(headers.includes(newColName)) { alert('Column already exists.'); return; }
+    headers.push(newColName);
+    dataRows.forEach(r => r[newColName] = '');
+    renderCsvView($('#csvViewSearch')?.value);
+    requestSaveState();
+});
+
+on('#clearDataBtn', 'click', () => {
+    if(confirm('Are you sure you want to clear all data? This will also remove your column headers.')) {
+        headers = [];
+        dataRows = [];
+        renderCsvView();
+        requestSaveState();
+    }
+});
+
+on('#csvViewSearch', 'input', (e) => {
+    renderCsvView(e.target.value);
+});
+
+// Paste Handler for CSV Modal
+window.addEventListener('paste', (e) => {
+   if ($('#csvViewModal').style.display !== 'flex') return;
+   if (e.target.tagName === 'INPUT' || e.target.contentEditable === 'true') return;
+
+   e.preventDefault();
+   const clipboardData = e.clipboardData || window.clipboardData;
+   const pastedData = clipboardData.getData('Text');
+   if(!pastedData) return;
+   
+   const rows = pastedData.trim().split('\n').map(r => r.split('\t'));
+   if (rows.length === 0) return;
+
+   if (headers.length === 0) {
+       headers = rows[0].map((h, i) => h.trim() || `Col ${i+1}`);
+       const count = {};
+       headers = headers.map(h => { count[h] = (count[h] || 0) + 1; return count[h] > 1 ? `${h}_${count[h]}` : h; });
+       rows.shift();
+   }
+
+   rows.forEach(r => {
+       const rowObj = {};
+       headers.forEach((h, i) => { rowObj[h] = r[i] ? r[i].trim() : ''; });
+       dataRows.push(rowObj);
+   });
+   
+   renderCsvView($('#csvViewSearch')?.value);
+   requestSaveState();
+   showNotification(`Imported ${rows.length} rows from clipboard.`);
+});
+
+// Drag & Drop Handler for CSV Modal
+on('#csvViewModal', 'dragover', (e) => { 
+    e.preventDefault(); 
+    $('#csvDropZone').style.borderColor = 'var(--accent)'; 
+    $('#csvDropZone').style.background = 'rgba(59, 130, 246, 0.05)';
+});
+on('#csvViewModal', 'dragleave', (e) => { 
+    e.preventDefault(); 
+    $('#csvDropZone').style.borderColor = 'var(--border)'; 
+    $('#csvDropZone').style.background = 'rgba(255, 255, 255, 0.02)';
+});
+on('#csvViewModal', 'drop', async (e) => {
+    e.preventDefault();
+    $('#csvDropZone').style.borderColor = 'var(--border)';
+    $('#csvDropZone').style.background = 'rgba(255, 255, 255, 0.02)';
+    const file = e.dataTransfer.files[0];
+    if (file && (file.name.endsWith('.csv') || file.name.endsWith('.xlsx') || file.name.endsWith('.xls'))) {
+         const data = await file.arrayBuffer();
+         processFileData(data, file.name);
+         await cacheDataFile(file);
+    } else {
+        showNotification('Please drop a valid CSV or Excel file.', 'error');
+    }
+});
+
+function openCsvView() {
+    const modal = $('#csvViewModal');
+    if (!modal) return;
+    modal.style.display = 'flex';
+    renderCsvView($('#csvViewSearch')?.value);
+}
+
+function closeCsvView() { $('#csvViewModal').style.display = 'none'; }
 // --- AUTH & DATA LOADING ---
 async function initializeEditor() {
     applyTheme(localStorage.getItem('csvlink-theme') || 'dark');
@@ -651,19 +1267,21 @@ async function initializeEditor() {
         const { data: profile } = await supabase.from('profiles').select('role').eq('id', currentUser.id).single();
         if (profile) userRole = profile.role || 'free';
         // 6. Add "Become Pro" button
-        if (userRole === 'free') {
+        if (userRole === 'free' && !navLinks.querySelector('a[href="/#pricing"]')) {
             const proButton = document.createElement('a');
             proButton.href = '/#pricing';
             proButton.className = 'btn ghost';
-            proButton.textContent = 'Become Pro';
+            proButton.innerHTML = '★ Pricing';
             navLinks.insertBefore(proButton, navLinks.firstChild);
         }
     } else {
-        const proButton = document.createElement('a');
-        proButton.href = '/#pricing';
-        proButton.className = 'btn ghost';
-        proButton.textContent = 'Become Pro';
-        navLinks.insertBefore(proButton, navLinks.firstChild);
+        if (!navLinks.querySelector('a[href="/#pricing"]')) {
+            const proButton = document.createElement('a');
+            proButton.href = '/#pricing';
+            proButton.className = 'btn ghost';
+            proButton.innerHTML = '★ Pricing';
+            navLinks.insertBefore(proButton, navLinks.firstChild);
+        }
     }
     updateExportUI();
 
@@ -671,6 +1289,7 @@ async function initializeEditor() {
     const templateId = urlParams.get('id');
 
     initializeCanvas();
+    updateHistoryButtons();
     initializeVisualCropper();
     renderPageInspector();
     await loadCachedData();
@@ -737,6 +1356,12 @@ async function initializeEditor() {
     /* Other UI initialization */
     if (!localStorage.getItem('hasSeenTour')) startTour();
     initializeLeftPanelTabs();
+    
+    // Bind Load Template buttons
+    const bindLoader = (id) => on(id, 'click', (e) => toggleTemplateLoader(e.currentTarget));
+    bindLoader('#loadTemplateBtnPage');
+    bindLoader('#openLoaderFromSidebar');
+    bindLoader('#toolbarLoadTemplateBtn');
 }
 
 function showGuestWarning() { saveStatusEl.textContent = "Log in to save your work."; saveStatusEl.style.color = '#ff9800'; }
@@ -789,6 +1414,10 @@ async function loadTemplateFromDB(templateId, options = {}) {
 
     if (data && data.template_data) {
         const template = data.template_data;
+        if (template.data) {
+            headers = template.data.headers || [];
+            dataRows = template.data.rows || [];
+        }
         $('#titleInput').value = isPublic || options.purchased ? `Copy of ${data.title}` : (data.title || 'Untitled Template');
         $('#pageWidth').value = template.page.width || 768; $('#pageHeight').value = template.page.height || 1024;
         pageRect.set({ width: parseInt(template.page.width), height: parseInt(template.page.height) });
@@ -798,6 +1427,12 @@ async function loadTemplateFromDB(templateId, options = {}) {
             centerAndFitPage();
             historyStack = []; historyIndex = -1;
             requestSaveState(); 
+            // Also refresh UI
+            if (headers.length > 0) {
+                 $('#fileName').textContent = 'Saved Data';
+                 $('#unloadDataBtn').style.display = 'inline';
+                 updateExportUI();
+            }
             saveStatusEl.textContent = 'Template loaded.';
         });
     }
@@ -810,7 +1445,12 @@ const debouncedSave = debounce(async () => {
     if (objects.length === 0) { saveStatusEl.textContent = 'Cannot save empty template.'; return; }
 
     saveStatusEl.textContent = 'Saving...';
-    const fullTemplateData = { canvas: canvas.toJSON(['oid', 'name', 'isTable', 'isSvgGroup', 'rows', 'cols', 'colWidths', 'rowHeights', 'locked']), page: { title: $('#titleInput').value, width: $('#pageWidth').value, height: $('#pageHeight').value }, bindings: Array.from(bindings.entries()), };
+    const fullTemplateData = { 
+        canvas: canvas.toJSON(['oid', 'name', 'isTable', 'isSvgGroup', 'rows', 'cols', 'colWidths', 'rowHeights', 'locked']), 
+        page: { title: $('#titleInput').value, width: $('#pageWidth').value, height: $('#pageHeight').value }, 
+        bindings: Array.from(bindings.entries()),
+        data: { headers, rows: dataRows }
+    };
     
     if (currentTemplateId) {
         const { error } = await supabase.from('templates').update({ title: $('#titleInput').value, template_data: fullTemplateData }).eq('id', currentTemplateId);
@@ -819,19 +1459,110 @@ const debouncedSave = debounce(async () => {
         if (userRole === 'free') { const { count } = await supabase.from('templates').select('*', { count: 'exact', head: true }).eq('user_id', currentUser.id); if (count >= 5) { saveStatusEl.textContent = 'Free account limit (5 templates) reached.'; return; } }
         const { data, error } = await supabase.from('templates').insert({ user_id: currentUser.id, title: $('#titleInput').value, template_data: fullTemplateData }).select('id').single();
         if (error) { saveStatusEl.textContent = 'Error creating template.'; } 
-        else { currentTemplateId = data.id; const newUrl = `${window.location.pathname}?id=${currentTemplateId}`; window.history.replaceState({ path: newUrl }, '', newUrl); saveStatusEl.textContent = 'Template saved.'; }
+        else { 
+            currentTemplateId = data.id; 
+            const newUrl = `${window.location.pathname}?id=${currentTemplateId}`; 
+            window.history.replaceState({ path: newUrl }, '', newUrl); 
+            saveStatusEl.textContent = 'Template saved to your account.'; 
+        }
     }
 });
 
+function updateHistoryButtons() {
+    const undoBtn = $('#undoBtn');
+    const redoBtn = $('#redoBtn');
+    if (undoBtn) undoBtn.disabled = historyIndex <= 0;
+    if (redoBtn) redoBtn.disabled = historyIndex >= historyStack.length - 1;
+}
+
+function undo() {
+    if (historyIndex <= 0 || historyLocked) return;
+    if (typeof requestSaveState.clear === 'function') requestSaveState.clear();
+    historyLocked = true;
+    historyIndex--;
+    const state = historyStack[historyIndex];
+    
+    // Safety timeout to prevent lockup
+    const lockTimeout = setTimeout(() => { historyLocked = false; }, 3000);
+    
+    restoreFullState(state, () => {
+        clearTimeout(lockTimeout);
+        historyLocked = false;
+        updateHistoryButtons();
+    });
+}
+
+function redo() {
+    if (historyIndex >= historyStack.length - 1 || historyLocked) return;
+    if (typeof requestSaveState.clear === 'function') requestSaveState.clear();
+    historyLocked = true;
+    historyIndex++;
+    const state = historyStack[historyIndex];
+    
+    // Safety timeout to prevent lockup
+    const lockTimeout = setTimeout(() => { historyLocked = false; }, 3000);
+    
+    restoreFullState(state, () => {
+        clearTimeout(lockTimeout);
+        historyLocked = false;
+        updateHistoryButtons();
+    });
+}
+
+function restoreFullState(state, callback) {
+    if (!state) return;
+    headers = [...(state.data?.headers || [])];
+    dataRows = JSON.parse(JSON.stringify(state.data?.rows || []));
+    bindings = new Map(state.bindings || []);
+    if(state.title !== undefined) $('#titleInput').value = state.title;
+    if(state.page) {
+        $('#pageWidth').value = state.page.width;
+        $('#pageHeight').value = state.page.height;
+    }
+    
+    canvas.loadFromJSON(state.canvas, () => {
+        restoreCanvasStateAfterLoad();
+        renderLayers();
+        renderCsvView();
+        updateExportUI();
+        
+        // Sync the history signature to current state
+        lastHistorySig = JSON.stringify(state);
+        
+        if (typeof callback === 'function') callback();
+    });
+}
+
 const requestSaveState = debounce(() => {
     if (historyLocked) return;
-    // Only clear redo history if we're not at the end of the stack
+    
+    const snap = {
+        canvas: canvas.toJSON(['oid', 'name', 'isTable', 'isSvgGroup', 'rows', 'cols', 'colWidths', 'rowHeights', 'locked']),
+        data: { headers: [...headers], rows: JSON.parse(JSON.stringify(dataRows)) },
+        bindings: Array.from(bindings.entries()),
+        title: $('#titleInput').value,
+        page: { width: $('#pageWidth').value, height: $('#pageHeight').value }
+    };
+    
+    const sig = JSON.stringify(snap);
+    if (sig === lastHistorySig) { 
+        updateHistoryButtons(); 
+        return; 
+    }
+    
     if (historyIndex < historyStack.length - 1) {
         historyStack.splice(historyIndex + 1);
     }
-    historyStack.push(canvas.toJSON(['oid', 'name', 'isTable', 'isSvgGroup', 'rows', 'cols', 'colWidths', 'rowHeights', 'locked']));
+    
+    lastHistorySig = sig;
+    historyStack.push(snap);
+    const MAX_HISTORY = 40;
+    if (historyStack.length > MAX_HISTORY) {
+        historyStack.shift();
+    }
     historyIndex = historyStack.length - 1;
     updateHistoryButtons();
+    
     if (currentUser) {
         saveStatusEl.textContent = 'Unsaved changes...';
         debouncedSave();
@@ -840,21 +1571,39 @@ const requestSaveState = debounce(() => {
 
 // --- CANVAS & PAGE SETUP ---
 function initializeCanvas() {
-    fabric.Object.prototype.set({ transparentCorners: false, cornerStyle: 'circle', cornerColor: '#000000', cornerSize: 10, borderColor: '#000000', borderScaleFactor: 1, padding: 10, strokeUniform: true });
-    fabric.ActiveSelection.prototype.set({ cornerStyle: 'circle', cornerColor: '#000000', borderColor: 'black' });
+    fabric.Object.prototype.set({ transparentCorners: false, cornerStyle: 'circle', cornerColor: '#000000', cornerSize: 10, borderColor: '#000000', borderScaleFactor: 1, padding: 0, strokeUniform: true });
+    fabric.ActiveSelection.prototype.set({ cornerStyle: 'circle', cornerColor: '#000000', borderColor: 'black', padding: 0 });
     const resizeCanvas = () => { const { width, height } = canvasWrapper.getBoundingClientRect(); canvas.setWidth(width); canvas.setHeight(height); canvas.renderAll(); };
-    pageRect = new fabric.Rect({ left: 0, top: 0, width: 768, height: 1024, fill: '#fff', stroke: 'transparent', strokeWidth: 0, selectable: false, evented: false, hasControls: false, hasBorders: false, lockMovementX: true, lockMovementY: true, lockScalingX: true, lockScalingY: true, lockRotation: true, oid: 'pageRect' });
+    pageRect = new fabric.Rect({ left: 0, top: 0, width: 768, height: 1024, fill: '#fff', stroke: 'rgba(0,0,0,0.25)', strokeWidth: 1, selectable: false, evented: false, hasControls: false, hasBorders: false, lockMovementX: true, lockMovementY: true, lockScalingX: true, lockScalingY: true, lockRotation: true, oid: 'pageRect' });
     canvas.add(pageRect); resizeCanvas(); drawGrid(); new ResizeObserver(resizeCanvas).observe(canvasWrapper);
     canvas.on({ 
         'object:added': () => { requestSaveState(); renderLayers(); }, 
         'object:removed': () => { requestSaveState(); renderLayers(); }, 
         'object:modified': (e) => { requestSaveState(); if (e.target) { refreshInspector({target: e.target}); } },
         'object:moving': (e) => { handleSmartSnapping(e); updateFloatingLinkerPosition(e.target); },
-        'object:scaling': (e) => { updateLiveInspector(e); updateFloatingLinkerPosition(e.target); },
+        'object:scaling': (e) => { 
+            const obj = e.target;
+            if (obj && obj.type === 'textbox') {
+                const newFontSize = Math.round(obj.fontSize * obj.scaleX);
+                const newWidth = obj.width * obj.scaleX;
+                obj.set({
+                    fontSize: newFontSize,
+                    width: newWidth,
+                    scaleX: 1,
+                    scaleY: 1
+                });
+            }
+            updateLiveInspector(e); 
+            updateFloatingLinkerPosition(e.target); 
+        },
         'object:rotating': (e) => { updateLiveInspector(e); updateFloatingLinkerPosition(e.target); },
         'mouse:up': () => { clearSnapLines(); } // 7. Clear guides on mouse up
     });
     requestSaveState(); renderLayers();
+    addWheelPanFix();
+    
+    onClick('#undoBtn', undo);
+    onClick('#redoBtn', redo);
 }
 
 function keepPageRectAtBack() {
@@ -871,39 +1620,63 @@ window.addEventListener('paste', (e) => {
     }
 });
 const setPageDimensions = debounce(() => { if (!pageRect) return; const w = parseInt($('#pageWidth').value, 10) || 768; const h = parseInt($('#pageHeight').value, 10) || 1024; pageRect.set({ width: w, height: h }); canvas.centerObject(pageRect); pageRect.setCoords(); drawGrid(); canvas.renderAll(); requestSaveState(); }, 300);
-$('#titleInput').addEventListener("input", () => { requestSaveState(); }); $('#pageWidth').addEventListener('input', setPageDimensions); $('#pageHeight').addEventListener('input', setPageDimensions);
+on('#titleInput','input', () => { requestSaveState(); }); on('#pageWidth','input',setPageDimensions); on('#pageHeight','input',setPageDimensions);
 function drawGrid() { canvas.remove(...canvas.getObjects('line').filter(o => o.excludeFromExport)); if (!gridEnabled || !pageRect) { canvas.renderAll(); return; } const { width, height, left, top } = pageRect; const gridLines = []; const lineOption = { stroke: 'rgba(0,0,0,0.1)', selectable: false, evented: false, excludeFromExport: true }; const step = gridCellSize; for (let i = 1; i < (width / step); i++) gridLines.push(new fabric.Line([left + i * step, top, left + i * step, top + height], lineOption)); for (let i = 1; i < (height / step); i++) gridLines.push(new fabric.Line([left, top + i * step, left + width, top + i * step], lineOption)); canvas.add(...gridLines); gridLines.forEach(line => canvas.sendToBack(line)); canvas.sendToBack(pageRect); canvas.renderAll(); }
-$('#toggleGridBtn').addEventListener('click', () => { gridEnabled = !gridEnabled; $('#toggleGridBtn').classList.toggle('active', gridEnabled); drawGrid(); });
-$('#toggleSnapBtn').addEventListener('click', () => { snapEnabled = !snapEnabled; $('#toggleSnapBtn').classList.toggle('active', snapEnabled); });
+on('#toggleGridBtn','click', () => { gridEnabled = !gridEnabled; $('#toggleGridBtn').classList.toggle('active', gridEnabled); drawGrid(); });
+on('#toggleSnapBtn','click', () => { snapEnabled = !snapEnabled; $('#toggleSnapBtn').classList.toggle('active', snapEnabled); });
 const gridSizeInput = $('#gridSizeInput'); gridSizeInput.value = gridCellSize; gridSizeInput.addEventListener('input', (e) => { const newSize = Math.max(12, Math.min(64, parseInt(e.target.value, 10))); if (!isNaN(newSize) && gridCellSize !== newSize) { gridCellSize = newSize; drawGrid(); } });
-$('#closeColumnSelectModal').addEventListener('click', () => $('#columnSelectModal').style.display = 'none');
+on('#closeColumnSelectModal','click', () => $('#columnSelectModal').style.display = 'none');
 
 // --- CANVAS PANNING & ZOOM ---
+// Ensure wheel events are captured and do not scroll the page
+try {
+  canvas.upperCanvasEl.addEventListener('wheel', (ev) => { ev.preventDefault(); }, { passive: false });
+} catch(e) {}
+
+function addWheelPanFix(){
+  const el = canvas.upperCanvasEl;
+  if(!el) return;
+  // also prevent browser back/forward swipe on trackpads inside canvas
+  el.style.overscrollBehavior = 'contain';
+}
+
 let isPanning = false; let lastPosX, lastPosY;
+let isSpaceDown = false;
+
+window.addEventListener('keydown', e => { if (e.code === 'Space' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') { isSpaceDown = true; canvas.defaultCursor = 'grab'; canvas.setCursor('grab'); } });
+window.addEventListener('keyup', e => { if (e.code === 'Space') { isSpaceDown = false; canvas.defaultCursor = 'default'; canvas.setCursor('default'); } });
+
 canvas.on('mouse:wheel', function(opt) {
-  const e = opt.e; e.preventDefault(); e.stopPropagation();
-  const delta = e.deltaY;
-  if (e.shiftKey) {
-      const vpt = this.viewportTransform;
-      vpt[4] -= e.deltaX * 0.5;
-      vpt[5] -= e.deltaY * 0.5;
-      this.requestRenderAll();
-  } else {
+  const e = opt.e;
+  e.preventDefault();
+  e.stopPropagation();
+  
+  const isZoom = e.ctrlKey || e.metaKey;
+  
+  if (isZoom) {
       let zoom = canvas.getZoom();
-      zoom *= 0.999 ** delta;
+      zoom *= 0.999 ** e.deltaY;
       if (zoom > 20) zoom = 20;
       if (zoom < 0.05) zoom = 0.05;
-      canvas.zoomToPoint({ x: e.offsetX, y: e.offsetY }, zoom);
+      canvas.zoomToPoint({ x: opt.e.offsetX, y: opt.e.offsetY }, zoom);
+  } else {
+      // Natural panning with wheel
+      const vpt = this.viewportTransform;
+      vpt[4] -= e.deltaX || (e.shiftKey ? e.deltaY : 0);
+      vpt[5] -= e.deltaX ? 0 : (e.shiftKey ? 0 : e.deltaY);
+      this.requestRenderAll();
+      this.setViewportTransform(vpt);
   }
   $('#zoomLevel').textContent = `Zoom: ${Math.round(canvas.getZoom() * 100)}%`;
 });
 
 canvas.on('mouse:down', function(opt) {
     const e = opt.e;
-    if (e.button === 1 || (e.altKey && !opt.target)) {
+    if (e.button === 1 || (isSpaceDown)) {
         isPanning = true;
         this.selection = false;
         lastPosX = e.clientX; lastPosY = e.clientY;
+        canvas.setCursor('grabbing');
         e.preventDefault();
     }
 });
@@ -918,17 +1691,28 @@ canvas.on('mouse:move', function(opt) {
 canvas.on('mouse:up', function() {
     this.setViewportTransform(this.viewportTransform);
     isPanning = false; this.selection = true;
+    if (isSpaceDown) canvas.setCursor('grab');
 });
 
 
 // --- DATA HANDLING ---
 // 4. In-app notification
-function showNotification(message, duration = 3000) {
-    const modal = $('#notification-modal');
-    modal.textContent = message;
-    modal.style.top = '20px';
+// 4. Modern Toast notification
+function showNotification(message, type = 'info', duration = 3000) {
+    const container = $('#toast-container');
+    if (!container) return;
+    
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    
+    const icon = type === 'success' ? '✓' : type === 'error' ? '!' : 'i';
+    toast.innerHTML = `<span class="toast-icon">${icon}</span><span class="toast-message">${message}</span>`;
+    
+    container.appendChild(toast);
+    
     setTimeout(() => {
-        modal.style.top = '-100px';
+        toast.classList.add('fade-out');
+        setTimeout(() => toast.remove(), 300);
     }, duration);
 }
 
@@ -948,14 +1732,18 @@ function processFileData(arrayBuffer, fileName) {
         worksheet = workbook.Sheets[sheetName];
         const json = XLSX.utils.sheet_to_json(worksheet, { defval: '', raw: false });
         if (!json.length) { showNotification('No data found in the sheet.'); return; }
+        // Ensure headers are extracted from the first row keys
         headers = Object.keys(json[0]);
-        dataRows = json;
+        dataRows = json; // Keep the full array of objects
+        console.log('Processed Data:', { headers, rowCount: dataRows.length, sample: dataRows[0] });
         $('#fileName').textContent = fileName;
         $('#unloadDataBtn').style.display = 'inline';
         showNotification(`Loaded "${sheetName}" with ${dataRows.length} rows.`);
         refreshInspector({ target: canvas.getActiveObject() });
         updateExportUI();
         updateFloatingLinker(canvas.getActiveObject());
+        renderCsvView(); // Update view if open
+        requestSaveState(); // Trigger save with new data
     } catch (err) {
         showNotification('Error reading file.');
         unloadData();
@@ -969,11 +1757,12 @@ function unloadData() {
     localStorage.removeItem('cachedFileName');
     localStorage.removeItem('cachedFileData');
     $('#csvInput').value = '';
+    $('#csvViewBtn').style.display = 'none';
     updateExportUI();
     updateFloatingLinker(null);
     showNotification('Data unloaded.');
 }
-$('#unloadDataBtn').addEventListener('click', unloadData);
+on('#unloadDataBtn','click',unloadData);
 
 function base64ToArrayBuffer(base64) {
     const binaryString = window.atob(base64.split(',')[1]);
@@ -992,13 +1781,38 @@ async function loadCachedData() {
         processFileData(arrayBuffer, fileName);
     }
 }
-$('#csvInput').addEventListener('change', async (e) => {
+on('#csvInput','change', async (e) => {
     const file = e.target.files?.[0];
     if (!file) { unloadData(); return; }
     await cacheDataFile(file);
     const data = await file.arrayBuffer();
     processFileData(data, file.name);
 });
+
+// Font Loading
+async function loadFont(file) {
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+        try {
+            const fontName = file.name.split('.')[0];
+            const fontFace = new FontFace(fontName, e.target.result);
+            await fontFace.load();
+            document.fonts.add(fontFace);
+            if (!FONT_LIST.includes(fontName)) {
+                FONT_LIST.push(fontName);
+                FONT_LIST.sort();
+            }
+            refreshInspector({target: canvas.getActiveObject()});
+            showNotification(`Font "${fontName}" loaded.`);
+        } catch(err) {
+            console.error(err);
+            showNotification('Error loading font.', 'error');
+        }
+    };
+    reader.readAsArrayBuffer(file);
+}
+on('#fontUpload', 'change', (e) => loadFont(e.target.files[0]));
 
 
 // --- COMPONENT ADDITION ---
@@ -1011,7 +1825,7 @@ function getUniqueName(baseName) {
 }
 
 const adders = {
-  text: (x, y, content = 'Sample Text') => canvas.add(new fabric.Textbox(content, { left: x, top: y, fontSize: 28, fill: '#000000', fontFamily: 'Arial', originX: 'center', originY: 'center', styles: [], padding: 10, name: getUniqueName('text') })).setActiveObject(canvas.getObjects().pop()),
+  text: (x, y, content = 'Sample Text') => canvas.add(new fabric.Textbox(content, { left: x, top: y, fontSize: 28, fill: '#000000', fontFamily: 'Arial', originX: 'center', originY: 'center', styles: [], padding: 10, name: getUniqueName('text'), lockUniScaling: true })).setActiveObject(canvas.getObjects().pop()),
   rect: ({x, y, asSquare=true}={}) => canvas.add(new fabric.Rect({ left: x, top: y, width: asSquare?150:220, height: 150, fill: '#ffffff', stroke: '#000000', strokeWidth: 2, strokeUniform: true, originX: 'center', originY: 'center', name: getUniqueName(asSquare ? 'square' : 'rectangle') })).setActiveObject(canvas.getObjects().pop()),
   circle: (x, y) => canvas.add(new fabric.Circle({ left: x, top: y, radius: 75, fill: '#ffffff', stroke: '#000000', strokeWidth: 2, strokeUniform: true, originX: 'center', originY: 'center', name: getUniqueName('circle') })).setActiveObject(canvas.getObjects().pop()),
   triangle: (x, y) => canvas.add(new fabric.Triangle({ left: x, top: y, width: 150, height: 130, fill: '#ffffff', stroke: '#000000', strokeWidth: 2, strokeUniform: true, originX: 'center', originY: 'center', name: getUniqueName('triangle') })).setActiveObject(canvas.getObjects().pop()),
@@ -1092,9 +1906,9 @@ const adders = {
         $('#closeTableCreator').removeEventListener('click', closeTableModal);
     };
 
-    $('#confirmTableCreate').addEventListener('click', createHandler, { once: true });
-    $('#cancelTableCreate').addEventListener('click', closeTableModal, { once: true });
-    $('#closeTableCreator').addEventListener('click', closeTableModal, { once: true });
+    on('#confirmTableCreate','click',createHandler, { once: true });
+    on('#cancelTableCreate','click',closeTableModal, { once: true });
+    on('#closeTableCreator','click',closeTableModal, { once: true });
   }
 };
 // 6. Restored Table Code
@@ -1158,7 +1972,7 @@ class TableResizer {
         this.canvas.on('mouse:down', this.handleMouseDown.bind(this));
         this.canvas.on('mouse:move', this.handleMouseMove.bind(this));
         this.canvas.on('mouse:up', this.handleMouseUp.bind(this));
-        this.canvas.on('object:scaling', this.handleObjectScaling.bind(this));
+        this.canvas.on('object:modified', this.handleObjectScaling.bind(this));
     }
     
     handleObjectScaling(options) {
@@ -1384,8 +2198,12 @@ const mainLayout = document.getElementById('main-layout'); const leftResizer = d
 function initResizer(resizer, resizeFlagSetter, panelSide) { resizer.addEventListener('mousedown', (e) => { e.preventDefault(); resizeFlagSetter(true); document.body.style.cursor = 'col-resize'; document.body.style.userSelect = 'none'; }); document.addEventListener('mousemove', (e) => { if (!resizeFlagSetter()) return; const mainRect = mainLayout.getBoundingClientRect(); if (panelSide === 'left') { const newWidth = e.clientX - mainRect.left; if (newWidth > 150 && newWidth < mainRect.width / 2) { mainLayout.style.gridTemplateColumns = `${newWidth}px 5px 1fr 5px ${mainLayout.style.gridTemplateColumns.split(' ')[4]}`; lastLeftPanelWidth = `${newWidth}px`; } } else { const newWidth = mainRect.right - e.clientX; if (newWidth > 200 && newWidth < mainRect.width / 2) { mainLayout.style.gridTemplateColumns = `${mainLayout.style.gridTemplateColumns.split(' ')[0]} 5px 1fr 5px ${newWidth}px`; lastRightPanelWidth = `${newWidth}px`; } } canvas.setWidth(canvasWrapper.getBoundingClientRect().width); canvas.renderAll(); }); document.addEventListener('mouseup', () => { if (resizeFlagSetter()) { resizeFlagSetter(false); document.body.style.cursor = 'default'; document.body.style.userSelect = 'auto'; } }); }
 initResizer(leftResizer, (v) => { if(v !== undefined) isResizingLeft=v; return isResizingLeft; }, 'left'); initResizer(rightResizer, (v) => { if(v !== undefined) isResizingRight=v; return isResizingRight; }, 'right');
 function refreshCanvasSize() { setTimeout(() => { const { width, height } = canvasWrapper.getBoundingClientRect(); canvas.setWidth(width); canvas.setHeight(height); canvas.renderAll(); centerAndFitPage(); }, 50); }
-document.getElementById('left-panel-toggle').addEventListener('click', () => { const btn = document.getElementById('left-panel-toggle'); const cols = mainLayout.style.gridTemplateColumns.split(' '); if (cols[0] !== '0px') { lastLeftPanelWidth = cols[0]; mainLayout.style.gridTemplateColumns = `0px 0px 1fr 5px ${cols[4]}`; btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>`; } else { mainLayout.style.gridTemplateColumns = `${lastLeftPanelWidth} 5px 1fr 5px ${cols[4]}`; btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>`; } refreshCanvasSize(); });
-document.getElementById('right-panel-toggle').addEventListener('click', () => { const btn = document.getElementById('right-panel-toggle'); const cols = mainLayout.style.gridTemplateColumns.split(' '); if (cols[4] !== '0px') { lastRightPanelWidth = cols[4]; mainLayout.style.gridTemplateColumns = `${cols[0]} 5px 1fr 0px 0px`; btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>`; } else { mainLayout.style.gridTemplateColumns = `${cols[0]} 5px 1fr 5px ${lastRightPanelWidth}`; btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>`; } refreshCanvasSize(); });
+document.getElementById('left-panel-toggle').addEventListener('click', () => { const btn = document.getElementById('left-panel-toggle'); const cols = mainLayout.style.gridTemplateColumns.split(' '); if (cols[0] !== '0px') { lastLeftPanelWidth = cols[0]; mainLayout.style.gridTemplateColumns = `0px 0px 1fr 5px ${cols[4]}`;
+        document.querySelector('.panel.left')?.classList.add('collapsed'); btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>`; } else { mainLayout.style.gridTemplateColumns = `${lastLeftPanelWidth} 5px 1fr 5px ${cols[4]}`;
+        document.querySelector('.panel.left')?.classList.remove('collapsed'); btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>`; } refreshCanvasSize(); });
+document.getElementById('right-panel-toggle').addEventListener('click', () => { const btn = document.getElementById('right-panel-toggle'); const cols = mainLayout.style.gridTemplateColumns.split(' '); if (cols[4] !== '0px') { lastRightPanelWidth = cols[4]; mainLayout.style.gridTemplateColumns = `${cols[0]} 5px 1fr 0px 0px`;
+        document.querySelector('.panel.right')?.classList.add('collapsed'); btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>`; } else { mainLayout.style.gridTemplateColumns = `${cols[0]} 5px 1fr 5px ${lastRightPanelWidth}`;
+        document.querySelector('.panel.right')?.classList.remove('collapsed'); btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>`; } refreshCanvasSize(); });
 // --- REBUILT: SNAPPING GUIDES ---
 const snapThreshold = 10, snapColor = '#ed7062';
 let snapLines = [], snapHighlightBox = null;
@@ -1422,18 +2240,17 @@ function handleSmartSnapping(options) {
             }
         };
 
-        // Compute object edges & center
+        // Compute object edges & center (absolute bounding box to avoid offset snapping bugs)
         const getEdges = (obj) => {
-            const center = obj.getCenterPoint();
-            const halfW = (obj.width * obj.scaleX) / 2;
-            const halfH = (obj.height * obj.scaleY) / 2;
+            obj.setCoords();
+            const rect = obj.getBoundingRect(true, true);
             return {
-                left: center.x - halfW,
-                right: center.x + halfW,
-                top: center.y - halfH,
-                bottom: center.y + halfH,
-                centerX: center.x,
-                centerY: center.y
+                left: rect.left,
+                right: rect.left + rect.width,
+                top: rect.top,
+                bottom: rect.top + rect.height,
+                centerX: rect.left + (rect.width / 2),
+                centerY: rect.top + (rect.height / 2)
             };
         };
 
@@ -1552,9 +2369,30 @@ const settingsBtn = $('#settingsBtn'); const settingsModal = $('#settingsModal')
 settingsBtn.addEventListener('click', openSettingsModal); closeSettingsModalBtn.addEventListener('click', () => settingsModal.style.display = 'none'); settingsModal.addEventListener('click', (e) => { if (e.target === settingsModal) { settingsModal.style.display = 'none'; } });
 const openCustomerPortal = async () => { const btn = $('#manageSubscriptionBtn'); if (btn) { btn.disabled = true; btn.textContent = 'Generating link...'; } try { const { data, error } = await supabase.functions.invoke('lemonsqueezy-sub-manager', { body: { action: 'getPortalLink' } }); if (error) throw error; if (data && data.url) window.open(data.url, '_blank'); else throw new Error('Could not generate portal link.'); } catch (error) { alert(`Error: ${error.message}`); } finally { if (btn) { btn.disabled = false; btn.textContent = 'Manage Subscription'; } } };
 async function openSettingsModal() { const settingsContent = $('#settingsContent'); settingsContent.innerHTML = '<p class="muted">Loading account details...</p>'; settingsModal.style.display = 'flex'; const { data: { user } } = await supabase.auth.getUser(); if (!user) { settingsContent.innerHTML = '<p>Please log in to manage your settings.</p>'; return; } const { data: profile, error } = await supabase.from('profiles').select('role').eq('id', user.id).single(); if (error || !profile) { settingsContent.innerHTML = '<p class="error">Could not load your profile.</p>'; return; } const currentTheme = localStorage.getItem('csvlink-theme') || 'dark'; let modalHTML = `<div class="settings-section stack"><h4>Appearance</h4><button id="themeToggleBtn" class="btn ghost" style="width: 100%;">${currentTheme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}</button></div><div class="settings-section stack" style="gap: 16px;"><h4>Account</h4><div class="stack"><label for="newPassword">New Password</label><input type="password" id="newPassword" placeholder="Enter new password"></div><div class="stack"><label for="confirmPassword">Confirm Password</label><input type="password" id="confirmPassword" placeholder="Confirm new password"></div><button id="changePasswordBtn" class="btn">Update Password</button><p id="passwordMessage" class="muted" style="text-align:center; margin-top: 4px;"></p></div>`; if (profile.role === 'pro' || profile.role === 'admin') { modalHTML += `<div class="settings-section stack"><h4>Subscription</h4><p class="muted">You are on the Pro plan.</p><button id="manageSubscriptionBtn" class="btn ghost" style="width: 100%;">Manage Subscription</button></div>`; } else { modalHTML += `<div class="settings-section stack"><h4>Upgrade to Pro</h4><p class="muted">Upgrade for API access and unlimited templates.</p><a href="/#pricing" class="btn" style="text-decoration: none;">View Pricing Plans</a></div>`; } if (profile.role === 'pro' || profile.role === 'admin') { modalHTML += `<div class="settings-section stack" style="gap: 16px;"><h4>Developer API Keys</h4><div id="newKeyContainer" class="stack" style="display:none;"><h5>Your New API Key</h5><p class="muted">Copy this key and store it safely. <strong>You will not see it again.</strong></p><div id="newKeyDisplay"></div></div><div class="stack"><h5>Your Existing Keys</h5><div id="existingKeysList" class="stack">Loading...</div></div><button id="generateKeyBtn" class="btn">Generate New API Key</button><p id="keyMessage" class="muted" style="text-align:center; margin-top: 4px;"></p></div>`; } settingsContent.innerHTML = modalHTML; attachSettingsEventListeners(user.id, profile.role); }
-function attachSettingsEventListeners(userId, role) { $('#themeToggleBtn').addEventListener('click', toggleTheme); $('#changePasswordBtn').addEventListener('click', async () => { const newPassword = $('#newPassword').value, confirmPassword = $('#confirmPassword').value, msgEl = $('#passwordMessage'); if (!newPassword || newPassword !== confirmPassword) { msgEl.textContent = 'Passwords do not match or are empty.'; return; } msgEl.textContent = 'Updating...'; const { error } = await supabase.auth.updateUser({ password: newPassword }); if (error) { msgEl.textContent = `Error: ${error.message}`; } else { msgEl.textContent = 'Password updated successfully!'; $('#newPassword').value = ''; $('#confirmPassword').value = ''; } }); if (role === 'pro' || role === 'admin') { $('#generateKeyBtn').addEventListener('click', handleGenerateKey); loadAndDisplayKeys(userId); if ($('#manageSubscriptionBtn')) $('#manageSubscriptionBtn').addEventListener('click', openCustomerPortal); } }
-function applyTheme(theme) { document.body.classList.toggle('light-mode', theme === 'light'); localStorage.setItem('csvlink-theme', theme); }
-function toggleTheme() { const newTheme = (localStorage.getItem('csvlink-theme') || 'dark') === 'dark' ? 'light' : 'dark'; applyTheme(newTheme); const themeBtn = $('#themeToggleBtn'); if (themeBtn) { themeBtn.textContent = newTheme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'; } }
+function attachSettingsEventListeners(userId, role) { on('#themeToggleBtn','click',toggleTheme); on('#changePasswordBtn','click', async () => { const newPassword = $('#newPassword').value, confirmPassword = $('#confirmPassword').value, msgEl = $('#passwordMessage'); if (!newPassword || newPassword !== confirmPassword) { msgEl.textContent = 'Passwords do not match or are empty.'; return; } msgEl.textContent = 'Updating...'; const { error } = await supabase.auth.updateUser({ password: newPassword }); if (error) { msgEl.textContent = `Error: ${error.message}`; } else { msgEl.textContent = 'Password updated successfully!'; $('#newPassword').value = ''; $('#confirmPassword').value = ''; } }); if (role === 'pro' || role === 'admin') { on('#generateKeyBtn','click',handleGenerateKey); loadAndDisplayKeys(userId); if ($('#manageSubscriptionBtn')) on('#manageSubscriptionBtn','click',openCustomerPortal); } }
+function applyTheme(theme) {
+  document.body.classList.toggle('light-mode', theme === 'light');
+  localStorage.setItem('csvlink-theme', theme);
+  // page outline for visibility
+  if (pageRect) {
+    pageRect.set({ stroke: theme === 'light' ? 'rgba(15,23,42,0.25)' : 'rgba(255,255,255,0.25)', strokeWidth: 1 });
+    canvas.requestRenderAll();
+  }
+  const icon = $('#themeIconSvg');
+  if (icon) {
+    icon.innerHTML = (theme === 'light')
+      ? '<circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="M4.93 4.93l1.41 1.41"/><path d="M17.66 17.66l1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="M4.93 19.07l1.41-1.41"/><path d="M17.66 6.34l1.41-1.41"/>'
+      : '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
+  }
+}
+function toggleTheme() {
+  const newTheme = (localStorage.getItem('csvlink-theme') || 'dark') === 'dark' ? 'light' : 'dark';
+  applyTheme(newTheme);
+  const themeBtn = $('#themeToggleBtn');
+  if (themeBtn) themeBtn.textContent = newTheme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode';
+}
+// toolbar icon toggle
+$('#themeIconBtn')?.addEventListener('click', toggleTheme);
 async function loadAndDisplayKeys(userId) { const list = $('#existingKeysList'); const { data: keys, error } = await supabase.from('api_keys').select('api_key, created_at').eq('user_id', userId); if (error) { list.innerHTML = '<p class="error">Could not load keys.</p>'; return; } if (keys.length === 0) { list.innerHTML = '<p class="muted">No API keys generated.</p>'; } else { list.innerHTML = keys.map(k => `<div class="api-key-item"><span>${k.api_key.substring(0, 11)}...${k.api_key.substring(k.api_key.length - 4)}</span><span class="muted">Created: ${new Date(k.created_at).toLocaleDateString()}</span></div>`).join(''); } }
 async function handleGenerateKey() { const btn = $('#generateKeyBtn'), msg = $('#keyMessage'), container = $('#newKeyContainer'), display = $('#newKeyDisplay'); btn.disabled = true; btn.textContent = 'Generating...'; msg.textContent = ''; container.style.display = 'none'; try { const { data, error } = await supabase.functions.invoke('generate-api-key'); if (error) throw error; display.textContent = data.apiKey; container.style.display = 'block'; const { data: { user } } = await supabase.auth.getUser(); loadAndDisplayKeys(user.id); } catch (error) { msg.textContent = `Error: ${error.message}`; } finally { btn.disabled = false; btn.textContent = 'Generate New API Key'; } }
 
@@ -1582,6 +2420,7 @@ function renderMultiSelectInspector(selection) {
     // Alignment for multiple objects
     multiInspector.appendChild(section('Align Objects', [alignMultipleObjectsButtons()]));
     multiInspector.appendChild(section('Align to Page', [alignToPageButtons(true)]));
+    multiInspector.appendChild(section('Distribute', [distributeButtons()]));
     
     // If all selected are text, show text formatting
     if (allText) {
@@ -1625,6 +2464,62 @@ function renderMultiSelectInspector(selection) {
         sliderRow('Stroke Width', getCommonPropertyValue(objects, 'strokeWidth') ?? 0, (v) => setCommonPropertyValue(objects, 'strokeWidth', v), { min: 0, max: 50, step: 1 }) 
     ]));
 }
+
+
+
+function setObjectDimensions(obj, w, h, opts = {}) {
+    const lockWidth = !!opts.lockWidth;
+    const minSize = 1;
+    if (!obj || !obj.width || !obj.height) return;
+    const newW = Math.max(minSize, Number(w) || obj.getScaledWidth());
+    const newH = Math.max(minSize, Number(h) || obj.getScaledHeight());
+
+    const baseW = obj.width;
+    const baseH = obj.height;
+
+    if (!lockWidth) obj.scaleX = newW / baseW;
+    obj.scaleY = newH / baseH;
+    obj.setCoords();
+}
+
+function dimensionsRow(obj) {
+    const isTextbox = obj?.type === 'textbox';
+    const w = document.createElement('div');
+    w.className = 'stack full-width';
+    w.innerHTML = `<label>Dimensions</label>`;
+    const r = document.createElement('div');
+    r.className = 'row';
+
+    const x = document.createElement('input');
+    x.type = 'number';
+    x.value = Math.round(obj.getScaledWidth());
+    x.id = 'inspector-dim-w';
+
+    const y = document.createElement('input');
+    y.type = 'number';
+    y.value = Math.round(obj.getScaledHeight());
+    y.id = 'inspector-dim-h';
+
+    if (isTextbox) {
+        x.disabled = true;
+        x.title = 'Text box width is locked. Use the text box handles to resize width.';
+        x.style.opacity = '0.6';
+    }
+
+    const update = () => {
+        setObjectDimensions(obj, x.value, y.value, { lockWidth: isTextbox });
+        canvas.requestRenderAll();
+        updateLiveInspector({ target: canvas.getActiveObject() });
+    };
+    const finalUpdate = () => { update(); requestSaveState(); };
+    x.oninput = update; y.oninput = update;
+    x.onchange = finalUpdate; y.onchange = finalUpdate;
+
+    r.append(x, y);
+    w.appendChild(r);
+    return w;
+}
+
 function renderSingleObjectInspector(o) {
     inspector.innerHTML = ''; 
     const actions = [];
@@ -1640,7 +2535,20 @@ function renderSingleObjectInspector(o) {
         inspector.appendChild(section('SVG Style', [
             colorInputRow('Fill', o.fill, v => { o.set('fill', v); o.forEachObject(sub => { if(sub.fill !== 'none') sub.set({fill:v})}); }),
             colorInputRow('Stroke', o.stroke, v => { o.set('stroke', v); o.forEachObject(sub => sub.set({stroke:v})); }),
-            sliderRow('Stroke Width', o.strokeWidth ?? 1, v => { o.set({strokeWidth: v}); o.forEachObject(sub => sub.set({strokeWidth:v})); }, {min:0, max:20, step:0.5})
+            sliderRow('Stroke Width', o.strokeWidth ?? 1, v => { 
+                o.set({strokeWidth: parseFloat(v)}); 
+                o.forEachObject(sub => sub.set({strokeWidth: parseFloat(v)})); 
+                // Fix for pivot shift: setCoords and recalibrate if group
+                o.setCoords();
+                if (o.type === 'group') {
+                    // This re-calculates the group size based on children
+                    const center = o.getCenterPoint();
+                    o.addWithUpdate(); 
+                    o.setPositionByOrigin(center, 'center', 'center');
+                }
+                canvas.renderAll();
+                requestSaveState();
+            }, {min:0, max:20, step:0.5})
         ]));
     }
 
@@ -1657,7 +2565,29 @@ function renderSingleObjectInspector(o) {
         inspector.appendChild(section('Text', [ 
             inputRow('Content', o.text, v => o.set({text:v}), 'textarea'), 
             inputRow('Font Size', o.fontSize, v => o.set({fontSize:parseFloat(v)})), 
-            selectRow('Font Family', FONT_LIST, o.fontFamily, v => o.set({fontFamily:v})), 
+            (() => {
+                const w = document.createElement('div');
+                w.className = 'stack full-width';
+                w.innerHTML = `<label>Font Family</label>`;
+                const r = document.createElement('div');
+                r.className = 'row';
+                r.style.gap = '8px';
+                
+                const s = document.createElement('select');
+                s.style.flex = '1';
+                FONT_LIST.forEach(opt => s.innerHTML+=`<option value="${opt}" ${opt==o.fontFamily?'selected':''}>${opt}</option>`);
+                s.onchange = e => { o.set({fontFamily:e.target.value}); canvas.renderAll(); requestSaveState(); };
+                
+                const btn = document.createElement('button');
+                btn.className = 'btn ghost icon-only';
+                btn.title = 'Upload Font';
+                btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>';
+                btn.onclick = () => $('#fontUpload').click();
+                
+                r.append(s, btn);
+                w.appendChild(r);
+                return w;
+            })(), 
             colorInputRow('Fill Color', o.fill, v => o.set({fill:v})),
             buttonGroupRow('Text Style', [
                 {value: 'bold', label: 'B', active: o.fontWeight === 'bold'},
@@ -1674,14 +2604,39 @@ function renderSingleObjectInspector(o) {
             buttonGroupRow('Alignment', ['left','center','right','justify'], o.textAlign, v => { o.set({textAlign:v}); o.initDimensions(); canvas.requestRenderAll(); }) 
         ])); 
     }
-    inspector.appendChild(section('Common', [ xyInputRow('Position', {x: o.left, y: o.top}, (p) => o.set({left: p.x, top: p.y})), xyInputRow('Dimensions', {w: o.getScaledWidth(), h: o.getScaledHeight()}, (d) => {o.scaleToWidth(d.w); o.scaleToHeight(d.h);}), sliderRow('Opacity', o.opacity ?? 1, (v) => o.set({opacity: v}), {min: 0, max: 1, step: 0.01}), colorInputRow('Stroke Color', o.stroke ?? '', v => o.set({stroke: v})), sliderRow('Stroke Width', o.strokeWidth ?? 0, (v) => o.set({strokeWidth: v}), {min: 0, max: 50, step: 1}), ]));
+    inspector.appendChild(section('Common', [
+        xyInputRow('Position', {x: o.left, y: o.top}, (p) => o.set({left: p.x, top: p.y})),
+        xyInputRow('Dimensions', {w: o.getScaledWidth(), h: o.getScaledHeight()}, (d) => { setObjectDimensions(o, d.w, d.h); }),
+        sliderRow('Opacity', o.opacity ?? 1, (v) => o.set({opacity: v}), {min: 0, max: 1, step: 0.01}),
+    ]));
     inspector.appendChild(section('Align to Page', [alignToPageButtons()]));
 }
-function renderPageInspector() { if (!pageRect) pageRect = canvas.getObjects().find(o => o.oid === 'pageRect'); if (!pageRect) return; const container = $('#pageInspector'); container.innerHTML = ''; const pageProps = section('Page Style', [ colorInputRow('Background Color', pageRect.fill, v => pageRect.set({fill: v})), buttonRow('Set Background Image', () => { editingFillObject = pageRect; $('#imageFillUpload').click(); }) ]); container.appendChild(pageProps); }
-$('#loadTemplateBtnPage').onclick = (e) => {
-    e.stopPropagation();
-    toggleTemplateLoader(e.target);
-};
+function renderPageInspector() {
+  const pageRect = canvas.getObjects().find(o => o.oid === 'pageRect');
+  if (!pageRect) return;
+  const container = document.getElementById('pageInspector');
+  if (!container) return;
+  container.innerHTML = '';
+  const pageProps = section('Page Style', [
+    colorInputRow('Background Color', pageRect.fill || '#ffffff', (v) => {
+      pageRect.set({ fill: v });
+      canvas.requestRenderAll();
+      requestSaveState();
+    }),
+    buttonRow('Set Background Image', () => {
+      const up = document.getElementById('imageFillUpload');
+      if (!up) return;
+      editingFillObject = pageRect;
+      up.click();
+    })
+  ]);
+  container.appendChild(pageProps);
+}
+on('#loadTemplateBtnPage','click',(e) => {
+  e.preventDefault();
+  e.stopPropagation();
+  toggleTemplateLoader(e.currentTarget || e.target);
+});
 function section(title, rows){ const w=document.createElement('div'); w.className='stack'; w.innerHTML=`<h3>${title}</h3>`; const g=document.createElement('div'); g.className='prop-grid'; rows.forEach(r => g.appendChild(r)); w.appendChild(g); return w; }
 function inputRow(label, value, onChange, type = 'text') { const w = document.createElement('div'); w.className = 'stack full-width'; w.innerHTML = `<label>${label}</label>`; const i = document.createElement(type === 'textarea' ? 'textarea' : 'input'); if (type !== 'textarea') i.type = type; i.value = value ?? ''; i.oninput = () => { onChange(i.value); canvas.requestRenderAll(); }; i.onchange = () => requestSaveState(); if (type === 'textarea') i.rows = 3; w.appendChild(i); return w; }
 function xyInputRow(label, values, onChange) { const w = document.createElement('div'); w.className = 'stack full-width'; w.innerHTML = `<label>${label}</label>`; const r = document.createElement('div'); r.className = 'row'; const x = document.createElement('input'); x.type = 'number'; x.value = Math.round(values.x ?? values.w ?? 0); const y = document.createElement('input'); y.type = 'number'; y.value = Math.round(values.y ?? values.h ?? 0); if (label === 'Position') { x.id = 'inspector-pos-x'; y.id = 'inspector-pos-y'; } else if (label === 'Dimensions') { x.id = 'inspector-dim-w'; y.id = 'inspector-dim-h'; } const update = () => { const v = label === 'Position' ? { x: parseFloat(x.value), y: parseFloat(y.value) } : { w: parseFloat(x.value), h: parseFloat(y.value) }; onChange(v); canvas.requestRenderAll(); updateLiveInspector({ target: canvas.getActiveObject() }); }; const finalUpdate = () => { update(); requestSaveState(); }; x.oninput = update; y.oninput = update; x.onchange = finalUpdate; y.onchange = finalUpdate; r.append(x, y); w.appendChild(r); return w; }
@@ -1734,7 +2689,7 @@ function buttonGroupRow(label, options, value, onChange) {
     w.innerHTML = `<label>${label}</label>`;
     const r = document.createElement('div');
     r.className = 'align-buttons';
-    r.style.gridTemplateColumns = `repeat(${options.length}, 1fr)`;
+    r.style.gridTemplateColumns = `repeat(${options.length}, 32px)`;
     
     const icons = {
         left: '<svg fill="currentColor" viewBox="0 0 24 24"><path d="M15 15H3v2h12v-2zm0-8H3v2h12V7zM3 13h18v-2H3v2zm0 8h18v-2H3v2zM3 3v2h18V3H3z"/></svg>',
@@ -1778,7 +2733,7 @@ function buttonGroupRow(label, options, value, onChange) {
 }
 
 // --- VISUAL CROPPER ---
-function initializeVisualCropper() { const modal = $('#visualCropModal'); const container = $('#visualCropContainer'); cropCanvas = new fabric.Canvas('cropCanvas', { selection: false, backgroundColor: '#222' }); new ResizeObserver(() => { const { width, height } = container.getBoundingClientRect(); cropCanvas.setWidth(width).setHeight(height); }).observe(container); $('#closeVisualCropModal').addEventListener('click', closeVisualCropper); $('#cancelCropBtn').addEventListener('click', closeVisualCropper); $('#applyCropBtn').addEventListener('click', applyCrop); }
+function initializeVisualCropper() { const modal = $('#visualCropModal'); const container = $('#visualCropContainer'); cropCanvas = new fabric.Canvas('cropCanvas', { selection: false, backgroundColor: '#222' }); new ResizeObserver(() => { const { width, height } = container.getBoundingClientRect(); cropCanvas.setWidth(width).setHeight(height); }).observe(container); on('#closeVisualCropModal','click',closeVisualCropper); on('#cancelCropBtn','click',closeVisualCropper); on('#applyCropBtn','click',applyCrop); }
 function openVisualCropper(imageObject) { croppingImage = imageObject; const modal = $('#visualCropModal'); modal.style.display = 'flex'; cropCanvas.clear(); const { width: cW, height: cH } = $('#visualCropContainer').getBoundingClientRect(); cropCanvas.setWidth(cW).setHeight(cH); const imgEl = croppingImage.getElement(); const scale = Math.min(cW / imgEl.naturalWidth, cH / imgEl.naturalHeight) * 0.8; const imgInstance = new fabric.Image(imgEl, { selectable: false, evented: false, scaleX: scale, scaleY: scale }); cropCanvas.add(imgInstance); cropCanvas.centerObject(imgInstance); cropCanvas.add(new fabric.Rect({ fill: 'rgba(0,0,0,0.3)', width: cW, height: cH, selectable: false, evented: false })); const cropBox = new fabric.Rect({ left: imgInstance.left, top: imgInstance.top, width: imgInstance.getScaledWidth(), height: imgInstance.getScaledHeight(), fill: 'transparent', stroke: '#fff', strokeWidth: 2, cornerColor: '#fff', cornerSize: 12, transparentCorners: false, }); cropCanvas.add(cropBox); cropCanvas.setActiveObject(cropBox); cropCanvas.renderAll(); }
 function closeVisualCropper() { $('#visualCropModal').style.display = 'none'; croppingImage = null; cropCanvas.clear(); }
 function applyCrop() { if (!croppingImage || !cropCanvas.getActiveObject()) return; const cropBox = cropCanvas.getActiveObject(); const imgInstance = cropCanvas.getObjects('image')[0]; const cropX = (cropBox.left - imgInstance.left) / imgInstance.scaleX; const cropY = (cropBox.top - imgInstance.top) / imgInstance.scaleY; const width = cropBox.getScaledWidth() / imgInstance.scaleX; const height = cropBox.getScaledHeight() / imgInstance.scaleY; croppingImage.set({ cropX, cropY, width, height }); croppingImage.scaleToWidth(cropBox.getScaledWidth()); canvas.renderAll(); requestSaveState(); closeVisualCropper(); }
@@ -1795,14 +2750,52 @@ function alignToPageButtons(isMultiSelect = false) {
         v_center: '<svg viewBox="0 0 24 24" transform="rotate(90)"><path d="M4 21V3h2v18H4zm14 0V3h2v18h-2zM9 21V3h6v18H9z" fill="currentColor"/></svg>', 
         bottom: '<svg viewBox="0 0 24 24" transform="rotate(90)"><path d="M4 21V3h2v18H4zm4 0V3h2v18H8zm12 0h-6V3h6v18z" fill="currentColor"/></svg>' 
     }; 
-    const actions = { 
+    
+    // Actions for single objects
+    const singleActions = { 
         left: o => o.set({ originX: 'left', left: pageRect.left }), 
         h_center: o => o.set({ originX: 'center', left: pageRect.left + pageRect.width / 2 }), 
         right: o => o.set({ originX: 'left', left: pageRect.left + pageRect.width - o.getScaledWidth() }), 
         top: o => o.set({ originY: 'top', top: pageRect.top }), 
         v_center: o => o.set({ originY: 'center', top: pageRect.top + pageRect.height / 2 }), 
         bottom: o => o.set({ originY: 'top', top: pageRect.top + pageRect.height - o.getScaledHeight() }) 
-    }; 
+    };
+    
+    // For multi-select, we calculate offset to move the whole group
+    function alignMultiSelection(selection, key) {
+        if (!selection) return;
+        const bounds = selection.getBoundingRect(true, true);
+        let dx = 0, dy = 0;
+        
+        switch(key) {
+            case 'left':
+                dx = pageRect.left - bounds.left;
+                break;
+            case 'h_center':
+                dx = (pageRect.left + pageRect.width / 2) - (bounds.left + bounds.width / 2);
+                break;
+            case 'right':
+                dx = (pageRect.left + pageRect.width) - (bounds.left + bounds.width);
+                break;
+            case 'top':
+                dy = pageRect.top - bounds.top;
+                break;
+            case 'v_center':
+                dy = (pageRect.top + pageRect.height / 2) - (bounds.top + bounds.height / 2);
+                break;
+            case 'bottom':
+                dy = (pageRect.top + pageRect.height) - (bounds.top + bounds.height);
+                break;
+        }
+        
+        // Move all objects by the calculated offset
+        selection.forEachObject(obj => {
+            obj.set({ left: obj.left + dx, top: obj.top + dy });
+            obj.setCoords();
+        });
+        selection.setCoords();
+    }
+    
     Object.keys(icons).forEach(key => { 
         const btn = document.createElement('button'); 
         btn.className = 'btn ghost'; 
@@ -1811,11 +2804,10 @@ function alignToPageButtons(isMultiSelect = false) {
         btn.onclick = () => { 
             const active = canvas.getActiveObject(); 
             if (active && pageRect) { 
-                if (isMultiSelect && active.type === 'activeSelection') {
-                    active.forEachObject(obj => actions[key](obj));
-                    active.setCoords();
+                if (active.type === 'activeSelection') {
+                    alignMultiSelection(active, key);
                 } else {
-                    actions[key](active); 
+                    singleActions[key](active); 
                     active.setCoords(); 
                 }
                 canvas.renderAll(); 
@@ -1830,20 +2822,20 @@ function alignToPageButtons(isMultiSelect = false) {
 function alignMultipleObjectsButtons() {
     const container = document.createElement('div'); 
     container.className = 'align-buttons full-width'; 
-    container.style.gridTemplateColumns = 'repeat(6, 1fr)';
+    container.style.gridTemplateColumns = 'repeat(6, 32px)';
     
     const alignments = [
-        {key: 'left', icon: '<svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="3" y2="18" stroke="currentColor" stroke-width="2"/><rect x="6" y="4" width="6" height="4" fill="currentColor"/><rect x="6" y="10" width="10" height="4" fill="currentColor"/><rect x="6" y="16" width="8" height="4" fill="currentColor"/></svg>', title: 'Align left edges'},
-        {key: 'h_center', icon: '<svg viewBox="0 0 24 24"><line x1="12" y1="2" x2="12" y2="22" stroke="currentColor" stroke-width="2"/><rect x="8" y="4" width="8" height="4" fill="currentColor"/><rect x="6" y="10" width="12" height="4" fill="currentColor"/><rect x="7" y="16" width="10" height="4" fill="currentColor"/></svg>', title: 'Align centers horizontally'},
-        {key: 'right', icon: '<svg viewBox="0 0 24 24"><line x1="21" y1="6" x2="21" y2="18" stroke="currentColor" stroke-width="2"/><rect x="9" y="4" width="6" height="4" fill="currentColor"/><rect x="5" y="10" width="10" height="4" fill="currentColor"/><rect x="7" y="16" width="8" height="4" fill="currentColor"/></svg>', title: 'Align right edges'},
-        {key: 'top', icon: '<svg viewBox="0 0 24 24"><line x1="6" y1="3" x2="18" y2="3" stroke="currentColor" stroke-width="2"/><rect x="4" y="6" width="4" height="6" fill="currentColor"/><rect x="10" y="6" width="4" height="10" fill="currentColor"/><rect x="16" y="6" width="4" height="8" fill="currentColor"/></svg>', title: 'Align top edges'},
-        {key: 'v_center', icon: '<svg viewBox="0 0 24 24"><line x1="2" y1="12" x2="22" y2="12" stroke="currentColor" stroke-width="2"/><rect x="4" y="8" width="4" height="8" fill="currentColor"/><rect x="10" y="6" width="4" height="12" fill="currentColor"/><rect x="16" y="7" width="4" height="10" fill="currentColor"/></svg>', title: 'Align centers vertically'},
-        {key: 'bottom', icon: '<svg viewBox="0 0 24 24"><line x1="6" y1="21" x2="18" y2="21" stroke="currentColor" stroke-width="2"/><rect x="4" y="9" width="4" height="6" fill="currentColor"/><rect x="10" y="5" width="4" height="10" fill="currentColor"/><rect x="16" y="7" width="4" height="8" fill="currentColor"/></svg>', title: 'Align bottom edges'}
+        {key: 'left', icon: '<svg viewBox="0 0 24 24" width="16" height="16"><line x1="3" y1="4" x2="3" y2="20" stroke="currentColor" stroke-width="2"/><rect x="6" y="7" width="8" height="3" fill="currentColor"/><rect x="6" y="14" width="12" height="3" fill="currentColor"/></svg>', title: 'Align left edges'},
+        {key: 'h_center', icon: '<svg viewBox="0 0 24 24" width="16" height="16"><line x1="12" y1="3" x2="12" y2="21" stroke="currentColor" stroke-width="2"/><rect x="7" y="6" width="10" height="3" fill="currentColor"/><rect x="5" y="15" width="14" height="3" fill="currentColor"/></svg>', title: 'Align centers horizontally'},
+        {key: 'right', icon: '<svg viewBox="0 0 24 24" width="16" height="16"><line x1="21" y1="4" x2="21" y2="20" stroke="currentColor" stroke-width="2"/><rect x="10" y="7" width="8" height="3" fill="currentColor"/><rect x="6" y="14" width="12" height="3" fill="currentColor"/></svg>', title: 'Align right edges'},
+        {key: 'top', icon: '<svg viewBox="0 0 24 24" width="16" height="16"><line x1="4" y1="3" x2="20" y2="3" stroke="currentColor" stroke-width="2"/><rect x="7" y="6" width="3" height="8" fill="currentColor"/><rect x="14" y="6" width="3" height="12" fill="currentColor"/></svg>', title: 'Align top edges'},
+        {key: 'v_center', icon: '<svg viewBox="0 0 24 24" width="16" height="16"><line x1="3" y1="12" x2="21" y2="12" stroke="currentColor" stroke-width="2"/><rect x="6" y="7" width="3" height="10" fill="currentColor"/><rect x="15" y="5" width="3" height="14" fill="currentColor"/></svg>', title: 'Align centers vertically'},
+        {key: 'bottom', icon: '<svg viewBox="0 0 24 24" width="16" height="16"><line x1="4" y1="21" x2="20" y2="21" stroke="currentColor" stroke-width="2"/><rect x="7" y="10" width="3" height="8" fill="currentColor"/><rect x="14" y="6" width="3" height="12" fill="currentColor"/></svg>', title: 'Align bottom edges'}
     ];
     
     alignments.forEach(({key, icon, title}) => {
         const btn = document.createElement('button'); 
-        btn.className = 'btn ghost'; 
+        btn.className = 'btn ghost align-btn'; 
         btn.innerHTML = icon; 
         btn.title = title;
         btn.onclick = () => { 
@@ -1884,6 +2876,73 @@ function alignMultipleObjectsButtons() {
         container.appendChild(btn); 
     });
     
+    return container;
+}
+
+// --- Distribution tools (multi-select) ---
+function distributeSelection(selection, axis) {
+    if (!selection || selection.type !== 'activeSelection') return;
+    const objs = selection.getObjects().filter(o => o && o.oid !== 'pageRect');
+    if (objs.length < 3) return; // distribution needs 3+ objects
+
+    const rectFor = (o) => {
+        o.setCoords();
+        return o.getBoundingRect(true, true);
+    };
+
+    const items = objs.map(o => ({ o, r: rectFor(o) }));
+    if (axis === 'h') {
+        items.sort((a, b) => a.r.left - b.r.left);
+        const leftEdge = Math.min(...items.map(i => i.r.left));
+        const rightEdge = Math.max(...items.map(i => i.r.left + i.r.width));
+        const total = items.reduce((s, i) => s + i.r.width, 0);
+        const gap = (rightEdge - leftEdge - total) / (items.length - 1);
+        let cursor = leftEdge;
+        items.forEach(i => {
+            const dx = cursor - i.r.left;
+            i.o.left += dx;
+            i.o.setCoords();
+            // refresh cached rect for subsequent objects
+            cursor += i.r.width + gap;
+        });
+    } else {
+        items.sort((a, b) => a.r.top - b.r.top);
+        const topEdge = Math.min(...items.map(i => i.r.top));
+        const bottomEdge = Math.max(...items.map(i => i.r.top + i.r.height));
+        const total = items.reduce((s, i) => s + i.r.height, 0);
+        const gap = (bottomEdge - topEdge - total) / (items.length - 1);
+        let cursor = topEdge;
+        items.forEach(i => {
+            const dy = cursor - i.r.top;
+            i.o.top += dy;
+            i.o.setCoords();
+            cursor += i.r.height + gap;
+        });
+    }
+
+    selection.setCoords();
+    canvas.requestRenderAll();
+    requestSaveState();
+}
+
+function distributeButtons() {
+    const container = document.createElement('div');
+    container.className = 'align-buttons';
+    container.style.gridTemplateColumns = 'repeat(2, 32px)';
+    
+    const hBtn = document.createElement('button');
+    hBtn.className = 'btn ghost';
+    hBtn.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16"><rect x="3" y="4" width="2" height="16" fill="currentColor" opacity="0.3"/><rect x="19" y="4" width="2" height="16" fill="currentColor" opacity="0.3"/><rect x="11" y="6" width="2" height="12" fill="currentColor"/></svg>';
+    hBtn.title = 'Distribute Horizontally';
+    hBtn.onclick = () => distributeSelection(canvas.getActiveObject(), 'h');
+    
+    const vBtn = document.createElement('button');
+    vBtn.className = 'btn ghost';
+    vBtn.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" style="transform: rotate(90deg)"><rect x="3" y="4" width="2" height="16" fill="currentColor" opacity="0.3"/><rect x="19" y="4" width="2" height="16" fill="currentColor" opacity="0.3"/><rect x="11" y="6" width="2" height="12" fill="currentColor"/></svg>';
+    vBtn.title = 'Distribute Vertically';
+    vBtn.onclick = () => distributeSelection(canvas.getActiveObject(), 'v');
+    
+    container.append(hBtn, vBtn);
     return container;
 }
 function getBindingsFor(o){ const id=ensureId(o); if(!bindings.has(id)) bindings.set(id,[]); return bindings.get(id); }
@@ -1985,7 +3044,7 @@ function renderFloatingColumnList(target, query) {
 }
 
 // Add event handlers for Duplicate and Delete buttons
-$('#duplicateBtn').addEventListener('click', () => {
+on('#duplicateBtn','click', () => {
     const activeObject = canvas.getActiveObject();
     if (!activeObject) return;
     
@@ -1996,13 +3055,29 @@ $('#duplicateBtn').addEventListener('click', () => {
     }, ['oid', 'name']);
 });
 
-$('#deleteBtn').addEventListener('click', () => {
+on('#deleteBtn','click', () => {
     const activeObjects = canvas.getActiveObjects();
     if (activeObjects.length) {
         activeObjects.forEach(obj => canvas.remove(obj));
         canvas.discardActiveObject();
         canvas.renderAll();
     }
+});
+
+// Bring to Front / Send to Back quick buttons
+on('#bringToFrontBtn','click', () => {
+    const activeObjects = canvas.getActiveObjects();
+    activeObjects.forEach(obj => canvas.bringToFront(obj));
+    renderLayers();
+    requestSaveState();
+});
+
+on('#sendToBackBtn','click', () => {
+    const activeObjects = canvas.getActiveObjects();
+    activeObjects.forEach(obj => canvas.sendToBack(obj));
+    keepPageRectAtBack();
+    renderLayers();
+    requestSaveState();
 });
 
 canvas.on('object:moving', () => {
@@ -2049,8 +3124,8 @@ function renderDataLinksManager() {
         const item = document.createElement('div');
         item.className = 'data-links-object-item';
         item.setAttribute('data-oid', ensureId(obj));
+        // Keep object names consistent with the Layers panel
         let name = obj.name || obj.type;
-        if (obj.type === 'textbox') name = obj.text.substring(0, 25) || obj.name;
         const bindingCount = getBindingsFor(obj).length;
         item.innerHTML = `<strong>${name}</strong> <br> <span class="muted">${bindingCount} link(s)</span>`;
         item.addEventListener('click', () => {
@@ -2115,8 +3190,8 @@ function bindingEditorRow(o, b) {
     info.style.fontSize = '12px';
     
     const linkBtn = document.createElement('button');
-    linkBtn.className = 'btn';
-    linkBtn.textContent = 'Link Column';
+    linkBtn.className = b.column ? 'btn primary' : 'btn';
+    linkBtn.textContent = b.column ? 'Change Column' : 'Link Column';
     linkBtn.onclick = () => {
         openColumnSelectionModal(o, b);
     };
@@ -2154,10 +3229,15 @@ function openColumnSelectionModal(object, binding) {
                 item.className = 'col-item';
                 item.dataset.columnName = h; // Store name for confirmation
                 
-                const sample = dataRows.length > 0 ? (dataRows[0][h] || '—') : '—';
+                const sample = dataRows.length > 0 ? (dataRows[0]?.[index] ?? '—') : '—';
                 
                 item.innerHTML = `<strong>Column ${index + 1}: ${h}</strong><div class="muted" style="font-size: 11px;">Sample: ${sample}</div>`;
                 
+                // Preselect currently linked column
+                if (binding.column && binding.column === h) {
+                    item.setAttribute('aria-selected', 'true');
+                }
+
                 item.onclick = () => {
                     list.querySelectorAll('.col-item').forEach(el => el.removeAttribute('aria-selected'));
                     item.setAttribute('aria-selected', 'true');
@@ -2402,7 +3482,7 @@ async function handleSinglePdfExport() {
 exportBtn.addEventListener('click', handleExport);
 exportSinglePdfBtn.addEventListener('click', handleSinglePdfExport);
 exportFormatSelect.addEventListener('change', updateExportUI);
-$('#closeProLimitModal').addEventListener('click', () => proLimitModal.style.display = 'none');
+on('#closeProLimitModal','click', () => proLimitModal.style.display = 'none');
 
 // Binding logic
 function applyBinding(o,prop,val){ 
@@ -2416,38 +3496,22 @@ function applyBinding(o,prop,val){
         case'Opacity':if(!isNaN(numVal))o.set({opacity:numVal});break; 
         case'Border Color':if(o.isTable)o.forEachObject(cell => cell.set({stroke:strVal}));break;
         case'Border Width':if(o.isTable && !isNaN(numVal))o.forEachObject(cell => cell.set({strokeWidth:numVal}));break;
-        case'Stroke Color':o.set({stroke:strVal});break; 
-        case'Stroke Width':if(!isNaN(numVal))o.set({strokeWidth:numVal});break; 
+        case'Stroke Color':o.set({stroke:strVal}); break; 
+        case'Stroke Width':
+            if(!isNaN(numVal)) {
+                o.set({strokeWidth:numVal});
+                o.setCoords();
+            }
+            break; 
         case'Corner Radius':if('rx'in o && !isNaN(numVal))o.set({rx:numVal,ry:numVal});break; 
         case'Image Fill URL':fabric.Image.fromURL(strVal,img=>o.set('fill',new fabric.Pattern({source:img.getElement()})),{crossOrigin:'anonymous'});break; 
-    } 
-}
+    }
+    canvas.renderAll();
+} 
 
-// --- HISTORY & UTILS ---
-function undo() { 
-    if (historyIndex > 0) { 
-        historyLocked = true; 
-        historyIndex--; 
-        canvas.loadFromJSON(historyStack[historyIndex], () => {
-            restoreCanvasStateAfterLoad();
-            historyLocked = false;
-            updateHistoryButtons();
-        });
-    } 
-}
-function redo() { 
-    if (historyIndex < historyStack.length - 1) { 
-        historyLocked = true; 
-        historyIndex++; 
-        canvas.loadFromJSON(historyStack[historyIndex], () => {
-            restoreCanvasStateAfterLoad();
-            historyLocked = false;
-            updateHistoryButtons();
-        });
-    } 
-}
-function updateHistoryButtons(){ $('#undoBtn').disabled=historyIndex<=0; $('#redoBtn').disabled=historyIndex>=historyStack.length-1; }
-$('#undoBtn').onclick=undo; $('#redoBtn').onclick=redo;
+
+onClick('#csvViewBtn', openCsvView);
+onClick('#closeCsvView', closeCsvView);
 function restoreCanvasStateAfterLoad(callback) {
     pageRect = canvas.getObjects().find(o => o.oid === 'pageRect');
     if (pageRect) {
@@ -2489,8 +3553,47 @@ function renderLayers(e) {
             }
             canvas.renderAll();
         };
+
+        // DRAG AND DROP HANDLERS
+        item.draggable = true;
+        item.ondragstart = (e) => {
+            item.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', obj.oid);
+        };
+        item.ondragend = () => {
+            item.classList.remove('dragging');
+            document.querySelectorAll('.layer-item').forEach(i => i.classList.remove('drag-over'));
+        };
+        item.ondragover = (e) => {
+            e.preventDefault();
+            item.classList.add('drag-over');
+        };
+        item.ondragleave = () => {
+            item.classList.remove('drag-over');
+        };
+        item.ondrop = (e) => {
+            e.preventDefault();
+            const draggedOid = e.dataTransfer.getData('text/plain');
+            const draggedObj = canvas.getObjects().find(o => o.oid === draggedOid);
+            if (draggedObj && draggedObj !== obj) {
+                // Move draggedObj to be above obj
+                canvas.remove(draggedObj);
+                const objects = canvas.getObjects();
+                const targetIndex = objects.indexOf(obj);
+                canvas.insertAt(draggedObj, targetIndex + 1);
+                
+                // Re-ensure pageRect is at bottom
+                keepPageRectAtBack();
+                renderLayers();
+                requestSaveState();
+            }
+        };
         
-        const nameSpan = document.createElement('span'); nameSpan.className = 'layer-name'; nameSpan.textContent = obj.name || obj.type;
+        // Capitalize layer name (first letter uppercase)
+        const rawName = obj.name || obj.type;
+        const displayName = rawName.charAt(0).toUpperCase() + rawName.slice(1);
+        const nameSpan = document.createElement('span'); nameSpan.className = 'layer-name'; nameSpan.textContent = displayName;
         nameSpan.ondblclick = () => { /* ... rename logic ... */ };
         
         item.innerHTML = `
@@ -2513,8 +3616,8 @@ function renderLayers(e) {
 }
 function toggleLock(obj) { obj.locked = !obj.locked; obj.selectable = !obj.locked; obj.evented = !obj.locked; if(obj.locked) canvas.discardActiveObject(); canvas.renderAll(); renderLayers(); requestSaveState(); }
 function centerAndFitPage(){ if(!pageRect)return; const{width:wrapperW,height:wrapperH}=canvasWrapper.getBoundingClientRect(); const pageW=pageRect.width; const pageH=pageRect.height; const zoom=Math.min(wrapperW/pageW,wrapperH/pageH)*0.95; canvas.setZoom(zoom); const center=pageRect.getCenterPoint(); const vpt=[zoom,0,0,zoom,(wrapperW/2)-center.x*zoom,(wrapperH/2)-center.y*zoom]; canvas.setViewportTransform(vpt); $('#zoomLevel').textContent=`Zoom: ${Math.round(zoom*100)}%`; canvas.renderAll(); }
-$('#centerViewBtn').onclick=centerAndFitPage;
-window.addEventListener('keydown', e=>{ if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA')return; const isCtrl=e.ctrlKey||e.metaKey; const activeObj = canvas.getActiveObject(); if(isCtrl&&e.key.toLowerCase()==='z'){e.preventDefault();undo();} if(isCtrl&&e.key.toLowerCase()==='y'){e.preventDefault();redo();} if(isCtrl&&e.key.toLowerCase()==='c'){e.preventDefault();copy();} if(isCtrl&&e.key.toLowerCase()==='x'){e.preventDefault();cut();} if(isCtrl&&e.key.toLowerCase()==='v'){e.preventDefault();paste();} if(isCtrl&&e.key.toLowerCase()==='a'){ e.preventDefault(); const allObjects = canvas.getObjects().filter(o => o.selectable); canvas.setActiveObject(new fabric.ActiveSelection(allObjects, { canvas: canvas })); canvas.renderAll(); } if(isCtrl&&e.key.toLowerCase()==='g'){ e.preventDefault(); if(activeObj && activeObj.type === 'activeSelection') activeObj.toGroup(); } if(isCtrl&&e.shiftKey&&e.key.toLowerCase()==='g'){ e.preventDefault(); if(activeObj && activeObj.type === 'group') activeObj.toActiveSelection(); } if (e.key.startsWith('Arrow') && activeObj) { e.preventDefault(); const amount = e.shiftKey ? 10 : 1; switch(e.key) { case 'ArrowUp': activeObj.top -= amount; break; case 'ArrowDown': activeObj.top += amount; break; case 'ArrowLeft': activeObj.left -= amount; break; case 'ArrowRight': activeObj.left += amount; break; } activeObj.setCoords(); canvas.renderAll(); } if(e.key==='Delete'||e.key==='Backspace'){ const activeObjects=canvas.getActiveObjects(); if(activeObjects.length){ activeObjects.forEach(obj=>canvas.remove(obj)); canvas.discardActiveObject().renderAll(); } } });
+onClick('#centerViewBtn', centerAndFitPage);
+window.addEventListener('keydown', e=>{ if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA')return; const isCtrl=e.ctrlKey||e.metaKey; const activeObj = canvas.getActiveObject(); if(isCtrl&&e.key.toLowerCase()==='z'){e.preventDefault(); if(e.shiftKey) redo(); else undo();} if(isCtrl&&e.key.toLowerCase()==='y'){e.preventDefault();redo();} if(isCtrl&&e.key.toLowerCase()==='c'){e.preventDefault();copy();} if(isCtrl&&e.key.toLowerCase()==='x'){e.preventDefault();cut();} if(isCtrl&&e.key.toLowerCase()==='v'){e.preventDefault();paste();} if(isCtrl&&e.key.toLowerCase()==='a'){ e.preventDefault(); const allObjects = canvas.getObjects().filter(o => o.selectable); canvas.setActiveObject(new fabric.ActiveSelection(allObjects, { canvas: canvas })); canvas.renderAll(); } if(isCtrl&&e.key.toLowerCase()==='g'){ e.preventDefault(); if(activeObj && activeObj.type === 'activeSelection') activeObj.toGroup(); } if(isCtrl&&e.shiftKey&&e.key.toLowerCase()==='g'){ e.preventDefault(); if(activeObj && activeObj.type === 'group') activeObj.toActiveSelection(); } if (e.key.startsWith('Arrow') && activeObj) { e.preventDefault(); const amount = e.shiftKey ? 10 : 1; switch(e.key) { case 'ArrowUp': activeObj.top -= amount; break; case 'ArrowDown': activeObj.top += amount; break; case 'ArrowLeft': activeObj.left -= amount; break; case 'ArrowRight': activeObj.left += amount; break; } activeObj.setCoords(); canvas.renderAll(); } if(e.key==='Delete'||e.key==='Backspace'){ const activeObjects=canvas.getActiveObjects(); if(activeObjects.length){ activeObjects.forEach(obj=>canvas.remove(obj)); canvas.discardActiveObject().renderAll(); } } });
 window.addEventListener('keyup', e => { if (e.key.startsWith('Arrow') && canvas.getActiveObject()) { requestSaveState(); } });
 
 // --- AI ASSISTANT ---
@@ -3090,7 +4193,7 @@ function goToStep(stepIndex) {
         tourModal.style.transform = 'translate(-50%, -50%)';
     }
 }
-$('#start-tour-btn').addEventListener('click', startTour); $('#tour-close-btn').addEventListener('click', endTour); $('#tour-finish-btn').addEventListener('click', endTour); $('#tour-next-btn').addEventListener('click', () => { currentTourStep++; goToStep(currentTourStep); }); $('#tour-prev-btn').addEventListener('click', () => { currentTourStep--; goToStep(currentTourStep); });
+on('#start-tour-btn','click',startTour); on('#tour-close-btn','click',endTour); on('#tour-finish-btn','click',endTour); on('#tour-next-btn','click', () => { currentTourStep++; goToStep(currentTourStep); }); on('#tour-prev-btn','click', () => { currentTourStep--; goToStep(currentTourStep); });
 
 // 5. Enhanced Template Loader
 const templateLoaderModal = $('#template-loader-modal');
@@ -3100,36 +4203,60 @@ async function toggleTemplateLoader(button) {
         return;
     }
     const rect = button.getBoundingClientRect();
-    templateLoaderModal.style.top = `${rect.bottom + 5}px`;
-    templateLoaderModal.style.left = `${rect.left}px`;
+    const maxW = 420;
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    let left = rect.left;
+    let top = rect.bottom + 8;
+    if (left + maxW > vw - 12) left = Math.max(12, vw - maxW - 12);
+    if (top > vh - 120) top = Math.max(12, rect.top - 8);
+    templateLoaderModal.style.top = `${top}px`;
+    templateLoaderModal.style.left = `${left}px`;
     templateLoaderModal.style.display = 'block';
-    templateLoaderModal.innerHTML = '<p class="muted" style="padding: 16px;">Loading...</p>';
+    templateLoaderModal.innerHTML = '<p class="muted" style="padding: 24px; text-align: center;">Loading templates...</p>';
 
-    const [publicTemplates, purchasedTemplates] = await Promise.all([
-        supabase.from('public_templates').select('id, title'),
-        currentUser ? supabase.from('purchased_templates').select('store_templates(id, title)').eq('user_id', currentUser.id) : Promise.resolve({ data: [] })
+    const [publicTemplates, purchasedTemplates, myTemplates] = await Promise.all([
+        supabase.from('public_templates').select('id, title, template_data'),
+        currentUser ? supabase.from('purchased_templates').select('store_templates(id, title, template_data)').eq('user_id', currentUser.id) : Promise.resolve({ data: [] }),
+        currentUser ? supabase.from('templates').select('id, title, template_data').eq('user_id', currentUser.id).order('created_at', { ascending: false }) : Promise.resolve({ data: [] })
     ]);
     
     templateLoaderModal.innerHTML = `
         <div class="template-modal-tabs">
             <button class="template-modal-tab active" data-tab="public">Public</button>
-            <button class="template-modal-tab" data-tab="purchased">Purchased</button>
+            <button class="template-modal-tab" data-tab="mine">My Templates</button>
+            <button class="template-modal-tab" data-tab="purchased">Library</button>
         </div>
         <div id="public-templates" class="template-grid"></div>
+        <div id="my-templates" class="template-grid" style="display:none;"></div>
         <div id="purchased-templates" class="template-grid" style="display:none;"></div>
-        <button id="loadJsonBtn" class="btn ghost" style="width: 100%; margin-top: 8px;">Load from File (.json)</button>
+        <div style="padding: 12px; border-top: 1px solid var(--border); background: var(--panel-2); display: flex; gap: 8px;">
+            <button id="loadJsonBtn" class="btn ghost" style="flex: 1; font-size: 11px;">Upload JSON</button>
+        </div>
+        <input type="file" id="jsonUpload" accept=".json" style="display:none;">
     `;
 
     const publicGrid = $('#public-templates');
     publicGrid.innerHTML = '';
-    publicTemplates.data.forEach(t => publicGrid.appendChild(createTemplateItem(t, true)));
+    (publicTemplates.data||[]).forEach(t => publicGrid.appendChild(createTemplateItem(t, true)));
+
+    const myGrid = $('#my-templates');
+    myGrid.innerHTML = '';
+    if (myTemplates.data && myTemplates.data.length > 0) {
+        myTemplates.data.forEach(t => myGrid.appendChild(createTemplateItem(t, false)));
+    } else {
+        myGrid.innerHTML = `<div style="grid-column: 1 / -1; padding: 32px 16px; text-align: center;">
+            <p class="muted" style="font-size: 12px; margin-bottom: 12px;">You haven't saved any templates yet.</p>
+            <button onclick="templateLoaderModal.style.display='none'" class="btn primary" style="height: 28px; font-size: 11px;">Start Creating</button>
+        </div>`;
+    }
 
     const purchasedGrid = $('#purchased-templates');
     purchasedGrid.innerHTML = '';
     if (purchasedTemplates.data && purchasedTemplates.data.length > 0) {
-        purchasedTemplates.data.forEach(t => purchasedGrid.appendChild(createTemplateItem(t.store_templates, false)));
+        purchasedTemplates.data.forEach(t => purchasedGrid.appendChild(createTemplateItem(t.store_templates, false, true)));
     } else {
-        purchasedGrid.innerHTML = '<p class="muted" style="font-size: 12px; text-align: center; grid-column: 1 / -1;">No purchased templates found.</p>';
+        purchasedGrid.innerHTML = '<p class="muted" style="font-size: 12px; text-align: center; grid-column: 1 / -1; padding: 32px 16px;">No purchased templates found.</p>';
     }
 
     document.querySelectorAll('.template-modal-tab').forEach(btn => {
@@ -3137,25 +4264,67 @@ async function toggleTemplateLoader(button) {
             document.querySelectorAll('.template-modal-tab').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             publicGrid.style.display = btn.dataset.tab === 'public' ? 'grid' : 'none';
+            myGrid.style.display = btn.dataset.tab === 'mine' ? 'grid' : 'none';
             purchasedGrid.style.display = btn.dataset.tab === 'purchased' ? 'grid' : 'none';
         });
     });
 
-    $('#loadJsonBtn').addEventListener('click', () => $('#jsonUpload').click());
+    on('#loadJsonBtn','click', () => $('#jsonUpload').click());
 }
 
-function createTemplateItem(template, isPublic) {
+function createTemplateItem(template, isPublic, isPurchased = false) {
     const item = document.createElement('div');
     item.className = 'template-item';
-    item.textContent = template.title;
+
+    const thumb = document.createElement('div');
+    thumb.className = 'template-thumb';
+    thumb.style.backgroundColor = '#111';
+    thumb.innerHTML = '<div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; opacity:0.1;"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg></div>';
+
+    const title = document.createElement('div');
+    title.className = 'template-title';
+    title.textContent = template.title || 'Untitled Template';
+
+    item.append(thumb, title);
+
+    // Lightweight preview generation
+    setTimeout(() => {
+        try {
+            const data = template.template_data;
+            if (data && data.canvas) {
+                const off = document.createElement('canvas');
+                off.width = 320;
+                off.height = 240;
+                const c2 = new fabric.StaticCanvas(off); // Use StaticCanvas for better performance
+                c2.loadFromJSON(data.canvas, () => {
+                    const pr = c2.getObjects().find(o => o.oid === 'pageRect');
+                    if (pr) {
+                        pr.set({ strokeWidth: 0, shadow: null });
+                        const zoom = Math.min(off.width / pr.width, off.height / pr.height) * 0.95;
+                        c2.setZoom(zoom);
+                        c2.viewportTransform[4] = (off.width - pr.width * zoom) / 2;
+                        c2.viewportTransform[5] = (off.height - pr.height * zoom) / 2;
+                    }
+                    c2.renderAll();
+                    const dataUrl = off.toDataURL('image/jpeg', 0.8);
+                    thumb.innerHTML = ''; // Clear placeholder
+                    thumb.style.backgroundImage = `url(${dataUrl})`;
+                    c2.dispose();
+                });
+            }
+        } catch (e) {
+            console.error('Preview failed:', e);
+        }
+    }, 50);
+
     item.onclick = () => {
-        loadTemplateFromDB(template.id, { public: isPublic });
+        loadTemplateFromDB(template.id, { public: isPublic, purchased: isPurchased });
         templateLoaderModal.style.display = 'none';
     };
     return item;
 }
 
-$('#jsonUpload').addEventListener('change', (e) => {
+on('#jsonUpload','change', (e) => {
     const file = e.target.files[0];
     if (!file) return;
     const reader = new FileReader();
@@ -3176,10 +4345,18 @@ $('#jsonUpload').addEventListener('change', (e) => {
     e.target.value = ''; // Reset input
 });
 
-window.addEventListener('click', (e) => { if (!templateLoaderModal.contains(e.target) && e.target.id !== 'loadTemplateBtnPage') templateLoaderModal.style.display = 'none'; });
+window.addEventListener('click', (e) => { 
+    if (!templateLoaderModal.contains(e.target) && 
+        !e.target.closest('#loadTemplateBtnPage') && 
+        !e.target.closest('#openLoaderFromSidebar') && 
+        !e.target.closest('#toolbarLoadTemplateBtn')) {
+        templateLoaderModal.style.display = 'none'; 
+    }
+});
 
 // --- INITIALIZE ---
 window.addEventListener('DOMContentLoaded', initializeEditor);
+
 </script>
 
 </body>

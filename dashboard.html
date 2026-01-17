@@ -13,11 +13,11 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 2rem;
+            margin-top: 60px; /* Offset for fixed nav */
         }
-        /* NEW: Styles for the header title and counter */
         .header-title-group {
             display: flex;
-            align-items: baseline; /* Aligns title and counter nicely */
+            align-items: baseline;
             gap: 1rem;
         }
         .template-counter {
@@ -41,14 +41,21 @@
         .tab {
             padding: 1rem;
             cursor: pointer;
+            color: var(--muted);
+            font-weight: 500;
             border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        .tab:hover {
+            color: var(--fg);
         }
         .tab.active {
+            color: var(--accent);
             border-bottom-color: var(--accent);
         }
         .template-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
             gap: 1.5rem;
         }
         .template-card {
@@ -60,88 +67,82 @@
             flex-direction: column;
             position: relative;
             cursor: pointer;
-            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out, border-color 0.2s ease-in-out;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .template-card .preview {
             height: 180px;
-            background-color: #2a2a2a;
+            background-color: var(--bg);
             display: flex;
             align-items: center;
             justify-content: center;
             position: relative;
             overflow: hidden;
+            border-bottom: 1px solid var(--border);
         }
         .template-card .info {
             padding: 1rem;
             flex-grow: 1;
         }
-        .template-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 4px 12px rgba(0,0,0,.3);
+        .template-card .info h3 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--fg);
         }
-
-        /* --- STYLES for SELECTION --- */
+        .template-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--muted);
+            box-shadow: var(--shadow-lg);
+        }
 
         .template-card.selected {
             border-color: var(--accent);
             box-shadow: 0 0 0 1px var(--accent);
         }
         
-        /* --- NEW: Selection Indicator (the little square) --- */
         .template-card .selection-indicator {
             position: absolute;
             top: 12px;
             left: 12px;
             z-index: 3;
-            width: 15px;
-            height: 15px;
-            border: 2px dotted rgba(255,255,255,0.7);
-            background-color: rgba(0,0,0,0.4);
-            border-radius: 5px;
-            display: none; /* Hide by default */
-            pointer-events: none; /* Make sure it doesn't interfere with clicks */
-            transition: background-color 0.2s, border-color 0.2s;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255,255,255,0.2);
+            background-color: rgba(0,0,0,0.5);
+            border-radius: 6px;
+            display: none;
+            pointer-events: none;
+            transition: all 0.2s;
         }
 
-        /* Show the indicator when selection mode is active */
         .template-grid.selection-active .template-card .selection-indicator {
             display: block;
         }
 
-
-        /* Style for the indicator when the card is selected */
         .template-card.selected .selection-indicator {
             background-color: var(--accent);
             border-color: var(--accent);
         }
 
-        /* The checkmark, created with a pseudo-element */
         .template-card.selected .selection-indicator::after {
             content: '';
             position: absolute;
-            left: 4px;
-            top: 0px;
+            left: 6px;
+            top: 2px;
             width: 5px;
             height: 10px;
-            border: solid rgb(0, 0, 0);
+            border: solid #fff;
             border-width: 0 2px 2px 0;
             transform: rotate(45deg);
         }
 
-        /* In selection mode, disable the link and change cursor */
         .template-grid.selection-active .template-card .card-link {
             pointer-events: none;
-        }
-        .template-grid.selection-active .template-card {
-            cursor: pointer;
         }
         
         .template-card .card-link {
             position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
+            top: 0; left: 0; right: 0; bottom: 0;
             z-index: 1;
         }
         .template-card .actions {
@@ -166,30 +167,15 @@
             justify-content: center;
             position: relative;
             z-index: 2;
-            transition: background-color 0.2s;
+            color: var(--muted);
+            transition: all 0.2s;
         }
-        .template-card .icon-btn svg {
-            width: 18px;
-            height: 18px;
-            transition: stroke 0.2s;
-        }
-        .template-card .duplicate-btn svg {
-            stroke: var(--fg);
-        }
-        .template-card .duplicate-btn:hover {
+        .template-card .icon-btn:hover {
             background-color: var(--panel-2);
-        }         
-        .template-card .duplicate-btn:hover svg {
-            stroke: #b0b0b0;
-        }
-        .template-card .delete-btn svg {
-            stroke: #e53e3e;
+            color: var(--fg);
         }
         .template-card .delete-btn:hover {
-            background-color: var(--panel-2);
-        }
-        .template-card .delete-btn:hover svg {
-            stroke: #b0b0b0;
+            color: var(--danger);
         }
     </style>
 </head>
@@ -205,43 +191,41 @@
     </nav>
 
     <main class="container">
-        <div class="dashboard-header">
-            <!-- MODIFIED: Wrapped title and added counter span -->
+        <div class="dashboard-header animated">
             <div class="header-title-group">
-                <h1>My Dashboard</h1>
+                <h1 class="glow-text" style="font-size: 2.5rem; margin: 0;">My Dashboard</h1>
                 <span id="template-counter" class="template-counter" style="display: none;"></span>
             </div>
             <div class="header-actions">
                 <button id="select-btn" class="btn ghost">Select</button>
                 <button id="cancel-selection-btn" class="btn ghost" style="display: none;">Cancel</button>
-                <button id="delete-selected-btn" class="btn" style="display: none; color: #fff; background-color: #e53e3e;">Delete Selected</button>
-                <a href="/tool.html" class="btn">Create New Template</a>
+                <button id="delete-selected-btn" class="btn" style="display: none; color: #fff; background-color: var(--danger); border: none;">Delete Selected</button>
+                <a href="/tool" class="btn primary">Create New Template</a>
             </div>
         </div>
 
-        <div class="tabs">
+        <div class="tabs animated" style="animation-delay: 0.1s;">
             <div class="tab active" data-tab="created">My Created Templates</div>
             <div class="tab" data-tab="purchased">My Purchased Templates</div>
         </div>
 
-        <div id="template-grid" class="template-grid">
-            <p>Loading templates...</p>
+        <div id="template-grid" class="template-grid animated" style="animation-delay: 0.2s;">
+            <p class="muted">Loading templates...</p>
         </div>
     </main>
     
+    <footer>
+        <div class="footer-links">
+            <a href="terms.html">Terms of Service</a>
+            <a href="privacy.html">Privacy Policy</a>
+            <a href="refunds.html">Refund Policy</a>
+        </div>
+        <div class="copyright">
+            <p>&copy; 2026 CSVLink. All Rights Reserved.</p>
+        </div>
+    </footer>
+
     <script type="module" src="assets/js/auth.js"></script>
     <script type="module" src="assets/js/dashboard.js"></script>
 </body>
-
-<footer>
-    <div class="footer-links">
-        <a href="terms.html">Terms of Service</a>
-        <a href="privacy.html">Privacy Policy</a>
-        <a href="refunds.html">Refund Policy</a>
-    </div>
-    <div class="copyright">
-        <p>&copy; 2025 AtomLink. All Rights Reserved.</p>
-    </div>
-</footer>
-
 </html>

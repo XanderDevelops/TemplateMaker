@@ -14,15 +14,15 @@ let isSignup = false;
 const renderNav = (user) => {
     if (!navLinksContainer) return;
     navLinksContainer.innerHTML = '';
-    
+
     let linksHtml = `
-        <a href="/store.html">Store</a>
+        <a href="/store.html" title="Store" class="btn ghost icon-only"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg></a>
     `;
 
     if (user) {
         linksHtml += `
-            <a href="/dashboard.html">Dashboard</a>
-            <a href="#" id="logout-btn">Logout</a>
+            <a href="/dashboard.html" title="Dashboard"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg></a>
+            <a href="#" id="logout-btn" title="Logout"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg></a>
         `;
     } else {
         linksHtml += `
@@ -65,17 +65,17 @@ if (loginForm) {
 }
 
 // --- Handle Google Auth ---if (googleLoginBtn) {
-    googleLoginBtn.addEventListener('click', async () => {
-        const { error } = await supabase.auth.signInWithOAuth({
-            provider: 'google',
-            options: {
-                redirectTo: window.location.origin + '/login.html?redirect=' + encodeURIComponent(redirectTo)
-            }
-        });
-        if (error) {
-            authError.textContent = error.message;
+googleLoginBtn.addEventListener('click', async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+            redirectTo: window.location.origin + '/login.html?redirect=' + encodeURIComponent(redirectTo)
         }
     });
+    if (error) {
+        authError.textContent = error.message;
+    }
+});
 
 
 // --- Toggle between Login and Signup view ---
@@ -107,12 +107,12 @@ const checkUser = async () => {
 
     // Render navigation based on user state
     renderNav(user);
-    
+
     // Redirect if user is on login page but already logged in
     if (user && window.location.pathname.includes('login.html')) {
         window.location.href = redirectTo;
     }
-    
+
     return user;
 };
 

@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Canvas</title>
+    <script src="https://cdn.jsdelivr.net/npm/fabric@5.3.0/dist/fabric.min.js"></script>
+</head>
+<body>
+    <canvas id="c" width="800" height="600"></canvas>
+    <script>
+        console.log('Fabric loaded:', typeof fabric);
+        const canvas = new fabric.Canvas('c', { backgroundColor: '#f0f0f0' });
+        const rect = new fabric.Rect({
+            left: 100,
+            top: 100,
+            fill: 'red',
+            width: 200,
+            height: 100
+        });
+        canvas.add(rect);
+        console.log('Canvas initialized:', canvas);
+    </script>
+</body>
+</html>

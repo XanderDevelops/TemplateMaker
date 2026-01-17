@@ -18,10 +18,10 @@
         
         /* General Body Styles */
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             margin: 0;
-            background-color: #121212;
-            color: #fff;
+            background-color: var(--bg);
+            color: var(--fg);
             overflow-x: hidden;
             scroll-behavior: smooth;
         }
@@ -31,152 +31,115 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 1rem 2rem;
-            background-color: rgba(18, 18, 18, 0.8);
-            backdrop-filter: blur(10px);
+            padding: 0 24px;
+            height: 60px;
+            background-color: rgba(11, 17, 33, 0.8);
+            backdrop-filter: blur(12px);
             position: fixed;
             width: 100%;
             top: 0;
             z-index: 1000;
             box-sizing: border-box;
+            border-bottom: 1px solid var(--border);
         }
 
         .logo {
-            font-size: 1.5rem;
-            font-weight: bold;
+            font-size: 1.25rem;
+            font-weight: 700;
             text-decoration: none;
-            color: #fff;
+            color: var(--fg);
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
         /* Hero Section */
         .hero {
             text-align: center;
-            padding: 150px 20px 100px;
-            background: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%);
+            padding: 160px 20px 120px;
+            background-color: var(--bg); 
             position: relative;
-            overflow: hidden; /* To contain the pseudo-element */
-        }
-        
-        /* 3. Added pseudo-element for feather effect */
-        /* --- REPLACE THIS ENTIRE BLOCK in your <style> tag --- */
-
-        /* Hero Section */
-        .hero {
-            text-align: center;
-            padding: 150px 20px 100px;
-            /* Use the darker color from the gradient for a seamless base */
-            background-color: #121212; 
-            position: relative;
-            overflow: hidden; /* Crucial for containing the rotating element */
+            overflow: hidden;
         }
 
-        /* This is the new ROTATING element - it sits in the back */
         .hero::after {
             content: '';
             position: absolute;
-            top: 100%; /* Make it much larger than the container */
-            left: -100%;
-            width: 300%;
-            height: 300%;
-            /* Creates a soft, sweeping light effect */
+            top: 50%;
+            left: 50%;
+            width: 150%;
+            height: 150%;
             background: conic-gradient(
-                from 0.5turn at 50% 50%,
-                #121212, /* Start with the background color */
-                rgba(79, 172, 254, 0.15) 48%, /* The rotating glow color */
-                rgba(79, 172, 254, 0.15) 52%,
-                #121212 55%, /* End with the background color */
-                #121212
+                from 180deg at 50% 50%,
+                transparent,
+                rgba(59, 130, 246, 0.03) 45%,
+                rgba(59, 130, 246, 0.08) 50%,
+                rgba(59, 130, 246, 0.03) 55%,
+                transparent
             );
-            z-index: 0; /* Sits behind everything */
-            
-            /* Apply the animation */
-            animation: rotate-background 25s linear infinite;
+            z-index: 0;
+            transform: translate(-50%, -50%);
+            animation: rotate-background 60s linear infinite;
+            filter: blur(60px);
         }
 
-        /* This is your original feather effect - it sits on top of the rotation */
         .hero::before {
             content: '';
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            /* Updated to use the correct background color for a perfect blend */
-            background: linear-gradient(to right, 
-                #121212 0%, 
-                rgba(18, 18, 18, 0) 25%, 
-                rgba(18, 18, 18, 0) 75%, 
-                #121212 100%
-            );
-            z-index: 1; /* Sits on top of the ::after element */
+            inset: 0;
+            background: radial-gradient(circle at center, transparent 20%, var(--bg) 80%);
+            z-index: 1;
         }
 
-        /* Ensure the hero content (h1, p, btn) is on the very top */
+        /* Ensure hero content stays on top */
         .hero > * {
             position: relative;
             z-index: 2;
         }
 
         .hero h1 {
-            font-size: 3.5rem;
-            margin-bottom: 1rem;
-            background: linear-gradient(90deg, #4facfe, #00f2fe);
+            font-size: 4rem;
+            margin: 0 0 1.5rem;
+            background: linear-gradient(90deg, #fff, var(--accent));
             -webkit-background-clip: text;
+            background-clip: text;
             -webkit-text-fill-color: transparent;
+            letter-spacing: -0.04em;
+            font-weight: 800;
         }
 
         .hero p {
-            font-size: 1.2rem;
-            color: #aaa;
-            max-width: 600px;
-            margin: 0 auto 2rem;
+            font-size: 1.25rem;
+            color: var(--muted);
+            max-width: 640px;
+            margin: 0 auto 2.5rem;
+            line-height: 1.6;
         }
-
-        /* --- ADD THIS KEYFRAMES RULE at the end of your <style> tag --- */
 
         @keyframes rotate-background {
-            from {
-                transform: rotate(0deg);
-            }
-            to {
-                transform: rotate(360deg);
-            }
+            from { transform: translate(-50%, -50%) rotate(0deg); }
+            to { transform: translate(-50%, -50%) rotate(360deg); }
         }
 
-        .hero > * {
-            position: relative;
-            z-index: 2; /* Ensure content is above the gradient overlay */
-        }
-
-        .hero h1 {
-            font-size: 3.5rem;
-            margin-bottom: 1rem;
-            background: linear-gradient(90deg, #ffffff, #00f2fe);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        .hero p {
-            font-size: 1.2rem;
-            color: #aaa;
-            max-width: 600px;
-            margin: 0 auto 2rem;
-        }
-        
-        /* 5. Modified button style */
         .btn {
-            background-color: #ffffff;
-            color: #121212;
-            padding: 12px 24px;
-            border-radius: 8px;
+            background-color: var(--accent);
+            color: var(--accent-fg);
+            padding: 0 32px;
+            height: 48px;
+            border-radius: var(--radius);
             text-decoration: none;
-            font-weight: bold;
-            transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3s;
-            border: 1px solid transparent;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            border: none;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
         }
         .btn:hover {
-            background-color: #f0f0f0;
-            transform: translateY(-3px);
-            box-shadow: 0 10px 20px rgba(255, 255, 255, 0.1);
+            background-color: var(--accent-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(59, 130, 246, 0.4);
         }
 
         /* Feature Sections General Style */
@@ -185,10 +148,10 @@
             align-items: center;
             justify-content: center;
             gap: 4rem;
-            padding: 6rem 2rem;
+            padding: 8rem 2rem;
             opacity: 0;
-            transform: translateY(50px);
-            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+            transform: translateY(30px);
+            transition: all 0.8s cubic-bezier(0.2, 1, 0.3, 1);
         }
 
         .feature-section.is-visible {
@@ -196,32 +159,25 @@
             transform: translateY(0);
         }
 
-        /* Alternating layout for feature sections */
-        .feature-section:nth-child(even) {
-            flex-direction: row-reverse;
-        }
-        
-        .feature-content {
-            max-width: 500px;
-        }
-        
         .feature-content h2 {
-            font-size: 2.5rem;
-            margin-bottom: 1rem;
-            display: flex;
-            align-items: center;
+            font-size: 3rem;
+            margin-bottom: 1.5rem;
+            color: var(--fg);
+            font-weight: 700;
+            letter-spacing: -0.02em;
         }
         
         .feature-content p, .feature-content li {
-            font-size: 1.1rem;
-            color: #bbb;
-            line-height: 1.6;
+            font-size: 1.125rem;
+            color: var(--muted);
+            line-height: 1.7;
         }
         
         .feature-image img {
-            max-width: 500px;
-            border-radius: 12px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+            max-width: 560px;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-lg);
         }
 
         /* Bulk Generation Specifics */
@@ -277,12 +233,13 @@
         /* 6. Template Gallery Section - MODIFIED */
         .templates-section {
             text-align: center;
-            padding: 6rem 2rem;
-            background-color: #1a1a1a;
+            padding: 8rem 2rem;
+            background-color: var(--panel);
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
             opacity: 0;
-            transform: translateY(50px);
-            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
-            overflow: hidden; /* Hide overflowing carousel items */
+            transform: translateY(30px);
+            transition: all 0.8s cubic-bezier(0.2, 1, 0.3, 1);
         }
 
         .templates-section.is-visible {
@@ -293,36 +250,38 @@
         .templates-section h2 {
             font-size: 2.5rem;
             margin-bottom: 1rem;
+            font-weight: 700;
         }
         
-        /* 6. Template Category Buttons */
         .template-categories {
             display: flex;
             justify-content: center;
-            gap: 1rem;
-            margin-bottom: 3rem;
+            gap: 0.75rem;
+            margin-bottom: 4rem;
+            flex-wrap: wrap;
         }
 
         .template-category-btn {
-            background-color: transparent;
-            border: 1px solid #555;
-            color: #aaa;
-            padding: 10px 20px;
-            border-radius: 20px;
+            background-color: var(--panel-2);
+            border: 1px solid var(--border);
+            color: var(--muted);
+            padding: 8px 18px;
+            border-radius: 100px;
             cursor: pointer;
-            font-size: 1rem;
+            font-size: 0.875rem;
             font-weight: 600;
-            transition: all 0.3s ease;
+            transition: all 0.2s;
         }
 
         .template-category-btn:hover {
-            background-color: #333;
-            color: #fff;
+            border-color: var(--muted);
+            color: var(--fg);
         }
 
         .template-category-btn.active {
-            background-color: #ffffff;
-            color: #000000;
+            background-color: var(--accent);
+            color: var(--accent-fg);
+            border-color: var(--accent);
         }
 
         /* 6. Template Carousel */
@@ -498,11 +457,11 @@
 
         /* Pricing Section */
         .pricing-section {
-            padding: 6rem 2rem;
+            padding: 8rem 2rem;
             text-align: center;
             opacity: 0;
-            transform: translateY(50px);
-            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+            transform: translateY(30px);
+            transition: all 0.8s cubic-bezier(0.2, 1, 0.3, 1);
         }
 
         .pricing-section.is-visible {
@@ -511,112 +470,146 @@
         }
 
         .pricing-header h2 {
-            font-size: 2.5rem;
-            margin-bottom: 1rem;
+            font-size: 3rem;
+            margin-bottom: 1.5rem;
+            font-weight: 700;
         }
 
         .pricing-header p {
-            font-size: 1.2rem;
-            color: #aaa;
+            font-size: 1.25rem;
+            color: var(--muted);
             max-width: 600px;
-            margin: 0 auto 3rem;
+            margin: 0 auto 4rem;
         }
 
         .pricing-container {
-            display: grid; /* Use grid for more control */
-            justify-content: center;
-            gap: 6rem;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            max-width: 1100px; /* Set a max-width for the container itself */
-            margin: 0 auto; /* Center the container */
+            display: grid;
+            gap: 24px;
+            grid-template-columns: repeat(3, 1fr);
+            max-width: 1000px;
+            margin: 0 auto;
         }
 
-        .pricing-card {
-            background-color: #1a1a1a;
-            border-radius: 12px;
-            padding: 2rem;
-            width: 100%; /* The grid handles the width, so this can be 100% */
-            display: flex;
-            flex-direction: column;
-            border: 1px solid #333;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-
-        /* Optional: Media query for very small screens if needed */
-        @media (max-width: 1024px) {
+        @media (max-width: 900px) {
             .pricing-container {
-                /* On tablets and smaller, allow fewer columns */
-                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                grid-template-columns: 1fr;
+                max-width: 400px;
             }
         }
 
+        .pricing-card {
+            background-color: var(--panel);
+            border-radius: 16px;
+            padding: 2.5rem;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid var(--border);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            text-align: left;
+        }
+
         .pricing-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+            transform: translateY(-8px);
+            border-color: var(--muted);
+            box-shadow: var(--shadow-lg);
         }
 
         .pricing-card.recommended {
-            border-color: #4facfe;
-            box-shadow: 0 0 20px rgba(79, 172, 254, 0.3);
+            border-color: var(--accent);
+            background: linear-gradient(to bottom, var(--panel), #0a1125);
+            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.15);
+            position: relative;
+        }
+        .pricing-card.recommended::before {
+            content: 'Most Popular';
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--accent);
+            color: #fff;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
 
         .card-header h3 {
-            font-size: 1.8rem;
-            margin-bottom: 0.5rem;
+            font-size: 1.5rem;
+            margin: 0 0 0.5rem;
+            font-weight: 700;
         }
 
         .card-header p {
-            color: #bbb;
-            margin-bottom: 1.5rem;
-            min-height: 40px;
+            color: var(--muted);
+            margin-bottom: 2rem;
+            font-size: 0.875rem;
+            min-height: auto;
         }
 
         .price {
-            font-size: 3rem;
-            font-weight: bold;
-            margin-bottom: 2rem;
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 2.5rem;
+            color: var(--fg);
         }
 
         .price sup {
-            font-size: 1.5rem;
-            top: -1em;
+            font-size: 1.25rem;
+            top: -0.5em;
         }
 
         .price span {
-            font-size: 1rem;
-            font-weight: normal;
-            color: #aaa;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--muted);
         }
 
         .card-body ul {
             list-style: none;
             padding: 0;
-            margin: 0 0 2rem;
-            text-align: left;
+            margin: 0 0 2.5rem;
             flex-grow: 1;
         }
 
         .card-body li {
-            margin-bottom: 1rem;
-            color: #ddd;
-        }
-
-        .card-body {
-            flex-grow: 1;
+            margin-bottom: 0.875rem;
+            color: var(--fg);
+            opacity: 0.8;
+            font-size: 0.9375rem;
             display: flex;
-            flex-direction: column;
-            justify-content: flex-start;
+            align-items: center;
+            gap: 10px;
         }
-
-        .card-footer {
-            margin-top: auto;
+        .card-body li::before {
+            content: '✓';
+            color: var(--success);
+            font-weight: 700;
         }
 
         .card-footer .btn {
-            display: block; /* Make the link a block-level element */
-            box-sizing: border-box; /* Ensure padding is included in the total width */
             width: 100%;
-            text-align: center; /* Center the text inside the button */
+        }
+        .pricing-card.recommended .btn {
+            background: var(--accent);
+            color: #fff;
+        }
+        .pricing-card:not(.recommended) .btn {
+            background: var(--panel-2);
+            color: var(--fg);
+            border: 1px solid var(--border);
+        }
+        .pricing-card:not(.recommended) .btn:hover {
+            background: var(--border);
+        }
+
+        footer {
+            background-color: var(--panel);
+            border-top: 1px solid var(--border);
+            padding: 4rem 2rem;
+            margin-top: 8rem;
         }
     </style>
 </head>

@@ -6,26 +6,35 @@
     <link rel="icon" href="assets/images/android-chrome-192x192.png" type="image/png" />
     <title>Store - CSVLink</title>
     <link rel="stylesheet" href="assets/css/style.css">
-    <!-- Re-using dashboard styles for the grid -->
-    <link rel="stylesheet" href="assets/css/store-dashboard.css">
     <script src="https://app.lemonsqueezy.com/js/lemon.js" defer></script>
     <style>
+        .store-header {
+            margin-top: 60px;
+            margin-bottom: 3rem;
+        }
         .store-layout {
             display: grid;
-            grid-template-columns: 200px 1fr;
-            gap: 2rem;
+            grid-template-columns: 240px 1fr;
+            gap: 2.5rem;
             align-items: flex-start;
         }
 
         .categories {
             background: var(--panel);
-            padding: 1rem;
-            border-radius: 12px;
+            padding: 1.5rem;
+            border-radius: 16px;
             border: 1px solid var(--border);
+            position: sticky;
+            top: 84px;
         }
 
         .categories h3 {
             margin-top: 0;
+            margin-bottom: 1.5rem;
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--muted);
         }
 
         .categories ul {
@@ -35,19 +44,64 @@
         }
 
         .categories li {
-            padding: 0.75rem;
+            padding: 0.75rem 1rem;
             border-radius: 8px;
             cursor: pointer;
             font-weight: 500;
+            color: var(--muted);
+            transition: all 0.2s;
+            margin-bottom: 4px;
         }
 
         .categories li:hover {
-            background-color: #2a2a2a;
+            background-color: var(--panel-2);
+            color: var(--fg);
         }
 
         .categories li.active {
             background-color: var(--accent);
-            color: #000000;
+            color: var(--accent-fg);
+        }
+
+        .template-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .template-card {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .template-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--muted);
+            box-shadow: var(--shadow-lg);
+        }
+        .template-card .preview {
+            height: 180px;
+            background-color: var(--bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            border-bottom: 1px solid var(--border);
+        }
+        .template-card .info {
+            padding: 1rem;
+        }
+        .template-card .info h3 {
+            margin: 0;
+            font-size: 16px;
+            font-weight: 600;
         }
 
         /* Modal Styles */
@@ -57,35 +111,40 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.7);
-            display: none; /* Hidden by default */
+            background: rgba(3, 5, 8, 0.85);
+            display: none;
             align-items: center;
             justify-content: center;
-            z-index: 1000;
+            z-index: 2000;
+            backdrop-filter: blur(4px);
         }
 
         .modal-content {
             background: var(--panel);
-            padding: 1rem;
-            border-radius: 16px;
+            padding: 24px;
+            border-radius: 20px;
             border: 1px solid var(--border);
-            width: 90vw;
-            height: 85vh;
-            max-width: 1000px;
+            width: 95vw;
+            height: 90vh;
+            max-width: 1100px;
             display: flex;
             flex-direction: column;
+            box-shadow: var(--shadow-lg);
         }
 
         .modal-header {
             display: flex;
-            justify-content: flex-end;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
         }
 
         .modal-body {
             flex-grow: 1;
-            background-color: #2a2a2a;
-            border-radius: 8px;
+            background-color: var(--bg);
+            border-radius: 12px;
             overflow: hidden;
+            border: 1px solid var(--border);
         }
     </style>
 </head>
@@ -101,8 +160,12 @@
     </nav>
 
     <main class="container">
-        <h1>Template Store</h1>
-        <div class="store-layout">
+        <div class="store-header animated">
+            <h1 class="glow-text" style="font-size: 3rem; margin: 0;">Template Store</h1>
+            <p class="muted">Discover professional templates for your business data.</p>
+        </div>
+
+        <div class="store-layout animated" style="animation-delay: 0.1s;">
             <aside class="categories">
                 <h3>Categories</h3>
                 <ul id="category-list">
@@ -114,7 +177,7 @@
                 </ul>
             </aside>
             <div id="template-grid" class="template-grid">
-                <p>Loading templates...</p>
+                <p class="muted">Loading templates...</p>
             </div>
         </div>
     </main>
@@ -123,7 +186,8 @@
     <div id="preview-modal" class="modal-backdrop">
         <div class="modal-content">
             <div class="modal-header">
-                <button id="close-modal-btn" class="btn ghost">&times;</button>
+                <h2 id="modal-title" style="margin: 0; font-size: 1.25rem;">Template Preview</h2>
+                <button id="close-modal-btn" class="btn ghost icon-only" style="width: 32px; height: 32px; border-radius: 50%; font-size: 20px;">&times;</button>
             </div>
             <div class="modal-body">
                 <canvas id="modal-canvas"></canvas>
@@ -138,7 +202,7 @@
             <a href="refunds.html">Refund Policy</a>
         </div>
         <div class="copyright">
-            <p>&copy; 2025 AtomLink. All Rights Reserved.</p>
+            <p>&copy; 2026 CSVLink. All Rights Reserved.</p>
         </div>
     </footer>
     
