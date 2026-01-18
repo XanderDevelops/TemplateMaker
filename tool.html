@@ -170,7 +170,7 @@
   }
   .canvas-wrap { 
     box-shadow: 0 20px 40px rgba(0,0,0,0.5); 
-    background-color: #0a0e1a;
+    background-color: #242c44;
     background-image: radial-gradient(rgba(59, 130, 246, 0.12) 1px, transparent 0);
     background-size: 20px 20px;
     width: 100%; height: 100%;
@@ -617,19 +617,19 @@
 
 /* --- UI/UX polish patch (2026-01-16) --- */
 :root{
-  --canvas-bg:#0a0e1a;
-  --canvas-dot:rgba(59,130,246,.12);
-  --page-outline:rgba(255,255,255,.10);
+  --canvas-bg:#474d5c;
+  --canvas-dot:rgba(0, 2, 67, 0.12);
+  --page-outline:rgba(0, 0, 0, 0.1);
 }
 body.light-mode{
-  --canvas-bg:#f1f5f9;
-  --canvas-dot:rgba(37,99,235,.10);
+  --canvas-bg:#cfd5dd;
+  --canvas-dot:rgba(0, 23, 71, 0.1);
   --page-outline:rgba(15,23,42,.12);
 }
 
 .canvas-wrap{
   background-color:var(--canvas-bg) !important;
-  background-image:radial-gradient(var(--canvas-dot) 1px, transparent 0) !important;
+  background-image:radial-gradient(var(--canvas-dot) 1.5px, transparent 0) !important;
 }
 
 /* Make number inputs look modern (hide default spinners) */
