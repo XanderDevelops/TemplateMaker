@@ -1976,6 +1976,7 @@
         let editingFillObject = null;
         let cropCanvas, croppingImage = null;
         let currentUser = null, currentTemplateId = null, userRole = 'free';
+        let pendingGuestTemplateRestore = false;
         const saveStatusEl = $('#saveStatus');
         let activeTableCellEditor = null;
 
@@ -3041,14 +3042,12 @@
                     lastHistorySig = null;
                     renderCsvView();
                     updateExportUI();
+                    pendingGuestTemplateRestore = true;
                     requestSaveState();
                     saveStatusEl.textContent = 'Restored from guest session. Saving...';
                 } catch (err) {
                     console.error('Failed to restore guest template:', err);
                 }
-
-                // Cleanup so it doesn't load again
-                localStorage.removeItem('csvlink-guest-template');
             }
 
             /* 3) Guest user with no templateId â†’ autosave guest mode */
@@ -3165,6 +3164,10 @@
                 if (error) { saveStatusEl.textContent = 'Error creating template.'; }
                 else {
                     currentTemplateId = data.id;
+                    if (pendingGuestTemplateRestore) {
+                        localStorage.removeItem('csvlink-guest-template');
+                        pendingGuestTemplateRestore = false;
+                    }
                     const newUrl = `${window.location.pathname}?id=${currentTemplateId}`;
                     window.history.replaceState({ path: newUrl }, '', newUrl);
                     saveStatusEl.textContent = 'Template saved to your account.';

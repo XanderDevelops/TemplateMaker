@@ -6,10 +6,99 @@ const deleteSelectedBtn = document.getElementById('delete-selected-btn');
 const selectBtn = document.getElementById('select-btn');
 const cancelSelectionBtn = document.getElementById('cancel-selection-btn');
 const templateCounterEl = document.getElementById('template-counter');
+const GUEST_TEMPLATE_KEY = 'csvlink-guest-template';
 
 let currentTab = 'created';
 let selectedTemplates = new Set();
 let selectionMode = false;
+
+const hasRenderableObjects = (canvasState) => {
+    const objects = canvasState?.objects || [];
+    return objects.some(o => o && o.oid !== 'pageRect' && !o.excludeFromExport && !o.isSnapLine);
+};
+
+const hasTemplateContent = (templateData) => {
+    if (!templateData || typeof templateData !== 'object') return false;
+    if (Array.isArray(templateData.pages) && templateData.pages.length > 0) {
+        return templateData.pages.some(page => hasRenderableObjects(page?.canvas));
+    }
+    return hasRenderableObjects(templateData.canvas);
+};
+
+const tryRestoreGuestTemplateToDashboard = async () => {
+    const rawGuestTemplate = localStorage.getItem(GUEST_TEMPLATE_KEY);
+    if (!rawGuestTemplate) return false;
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return false;
+
+    let guestTemplate;
+    try {
+        guestTemplate = JSON.parse(rawGuestTemplate);
+    } catch (parseError) {
+        console.error('Failed to parse guest template:', parseError);
+        localStorage.removeItem(GUEST_TEMPLATE_KEY);
+        return false;
+    }
+
+    if (!hasTemplateContent(guestTemplate)) {
+        localStorage.removeItem(GUEST_TEMPLATE_KEY);
+        return false;
+    }
+
+    const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+
+    if (profileError) {
+        console.error('Error fetching profile for guest restore:', profileError);
+        return false;
+    }
+
+    const isPro = profile && (profile.role === 'pro' || profile.role === 'admin');
+    if (!isPro) {
+        const { count, error: countError } = await supabase
+            .from('templates')
+            .select('*', { count: 'exact', head: true })
+            .eq('user_id', user.id);
+
+        if (countError) {
+            console.error('Error checking template limit for guest restore:', countError);
+            return false;
+        }
+
+        if ((count || 0) >= 5) {
+            return false;
+        }
+    }
+
+    const title = guestTemplate.title || guestTemplate.page?.title || 'Untitled_Template';
+    const templateData = { ...guestTemplate };
+    if (!templateData.page || typeof templateData.page !== 'object') {
+        templateData.page = { title };
+    } else if (!templateData.page.title) {
+        templateData.page.title = title;
+    }
+    delete templateData.title;
+
+    const { error: insertError } = await supabase
+        .from('templates')
+        .insert({
+            user_id: user.id,
+            title,
+            template_data: templateData
+        });
+
+    if (insertError) {
+        console.error('Error saving guest template to dashboard:', insertError);
+        return false;
+    }
+
+    localStorage.removeItem(GUEST_TEMPLATE_KEY);
+    return true;
+};
 
 const enterSelectionMode = () => {
     selectionMode = true;
@@ -369,7 +458,12 @@ tabs.forEach(tab => {
     });
 });
 
-loadTemplates(currentTab);
+const initializeDashboard = async () => {
+    await tryRestoreGuestTemplateToDashboard();
+    await loadTemplates(currentTab);
+};
+
+initializeDashboard();
 
 const createBtn = document.querySelector('a[href="/tool.html"]');
 if (createBtn) {
