@@ -1944,6 +1944,15 @@
         // High-quality rendering (avoid blurry output)
         canvas.enableRetinaScaling = true;
         canvas.imageSmoothingEnabled = true;
+
+        function getDefaultSpawnPoint() {
+            if (pageRect && typeof pageRect.getCenterPoint === 'function') {
+                const center = pageRect.getCenterPoint();
+                if (center && Number.isFinite(center.x) && Number.isFinite(center.y)) return center;
+            }
+            const vpCenter = canvas.getVpCenter();
+            return new fabric.Point(vpCenter.x, vpCenter.y);
+        }
         const DEFAULT_PAGE_WIDTH = 768;
         const DEFAULT_PAGE_HEIGHT = 1024;
         const CAMERA_BOUND_PADDING = 600;
@@ -2170,22 +2179,46 @@
             const pointKey = currentControl?.pointKey || this?.pointKey || 'end';
             const canvasPoint = getLineCanvasPoint(fabricObject, pointKey);
             if (!canvasPoint) return new fabric.Point(0, 0);
-            const viewport = fabricObject.canvas?.viewportTransform || [1, 0, 0, 1, 0, 0];
-            return fabric.util.transformPoint(canvasPoint, viewport);
+            return fabric.util.transformPoint(
+                canvasPoint,
+                fabricObject.canvas?.viewportTransform || [1, 0, 0, 1, 0, 0]
+            );
         }
 
-        function getLineCanvasPoint(line, pointKey) {
+        function getLineLocalPoint(line, pointKey) {
             if (!line || line.type !== 'line') return null;
-            const matrix = line.calcTransformMatrix();
+            if (typeof line.calcLinePoints === 'function') {
+                const points = line.calcLinePoints();
+                if (
+                    points &&
+                    Number.isFinite(points.x1) &&
+                    Number.isFinite(points.y1) &&
+                    Number.isFinite(points.x2) &&
+                    Number.isFinite(points.y2)
+                ) {
+                    return pointKey === 'start'
+                        ? new fabric.Point(points.x1, points.y1)
+                        : new fabric.Point(points.x2, points.y2);
+                }
+            }
+
             const x1 = Number.isFinite(line.x1) ? line.x1 : 0;
             const y1 = Number.isFinite(line.y1) ? line.y1 : 0;
             const x2 = Number.isFinite(line.x2) ? line.x2 : x1;
             const y2 = Number.isFinite(line.y2) ? line.y2 : y1;
+            const pathOffset = line.pathOffset || { x: 0, y: 0 };
+            const offsetX = Number.isFinite(pathOffset.x) ? pathOffset.x : 0;
+            const offsetY = Number.isFinite(pathOffset.y) ? pathOffset.y : 0;
+            return pointKey === 'start'
+                ? new fabric.Point(x1 - offsetX, y1 - offsetY)
+                : new fabric.Point(x2 - offsetX, y2 - offsetY);
+        }
 
-            let localPoint = pointKey === 'start'
-                ? new fabric.Point(x1, y1)
-                : new fabric.Point(x2, y2);
-
+        function getLineCanvasPoint(line, pointKey) {
+            if (!line || line.type !== 'line') return null;
+            const localPoint = getLineLocalPoint(line, pointKey);
+            if (!localPoint) return null;
+            const matrix = line.calcTransformMatrix();
             return fabric.util.transformPoint(localPoint, matrix);
         }
 
@@ -2196,16 +2229,14 @@
 
             const left = Math.min(startPoint.x, endPoint.x);
             const top = Math.min(startPoint.y, endPoint.y);
-            const x1 = startPoint.x - left;
-            const y1 = startPoint.y - top;
-            const x2 = endPoint.x - left;
-            const y2 = endPoint.y - top;
+            const x1 = startPoint.x;
+            const y1 = startPoint.y;
+            const x2 = endPoint.x;
+            const y2 = endPoint.y;
 
             line.set({
-                left,
-                top,
-                originX: 'left',
-                originY: 'top',
+                originX: 'center',
+                originY: 'center',
                 angle: 0,
                 scaleX: 1,
                 scaleY: 1,
@@ -2258,6 +2289,10 @@
         function lineEndpointActionHandler(eventData, transform, x, y) {
             const line = transform?.target;
             if (!line || line.type !== 'line') return false;
+
+            const canvas = line.canvas;
+            if (!canvas) return false;
+
             const control = line.controls?.[transform.corner];
             const pointKey = control?.pointKey === 'start' ? 'start' : 'end';
             const anchorKey = pointKey === 'start' ? 'end' : 'start';
@@ -2265,18 +2300,23 @@
             if (!anchorPoint) return false;
 
             let pointerPoint = null;
-            if (line.canvas && typeof line.canvas.getPointer === 'function') {
-                const pointer = line.canvas.getPointer(eventData);
-                if (pointer && Number.isFinite(pointer.x) && Number.isFinite(pointer.y)) {
-                    pointerPoint = new fabric.Point(pointer.x, pointer.y);
-                }
+            if (Number.isFinite(x) && Number.isFinite(y)) {
+                pointerPoint = new fabric.Point(x, y);
+            } else {
+                const pointer = canvas.getPointer(eventData);
+                pointerPoint = new fabric.Point(pointer.x, pointer.y);
             }
-            if (!pointerPoint) pointerPoint = new fabric.Point(x, y);
-            const snappedPointer = snapLineEndpoint(anchorPoint, pointerPoint, !!eventData?.shiftKey);
+            if (!Number.isFinite(pointerPoint.x) || !Number.isFinite(pointerPoint.y)) return false;
+            pointerPoint = snapLineEndpoint(anchorPoint, pointerPoint, !!eventData?.shiftKey);
 
-            const startPoint = pointKey === 'start' ? snappedPointer : anchorPoint;
-            const endPoint = pointKey === 'start' ? anchorPoint : snappedPointer;
-            return normalizeLineFromCanvasEndpoints(line, startPoint, endPoint);
+            const startPoint = pointKey === 'start' ? pointerPoint : anchorPoint;
+            const endPoint = pointKey === 'start' ? anchorPoint : pointerPoint;
+            normalizeLineFromCanvasEndpoints(line, startPoint, endPoint);
+            line._endpointDragDirty = true;
+            if (typeof requestSaveState === 'function') requestSaveState();
+            line.setCoords();
+            canvas.requestRenderAll();
+            return true;
         }
 
         const LINE_ENDPOINT_CONTROLS = {
@@ -2301,14 +2341,14 @@
             let startPoint = getLineCanvasPoint(line, 'start');
             let endPoint = getLineCanvasPoint(line, 'end');
             if (!startPoint || !endPoint) {
-                const baseLeft = Number.isFinite(line.left) ? line.left : 0;
-                const baseTop = Number.isFinite(line.top) ? line.top : 0;
-                const rawX1 = Number.isFinite(line.x1) ? line.x1 : 0;
-                const rawY1 = Number.isFinite(line.y1) ? line.y1 : 0;
-                const rawX2 = Number.isFinite(line.x2) ? line.x2 : rawX1 + 150;
-                const rawY2 = Number.isFinite(line.y2) ? line.y2 : rawY1;
-                startPoint = new fabric.Point(baseLeft + rawX1, baseTop + rawY1);
-                endPoint = new fabric.Point(baseLeft + rawX2, baseTop + rawY2);
+                const center = (typeof line.getCenterPoint === 'function')
+                    ? line.getCenterPoint()
+                    : new fabric.Point(
+                        Number.isFinite(line.left) ? line.left : 0,
+                        Number.isFinite(line.top) ? line.top : 0
+                    );
+                startPoint = new fabric.Point(center.x - 75, center.y);
+                endPoint = new fabric.Point(center.x + 75, center.y);
             }
             if (Math.abs(startPoint.x - endPoint.x) < 0.0001 && Math.abs(startPoint.y - endPoint.y) < 0.0001) {
                 endPoint = new fabric.Point(startPoint.x + 150, startPoint.y);
@@ -3132,6 +3172,21 @@
             }
         });
 
+        function flushPendingSaves() {
+            if (typeof requestSaveState.flush === 'function') requestSaveState.flush();
+            if (currentUser && typeof debouncedSave.flush === 'function') debouncedSave.flush();
+        }
+
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState !== 'hidden') return;
+            commitPendingLineEndpointEdits();
+            flushPendingSaves();
+        });
+        window.addEventListener('pagehide', () => {
+            commitPendingLineEndpointEdits();
+            flushPendingSaves();
+        });
+
         function updateHistoryButtons() {
             const undoBtn = $('#undoBtn');
             const redoBtn = $('#redoBtn');
@@ -3279,6 +3334,20 @@
             cacheLocalDataState();
         }, 500);
 
+        function commitPendingLineEndpointEdits() {
+            let hadPendingEndpointEdit = false;
+            canvas.getObjects('line').forEach(line => {
+                if (line && line._endpointDragDirty) {
+                    delete line._endpointDragDirty;
+                    hadPendingEndpointEdit = true;
+                }
+            });
+            if (!hadPendingEndpointEdit) return;
+            requestSaveState();
+            if (typeof requestSaveState.flush === 'function') requestSaveState.flush();
+            if (currentUser && typeof debouncedSave.flush === 'function') debouncedSave.flush();
+        }
+
         // --- CANVAS & PAGE SETUP ---
         function initializeCanvas() {
             fabric.Object.prototype.set({ transparentCorners: false, cornerStyle: 'circle', cornerColor: '#000000', cornerSize: 10, borderColor: '#000000', borderScaleFactor: 1, padding: 0, strokeUniform: true });
@@ -3330,7 +3399,10 @@
                 'object:added': () => { requestSaveState(); renderLayers(); },
                 'object:removed': () => { requestSaveState(); renderLayers(); },
                 'object:modified': (e) => { requestSaveState(); if (e.target) { refreshInspector({ target: e.target }); } },
-                'object:moving': (e) => { handleSmartSnapping(e); updateFloatingLinkerPosition(e.target); },
+                'object:moving': (e) => {
+                    if (e?.transform?.action !== 'modifyLineEndpoint') handleSmartSnapping(e);
+                    updateFloatingLinkerPosition(e.target);
+                },
                 'object:scaling': (e) => {
                     const obj = e.target;
                     if (obj && obj.type === 'textbox') {
@@ -3347,7 +3419,10 @@
                     updateFloatingLinkerPosition(e.target);
                 },
                 'object:rotating': (e) => { updateLiveInspector(e); updateFloatingLinkerPosition(e.target); },
-                'mouse:up': () => { clearSnapLines(); } // 7. Clear guides on mouse up
+                'mouse:up': () => {
+                    clearSnapLines();
+                    commitPendingLineEndpointEdits();
+                } // 7. Clear guides on mouse up
             });
             requestSaveState(); renderLayers();
             addWheelPanFix();
@@ -3374,8 +3449,8 @@
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return; const items = e.clipboardData.items; if (!items) return;
             for (let i = 0; i < items.length; i++) {
                 const item = items[i];
-                if (item.type.indexOf('image') !== -1) { e.preventDefault(); const blob = item.getAsFile(); const reader = new FileReader(); reader.onload = (event) => { const { x, y } = canvas.getVpCenter(); adders.image(x, y, event.target.result); }; reader.readAsDataURL(blob); break; }
-                if (item.type.indexOf('text/plain') !== -1) { e.preventDefault(); item.getAsString((text) => { const { x, y } = canvas.getVpCenter(); adders.text(x, y, text); }); break; }
+                if (item.type.indexOf('image') !== -1) { e.preventDefault(); const blob = item.getAsFile(); const reader = new FileReader(); reader.onload = (event) => { const spawn = getDefaultSpawnPoint(); adders.image(spawn.x, spawn.y, event.target.result); }; reader.readAsDataURL(blob); break; }
+                if (item.type.indexOf('text/plain') !== -1) { e.preventDefault(); item.getAsString((text) => { const spawn = getDefaultSpawnPoint(); adders.text(spawn.x, spawn.y, text); }); break; }
             }
         });
         const setPageDimensions = debounce(() => {
@@ -4383,9 +4458,13 @@
             circle: (x, y) => canvas.add(new fabric.Circle({ left: x, top: y, radius: 75, fill: '#ffffff', stroke: '#000000', strokeWidth: 2, strokeUniform: true, originX: 'center', originY: 'center', name: getUniqueName('circle'), pageId: currentCanvasPageId() })).setActiveObject(canvas.getObjects().pop()),
             triangle: (x, y) => canvas.add(new fabric.Triangle({ left: x, top: y, width: 150, height: 130, fill: '#ffffff', stroke: '#000000', strokeWidth: 2, strokeUniform: true, originX: 'center', originY: 'center', name: getUniqueName('triangle'), pageId: currentCanvasPageId() })).setActiveObject(canvas.getObjects().pop()),
             line: (x, y) => {
-                const line = new fabric.Line([-75, 0, 75, 0], {
-                    left: x,
-                    top: y,
+                const spawnPoint = (Number.isFinite(x) && Number.isFinite(y))
+                    ? { x, y }
+                    : getDefaultSpawnPoint();
+                const startPoint = new fabric.Point(spawnPoint.x - 75, spawnPoint.y);
+                const endPoint = new fabric.Point(spawnPoint.x + 75, spawnPoint.y);
+
+                const line = new fabric.Line([startPoint.x, startPoint.y, endPoint.x, endPoint.y], {
                     stroke: '#000000',
                     strokeWidth: 4,
                     strokeUniform: true,
@@ -4395,8 +4474,9 @@
                     name: getUniqueName('line'),
                     pageId: currentCanvasPageId()
                 });
+
+                normalizeLineFromCanvasEndpoints(line, startPoint, endPoint);
                 canvas.add(line).setActiveObject(line);
-                applyLineEndpointControls(line);
                 canvas.renderAll();
             },
             star: (x, y) => { const pts = (n, oR, iR) => { const p = []; let a = -Math.PI / 2; const s = (Math.PI * 2) / n; for (let i = 0; i < n; i++) { p.push({ x: oR * Math.cos(a), y: oR * Math.sin(a) }); a += s / 2; p.push({ x: iR * Math.cos(a), y: iR * Math.sin(a) }); a += s / 2; } return p; }; canvas.add(new fabric.Polygon(pts(5, 75, 35), { left: x, top: y, fill: '#ffffff', stroke: '#000000', strokeWidth: 2, strokeUniform: true, originX: 'center', originY: 'center', name: getUniqueName('star'), pageId: currentCanvasPageId() })).setActiveObject(canvas.getObjects().pop()); },
@@ -4434,7 +4514,7 @@
 
                     const spawnPoint = (Number.isFinite(x) && Number.isFinite(y))
                         ? { x, y }
-                        : canvas.getVpCenter();
+                        : getDefaultSpawnPoint();
                     const table = createTableObject({
                         x: spawnPoint.x,
                         y: spawnPoint.y,
@@ -4799,8 +4879,8 @@
         });
 
 
-        document.getElementById('imageUpload').addEventListener('change', e => { if (!e.target.files || !e.target.files[0]) return; const reader = new FileReader(); reader.onload = (ev) => { const { x, y } = canvas.getVpCenter(); adders.image(x, y, ev.target.result); e.target.value = ''; }; reader.readAsDataURL(e.target.files[0]); });
-        document.querySelectorAll('.shape-chip').forEach(chip => { const type = chip.getAttribute('data-add'); chip.addEventListener('dragstart', e => { e.dataTransfer.setData('text/plain', `component:${type}`); }); chip.addEventListener('click', () => { if (!adders[type]) return; if (type === 'image') { $('#imageUpload').click(); return; } const center = canvas.getVpCenter(); adders[type](center.x, center.y); }); });
+        document.getElementById('imageUpload').addEventListener('change', e => { if (!e.target.files || !e.target.files[0]) return; const reader = new FileReader(); reader.onload = (ev) => { const spawn = getDefaultSpawnPoint(); adders.image(spawn.x, spawn.y, ev.target.result); e.target.value = ''; }; reader.readAsDataURL(e.target.files[0]); });
+        document.querySelectorAll('.shape-chip').forEach(chip => { const type = chip.getAttribute('data-add'); chip.addEventListener('dragstart', e => { e.dataTransfer.setData('text/plain', `component:${type}`); }); chip.addEventListener('click', () => { if (!adders[type]) return; if (type === 'image') { $('#imageUpload').click(); return; } const spawn = getDefaultSpawnPoint(); adders[type](spawn.x, spawn.y); }); });
         const dropTarget = canvas.upperCanvasEl; canvas.calcOffset();
         dropTarget.addEventListener('dragover', (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; });
         dropTarget.addEventListener('drop', (e) => {
@@ -4838,6 +4918,7 @@
 
         function handleSmartSnapping(options) {
             if (!snapEnabled) return;
+            if (options?.transform?.action === 'modifyLineEndpoint') return;
 
             const target = options.target;
             if (!target || target.locked || target.isArtboard) return;
@@ -5820,9 +5901,6 @@
         canvas.on('object:added', (e) => {
             if (!e.target) return;
             ensureId(e.target);
-            if (e.target.type === 'line' && !e.target.excludeFromExport && !e.target.isSnapLine) {
-                applyLineEndpointControls(e.target);
-            }
             if (e.target.type === 'textbox') {
                 e.target.padding = 0;
             }
