@@ -33,7 +33,7 @@
             align-items: center;
             padding: 0 24px;
             height: 60px;
-            background-color: rgba(11, 17, 33, 0.8);
+            background-color: rgba(255, 255, 255, 0.86);
             backdrop-filter: blur(12px);
             position: fixed;
             width: 100%;
@@ -100,7 +100,7 @@
         .hero h1 {
             font-size: 4rem;
             margin: 0 0 1.5rem;
-            background: linear-gradient(90deg, #fff, var(--accent));
+            background: linear-gradient(90deg, var(--fg), var(--accent));
             -webkit-background-clip: text;
             background-clip: text;
             -webkit-text-fill-color: transparent;
@@ -188,21 +188,21 @@
         }
         .bulk-steps li {
             padding: 0.8rem 0;
-            border-bottom: 1px solid #333;
+            border-bottom: 1px solid var(--border);
             display: flex;
             align-items: center;
         }
         .bulk-steps li:first-child {
-            border-top: 1px solid #333;
+            border-top: 1px solid var(--border);
         }
         .bulk-steps li::before {
             content: '✓';
-            color: #4facfe;
+            color: var(--accent);
             font-size: 1.5rem;
             margin-right: 1rem;
         }
         .bulk-steps strong {
-            color: #fff;
+            color: var(--fg);
         }
         .that-simple {
             font-weight: bold;
@@ -303,24 +303,26 @@
         }
 
         .template-card {
+            background: var(--panel);
+            border: 1px solid var(--border);
             border-radius: 12px;
             overflow: hidden;
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
+            box-shadow: var(--shadow);
             transition: transform 0.3s ease, box-shadow 0.3s ease;
             text-decoration: none; /* For the link */
             display: block; /* For the link */
         }
         
         .template-card:hover {
-            transform: scale(1.05);
-            box-shadow: 0 30px 0px rgba(79, 172, 254, 0.3);
+            transform: translateY(-6px);
+            box-shadow: var(--shadow-lg);
         }
         
         .template-card img {
             width: 100%;
             height: auto;
             display: block;
-            background-color: #2a2a2a;
+            background-color: var(--panel-2);
         }
 
         /* --- Scroll Down Arrow Animation --- */
@@ -356,7 +358,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 16.5l-6-6 1.41-1.41L12 13.67l4.59-4.58L18 10.5l-6 6z' fill='rgba(255,255,255,0.7)'/%3E%3C/svg%3E");
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 16.5l-6-6 1.41-1.41L12 13.67l4.59-4.58L18 10.5l-6 6z' fill='rgba(37,99,235,0.6)'/%3E%3C/svg%3E");
             background-size: cover;
             opacity: 0; /* Hidden by default */
         }
@@ -406,8 +408,8 @@
             height: 100%;
             border-radius: 12px;
             overflow: hidden;
-            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.6);
-            background-color: #1a1a1a;
+            box-shadow: var(--shadow-lg);
+            background-color: var(--panel);
         }
 
         .image-in-3d img {
@@ -438,17 +440,17 @@
             text-align: center;
             padding: 2rem;
             margin-top: 4rem;
-            background-color: #1a1a1a;
-            color: #888;
+            background-color: var(--panel);
+            color: var(--muted);
         }
         .footer-links a {
-            color: #aaa;
+            color: var(--muted);
             text-decoration: none;
             margin: 0 1rem;
             transition: color 0.3s ease;
         }
         .footer-links a:hover {
-            color: #4facfe;
+            color: var(--accent);
         }
         .copyright {
             margin-top: 1rem;
@@ -516,7 +518,7 @@
 
         .pricing-card.recommended {
             border-color: var(--accent);
-            background: linear-gradient(to bottom, var(--panel), #0a1125);
+            background: linear-gradient(to bottom, #ffffff, #eff6ff);
             box-shadow: 0 10px 30px rgba(59, 130, 246, 0.15);
             position: relative;
         }
@@ -631,11 +633,11 @@
             <h1>Link Data, Generate Documents in Bulk</h1>
             <p>Connect your data from a CSV or Excel file to any template and generate hundreds of personalized documents with a single click.</p>
             <a href="/tool" class="btn">Try It Now</a>
-            <p style="font-size: 1rem; color: #888; margin-top: 1rem; margin-bottom: 2rem;">Free to use.<br>No login required to try the tool.</p>
+            <p style="font-size: 1rem; color: var(--muted); margin-top: 1rem; margin-bottom: 2rem;">Free to use.<br>No login required to try the tool.</p>
             <a href="#first-feature" class="scroll-down-arrow" aria-label="Scroll down">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
                     <path fill="none" d="M0 0h24v24H0z"/>
-                    <path d="M12 16.5l-6-6 1.41-1.41L12 13.67l4.59-4.58L18 10.5l-6 6z" fill="rgba(255,255,255,0.7)"/>
+                    <path d="M12 16.5l-6-6 1.41-1.41L12 13.67l4.59-4.58L18 10.5l-6 6z" fill="rgba(37,99,235,0.7)"/>
                 </svg>
             </a>
         </section>
@@ -665,7 +667,7 @@
         <!-- 6. Section 3: Template Gallery - REWORKED -->
         <section class="templates-section animated-section">
             <h2>Find the perfect template for your needs</h2>
-            <p style="color: #aaa; max-width: 600px; margin: 0 auto 2rem;">Browse our library of professionally designed templates for any occasion.</p>
+            <p style="color: var(--muted); max-width: 600px; margin: 0 auto 2rem;">Browse our library of professionally designed templates for any occasion.</p>
             
             <!-- Using the correct class name: "template-category-btn" -->
             <div class="template-categories">
@@ -694,7 +696,7 @@
                 <p>Say goodbye to tedious formatting. Just tell our AI exactly what you are looking for, and it will generate a beautiful, professional document in seconds. Focus on your content, and let us handle the design.</p>
             </div>
             <div class="feature-image">
-                <img src="https://placehold.co/500x350/1e1e1e/4facfe?text=AI+Generating+Design" alt="AI designing a document interface">
+                <img src="https://placehold.co/500x350/eaf2ff/2563eb?text=AI+Generating+Design" alt="AI designing a document interface">
             </div>
         </section>
 
@@ -813,7 +815,7 @@
                             <canvas id="${canvasId}"></canvas>
                         </div>
                         <div class="info" style="text-align: center; padding: 1rem;">
-                            <h4 style="margin: 0; color: #fff;">${template.title || 'Untitled Template'}</h4>
+                            <h4 style="margin: 0; color: var(--fg);">${template.title || 'Untitled Template'}</h4>
                         </div>
                     `;
                     carouselTrack.appendChild(card);

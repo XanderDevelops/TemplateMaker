@@ -351,7 +351,7 @@ deleteSelectedBtn.addEventListener('click', async () => {
 function showConfirm(message) {
     return new Promise(resolve => {
         const backdrop = document.createElement('div');
-        backdrop.style.cssText = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); display:flex; align-items:center; justify-content:center; z-index:100;';
+        backdrop.style.cssText = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.28); display:flex; align-items:center; justify-content:center; z-index:100;';
 
         const modal = document.createElement('div');
         modal.style.cssText = 'background:var(--panel); padding:24px; border-radius:12px; max-width:400px; text-align:center; border:1px solid var(--border);';
@@ -493,10 +493,10 @@ if (createBtn) {
 
 function showLimitModal() {
     const backdrop = document.createElement('div');
-    backdrop.style.cssText = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); display:flex; align-items:center; justify-content:center; z-index:100;';
+    backdrop.style.cssText = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.28); display:flex; align-items:center; justify-content:center; z-index:100;';
 
     const modal = document.createElement('div');
-    modal.style.cssText = 'background:var(--panel); padding:24px; border-radius:12px; max-width:400px; text-align:center; border:1px solid var(--border); box-shadow: 0 4px 20px rgba(0,0,0,0.5);';
+    modal.style.cssText = 'background:var(--panel); padding:24px; border-radius:12px; max-width:400px; text-align:center; border:1px solid var(--border); box-shadow: 0 16px 40px rgba(15,23,42,0.16);';
 
     const icon = document.createElement('div');
     icon.innerHTML = '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#e53e3e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>';

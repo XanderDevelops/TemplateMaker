@@ -39,7 +39,7 @@ const renderTemplates = (templatesToRender) => {
             </div>
             <div class="info">
                 <h4>${template.title}</h4>
-                <p style="color:#aaa; font-size: 0.9em;">${template.description || ''}</p>
+                <p style="color:var(--muted); font-size: 0.9em;">${template.description || ''}</p>
             </div>
             <div class="actions">
                 <div class="button-group">

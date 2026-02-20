@@ -36,11 +36,11 @@
 }
 .template-card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 4px 12px rgba(0,0,0,.3);
+    box-shadow: var(--shadow-lg);
 }
 .template-card .preview {
     height: 180px;
-    background-color: #2a2a2a;
+    background-color: var(--bg);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -90,7 +90,7 @@
     transition: stroke 0.2s;
 }
 .template-card .icon-btn:hover {
-    background-color: #2a2a2a;
+    background-color: var(--panel-2);
 }
 .template-card .delete-btn svg {
     stroke: #e53e3e;
@@ -102,17 +102,17 @@ footer {
     text-align: center;
     padding: 2rem;
     margin-top: 4rem;
-    background-color: #1a1a1a;
-    color: #888;
+    background-color: var(--panel);
+    color: var(--muted);
 }
 .footer-links a {
-    color: #aaa;
+    color: var(--muted);
     text-decoration: none;
     margin: 0 1rem;
     transition: color 0.3s ease;
 }
 .footer-links a:hover {
-    color: #4facfe;
+    color: var(--accent);
 }
 .copyright {
     margin-top: 1rem;
