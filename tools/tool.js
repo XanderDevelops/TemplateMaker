@@ -7472,10 +7472,16 @@ function renderSelectionRotateHandle(ctx, left, top, styleOverride = {}, fabricO
 }
 
 function configureSelectionControls() {
-    const controls = fabric?.Object?.prototype?.controls;
-    if (!controls) return;
+    const controlSets = [
+        fabric?.Object?.prototype?.controls,
+        fabric?.ActiveSelection?.prototype?.controls,
+        fabric?.Textbox?.prototype?.controls,
+        fabric?.IText?.prototype?.controls,
+        fabric?.Text?.prototype?.controls
+    ].filter(Boolean).filter((controls, index, list) => list.indexOf(controls) === index);
+    if (!controlSets.length) return;
 
-    const setSideHandleStyle = (key, isHorizontal) => {
+    const setSideHandleStyle = (controls, key, isHorizontal) => {
         const control = controls[key];
         if (!control) return;
         control.render = renderSelectionSideHandle(isHorizontal);
@@ -7486,13 +7492,14 @@ function configureSelectionControls() {
         control.withConnection = false;
     };
 
-    setSideHandleStyle('mt', true);
-    setSideHandleStyle('mb', true);
-    setSideHandleStyle('ml', false);
-    setSideHandleStyle('mr', false);
+    controlSets.forEach(controls => {
+        setSideHandleStyle(controls, 'mt', true);
+        setSideHandleStyle(controls, 'mb', true);
+        setSideHandleStyle(controls, 'ml', false);
+        setSideHandleStyle(controls, 'mr', false);
 
-    const rotateControl = controls.mtr;
-    if (rotateControl) {
+        const rotateControl = controls.mtr;
+        if (!rotateControl) return;
         rotateControl.render = renderSelectionRotateHandle;
         rotateControl.sizeX = SELECTION_ROTATE_HANDLE_SIZE;
         rotateControl.sizeY = SELECTION_ROTATE_HANDLE_SIZE;
@@ -7500,7 +7507,7 @@ function configureSelectionControls() {
         rotateControl.touchSizeY = SELECTION_ROTATE_HANDLE_SIZE + 8;
         rotateControl.offsetY = -30;
         rotateControl.withConnection = true;
-    }
+    });
 }
 
 function snapAngleToNearestIncrement(angle, increment = ROTATION_SNAP_DEGREES) {
@@ -7594,7 +7601,82 @@ function initializeCanvas() {
         });
     }
 
+    const OBJECT_CLICK_DRAG_DEADZONE_PX = 4;
+    let pendingObjectClickDrag = null;
+
+    const getPointerClientPoint = (eventData) => {
+        if (!eventData) return null;
+        if (Number.isFinite(eventData.clientX) && Number.isFinite(eventData.clientY)) {
+            return { x: eventData.clientX, y: eventData.clientY };
+        }
+        const touchPoint = eventData.touches?.[0] || eventData.changedTouches?.[0];
+        if (touchPoint && Number.isFinite(touchPoint.clientX) && Number.isFinite(touchPoint.clientY)) {
+            return { x: touchPoint.clientX, y: touchPoint.clientY };
+        }
+        return null;
+    };
+
+    const beginObjectClickDragGuard = (options) => {
+        const target = options?.target;
+        const eventData = options?.e;
+        if (!target || target === pageRect || target.selectable === false || target.evented === false) {
+            pendingObjectClickDrag = null;
+            return;
+        }
+        if (typeof eventData?.button === 'number' && eventData.button !== 0) {
+            pendingObjectClickDrag = null;
+            return;
+        }
+        const clientPoint = getPointerClientPoint(eventData);
+        if (!clientPoint) {
+            pendingObjectClickDrag = null;
+            return;
+        }
+        pendingObjectClickDrag = {
+            target,
+            startClientX: clientPoint.x,
+            startClientY: clientPoint.y,
+            startLeft: normalizeNumeric(target.left, 0),
+            startTop: normalizeNumeric(target.top, 0)
+        };
+    };
+
+    const preventAccidentalObjectNudge = (options) => {
+        if (!pendingObjectClickDrag) return false;
+        const target = options?.target;
+        if (!target || target !== pendingObjectClickDrag.target) {
+            pendingObjectClickDrag = null;
+            return false;
+        }
+        const action = options?.transform?.action;
+        if (action && action !== 'drag') {
+            pendingObjectClickDrag = null;
+            return false;
+        }
+        const clientPoint = getPointerClientPoint(options?.e);
+        if (!clientPoint) return false;
+
+        const moveDistance = Math.hypot(
+            clientPoint.x - pendingObjectClickDrag.startClientX,
+            clientPoint.y - pendingObjectClickDrag.startClientY
+        );
+        if (moveDistance >= OBJECT_CLICK_DRAG_DEADZONE_PX) {
+            pendingObjectClickDrag = null;
+            return false;
+        }
+
+        target.set({
+            left: pendingObjectClickDrag.startLeft,
+            top: pendingObjectClickDrag.startTop
+        });
+        target.setCoords();
+        return true;
+    };
+
     canvas.on({
+        'mouse:down': (e) => {
+            beginObjectClickDragGuard(e);
+        },
         'object:added': (e) => {
             if (isRenderingCanvasGhosts || isPageSwitching || !e?.target || e.target.isCanvasGhost) return;
             if (isPastingFromClipboard) return;
@@ -7613,6 +7695,7 @@ function initializeCanvas() {
             refreshCanvasPageControlsDebounced();
         },
         'object:modified': async (e) => {
+            pendingObjectClickDrag = null;
             if (isRenderingCanvasGhosts || !e?.target) return;
             isObjectInteractionActive = false;
             if (e.target.type === 'activeSelection' && typeof e.target.getObjects === 'function') {
@@ -7685,6 +7768,11 @@ function initializeCanvas() {
         },
         'object:moving': (e) => {
             scheduleOutsideObjectsCleanup.clear();
+            if (preventAccidentalObjectNudge(e)) {
+                clearSnapLines();
+                updateFloatingLinkerPosition(e?.target);
+                return;
+            }
             if (e?.transform?.action !== 'modifyLineEndpoint') handleSmartSnapping(e);
             updateFloatingLinkerPosition(e.target);
         },
@@ -7719,6 +7807,7 @@ function initializeCanvas() {
             }
         },
         'mouse:up': () => {
+            pendingObjectClickDrag = null;
             clearSnapLines();
             commitPendingLineEndpointEdits();
             scheduleOutsideObjectsCleanup();
