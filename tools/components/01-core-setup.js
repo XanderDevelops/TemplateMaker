@@ -735,6 +735,71 @@ function refreshTextboxCurve(textbox, options = {}) {
     return setTextboxCurve(textbox, current, options);
 }
 
+function isValidTextboxPathObject(path) {
+    return !!path
+        && typeof path.toObject === 'function'
+        && typeof path.isNotVisible === 'function';
+}
+
+function normalizeTextboxCurvePathObject(textbox, { skipRender = true } = {}) {
+    if (!textbox || textbox.type !== 'textbox') return false;
+    const curveAmount = clampTextCurveAmount(textbox.curveAmount);
+    textbox.curveAmount = curveAmount;
+
+    const hasCurve = Math.abs(curveAmount) > TEXT_CURVE_EPSILON;
+    const hasPath = !!textbox.path;
+    const hasValidPathObject = hasPath && isValidTextboxPathObject(textbox.path);
+    const needsCurveRefresh = hasCurve && !hasValidPathObject;
+    const needsPathClear = !hasCurve && hasPath;
+    if (!needsCurveRefresh && !needsPathClear) return false;
+
+    try {
+        if (needsCurveRefresh) return refreshTextboxCurve(textbox, { skipRender });
+        return clearTextboxCurvePath(textbox, { skipRender });
+    } catch (error) {
+        console.warn('Failed to normalize textbox curve path:', error);
+        textbox.set({
+            path: null,
+            pathAlign: 'baseline',
+            pathSide: 'left',
+            pathStartOffset: 0
+        });
+        if (typeof textbox.initDimensions === 'function') textbox.initDimensions();
+        if (typeof textbox.setCoords === 'function') textbox.setCoords();
+        if (!skipRender) (textbox.canvas || canvas)?.requestRenderAll();
+        return true;
+    }
+}
+
+function normalizeTextboxPathsForSerialization(rootObject = null) {
+    const initial = rootObject
+        ? [rootObject]
+        : (typeof canvas?.getObjects === 'function' ? canvas.getObjects() : []);
+    if (!initial.length) return false;
+
+    const stack = [...initial];
+    const visited = new Set();
+    let changed = false;
+    while (stack.length) {
+        const obj = stack.pop();
+        if (!obj || visited.has(obj)) continue;
+        visited.add(obj);
+
+        if (obj.type === 'textbox' && normalizeTextboxCurvePathObject(obj, { skipRender: true })) {
+            changed = true;
+        }
+
+        if (typeof obj.getObjects === 'function') {
+            const children = obj.getObjects();
+            if (Array.isArray(children) && children.length) {
+                children.forEach(child => stack.push(child));
+            }
+        }
+    }
+
+    return changed;
+}
+
 function sanitizeCanvasObject(rawObject, { pageWidth = DEFAULT_PAGE_WIDTH, pageHeight = DEFAULT_PAGE_HEIGHT, depth = 0 } = {}) {
     if (!rawObject || typeof rawObject !== 'object') return null;
     const obj = { ...rawObject };
@@ -797,7 +862,7 @@ function sanitizeCanvasObject(rawObject, { pageWidth = DEFAULT_PAGE_WIDTH, pageH
         if (!Number.isFinite(obj.width) || obj.width <= 0) obj.width = 240;
         if (!obj.fontFamily) obj.fontFamily = 'Arial';
         obj.curveAmount = clampTextCurveAmount(obj.curveAmount);
-        if (Math.abs(obj.curveAmount) <= TEXT_CURVE_EPSILON && obj.path) delete obj.path;
+        if (obj.path) delete obj.path;
         obj.padding = 0;
     }
 
@@ -1777,6 +1842,7 @@ function serializeWorkspaceObjectForPageState(target, pageIndex, sourceOid) {
     const safeSourceOid = String(sourceOid || target.oid || '').trim();
     if (!safeSourceOid) return null;
 
+    normalizeTextboxPathsForSerialization(target);
     const raw = target.toObject(SERIALIZE_PROPS);
     raw.oid = safeSourceOid;
     raw.pageId = page.id;
@@ -2517,6 +2583,7 @@ function syncCurrentPageStateFromCanvas() {
     }
     const pageLeft = pageRect ? normalizeNumeric(pageRect.left, getPageLayoutLeft(currentPageIndex)) : getPageLayoutLeft(currentPageIndex);
     const pageTop = pageRect ? normalizeNumeric(pageRect.top, 0) : 0;
+    normalizeTextboxPathsForSerialization();
     const serializedCanvas = canvas.toJSON(SERIALIZE_PROPS);
     if (Array.isArray(serializedCanvas.objects)) {
         serializedCanvas.objects = serializedCanvas.objects

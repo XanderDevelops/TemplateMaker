@@ -147,15 +147,18 @@ function ensureTextboxPathsCloneSafe(rootObject) {
                 : (parseFloat(obj.curveAmount) || 0);
             const hasCurve = Math.abs(curveAmount) > curveEpsilon;
             const hasPath = !!obj.path;
-            const hasValidPathObject = hasPath && typeof obj.path.toObject === 'function';
+            const hasValidPathObject = hasPath
+                && typeof obj.path.toObject === 'function'
+                && typeof obj.path.isNotVisible === 'function';
             const missingCurvedPath = hasCurve && !hasPath;
             const invalidPathObject = hasPath && !hasValidPathObject;
+            const staleFlatPath = !hasCurve && hasPath;
 
-            if (missingCurvedPath || invalidPathObject) {
+            if (missingCurvedPath || invalidPathObject || staleFlatPath) {
                 try {
                     if (hasCurve && typeof refreshTextboxCurve === 'function') {
                         refreshTextboxCurve(obj, { skipRender: true });
-                    } else if (invalidPathObject) {
+                    } else {
                         clearInvalidTextboxPath(obj);
                     }
                 } catch (error) {
