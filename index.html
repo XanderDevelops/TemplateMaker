@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Instantly generate hundreds of personalized documents from CSV or Excel data with CSVLink. Use our AI designer and pre-made templates for free—no login required.">
-    <meta name="keywords" content="bulk document generation, csv to document, excel to document, data merge, document automation, invoice, resume, link word, AI document designer, free tool">
+    <meta name="description" content="Take your Excel or CSV, link your data to your designed template, and generate invoices, resumes, banners, flyers, and more in bulk with CSVLink.">
+    <meta name="keywords" content="bulk document generation, csv to document, excel to document, data mapping, invoice generator, resume generator, banner generator, flyer generator, template automation">
     <link rel="icon" href="assets/images/android-chrome-192x192.png" type="image/png" />
-    <title>CSVLink | Bulk Document Generation from CSV & Excel Data</title>
+    <title>CSVLink | Link Spreadsheet Data to Any Template</title>
     <link rel="stylesheet" href="assets/css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/fabric@5.3.0/dist/fabric.min.js"></script>
     
@@ -14,11 +14,11 @@
     <script src="https://app.lemonsqueezy.com/js/lemon.js" defer></script>
 
     <style>
-        /* All your existing CSS remains unchanged */
-        
+        @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap');
+
         /* General Body Styles */
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            font-family: 'Manrope', system-ui, -apple-system, sans-serif;
             margin: 0;
             background-color: var(--bg);
             color: var(--fg);
@@ -44,6 +44,7 @@
         }
 
         .logo {
+            font-family: 'Space Grotesk', sans-serif;
             font-size: 1.25rem;
             font-weight: 700;
             text-decoration: none;
@@ -55,11 +56,18 @@
 
         /* Hero Section */
         .hero {
-            text-align: center;
-            padding: 160px 20px 120px;
-            background-color: var(--bg); 
+            text-align: left;
+            padding: 136px 36px 56px;
+            background:
+                radial-gradient(circle at 8% 15%, rgba(37, 99, 235, 0.2), transparent 34%),
+                radial-gradient(circle at 88% 10%, rgba(14, 165, 233, 0.18), transparent 28%),
+                linear-gradient(140deg, #ffffff 0%, #f6f9ff 60%, #eef4ff 100%);
             position: relative;
             overflow: hidden;
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            box-shadow: var(--shadow-lg);
+            margin-top: 90px;
         }
 
         .hero::after {
@@ -87,7 +95,7 @@
             content: '';
             position: absolute;
             inset: 0;
-            background: radial-gradient(circle at center, transparent 20%, var(--bg) 80%);
+            background: radial-gradient(circle at center, transparent 8%, rgba(248, 250, 252, 0.9) 84%);
             z-index: 1;
         }
 
@@ -98,22 +106,75 @@
         }
 
         .hero h1 {
-            font-size: 4rem;
-            margin: 0 0 1.5rem;
-            background: linear-gradient(90deg, var(--fg), var(--accent));
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-            letter-spacing: -0.04em;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: clamp(2.1rem, 4.4vw, 4rem);
+            margin: 0 0 1rem;
+            color: #0b1328;
+            letter-spacing: -0.03em;
             font-weight: 800;
+            max-width: 16ch;
+            line-height: 1.08;
         }
 
         .hero p {
-            font-size: 1.25rem;
-            color: var(--muted);
-            max-width: 640px;
-            margin: 0 auto 2.5rem;
-            line-height: 1.6;
+            font-size: 1.05rem;
+            color: #3b4b66;
+            max-width: 66ch;
+            margin: 0 0 1rem;
+            line-height: 1.75;
+        }
+
+        .hero-actions {
+            margin-top: 1.2rem;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .hero .btn {
+            border-radius: 12px;
+            height: 48px;
+            font-weight: 700;
+        }
+
+        .hero-flow {
+            margin-top: 1.8rem;
+            display: grid;
+            gap: 12px;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .hero-flow-card {
+            border: 1px solid rgba(148, 163, 184, 0.35);
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.76);
+            padding: 14px 16px;
+        }
+
+        .hero-flow-card h3 {
+            margin: 0;
+            font-size: 0.98rem;
+            color: #0f172a;
+            font-family: 'Space Grotesk', sans-serif;
+        }
+
+        .hero-flow-card p {
+            margin: 4px 0 0;
+            font-size: 0.88rem;
+            color: #52627e;
+            line-height: 1.45;
+        }
+
+        .animated-section {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.8s cubic-bezier(0.2, 1, 0.3, 1);
+        }
+
+        .animated-section.is-visible {
+            opacity: 1;
+            transform: translateY(0);
         }
 
         @keyframes rotate-background {
@@ -148,10 +209,15 @@
             align-items: center;
             justify-content: center;
             gap: 4rem;
-            padding: 8rem 2rem;
+            padding: 2.4rem;
             opacity: 0;
             transform: translateY(30px);
             transition: all 0.8s cubic-bezier(0.2, 1, 0.3, 1);
+            margin-top: 2rem;
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            background: var(--panel);
+            box-shadow: var(--shadow);
         }
 
         .feature-section.is-visible {
@@ -160,15 +226,16 @@
         }
 
         .feature-content h2 {
-            font-size: 3rem;
-            margin-bottom: 1.5rem;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: clamp(1.7rem, 3.2vw, 3rem);
+            margin-bottom: 1rem;
             color: var(--fg);
             font-weight: 700;
             letter-spacing: -0.02em;
         }
         
         .feature-content p, .feature-content li {
-            font-size: 1.125rem;
+            font-size: 1rem;
             color: var(--muted);
             line-height: 1.7;
         }
@@ -210,6 +277,114 @@
             margin-top: 1rem;
             text-align: center;
         }
+
+        .bulk-steps li::before {
+            content: '01';
+            color: var(--accent);
+            font-size: 0.72rem;
+            font-weight: 800;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            margin-right: 1rem;
+            border: 1px solid rgba(37, 99, 235, 0.3);
+            background: rgba(37, 99, 235, 0.08);
+            border-radius: 999px;
+            padding: 4px 8px;
+            line-height: 1;
+        }
+
+        .bulk-steps li:nth-child(2)::before { content: '02'; }
+        .bulk-steps li:nth-child(3)::before { content: '03'; }
+
+        .mapping-demo {
+            margin-top: 1.3rem;
+            border: 1px dashed #c7d4ea;
+            border-radius: 16px;
+            background: #f8fbff;
+            padding: 0.9rem;
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .mapping-column {
+            border: 1px solid #dbe3ee;
+            border-radius: 10px;
+            background: #fff;
+            padding: 0.75rem;
+        }
+
+        .mapping-column h4 {
+            margin: 0 0 0.5rem;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #5f718f;
+        }
+
+        .field-pill {
+            display: inline-flex;
+            margin: 0.2rem 0.2rem 0.2rem 0;
+            padding: 5px 9px;
+            border-radius: 999px;
+            font-size: 0.76rem;
+            font-weight: 600;
+            border: 1px solid #d8e4f7;
+            background: #f7faff;
+            color: #26416d;
+        }
+
+        .mapping-arrow {
+            font-weight: 800;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--accent);
+            padding: 0.35rem 0.75rem;
+            border: 1px solid rgba(37, 99, 235, 0.3);
+            border-radius: 999px;
+            background: rgba(37, 99, 235, 0.08);
+            white-space: nowrap;
+        }
+
+        .use-cases-section {
+            padding: 2.4rem;
+            margin-top: 2rem;
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            background: var(--panel);
+            box-shadow: var(--shadow);
+        }
+
+        .use-cases-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 14px;
+            margin-top: 1rem;
+        }
+
+        .use-case-card {
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 1rem;
+            background: #fff;
+            min-height: 134px;
+        }
+
+        .use-case-card h3 {
+            margin: 0;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1rem;
+            color: #112446;
+        }
+
+        .use-case-card p {
+            margin: 0.5rem 0 0;
+            color: #5b6c88;
+            font-size: 0.91rem;
+            line-height: 1.6;
+        }
         
         /* 2. AI Icon and Animation */
         .ai-spark-icon {
@@ -233,10 +408,12 @@
         /* 6. Template Gallery Section - MODIFIED */
         .templates-section {
             text-align: center;
-            padding: 8rem 2rem;
+            padding: 2.4rem;
+            margin-top: 2rem;
             background-color: var(--panel);
-            border-top: 1px solid var(--border);
-            border-bottom: 1px solid var(--border);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            box-shadow: var(--shadow);
             opacity: 0;
             transform: translateY(30px);
             transition: all 0.8s cubic-bezier(0.2, 1, 0.3, 1);
@@ -248,7 +425,8 @@
         }
 
         .templates-section h2 {
-            font-size: 2.5rem;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: clamp(1.7rem, 3vw, 2.5rem);
             margin-bottom: 1rem;
             font-weight: 700;
         }
@@ -459,8 +637,13 @@
 
         /* Pricing Section */
         .pricing-section {
-            padding: 8rem 2rem;
+            padding: 2.4rem;
             text-align: center;
+            margin-top: 2rem;
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            background: var(--panel);
+            box-shadow: var(--shadow);
             opacity: 0;
             transform: translateY(30px);
             transition: all 0.8s cubic-bezier(0.2, 1, 0.3, 1);
@@ -472,16 +655,17 @@
         }
 
         .pricing-header h2 {
-            font-size: 3rem;
-            margin-bottom: 1.5rem;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: clamp(1.7rem, 3vw, 2.8rem);
+            margin-bottom: 1rem;
             font-weight: 700;
         }
 
         .pricing-header p {
-            font-size: 1.25rem;
+            font-size: 1rem;
             color: var(--muted);
             max-width: 600px;
-            margin: 0 auto 4rem;
+            margin: 0 auto 2rem;
         }
 
         .pricing-container {
@@ -493,6 +677,30 @@
         }
 
         @media (max-width: 900px) {
+            .hero {
+                padding: 122px 22px 44px;
+                border-radius: 20px;
+            }
+
+            .hero-flow,
+            .use-cases-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .mapping-demo {
+                grid-template-columns: 1fr;
+            }
+
+            .mapping-arrow {
+                justify-self: center;
+            }
+
+            .feature-section {
+                flex-direction: column;
+                gap: 1.8rem;
+                padding: 1.5rem;
+            }
+
             .pricing-container {
                 grid-template-columns: 1fr;
                 max-width: 400px;
@@ -585,8 +793,9 @@
             align-items: center;
             gap: 10px;
         }
+
         .card-body li::before {
-            content: '✓';
+            content: '+';
             color: var(--success);
             font-weight: 700;
         }
@@ -629,45 +838,102 @@
     <main class="container">
         <!-- (Your Hero, Features, and Template sections go here...) -->
         <section class="hero">
-            <!-- 4. Modified Hero Text -->
-            <h1>Link Data, Generate Documents in Bulk</h1>
-            <p>Connect your data from a CSV or Excel file to any template and generate hundreds of personalized documents with a single click.</p>
-            <a href="/tool" class="btn">Try It Now</a>
-            <p style="font-size: 1rem; color: var(--muted); margin-top: 1rem; margin-bottom: 2rem;">Free to use.<br>No login required to try the tool.</p>
-            <a href="#first-feature" class="scroll-down-arrow" aria-label="Scroll down">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
-                    <path fill="none" d="M0 0h24v24H0z"/>
-                    <path d="M12 16.5l-6-6 1.41-1.41L12 13.67l4.59-4.58L18 10.5l-6 6z" fill="rgba(37,99,235,0.7)"/>
-                </svg>
-            </a>
+            <h1>Take your Excel or CSV and link your data to your designed template.</h1>
+            <p>Create invoices, resumes, banners, flyers, certificates, labels, and more in minutes. Build your layout once, map your columns, and generate all files in one run.</p>
+            <div class="hero-actions">
+                <a href="/tool" class="btn">Start Building</a>
+                <a href="#templates" class="btn ghost">Browse Templates</a>
+            </div>
+            <p style="font-size: 0.95rem; color: #51617d; margin-top: 1rem; margin-bottom: 0;">Free to use. No login required to start.</p>
+
+            <div class="hero-flow">
+                <article class="hero-flow-card">
+                    <h3>1. Upload your spreadsheet</h3>
+                    <p>Import CSV or XLSX data with one row per document.</p>
+                </article>
+                <article class="hero-flow-card">
+                    <h3>2. Link fields to your layout</h3>
+                    <p>Map each column to text, images, and table placeholders.</p>
+                </article>
+                <article class="hero-flow-card">
+                    <h3>3. Export in bulk</h3>
+                    <p>Generate clean outputs for every record in one click.</p>
+                </article>
+            </div>
         </section>
         
-        <!-- 1. Section Order Changed: Bulk Generation is now first -->
         <section id="first-feature" class="feature-section animated-section">
             <div class="feature-content">
-                <h2>Generate documents in bulk</h2>
-                <p>Effortlessly create hundreds of personalized documents...</p>
+                <h2>One clear workflow from spreadsheet to finished files</h2>
+                <p>Your data stays structured. Your design stays reusable. CSVLink connects both so you can ship polished documents at scale without repetitive edits.</p>
                 <ul class="bulk-steps">
-                    <li><strong>1. Input your data:</strong> Upload a .csv or .xlsx file with all your information.</li>
-                    <li><strong>2. Link your data:</strong> Map your data fields to the template placeholders.</li>
-                    <li><strong>3. Export it!</strong> Generate and download all your documents in a single click.</li>
+                    <li><strong>Prepare your data:</strong> Keep clear column names like name, amount, role, or headline.</li>
+                    <li><strong>Design your template:</strong> Build invoices, resumes, reports, banners, or any custom layout.</li>
+                    <li><strong>Map and generate:</strong> Link placeholders once, then export all files with live row data.</li>
                 </ul>
-            </div>
 
-            <div class="feature-image-3d-container">
-                <div class="feature-image-3d-wrapper">
-                    <div class="image-in-3d" id="editor-preview-image">
-                        <img src="assets\images\editor-img-1.png" alt="The intuitive drag-and-drop editor interface for creating document templates.">
+                <div class="mapping-demo">
+                    <div class="mapping-column">
+                        <h4>Your CSV columns</h4>
+                        <span class="field-pill">full_name</span>
+                        <span class="field-pill">invoice_total</span>
+                        <span class="field-pill">job_title</span>
+                        <span class="field-pill">banner_text</span>
+                    </div>
+                    <span class="mapping-arrow">Link data</span>
+                    <div class="mapping-column">
+                        <h4>Template placeholders</h4>
+                        <span class="field-pill">{{customer_name}}</span>
+                        <span class="field-pill">{{amount_due}}</span>
+                        <span class="field-pill">{{role_heading}}</span>
+                        <span class="field-pill">{{campaign_message}}</span>
                     </div>
                 </div>
+            </div>
+
+            <div class="feature-image">
+                <img src="assets/images/editor-img-1.png" alt="Template editor used to link spreadsheet data to design placeholders">
+            </div>
+        </section>
+
+        <section class="use-cases-section animated-section">
+            <div class="feature-content">
+                <h2>Create almost anything with the same system</h2>
+                <p>Use one platform for operations, marketing, sales, and recruiting docs. Swap templates, keep your process.</p>
+            </div>
+            <div class="use-cases-grid">
+                <article class="use-case-card">
+                    <h3>Invoices and receipts</h3>
+                    <p>Generate client-ready billing documents with totals, due dates, and item tables.</p>
+                </article>
+                <article class="use-case-card">
+                    <h3>Resumes and certificates</h3>
+                    <p>Populate names, roles, skills, and dates into polished resume or certificate layouts.</p>
+                </article>
+                <article class="use-case-card">
+                    <h3>Banners and flyers</h3>
+                    <p>Build campaign visuals at scale by injecting product names and calls-to-action.</p>
+                </article>
+                <article class="use-case-card">
+                    <h3>Reports and summaries</h3>
+                    <p>Turn structured data into branded summaries for teams, clients, or stakeholders.</p>
+                </article>
+                <article class="use-case-card">
+                    <h3>Labels and ID cards</h3>
+                    <p>Automate repetitive production for labels, badges, and event materials.</p>
+                </article>
+                <article class="use-case-card">
+                    <h3>Any custom document</h3>
+                    <p>If you can design the template, CSVLink can merge data and generate final files in bulk.</p>
+                </article>
             </div>
         </section>
         
         
         <!-- 6. Section 3: Template Gallery - REWORKED -->
-        <section class="templates-section animated-section">
-            <h2>Find the perfect template for your needs</h2>
-            <p style="color: var(--muted); max-width: 600px; margin: 0 auto 2rem;">Browse our library of professionally designed templates for any occasion.</p>
+        <section id="templates" class="templates-section animated-section">
+            <h2>Start from ready templates or build your own</h2>
+            <p style="color: var(--muted); max-width: 680px; margin: 0 auto 2rem;">Pick a template category and launch it in the editor. Replace sample content with your own data and export immediately.</p>
             
             <!-- Using the correct class name: "template-category-btn" -->
             <div class="template-categories">
@@ -686,38 +952,37 @@
         <!-- Section 2: AI Design -->
         <section class="feature-section animated-section">
             <div class="feature-content">
-                <!-- 2. Added AI Icon -->
-                <h2>Let AI design your documents
-                    <svg class="ai-spark-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M12 2L9.5 9.5L2 12L9.5 14.5L12 22L14.5 14.5L22 12L14.5 9.5L12 2Z" stroke="#00f2fe" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        <path d="M5 2L6 6L10 7L6 8L5 12L4 8L0 7L4 6L5 2Z" stroke="#4facfe" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                </h2>
-                <p>Say goodbye to tedious formatting. Just tell our AI exactly what you are looking for, and it will generate a beautiful, professional document in seconds. Focus on your content, and let us handle the design.</p>
+                <h2>Use AI to draft the layout, then link your real data</h2>
+                <p>Describe what you need, generate a starting design, and refine it with full control. Keep the speed of AI with the precision of manual editing.</p>
+                <ul class="bulk-steps" style="margin-top: 1rem;">
+                    <li><strong>Generate:</strong> Start from a simple prompt.</li>
+                    <li><strong>Adjust:</strong> Tweak fonts, structure, spacing, and brand details.</li>
+                    <li><strong>Publish:</strong> Map placeholders and export personalized files in bulk.</li>
+                </ul>
             </div>
             <div class="feature-image">
-                <img src="https://placehold.co/500x350/eaf2ff/2563eb?text=AI+Generating+Design" alt="AI designing a document interface">
+                <img src="https://placehold.co/700x460/eaf2ff/1d4ed8?text=AI+Template+Draft" alt="AI assistant generating a starter template">
             </div>
         </section>
 
         <section id="pricing" class="pricing-section animated-section">
             <div class="pricing-header">
-                <h2>Choose the Plan That's Right for You</h2>
-                <p>Simple, transparent pricing for teams of all sizes.</p>
+                <h2>Simple pricing that scales with your output</h2>
+                <p>Start free, then upgrade when you need unlimited templates and larger export workflows.</p>
             </div>
             <div class="pricing-container">
                 <div class="pricing-card">
                     <div class="card-header">
                         <h3>Starter</h3>
-                        <p>Perfect for individuals and small projects.</p>
+                        <p>Perfect for early projects and testing your workflow.</p>
                         <div class="price"><sup>$</sup>0<span>/month</span></div>
                     </div>
                     <div class="card-body">
                         <ul>
-                           <li>✓ Access to the tool</li>
-                           <li>✓ Access to the AI</li>
-                           <li>✓ 5 templates max</li>
-                           <li>✓ Export up to 15 files at a time</li>
+                           <li>Access to the template editor</li>
+                           <li>Access to AI layout generation</li>
+                           <li>Up to 5 saved templates</li>
+                           <li>Export up to 15 files per run</li>
                         </ul>
                     </div>
                     <div class="card-footer">
@@ -727,16 +992,16 @@
                 <div class="pricing-card recommended">
                     <div class="card-header">
                         <h3>Monthly Pro</h3>
-                        <p>For professionals who need more power.</p>
+                        <p>For teams generating high-volume documents.</p>
                         <div class="price"><sup>$</sup>12<span>/month</span></div>
                     </div>
                     <div class="card-body">
                         <ul>
-                           <li>✓ All features from Starter</li>
-                           <li>✓ Unlimited templates</li>
-                           <li>✓ Access to the api</li>
-                           <li>✓ Export to png and jpg</li>
-                           <li>✓ Export unlimited documents at a time</li>
+                           <li>All Starter features included</li>
+                           <li>Unlimited templates</li>
+                           <li>API access</li>
+                           <li>PNG and JPG export options</li>
+                           <li>Unlimited files per export run</li>
                         </ul>
                     </div>
                     <div class="card-footer">
@@ -746,14 +1011,14 @@
                 <div class="pricing-card">
                     <div class="card-header">
                         <h3>Annual Pro</h3>
-                        <p>Get Pro for a full year and save 10%.</p>
+                        <p>Best value for production usage all year.</p>
                         <div class="price"><sup>$</sup>130<span>/year</span></div>
                     </div>
                     <div class="card-body">
                         <ul>
-                           <li>✓ All features from Pro</li>
-                           <li>✓ Billed yearly</li>
-                           <li>✓ Save ~10% vs monthly</li>
+                           <li>All Pro features included</li>
+                           <li>Yearly billing</li>
+                           <li>Lower effective monthly cost</li>
                         </ul>
                     </div>
                     <div class="card-footer">
@@ -771,7 +1036,7 @@
             <a href="refunds">Refund Policy</a>
         </div>
         <div class="copyright">
-            <p>&copy; 2025 AtomLink. All Rights Reserved.</p>
+            <p>&copy; 2026 CSVLink. All Rights Reserved.</p>
         </div>
     </footer>
 
