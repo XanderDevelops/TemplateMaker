@@ -12834,12 +12834,21 @@ window.addEventListener('keyup', e => {
             const AI_MAX_BINARY_ATTACHMENT_BYTES = 4 * 1024 * 1024;
             const AI_CANVAS_SNAPSHOT_MAX_SIDE = 820;
             const AI_CANVAS_SNAPSHOT_QUALITY = 0.4;
-            const AI_REQUEST_TIMEOUT_MS = 70000;
+            const AI_REQUEST_TIMEOUT_MS = 36000;
+            const AI_TEMPLATE_REQUEST_TIMEOUT_MS = 95000;
+            const AI_MAX_CONVERSATION_ITEMS = 6;
+            const AI_MAX_CONVERSATION_CHARS = 240;
+            const AI_MAX_APPLIED_ACTIONS = 8;
+            const AI_MAX_APPLIED_ACTION_CHARS = 180;
+            const AI_MAX_CONTEXT_COLUMNS = 14;
+            const AI_MAX_CANVAS_JSON_CHARS = 24000;
+            const AI_MAX_CANVAS_JSON_OBJECTS = 80;
             const AI_MODEL_NAME = 'gemini-2.5-flash';
             const AI_MODEL_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${AI_MODEL_NAME}:generateContent`;
             const AI_JSON_RESPONSE_SCHEMA = {
                 type: 'OBJECT',
                 properties: {
+                    thought: { type: 'STRING', description: 'Optional planning notes for action selection.' },
                     reply: { type: 'STRING' },
                     actions: {
                         type: 'ARRAY',
@@ -12864,6 +12873,20 @@ window.addEventListener('keyup', e => {
 
             function ensureChatScrolledToBottom() {
                 aiChatLog.scrollTop = aiChatLog.scrollHeight;
+            }
+
+            function clampText(value, maxChars = 240) {
+                const text = String(value || '').replace(/\s+/g, ' ').trim();
+                if (!text) return '';
+                if (text.length <= maxChars) return text;
+                return `${text.slice(0, Math.max(8, maxChars - 3))}...`;
+            }
+
+            function extractFirstQuestion(value = '') {
+                const text = String(value || '').replace(/\s+/g, ' ').trim();
+                if (!text) return '';
+                const match = text.match(/[^?]+\?/);
+                return match ? match[0].trim() : '';
             }
 
             function appendAiChatMessage(kind, text) {
@@ -13017,12 +13040,31 @@ window.addEventListener('keyup', e => {
                 if (!active) return 'none';
                 if (active.type === 'activeSelection' && typeof active.getObjects === 'function') {
                     const members = active.getObjects().filter(Boolean);
-                    return `${members.length} selected objects`;
+                    const counts = {};
+                    members.slice(0, 8).forEach(member => {
+                        const type = String(member?.type || 'object');
+                        counts[type] = (counts[type] || 0) + 1;
+                    });
+                    const typeSummary = Object.entries(counts)
+                        .slice(0, 4)
+                        .map(([type, count]) => `${count} ${type}`)
+                        .join(', ');
+                    return `${members.length} selected objects${typeSummary ? ` (${typeSummary})` : ''}`;
                 }
                 const name = active.name || active.type || 'object';
                 const width = Math.round(active.getScaledWidth?.() || active.width || 0);
                 const height = Math.round(active.getScaledHeight?.() || active.height || 0);
-                return `${name} (${width}x${height})`;
+                const details = [`${width}x${height}`];
+                const fill = typeof active.fill === 'string' ? active.fill : '';
+                const stroke = typeof active.stroke === 'string' ? active.stroke : '';
+                if ((active.type === 'textbox' || active.type === 'i-text') && typeof active.text === 'string') {
+                    details.push(`text="${clampText(active.text, 30)}"`);
+                    if (fill) details.push(`color=${fill}`);
+                } else if (fill) {
+                    details.push(`fill=${fill}`);
+                }
+                if (stroke) details.push(`stroke=${stroke}`);
+                return `${name} (${details.join(', ')})`;
             }
 
             function buildEditorContextSummary() {
@@ -13035,7 +13077,9 @@ window.addEventListener('keyup', e => {
                         return `${idx + 1}:${w}x${h}${idx === currentPageIndex ? '*' : ''}`;
                     })
                     .join(', ');
-                const columns = headers.length ? headers.join(', ') : 'none';
+                const columns = headers.length
+                    ? `${headers.slice(0, AI_MAX_CONTEXT_COLUMNS).join(', ')}${headers.length > AI_MAX_CONTEXT_COLUMNS ? ', ...' : ''}`
+                    : 'none';
                 const objectCount = canvas.getObjects()
                     .filter(o => o && o.oid !== 'pageRect' && !o.excludeFromExport && !o.isSnapLine && !o.isCanvasGhost && !o.isArtboard)
                     .length;
@@ -13050,16 +13094,19 @@ window.addEventListener('keyup', e => {
             }
 
             function buildConversationSummary(limit = 12) {
-                const subset = aiConversation.slice(-limit);
+                const maxItems = Math.max(1, Math.min(limit, AI_MAX_CONVERSATION_ITEMS));
+                const subset = aiConversation.slice(-maxItems);
                 if (!subset.length) return 'No prior chat context.';
-                return subset.map(msg => `${msg.role.toUpperCase()}: ${msg.text}`).join('\n');
+                return subset
+                    .map(msg => `${msg.role.toUpperCase()}: ${clampText(msg.text, AI_MAX_CONVERSATION_CHARS)}`)
+                    .join('\n');
             }
 
             function summarizeAppliedActions(actions = []) {
                 if (!Array.isArray(actions) || !actions.length) return 'none';
                 return actions
-                    .slice(0, 16)
-                    .map((action, idx) => `${idx + 1}. ${JSON.stringify(action)}`)
+                    .slice(0, AI_MAX_APPLIED_ACTIONS)
+                    .map((action, idx) => `${idx + 1}. ${clampText(JSON.stringify(action), AI_MAX_APPLIED_ACTION_CHARS)}`)
                     .join('\n');
             }
 
@@ -13078,7 +13125,9 @@ window.addEventListener('keyup', e => {
 - Improve polish, spacing, visual hierarchy, and details.
 - Avoid repeating actions already applied.`;
                 return `
-You are the CSVLink AI Copilot. You collaborate iteratively and return compact tool actions, not full Fabric JSON.
+You are the CSVLink AI Copilot. Your job is to ACTUALLY BUILD what the user requests by returning concrete JSON actions.
+Do not only describe ideas. Return executable actions whenever canvas edits are requested.
+You collaborate iteratively and return compact tool actions, not full Fabric JSON.
 Return strict JSON only (no markdown, no code fences):
 {
   "reply": "short natural-language response",
@@ -13091,6 +13140,10 @@ Execution mode: ${applyMode}
 - If mode is "plan_only", still propose actions, but keep them low risk.
 - Prefer small batches (max ${maxActions} actions) and high-value edits first.
 - If the request needs no canvas changes, return an empty "actions" array.
+- Default to autonomous decisions. Ask a question only when a critical requirement is missing.
+- Keep "reply" operational and brief (max 12 words). No narrative explanations.
+- If "Objects on current page" is 0 and user asks for design/layout work, include at least 3 creation actions
+  (like add_text/add_shape/add_icon/add_table/add_image_url) before any selection-only actions.
 ${phaseInstructions}
 
 Available action types:
@@ -13111,17 +13164,23 @@ Available action types:
 15) { "type": "resize_selection", "target": "selection|all", "width": 640, "height": 320, "scale": 1.1 }
 16) { "type": "style_selection", "target": "selection|all", "fill": "#ffffff", "stroke": "#cbd5e1", "strokeWidth": 1, "opacity": 1, "color": "#0f172a", "fontSize": 16, "fontFamily": "Inter", "align": "left|center|right", "radius": 12, "curve": -100..100 }
 17) { "type": "remove_outside_objects" }
+18) { "type": "replace_canvas_json", "canvas": { "version": "5.3.0", "objects": [] }, "width": 768, "height": 1024 }
 
 Coordinate rules:
 - Numeric x/y are relative to current page top-left.
 - "center" means visual center of current page.
 - "50%" means 50 percent of current page width/height.
 
+Canvas JSON rules:
+- You receive current-page JSON context in the request. Use it for precise edits.
+- Prefer standard action types for small changes.
+- Use "replace_canvas_json" for full structural rewrites.
+
 Design quality rules:
-- Professional, clean spacing, balanced hierarchy, and readable typography.
-- Use icons/images when useful.
-- Can reference public assets by URL.
-- Do not output giant monolithic structures.
+- Use an 8px spacing rhythm (8/16/24/32/48/64) and clean alignment.
+- Build strong hierarchy: one clear headline, supporting subtext, then details.
+- Favor subtle strokes (#cbd5e1), readable contrast, and rounded corners (8-18).
+- Keep outputs modular: several focused actions, not one giant monolithic change.
 
 Icon source (preferred):
 ${AI_ICON_BASE}/{icon-name}.svg
@@ -13170,11 +13229,33 @@ ${userPrompt || '(Attachment-only request)'}
                 if (!parsed || typeof parsed !== 'object') {
                     return { reply: fallbackReply, actions: [] };
                 }
-                const actions = Array.isArray(parsed.actions)
+                let actions = Array.isArray(parsed.actions)
                     ? parsed.actions
                     : Array.isArray(parsed.plan)
                         ? parsed.plan
                         : [];
+                if (!actions.length && parsed.action && typeof parsed.action === 'object') {
+                    actions = [parsed.action];
+                }
+                if (!actions.length) {
+                    const canvasPayload = parsed.canvas
+                        || parsed.canvas_json
+                        || parsed.canvasJson
+                        || parsed.page?.canvas
+                        || (Array.isArray(parsed.objects) ? {
+                            version: '5.3.0',
+                            background: 'transparent',
+                            objects: parsed.objects
+                        } : null);
+                    if (canvasPayload && typeof canvasPayload === 'object') {
+                        actions = [{
+                            type: 'replace_canvas_json',
+                            canvas: canvasPayload,
+                            width: parsed.page?.width ?? parsed.width,
+                            height: parsed.page?.height ?? parsed.height
+                        }];
+                    }
+                }
                 return {
                     reply: String(parsed.reply || parsed.message || parsed.summary || fallbackReply),
                     actions
@@ -13185,15 +13266,42 @@ ${userPrompt || '(Attachment-only request)'}
                 if (!rawText || typeof rawText !== 'string') return [];
                 const actions = [];
                 const lower = rawText.toLowerCase();
+                const countWords = {
+                    one: 1,
+                    two: 2,
+                    three: 3,
+                    four: 4,
+                    five: 5,
+                    six: 6,
+                    seven: 7,
+                    eight: 8
+                };
+                const parseCountToken = (token) => {
+                    if (!token) return null;
+                    const direct = parseInt(token, 10);
+                    if (Number.isFinite(direct)) return direct;
+                    const byWord = countWords[String(token).trim().toLowerCase()];
+                    return Number.isFinite(byWord) ? byWord : null;
+                };
 
-                const addCanvasMatch = lower.match(/\b(?:add|create|make)\s+(\d+)\s+(?:new\s+)?(?:canvas|canvases)\b/);
+                const addCanvasMatch = lower.match(/\b(?:add|create|make|generate|build)\s+((?:\d+|one|two|three|four|five|six|seven|eight))\s+(?:new\s+)?(?:canvas(?:es)?|page(?:s)?)\b/);
                 if (addCanvasMatch?.[1]) {
-                    actions.push({ type: 'add_canvas', count: parseInt(addCanvasMatch[1], 10) || 1 });
-                } else if (/\b(?:add|create|make)\s+(?:a|one|new)\s+(?:canvas)\b/.test(lower)) {
+                    actions.push({ type: 'add_canvas', count: parseCountToken(addCanvasMatch[1]) || 1 });
+                } else if (/\b(?:add|create|make|generate|build)\s+(?:a|one|new)\s+(?:canvas|page)\b/.test(lower)) {
+                    actions.push({ type: 'add_canvas', count: 1 });
+                } else if (/\b(?:add|create|make|generate|build)\s+(?:new\s+)?(?:canvases|pages)\b/.test(lower)) {
+                    const inferredCount = /\b(multiple|several|few)\b/.test(lower) ? 3 : 2;
+                    actions.push({ type: 'add_canvas', count: inferredCount });
+                } else if (/\b(?:add|create|make|generate|build)\s+(?:new\s+)?(?:canvas|page)\b/.test(lower)) {
                     actions.push({ type: 'add_canvas', count: 1 });
                 }
 
-                const sizeMatch = lower.match(/\b(\d{3,5})\s*[x×]\s*(\d{3,5})\b/);
+                const switchMatch = lower.match(/\b(?:switch|go|jump|open|move)\s+(?:to\s+)?(?:canvas|page)\s*(\d+)\b/);
+                if (switchMatch?.[1]) {
+                    actions.push({ type: 'switch_canvas', index: parseInt(switchMatch[1], 10) });
+                }
+
+                const sizeMatch = lower.match(/\b(\d{3,5})\s*(?:x|×|by)\s*(\d{3,5})\b/);
                 if (sizeMatch?.[1] && sizeMatch?.[2]) {
                     actions.push({
                         type: 'set_canvas_size',
@@ -13201,6 +13309,16 @@ ${userPrompt || '(Attachment-only request)'}
                         width: parseInt(sizeMatch[1], 10),
                         height: parseInt(sizeMatch[2], 10)
                     });
+                }
+
+                const titleMatch = rawText.match(/\b(?:title|name)\s+(?:it|template)?\s*(?:to|as)?\s*["“]([^"”]{2,120})["”]/i);
+                if (titleMatch?.[1]) {
+                    actions.push({ type: 'set_title', title: titleMatch[1].trim() });
+                }
+
+                const headingMatch = rawText.match(/\b(?:add|create|make)\s+(?:a\s+)?(?:title|heading|headline)\s*(?:that\s+says|saying|called|named)?\s*["“]([^"”]{2,120})["”]/i);
+                if (headingMatch?.[1]) {
+                    actions.push({ type: 'add_text', text: headingMatch[1].trim(), x: 'center', y: '18%', align: 'center' });
                 }
 
                 if (/\bclear\s+(?:the\s+)?canvas\b/.test(lower)) {
@@ -13225,15 +13343,48 @@ ${userPrompt || '(Attachment-only request)'}
             function normalizeAiAction(raw) {
                 if (!raw || typeof raw !== 'object') return null;
                 const next = { ...raw };
-                const rawType = String(next.type || next.tool || next.action || '').trim().toLowerCase().replace(/\s+/g, '_');
-                if (!rawType) return null;
+                const rawType = String(next.type || next.tool || next.action || '').trim().toLowerCase().replace(/[\s-]+/g, '_');
+                if (!rawType) {
+                    const canvasPayload = next.canvas
+                        || next.canvas_json
+                        || next.canvasJson
+                        || next.page?.canvas
+                        || (Array.isArray(next.objects) ? {
+                            version: '5.3.0',
+                            background: 'transparent',
+                            objects: next.objects
+                        } : null);
+                    if (canvasPayload && typeof canvasPayload === 'object') {
+                        return {
+                            ...next,
+                            type: 'replace_canvas_json',
+                            canvas: canvasPayload,
+                            width: next.page?.width ?? next.width,
+                            height: next.page?.height ?? next.height
+                        };
+                    }
+                    return null;
+                }
                 const aliases = {
                     create_canvas: 'add_canvas',
                     create_canvases: 'add_canvas',
                     new_canvas: 'add_canvas',
+                    add_page: 'add_canvas',
+                    add_pages: 'add_canvas',
+                    create_page: 'add_canvas',
+                    create_pages: 'add_canvas',
+                    new_page: 'add_canvas',
+                    new_pages: 'add_canvas',
+                    switch_page: 'switch_canvas',
+                    go_to_page: 'switch_canvas',
+                    goto_page: 'switch_canvas',
                     resize_canvas: 'set_canvas_size',
+                    resize_page: 'set_canvas_size',
+                    set_page_size: 'set_canvas_size',
                     set_dimensions: 'set_canvas_size',
                     change_dimensions: 'set_canvas_size',
+                    set_page_dimensions: 'set_canvas_size',
+                    change_page_dimensions: 'set_canvas_size',
                     add_rectangle: 'add_shape',
                     add_rect: 'add_shape',
                     add_circle: 'add_shape',
@@ -13241,10 +13392,15 @@ ${userPrompt || '(Attachment-only request)'}
                     add_line: 'add_shape',
                     add_star: 'add_shape',
                     add_arrow: 'add_shape',
+                    add_heading: 'add_text',
+                    add_headline: 'add_text',
+                    add_title: 'add_text',
+                    set_heading: 'add_text',
                     remove_selection: 'delete_selection',
                     delete_selected: 'delete_selection',
                     remove_selected: 'delete_selection',
                     clear_current_canvas: 'clear_canvas',
+                    clear_page: 'clear_canvas',
                     copy_selection: 'duplicate_selection',
                     duplicate_selected: 'duplicate_selection',
                     select_everything: 'select_all',
@@ -13258,12 +13414,96 @@ ${userPrompt || '(Attachment-only request)'}
                     set_selection_style: 'style_selection',
                     style_selected: 'style_selection',
                     cleanup_outside_objects: 'remove_outside_objects',
-                    remove_outside: 'remove_outside_objects'
+                    remove_outside: 'remove_outside_objects',
+                    set_canvas_json: 'replace_canvas_json',
+                    update_canvas_json: 'replace_canvas_json',
+                    edit_canvas_json: 'replace_canvas_json',
+                    replace_canvas_json: 'replace_canvas_json',
+                    replace_canvas_state: 'replace_canvas_json',
+                    replace_page_json: 'replace_canvas_json'
                 };
                 const type = aliases[rawType] || rawType;
                 if (!type) return null;
                 if (type === 'add_shape' && !next.shape && rawType.startsWith('add_')) {
                     next.shape = rawType.replace('add_', '');
+                }
+                if (type === 'add_canvas') {
+                    if (!Number.isFinite(parseInt(next.count, 10))) {
+                        const countFallback = parseInt(next.pages ?? next.pageCount ?? next.quantity ?? next.number, 10);
+                        if (Number.isFinite(countFallback)) next.count = countFallback;
+                    }
+                    if (!next.width && Number.isFinite(parseFloat(next.w ?? next.pageWidth ?? next.canvasWidth))) {
+                        next.width = parseFloat(next.w ?? next.pageWidth ?? next.canvasWidth);
+                    }
+                    if (!next.height && Number.isFinite(parseFloat(next.h ?? next.pageHeight ?? next.canvasHeight))) {
+                        next.height = parseFloat(next.h ?? next.pageHeight ?? next.canvasHeight);
+                    }
+                }
+                if (type === 'switch_canvas' && next.index == null) {
+                    const candidate = parseInt(next.page ?? next.pageIndex ?? next.canvas ?? next.canvasIndex, 10);
+                    if (Number.isFinite(candidate)) next.index = candidate;
+                }
+                if (type === 'set_canvas_size') {
+                    if (!next.width && Number.isFinite(parseFloat(next.w ?? next.pageWidth ?? next.canvasWidth))) {
+                        next.width = parseFloat(next.w ?? next.pageWidth ?? next.canvasWidth);
+                    }
+                    if (!next.height && Number.isFinite(parseFloat(next.h ?? next.pageHeight ?? next.canvasHeight))) {
+                        next.height = parseFloat(next.h ?? next.pageHeight ?? next.canvasHeight);
+                    }
+                    if (!next.scope) {
+                        if (next.all === true || next.applyToAll === true || next.target === 'all') next.scope = 'all';
+                        if (next.current === true) next.scope = 'current';
+                    }
+                }
+                if (type === 'add_text') {
+                    if (!next.text && typeof next.title === 'string') next.text = next.title;
+                    if (!next.text && typeof next.content === 'string') next.text = next.content;
+                    if (!next.text && typeof next.value === 'string') next.text = next.value;
+                    if (!next.fontSize && Number.isFinite(parseFloat(next.size))) next.fontSize = parseFloat(next.size);
+                }
+                if (type === 'add_shape') {
+                    if (!next.shape && typeof next.kind === 'string') next.shape = next.kind;
+                    if (!next.width && Number.isFinite(parseFloat(next.w))) next.width = parseFloat(next.w);
+                    if (!next.height && Number.isFinite(parseFloat(next.h))) next.height = parseFloat(next.h);
+                }
+                if (type === 'add_icon' && !next.name) {
+                    const iconName = next.icon ?? next.iconName ?? next.value;
+                    if (typeof iconName === 'string' && iconName.trim()) next.name = iconName.trim();
+                }
+                if (type === 'add_image_url' && !next.url) {
+                    const imageUrl = next.src ?? next.imageUrl ?? next.image;
+                    if (typeof imageUrl === 'string' && imageUrl.trim()) next.url = imageUrl.trim();
+                }
+                if (type === 'move_selection') {
+                    if (next.dx == null && Number.isFinite(parseFloat(next.deltaX ?? next.offsetX))) {
+                        next.dx = parseFloat(next.deltaX ?? next.offsetX);
+                    }
+                    if (next.dy == null && Number.isFinite(parseFloat(next.deltaY ?? next.offsetY))) {
+                        next.dy = parseFloat(next.deltaY ?? next.offsetY);
+                    }
+                }
+                if (type === 'resize_selection') {
+                    if (!next.width && Number.isFinite(parseFloat(next.w))) next.width = parseFloat(next.w);
+                    if (!next.height && Number.isFinite(parseFloat(next.h))) next.height = parseFloat(next.h);
+                }
+                if (type === 'replace_canvas_json') {
+                    if (!next.canvas || typeof next.canvas !== 'object') {
+                        const canvasPayload = next.canvas_json
+                            || next.canvasJson
+                            || next.page?.canvas
+                            || (Array.isArray(next.objects) ? {
+                                version: '5.3.0',
+                                background: 'transparent',
+                                objects: next.objects
+                            } : null);
+                        if (canvasPayload && typeof canvasPayload === 'object') next.canvas = canvasPayload;
+                    }
+                    if (!next.width && Number.isFinite(parseFloat(next.page?.width))) {
+                        next.width = parseFloat(next.page.width);
+                    }
+                    if (!next.height && Number.isFinite(parseFloat(next.page?.height))) {
+                        next.height = parseFloat(next.page.height);
+                    }
                 }
                 return { ...next, type };
             }
@@ -13327,6 +13567,51 @@ ${userPrompt || '(Attachment-only request)'}
                 }
             }
 
+            function buildCanvasJsonContextPart() {
+                try {
+                    if (typeof syncCurrentPageStateFromCanvas === 'function') {
+                        syncCurrentPageStateFromCanvas();
+                    }
+                    const page = documentPages[currentPageIndex] || {};
+                    const pageWidth = parsePositiveInt(page.width, DEFAULT_PAGE_WIDTH);
+                    const pageHeight = parsePositiveInt(page.height, DEFAULT_PAGE_HEIGHT);
+                    const canvasState = (typeof sanitizeCanvasStateForEditor === 'function')
+                        ? sanitizeCanvasStateForEditor(page.canvas, { pageWidth, pageHeight })
+                        : (page.canvas || { version: '5.3.0', background: 'transparent', objects: [] });
+                    const basePayload = {
+                        page: {
+                            index: currentPageIndex + 1,
+                            width: pageWidth,
+                            height: pageHeight
+                        },
+                        canvas: canvasState
+                    };
+                    let serialized = JSON.stringify(basePayload);
+                    if (serialized.length > AI_MAX_CANVAS_JSON_CHARS) {
+                        const trimmedObjects = Array.isArray(canvasState?.objects)
+                            ? canvasState.objects.slice(0, AI_MAX_CANVAS_JSON_OBJECTS)
+                            : [];
+                        serialized = JSON.stringify({
+                            page: basePayload.page,
+                            canvas: {
+                                ...canvasState,
+                                objects: trimmedObjects
+                            },
+                            note: `Object list truncated to first ${AI_MAX_CANVAS_JSON_OBJECTS} entries.`
+                        });
+                    }
+                    if (serialized.length > AI_MAX_CANVAS_JSON_CHARS) {
+                        serialized = `${serialized.slice(0, AI_MAX_CANVAS_JSON_CHARS)}...[truncated]`;
+                    }
+                    return {
+                        text: `Current editable canvas JSON (current page):\n${serialized}`
+                    };
+                } catch (err) {
+                    console.warn('Unable to build AI canvas JSON context.', err);
+                    return null;
+                }
+            }
+
             function getCurrentPageFrame() {
                 const current = documentPages[currentPageIndex] || {};
                 const width = parsePositiveInt(pageRect?.width, parsePositiveInt(current.width, DEFAULT_PAGE_WIDTH));
@@ -13341,6 +13626,126 @@ ${userPrompt || '(Attachment-only request)'}
                     centerX: left + width / 2,
                     centerY: top + height / 2
                 };
+            }
+
+            function promptHasDesignIntent(promptText = '') {
+                const lower = String(promptText || '').toLowerCase();
+                return /\b(design|designer|redesign|recreate|layout|mockup|hero|landing|poster|flyer|ui|screen|interface|template|style|look|visual|polish|card|section|resume|cv|curriculum|portfolio|document|doc)\b/.test(lower);
+            }
+
+            function promptRequestsCanvasMutation(promptText = '') {
+                const lower = String(promptText || '').toLowerCase();
+                const intent = /\b(add|create|make|build|generate|design|redesign|recreate|change|update|edit|modify|move|resize|style|apply|do|convert|transform)\b/.test(lower);
+                const domain = /\b(canvas|page|pages|template|layout|design|ui|screen|element|elements|object|objects|shape|text|icon|image|table|resume|cv|document|doc|portfolio)\b/.test(lower);
+                return intent && domain;
+            }
+
+            function inferDesignerHeading(promptText = '') {
+                const raw = String(promptText || '').trim();
+                const quoted = raw.match(/["“]([^"”]{3,90})["”]/);
+                if (quoted?.[1]) return clampText(quoted[1], 72);
+                const lower = raw.toLowerCase();
+                if (/\b(login|sign[\s-]?in|auth)\b/.test(lower)) return 'Welcome Back';
+                if (/\b(sign[\s-]?up|register|onboard)\b/.test(lower)) return 'Create Your Account';
+                if (/\b(dashboard|analytics|report)\b/.test(lower)) return 'Performance Overview';
+                if (/\b(profile|account)\b/.test(lower)) return 'Account Settings';
+                if (/\b(ecommerce|product|shop|store)\b/.test(lower)) return 'Featured Products';
+                if (/\b(resume|cv|curriculum|portfolio)\b/.test(lower)) return 'Your Name';
+                return 'Design Draft';
+            }
+
+            function buildDesignerBootstrapActions(promptText = '') {
+                if (!promptHasDesignIntent(promptText) && !promptRequestsCanvasMutation(promptText) && !aiAttachment) return [];
+                const lower = String(promptText || '').toLowerCase();
+                const resetIntent = /\b(from scratch|start over|blank|clean slate|new design)\b/.test(lower);
+                const existingObjects = getEditableCanvasObjects().length;
+                if (!resetIntent && existingObjects > 2) {
+                    return [{
+                        type: 'add_text',
+                        text: inferDesignerHeading(promptText),
+                        x: 'center',
+                        y: '10%',
+                        width: Math.max(220, Math.round(getCurrentPageFrame().width * 0.78)),
+                        align: 'center',
+                        color: '#0f172a',
+                        fontSize: Math.max(18, Math.round(getCurrentPageFrame().width * 0.03)),
+                        fontFamily: 'Inter'
+                    }];
+                }
+
+                const frame = getCurrentPageFrame();
+                const heading = inferDesignerHeading(promptText);
+                const headlineY = Math.max(56, Math.round(frame.height * 0.16));
+                const panelHeight = Math.max(200, Math.round(frame.height * 0.58));
+                const panelWidth = Math.max(260, Math.round(Math.min(frame.width * 0.88, 980)));
+                const subtitleY = Math.max(headlineY + 52, Math.round(frame.height * 0.27));
+
+                return [
+                    {
+                        type: 'add_shape',
+                        shape: 'rect',
+                        x: 'center',
+                        y: 'center',
+                        width: panelWidth,
+                        height: panelHeight,
+                        fill: '#ffffff',
+                        stroke: '#dbe2ea',
+                        strokeWidth: 1,
+                        radius: 18
+                    },
+                    {
+                        type: 'add_text',
+                        text: heading,
+                        x: 'center',
+                        y: headlineY,
+                        width: Math.max(220, Math.round(frame.width * 0.82)),
+                        align: 'center',
+                        color: '#0f172a',
+                        fontSize: Math.max(26, Math.round(frame.width * 0.062)),
+                        fontFamily: 'Inter'
+                    },
+                    {
+                        type: 'add_text',
+                        text: 'Starter layout added. Ask for sections, icons, and style refinements.',
+                        x: 'center',
+                        y: subtitleY,
+                        width: Math.max(220, Math.round(frame.width * 0.75)),
+                        align: 'center',
+                        color: '#334155',
+                        fontSize: Math.max(13, Math.round(frame.width * 0.02)),
+                        fontFamily: 'Inter'
+                    }
+                ];
+            }
+
+            function buildNoOpRescueActions(promptText = '') {
+                if (!promptRequestsCanvasMutation(promptText) && !promptHasDesignIntent(promptText) && !aiAttachment) return [];
+                const existingObjects = getEditableCanvasObjects().length;
+                if (!existingObjects) return buildDesignerBootstrapActions(promptText);
+                const frame = getCurrentPageFrame();
+                return [{
+                    type: 'add_text',
+                    text: inferDesignerHeading(promptText),
+                    x: 'center',
+                    y: Math.max(32, Math.round(frame.height * 0.1)),
+                    width: Math.max(220, Math.round(frame.width * 0.8)),
+                    align: 'center',
+                    color: '#0f172a',
+                    fontSize: Math.max(18, Math.round(frame.width * 0.03)),
+                    fontFamily: 'Inter'
+                }];
+            }
+
+            function shouldIncludeCanvasSnapshot(promptText = '') {
+                const lower = String(promptText || '').toLowerCase();
+                const hasObjects = getEditableCanvasObjects().length > 0;
+                if (!hasObjects) return false;
+                if (aiAttachment?.kind === 'inline') return true;
+                return /\b(edit|update|adjust|tweak|modify|improve|refine|align|move|resize|restyle|based on|this canvas|existing)\b/.test(lower);
+            }
+
+            function shouldSkipRemoteAiCall(promptText = '', quickActions = []) {
+                return false;
             }
 
             function resolveAxisCoordinate(value, axis, frame, fallback) {
@@ -13617,6 +14022,44 @@ ${userPrompt || '(Attachment-only request)'}
                         $('#titleInput').value = title;
                         return `Set title to "${title}".`;
                     }
+                    case 'replace_canvas_json': {
+                        syncCurrentPageStateFromCanvas();
+                        const page = documentPages[currentPageIndex];
+                        if (!page) return 'No active canvas available.';
+                        const candidate = action.canvas
+                            || action.canvas_json
+                            || action.canvasJson
+                            || action.page?.canvas
+                            || (Array.isArray(action.objects) ? {
+                                version: '5.3.0',
+                                background: 'transparent',
+                                objects: action.objects
+                            } : null);
+                        if (!candidate || typeof candidate !== 'object') {
+                            return 'Skipped invalid canvas JSON payload.';
+                        }
+                        const width = parsePositiveInt(
+                            action.width ?? action.page?.width,
+                            parsePositiveInt(page.width, DEFAULT_PAGE_WIDTH)
+                        );
+                        const height = parsePositiveInt(
+                            action.height ?? action.page?.height,
+                            parsePositiveInt(page.height, DEFAULT_PAGE_HEIGHT)
+                        );
+                        const nextCanvas = (typeof sanitizeCanvasStateForEditor === 'function')
+                            ? sanitizeCanvasStateForEditor(candidate, { pageWidth: width, pageHeight: height })
+                            : candidate;
+
+                        page.width = width;
+                        page.height = height;
+                        page.canvas = nextCanvas;
+                        ensurePageRectInCanvasState(page);
+                        await switchToCanvasPage(currentPageIndex, { fitView: false, skipSave: true, suppressHistory: true });
+                        const objectCount = Array.isArray(page.canvas?.objects)
+                            ? page.canvas.objects.filter(obj => obj && obj.oid !== 'pageRect').length
+                            : 0;
+                        return `Replaced current canvas JSON (${objectCount} object${objectCount === 1 ? '' : 's'}).`;
+                    }
                     case 'add_text': {
                         const { x, y } = resolveActionPoint(action);
                         adders.text(x, y, String(action.text || 'Text'));
@@ -13776,6 +14219,24 @@ ${userPrompt || '(Attachment-only request)'}
                         blocked.push(action);
                         return;
                     }
+                    if (type === 'replace_canvas_json' && !policy.allowClear) {
+                        const candidate = action.canvas
+                            || action.canvas_json
+                            || action.canvasJson
+                            || action.page?.canvas;
+                        const hasDrawableObjects = Array.isArray(candidate?.objects)
+                            && candidate.objects.some(obj =>
+                                obj
+                                && obj.oid !== 'pageRect'
+                                && !obj.excludeFromExport
+                                && !obj.isSnapLine
+                                && !obj.isCanvasGhost
+                            );
+                        if (!hasDrawableObjects && getEditableCanvasObjects().length > 0) {
+                            blocked.push(action);
+                            return;
+                        }
+                    }
                     safe.push(action);
                 });
                 return { safe, blocked };
@@ -13820,7 +14281,16 @@ ${userPrompt || '(Attachment-only request)'}
                 statusEl.textContent = lines.join('\n');
             }
 
-            async function requestAiResponseText(apiKey, parts, { enforceJson = true, onProgress = null, timeoutMs = AI_REQUEST_TIMEOUT_MS } = {}) {
+            async function requestAiResponseText(
+                apiKey,
+                parts,
+                {
+                    enforceJson = true,
+                    onProgress = null,
+                    timeoutMs = AI_REQUEST_TIMEOUT_MS,
+                    responseSchema = AI_JSON_RESPONSE_SCHEMA
+                } = {}
+            ) {
                 const payload = {
                     contents: [{ parts }]
                 };
@@ -13828,9 +14298,11 @@ ${userPrompt || '(Attachment-only request)'}
                 if (enforceJson) {
                     payload.generationConfig = {
                         temperature: 0.2,
-                        responseMimeType: 'application/json',
-                        responseSchema: AI_JSON_RESPONSE_SCHEMA
+                        responseMimeType: 'application/json'
                     };
+                    if (responseSchema && typeof responseSchema === 'object') {
+                        payload.generationConfig.responseSchema = responseSchema;
+                    }
                 } else {
                     payload.generationConfig = { temperature: 0.2 };
                 }
@@ -13888,7 +14360,8 @@ Convert the assistant output below into strict JSON (no markdown):
 
 Allowed action names:
 add_canvas, switch_canvas, set_canvas_size, set_title, add_text, add_shape, add_icon, add_image_url, add_table,
-duplicate_selection, delete_selection, clear_canvas, select_all, move_selection, resize_selection, style_selection, remove_outside_objects.
+duplicate_selection, delete_selection, clear_canvas, select_all, move_selection, resize_selection, style_selection,
+remove_outside_objects, replace_canvas_json.
 
 Rules:
 - Keep actions small and realistic for the current request.
@@ -13920,6 +14393,181 @@ ${rawResponse}
                 }
             }
 
+            function buildTemplateJsonEditPrompt(userPrompt) {
+                return `
+You are the CSVLink Template JSON Editor.
+Return ONLY one valid JSON object: the full modified template.
+
+Critical output rules:
+- Output must be JSON only. No markdown, no code fences, no explanation text.
+- Keep compatibility with CSVLink template loader.
+- Preserve existing data/keys unless user asks to change them.
+- You may change page dimensions, add/remove/reorder pages, and edit canvas objects per request.
+- Every page must include a pageRect object (oid="pageRect") sized to that page.
+- If a reference file/image is attached, follow it closely in the generated layout.
+
+Expected top-level shape:
+{
+  "version": "csvlink-template-v2",
+  "page": { "title": "Untitled_Template", "width": 768, "height": 1024 },
+  "canvas": { "version": "5.3.0", "background": "transparent", "objects": [] },
+  "bindings": [],
+  "pages": [],
+  "currentPageIndex": 0,
+  "data": { "headers": [], "rows": [], "identifierColumn": "" }
+}
+
+User instruction:
+${userPrompt || '(Attachment-only request)'}
+`.trim();
+            }
+
+            function getCurrentTemplatePayloadForAi() {
+                try {
+                    if (typeof buildTemplatePayload === 'function') {
+                        const payload = buildTemplatePayload();
+                        if (payload && typeof payload === 'object') return payload;
+                    }
+                } catch (err) {
+                    console.warn('Unable to build template payload for AI context.', err);
+                }
+                const activePage = documentPages[currentPageIndex] || {};
+                return {
+                    version: 'csvlink-template-v2',
+                    page: {
+                        title: $('#titleInput')?.value || 'Untitled_Template',
+                        width: parsePositiveInt(activePage.width, DEFAULT_PAGE_WIDTH),
+                        height: parsePositiveInt(activePage.height, DEFAULT_PAGE_HEIGHT)
+                    },
+                    canvas: activePage.canvas || { version: '5.3.0', background: 'transparent', objects: [] },
+                    bindings: activePage.bindings || [],
+                    pages: documentPages || [],
+                    currentPageIndex,
+                    data: {
+                        headers: headers || [],
+                        rows: dataRows || [],
+                        identifierColumn: identifierColumn || ''
+                    }
+                };
+            }
+
+            function normalizeAiTemplatePayload(raw) {
+                if (!raw || typeof raw !== 'object') return null;
+                if (raw.template && typeof raw.template === 'object') return raw.template;
+                if (raw.result && typeof raw.result === 'object') return raw.result;
+                if (raw.output && typeof raw.output === 'object') return raw.output;
+                if (raw.pages || raw.canvas || raw.page) return raw;
+                return null;
+            }
+
+            async function tryRepairTemplateFromText(
+                apiKey,
+                userPrompt,
+                rawResponse,
+                {
+                    onProgress = null,
+                    timeoutMs = Math.min(AI_TEMPLATE_REQUEST_TIMEOUT_MS, 40000)
+                } = {}
+            ) {
+                if (!rawResponse) return null;
+                const repairPrompt = `
+Convert the assistant output below into strict JSON ONLY for a CSVLink template.
+Return one JSON object and nothing else.
+
+User request:
+${userPrompt || '(Attachment-only request)'}
+
+Assistant output:
+${rawResponse}
+`.trim();
+                try {
+                    if (typeof onProgress === 'function') onProgress('Repairing template JSON');
+                    const repairedText = await requestAiResponseText(
+                        apiKey,
+                        [{ text: repairPrompt }],
+                        { enforceJson: true, onProgress, timeoutMs, responseSchema: null }
+                    );
+                    const repairedParsed = parseAiJsonResponse(repairedText);
+                    return normalizeAiTemplatePayload(repairedParsed);
+                } catch (err) {
+                    console.warn('Template JSON repair failed:', err);
+                    return null;
+                }
+            }
+
+            async function callAiTemplateEditor(apiKey, promptText, { onProgress = null } = {}) {
+                const currentTemplate = getCurrentTemplatePayloadForAi();
+                const currentTemplateText = JSON.stringify(currentTemplate);
+                const parts = [
+                    { text: buildTemplateJsonEditPrompt(promptText) },
+                    { text: `Current template JSON:\n${currentTemplateText}` }
+                ];
+
+                if (typeof onProgress === 'function') onProgress('Preparing request');
+                if (aiAttachment) {
+                    parts.push({ text: `Attached reference file: ${aiAttachment.name}` });
+                    if (aiAttachment.kind === 'inline') {
+                        parts.push({
+                            inline_data: {
+                                mime_type: aiAttachment.mimeType || 'application/octet-stream',
+                                data: aiAttachment.inlineData
+                            }
+                        });
+                    } else if (aiAttachment.kind === 'text') {
+                        parts.push({ text: `Attached file text:\n${aiAttachment.text}` });
+                    }
+                }
+
+                const responseText = await requestAiResponseText(
+                    apiKey,
+                    parts,
+                    {
+                        enforceJson: true,
+                        onProgress,
+                        timeoutMs: AI_TEMPLATE_REQUEST_TIMEOUT_MS,
+                        responseSchema: null
+                    }
+                );
+                if (!responseText) throw new Error('No template JSON returned by AI.');
+
+                if (typeof onProgress === 'function') onProgress('Parsing template JSON');
+                const parsed = parseAiJsonResponse(responseText);
+                let templatePayload = normalizeAiTemplatePayload(parsed);
+                if (!templatePayload) {
+                    templatePayload = await tryRepairTemplateFromText(apiKey, promptText, responseText, { onProgress });
+                }
+                if (!templatePayload) {
+                    throw new Error('AI response was not valid template JSON.');
+                }
+                return templatePayload;
+            }
+
+            async function applyAiTemplatePayload(templatePayload) {
+                if (!templatePayload || typeof templatePayload !== 'object') {
+                    throw new Error('Invalid AI template payload.');
+                }
+                const payload = JSON.parse(JSON.stringify(templatePayload));
+                if (payload.page?.title) {
+                    $('#titleInput').value = String(payload.page.title);
+                }
+                if (payload.data && typeof payload.data === 'object') {
+                    headers = Array.isArray(payload.data.headers) ? payload.data.headers : [];
+                    dataRows = Array.isArray(payload.data.rows) ? payload.data.rows : [];
+                    identifierColumn = String(payload.data.identifierColumn || '');
+                }
+                const selectedIndex = Number.isFinite(parseInt(payload.currentPageIndex, 10))
+                    ? parseInt(payload.currentPageIndex, 10)
+                    : currentPageIndex;
+                await setDocumentPagesFromTemplate(payload, { fitView: true, selectedIndex });
+                bindings = new Map(documentPages[currentPageIndex]?.bindings || payload.bindings || []);
+                historyStack = [];
+                historyIndex = -1;
+                lastHistorySig = null;
+                requestSaveState();
+                renderLayers();
+                refreshCanvasPageControlsDebounced();
+            }
+
             async function callAiCopilot(apiKey, promptText, {
                 onProgress = null,
                 phase = 'full',
@@ -13927,7 +14575,7 @@ ${rawResponse}
             } = {}) {
                 const normalizedPhase = String(phase || 'full').toLowerCase() === 'draft' ? 'draft' : 'full';
                 const isDraft = normalizedPhase === 'draft';
-                const requestTimeoutMs = isDraft ? 25000 : AI_REQUEST_TIMEOUT_MS;
+                const requestTimeoutMs = isDraft ? 22000 : AI_REQUEST_TIMEOUT_MS;
                 const parts = [{
                     text: buildCopilotPrompt(promptText, {
                         phase: normalizedPhase,
@@ -13936,8 +14584,14 @@ ${rawResponse}
                     })
                 }];
 
-                if (typeof onProgress === 'function') onProgress(isDraft ? 'Drafting starter actions' : 'Capturing canvas');
+                if (typeof onProgress === 'function') onProgress(isDraft ? 'Drafting actions' : 'Preparing request');
                 if (!isDraft) {
+                    if (typeof onProgress === 'function') onProgress('Collecting canvas JSON');
+                    const canvasJsonPart = buildCanvasJsonContextPart();
+                    if (canvasJsonPart) parts.push(canvasJsonPart);
+                }
+                if (!isDraft && shouldIncludeCanvasSnapshot(promptText)) {
+                    if (typeof onProgress === 'function') onProgress('Capturing canvas');
                     const snapshotPart = buildCanvasSnapshotPart();
                     if (snapshotPart) {
                         parts.push({ text: 'Current canvas snapshot:' });
@@ -13947,6 +14601,7 @@ ${rawResponse}
 
                 if (aiAttachment) {
                     if (aiAttachment.kind === 'inline') {
+                        parts.push({ text: `Reference attachment: ${aiAttachment.name}. Use this to recreate the layout with canvas actions.` });
                         parts.push({
                             inline_data: {
                                 mime_type: aiAttachment.mimeType || 'application/octet-stream',
@@ -13967,7 +14622,15 @@ ${rawResponse}
 
                 if (typeof onProgress === 'function') onProgress('Parsing actions');
                 const parsed = parseAiJsonResponse(responseText);
-                if (parsed) return normalizeAiParsedPayload(parsed, 'Done.');
+                if (parsed) {
+                    const normalized = normalizeAiParsedPayload(parsed, 'Done.');
+                    if (!Array.isArray(normalized.actions) || !normalized.actions.length) {
+                        normalized.actions = extractActionsFromPlainText(`${normalized.reply}\n${promptText}`)
+                            .map(normalizeAiAction)
+                            .filter(Boolean);
+                    }
+                    return normalized;
+                }
 
                 const repaired = await tryRepairActionsFromText(
                     apiKey,
@@ -13977,7 +14640,7 @@ ${rawResponse}
                 );
                 if (repaired) return repaired;
 
-                const heuristicActions = extractActionsFromPlainText(responseText)
+                const heuristicActions = extractActionsFromPlainText(`${responseText}\n${promptText}`)
                     .map(normalizeAiAction)
                     .filter(Boolean);
                 return {
@@ -14010,108 +14673,19 @@ ${rawResponse}
                 setAiBusy(true);
 
                 try {
-                    const actionFingerprintSet = new Set();
-                    const safetyPolicy = buildAiSafetyPolicy(prompt);
-                    const dedupeActions = (actions = []) => actions.filter(action => {
-                        const key = JSON.stringify(action);
-                        if (actionFingerprintSet.has(key)) return false;
-                        actionFingerprintSet.add(key);
-                        return true;
-                    });
-
-                    const draftResult = await callAiCopilot(apiKey, prompt, {
-                        phase: 'draft',
+                    const templatePayload = await callAiTemplateEditor(apiKey, prompt, {
                         onProgress: (stage) => thinkingTicker.setStage(stage)
                     });
-                    const draftRawActions = dedupeActions((draftResult.actions || []).map(normalizeAiAction).filter(Boolean));
-                    const draftFiltered = filterAiActionsForSafety(draftRawActions, safetyPolicy);
-                    const draftActions = draftFiltered.safe;
 
-                    if (draftActions.length) {
-                        if (draftResult.reply) {
-                            appendAiChatMessage('assistant', `Starter pass: ${draftResult.reply}`);
-                            aiConversation.push({ role: 'assistant', text: `Starter pass: ${draftResult.reply}` });
-                        }
-
-                        const draftStatus = appendAiChatMessage(
-                            'status',
-                            aiAutoApplyEnabled
-                                ? `Applying starter actions (${draftActions.length})...`
-                                : `Starter plan (${draftActions.length} actions):`
-                        );
-
-                        if (aiAutoApplyEnabled) {
-                            thinkingTicker.setStage('Applying starter actions');
-                            await executeAiActions(draftActions, draftStatus, { allowEmptyResult: safetyPolicy.allowEmptyResult });
-                        } else {
-                            draftStatus.textContent = draftActions
-                                .map((action, idx) => `${idx + 1}. ${action.type}`)
-                                .join('\n');
-                        }
-                    }
-                    if (draftFiltered.blocked.length) {
-                        const blockedTypes = Array.from(new Set(draftFiltered.blocked.map(action => action.type))).join(', ');
-                        appendAiChatMessage('status', `Safety: skipped ${draftFiltered.blocked.length} destructive action${draftFiltered.blocked.length === 1 ? '' : 's'} (${blockedTypes}).`);
-                    }
-
-                    let fullResult = null;
-                    let fullError = null;
-                    try {
-                        fullResult = await callAiCopilot(apiKey, prompt, {
-                            phase: 'full',
-                            appliedActions: draftActions,
-                            onProgress: (stage) => thinkingTicker.setStage(stage)
-                        });
-                    } catch (err) {
-                        fullError = err;
-                    }
-
-                    const fullRawActions = dedupeActions((fullResult?.actions || []).map(normalizeAiAction).filter(Boolean));
-                    const fullFiltered = filterAiActionsForSafety(fullRawActions, safetyPolicy);
-                    const fullActions = fullFiltered.safe;
                     thinkingTicker.stop();
+                    thinkingEl.textContent = 'Applying returned template JSON...';
+                    thinkingEl.className = 'ai-chat-message assistant';
 
-                    const assistantReply = fullResult?.reply
-                        || (fullError
-                            ? (draftActions.length
-                                ? 'Starter edits applied. I could not finish the refinement pass this time.'
-                                : 'I could not complete this request in time.')
-                            : (draftActions.length
-                                ? 'Starter edits applied and refinement is ready.'
-                                : (fullActions.length
-                                    ? `I prepared ${fullActions.length} action${fullActions.length === 1 ? '' : 's'}.`
-                                    : 'Done.')));
-
-                    thinkingEl.textContent = fullError
-                        ? `${assistantReply}\n${fullError.message}`
-                        : assistantReply;
-                    thinkingEl.className = fullError ? 'ai-chat-message status' : 'ai-chat-message assistant';
-                    aiConversation.push({
-                        role: 'assistant',
-                        text: fullError ? `${assistantReply} ${fullError.message}` : assistantReply
-                    });
-
-                    if (fullFiltered.blocked.length) {
-                        const blockedTypes = Array.from(new Set(fullFiltered.blocked.map(action => action.type))).join(', ');
-                        appendAiChatMessage('status', `Safety: skipped ${fullFiltered.blocked.length} destructive action${fullFiltered.blocked.length === 1 ? '' : 's'} (${blockedTypes}).`);
-                    }
-
-                    if (!fullActions.length) return;
-
-                    const actionStatus = appendAiChatMessage(
-                        'status',
-                        aiAutoApplyEnabled
-                            ? `Applying refinement actions (${fullActions.length})...`
-                            : `Refinement plan (${fullActions.length} actions):`
-                    );
-
-                    if (aiAutoApplyEnabled) {
-                        await executeAiActions(fullActions, actionStatus, { allowEmptyResult: safetyPolicy.allowEmptyResult });
-                    } else {
-                        actionStatus.textContent = fullActions
-                            .map((action, idx) => `${idx + 1}. ${action.type}`)
-                            .join('\n');
-                    }
+                    await applyAiTemplatePayload(templatePayload);
+                    const pageCount = Array.isArray(documentPages) ? documentPages.length : 1;
+                    const appliedMsg = `Loaded AI template JSON (${pageCount} page${pageCount === 1 ? '' : 's'}).`;
+                    appendAiChatMessage('status', appliedMsg);
+                    aiConversation.push({ role: 'assistant', text: appliedMsg });
                 } catch (error) {
                     thinkingTicker.stop();
                     console.error('AI Copilot Error:', error);
