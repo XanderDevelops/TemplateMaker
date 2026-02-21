@@ -569,6 +569,8 @@ function createBlankPageState(index = 0, width = DEFAULT_PAGE_WIDTH, height = DE
 
 const VALID_ORIGIN_X = new Set(['left', 'center', 'right']);
 const VALID_ORIGIN_Y = new Set(['top', 'center', 'bottom']);
+const VALID_TEXT_BASELINES = new Set(['top', 'hanging', 'middle', 'alphabetic', 'ideographic', 'bottom']);
+const VALID_TEXT_ALIGNS = new Set(['left', 'center', 'right', 'justify']);
 const TEXT_CURVE_MIN = -100;
 const TEXT_CURVE_MAX = 100;
 const TEXT_CURVE_EPSILON = 0.001;
@@ -800,12 +802,69 @@ function normalizeTextboxPathsForSerialization(rootObject = null) {
     return changed;
 }
 
+function repairLiveCanvasTextObjectsForSerialization(rootObject = null) {
+    const initial = rootObject
+        ? [rootObject]
+        : (typeof canvas?.getObjects === 'function' ? canvas.getObjects() : []);
+    if (!initial.length) return false;
+
+    const stack = [...initial];
+    const visited = new Set();
+    let changed = false;
+
+    while (stack.length) {
+        const obj = stack.pop();
+        if (!obj || visited.has(obj)) continue;
+        visited.add(obj);
+
+        const isTextLike = obj.type === 'textbox' || obj.type === 'text' || obj.type === 'i-text';
+        if (isTextLike) {
+            const patch = {};
+            if (typeof obj.text !== 'string') patch.text = String(obj.text ?? '');
+            const currentFontSize = normalizeNumeric(obj.fontSize, 24);
+            if (!Number.isFinite(currentFontSize) || currentFontSize <= 0) patch.fontSize = 24;
+            const currentWidth = normalizeNumeric(obj.width, 240);
+            if (!Number.isFinite(currentWidth) || currentWidth <= 0) patch.width = 240;
+            if (!Array.isArray(obj.styles)) patch.styles = [];
+            const baseline = typeof obj.textBaseline === 'string'
+                ? obj.textBaseline.toLowerCase()
+                : 'alphabetic';
+            if (obj.textBaseline != null && !VALID_TEXT_BASELINES.has(baseline)) {
+                patch.textBaseline = 'alphabetic';
+            }
+            const sx = normalizeNumeric(obj.scaleX, 1) || 1;
+            const sy = normalizeNumeric(obj.scaleY, 1) || 1;
+            if (Math.abs(sx - 1) > 0.001 || Math.abs(sy - 1) > 0.001) {
+                patch.width = Math.max(120, normalizeNumeric(obj.width, 240) * Math.abs(sx));
+                patch.fontSize = Math.max(8, normalizeNumeric(obj.fontSize, 24) * Math.abs(sy));
+                patch.scaleX = 1;
+                patch.scaleY = 1;
+            }
+            if (Object.keys(patch).length) {
+                obj.set(patch);
+                if (typeof obj.initDimensions === 'function') obj.initDimensions();
+                if (typeof obj.setCoords === 'function') obj.setCoords();
+                changed = true;
+            }
+        }
+
+        if (typeof obj.getObjects === 'function') {
+            const children = obj.getObjects();
+            if (Array.isArray(children) && children.length) {
+                children.forEach(child => stack.push(child));
+            }
+        }
+    }
+
+    return changed;
+}
+
 function sanitizeCanvasObject(rawObject, { pageWidth = DEFAULT_PAGE_WIDTH, pageHeight = DEFAULT_PAGE_HEIGHT, depth = 0 } = {}) {
     if (!rawObject || typeof rawObject !== 'object') return null;
     const obj = { ...rawObject };
 
-    if (!VALID_ORIGIN_X.has(obj.originX)) obj.originX = 'center';
-    if (!VALID_ORIGIN_Y.has(obj.originY)) obj.originY = 'center';
+    if (!VALID_ORIGIN_X.has(obj.originX)) obj.originX = 'left';
+    if (!VALID_ORIGIN_Y.has(obj.originY)) obj.originY = 'top';
     obj.left = normalizeNumeric(obj.left, pageWidth / 2);
     obj.top = normalizeNumeric(obj.top, pageHeight / 2);
     obj.scaleX = normalizeNumeric(obj.scaleX, 1) || 1;
@@ -856,14 +915,43 @@ function sanitizeCanvasObject(rawObject, { pageWidth = DEFAULT_PAGE_WIDTH, pageH
     if (obj.clipPath) delete obj.clipPath;
     if (obj.transformMatrix) delete obj.transformMatrix;
 
-    if (obj.type === 'textbox') {
+    const isTextLike = obj.type === 'textbox' || obj.type === 'text' || obj.type === 'i-text';
+    if (isTextLike) {
+        obj.type = 'textbox';
         if (typeof obj.text !== 'string') obj.text = String(obj.text ?? '');
-        if (!Number.isFinite(obj.fontSize) || obj.fontSize <= 0) obj.fontSize = 24;
-        if (!Number.isFinite(obj.width) || obj.width <= 0) obj.width = 240;
-        if (!obj.fontFamily) obj.fontFamily = 'Arial';
+        if (!Number.isFinite(parseFloat(obj.fontSize)) || parseFloat(obj.fontSize) <= 0) obj.fontSize = 24;
+        if (!obj.fontFamily || typeof obj.fontFamily !== 'string') obj.fontFamily = 'Arial';
+        const align = String(obj.textAlign || 'left').toLowerCase();
+        obj.textAlign = VALID_TEXT_ALIGNS.has(align) ? align : 'left';
+        if (!Number.isFinite(parseFloat(obj.lineHeight)) || parseFloat(obj.lineHeight) <= 0) obj.lineHeight = 1.16;
+        if (!Number.isFinite(parseFloat(obj.charSpacing))) obj.charSpacing = 0;
+        obj.splitByGrapheme = !!obj.splitByGrapheme;
+        if (obj.minWidth == null || !Number.isFinite(parseFloat(obj.minWidth)) || parseFloat(obj.minWidth) < 20) {
+            obj.minWidth = 20;
+        }
+        if (!Array.isArray(obj.styles)) obj.styles = [];
+
+        if (typeof obj.textBaseline === 'string') {
+            const baseline = obj.textBaseline.toLowerCase();
+            obj.textBaseline = VALID_TEXT_BASELINES.has(baseline) ? baseline : 'alphabetic';
+        } else if (obj.textBaseline != null) {
+            obj.textBaseline = 'alphabetic';
+        }
+
+        const sx = Math.abs(normalizeNumeric(obj.scaleX, 1) || 1);
+        const sy = Math.abs(normalizeNumeric(obj.scaleY, 1) || 1);
+        const baseWidth = Math.max(120, normalizeNumeric(obj.width, 260));
+        const normalizedWidth = Math.min(pageWidth * 0.95, Math.max(120, baseWidth * sx));
+        const normalizedFontSize = Math.max(8, normalizeNumeric(obj.fontSize, 24) * sy);
+        obj.width = normalizedWidth;
+        obj.fontSize = normalizedFontSize;
+        obj.scaleX = 1;
+        obj.scaleY = 1;
+
         obj.curveAmount = clampTextCurveAmount(obj.curveAmount);
         if (obj.path) delete obj.path;
         obj.padding = 0;
+        if (obj.lockUniScaling == null) obj.lockUniScaling = true;
     }
 
     if (obj.type === 'path' || obj.isSvgGroup || obj.type === 'group') {
@@ -2584,7 +2672,20 @@ function syncCurrentPageStateFromCanvas() {
     const pageLeft = pageRect ? normalizeNumeric(pageRect.left, getPageLayoutLeft(currentPageIndex)) : getPageLayoutLeft(currentPageIndex);
     const pageTop = pageRect ? normalizeNumeric(pageRect.top, 0) : 0;
     normalizeTextboxPathsForSerialization();
-    const serializedCanvas = canvas.toJSON(SERIALIZE_PROPS);
+    let serializedCanvas = null;
+    try {
+        serializedCanvas = canvas.toJSON(SERIALIZE_PROPS);
+    } catch (error) {
+        console.warn('Canvas serialization failed; attempting text object repair.', error);
+        try {
+            repairLiveCanvasTextObjectsForSerialization();
+            normalizeTextboxPathsForSerialization();
+            serializedCanvas = canvas.toJSON(SERIALIZE_PROPS);
+        } catch (retryError) {
+            console.error('Canvas serialization failed after repair attempt.', retryError);
+            return;
+        }
+    }
     if (Array.isArray(serializedCanvas.objects)) {
         serializedCanvas.objects = serializedCanvas.objects
             .filter(obj => {
@@ -2604,8 +2705,12 @@ function syncCurrentPageStateFromCanvas() {
                 }
                 if (Number.isFinite(parseFloat(next.left))) next.left = parseFloat(next.left) - pageLeft;
                 if (Number.isFinite(parseFloat(next.top))) next.top = parseFloat(next.top) - pageTop;
-                return next;
-            });
+                return sanitizeCanvasObject(next, {
+                    pageWidth: pageState.width,
+                    pageHeight: pageState.height
+                });
+            })
+            .filter(Boolean);
     }
     pageState.canvas = serializedCanvas;
     pageState.bindings = Array.from(bindings.entries());

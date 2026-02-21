@@ -4430,6 +4430,8 @@ function createBlankPageState(index = 0, width = DEFAULT_PAGE_WIDTH, height = DE
 
 const VALID_ORIGIN_X = new Set(['left', 'center', 'right']);
 const VALID_ORIGIN_Y = new Set(['top', 'center', 'bottom']);
+const VALID_TEXT_BASELINES = new Set(['top', 'hanging', 'middle', 'alphabetic', 'ideographic', 'bottom']);
+const VALID_TEXT_ALIGNS = new Set(['left', 'center', 'right', 'justify']);
 const TEXT_CURVE_MIN = -100;
 const TEXT_CURVE_MAX = 100;
 const TEXT_CURVE_EPSILON = 0.001;
@@ -4661,12 +4663,69 @@ function normalizeTextboxPathsForSerialization(rootObject = null) {
     return changed;
 }
 
+function repairLiveCanvasTextObjectsForSerialization(rootObject = null) {
+    const initial = rootObject
+        ? [rootObject]
+        : (typeof canvas?.getObjects === 'function' ? canvas.getObjects() : []);
+    if (!initial.length) return false;
+
+    const stack = [...initial];
+    const visited = new Set();
+    let changed = false;
+
+    while (stack.length) {
+        const obj = stack.pop();
+        if (!obj || visited.has(obj)) continue;
+        visited.add(obj);
+
+        const isTextLike = obj.type === 'textbox' || obj.type === 'text' || obj.type === 'i-text';
+        if (isTextLike) {
+            const patch = {};
+            if (typeof obj.text !== 'string') patch.text = String(obj.text ?? '');
+            const currentFontSize = normalizeNumeric(obj.fontSize, 24);
+            if (!Number.isFinite(currentFontSize) || currentFontSize <= 0) patch.fontSize = 24;
+            const currentWidth = normalizeNumeric(obj.width, 240);
+            if (!Number.isFinite(currentWidth) || currentWidth <= 0) patch.width = 240;
+            if (!Array.isArray(obj.styles)) patch.styles = [];
+            const baseline = typeof obj.textBaseline === 'string'
+                ? obj.textBaseline.toLowerCase()
+                : 'alphabetic';
+            if (obj.textBaseline != null && !VALID_TEXT_BASELINES.has(baseline)) {
+                patch.textBaseline = 'alphabetic';
+            }
+            const sx = normalizeNumeric(obj.scaleX, 1) || 1;
+            const sy = normalizeNumeric(obj.scaleY, 1) || 1;
+            if (Math.abs(sx - 1) > 0.001 || Math.abs(sy - 1) > 0.001) {
+                patch.width = Math.max(120, normalizeNumeric(obj.width, 240) * Math.abs(sx));
+                patch.fontSize = Math.max(8, normalizeNumeric(obj.fontSize, 24) * Math.abs(sy));
+                patch.scaleX = 1;
+                patch.scaleY = 1;
+            }
+            if (Object.keys(patch).length) {
+                obj.set(patch);
+                if (typeof obj.initDimensions === 'function') obj.initDimensions();
+                if (typeof obj.setCoords === 'function') obj.setCoords();
+                changed = true;
+            }
+        }
+
+        if (typeof obj.getObjects === 'function') {
+            const children = obj.getObjects();
+            if (Array.isArray(children) && children.length) {
+                children.forEach(child => stack.push(child));
+            }
+        }
+    }
+
+    return changed;
+}
+
 function sanitizeCanvasObject(rawObject, { pageWidth = DEFAULT_PAGE_WIDTH, pageHeight = DEFAULT_PAGE_HEIGHT, depth = 0 } = {}) {
     if (!rawObject || typeof rawObject !== 'object') return null;
     const obj = { ...rawObject };
 
-    if (!VALID_ORIGIN_X.has(obj.originX)) obj.originX = 'center';
-    if (!VALID_ORIGIN_Y.has(obj.originY)) obj.originY = 'center';
+    if (!VALID_ORIGIN_X.has(obj.originX)) obj.originX = 'left';
+    if (!VALID_ORIGIN_Y.has(obj.originY)) obj.originY = 'top';
     obj.left = normalizeNumeric(obj.left, pageWidth / 2);
     obj.top = normalizeNumeric(obj.top, pageHeight / 2);
     obj.scaleX = normalizeNumeric(obj.scaleX, 1) || 1;
@@ -4717,14 +4776,43 @@ function sanitizeCanvasObject(rawObject, { pageWidth = DEFAULT_PAGE_WIDTH, pageH
     if (obj.clipPath) delete obj.clipPath;
     if (obj.transformMatrix) delete obj.transformMatrix;
 
-    if (obj.type === 'textbox') {
+    const isTextLike = obj.type === 'textbox' || obj.type === 'text' || obj.type === 'i-text';
+    if (isTextLike) {
+        obj.type = 'textbox';
         if (typeof obj.text !== 'string') obj.text = String(obj.text ?? '');
-        if (!Number.isFinite(obj.fontSize) || obj.fontSize <= 0) obj.fontSize = 24;
-        if (!Number.isFinite(obj.width) || obj.width <= 0) obj.width = 240;
-        if (!obj.fontFamily) obj.fontFamily = 'Arial';
+        if (!Number.isFinite(parseFloat(obj.fontSize)) || parseFloat(obj.fontSize) <= 0) obj.fontSize = 24;
+        if (!obj.fontFamily || typeof obj.fontFamily !== 'string') obj.fontFamily = 'Arial';
+        const align = String(obj.textAlign || 'left').toLowerCase();
+        obj.textAlign = VALID_TEXT_ALIGNS.has(align) ? align : 'left';
+        if (!Number.isFinite(parseFloat(obj.lineHeight)) || parseFloat(obj.lineHeight) <= 0) obj.lineHeight = 1.16;
+        if (!Number.isFinite(parseFloat(obj.charSpacing))) obj.charSpacing = 0;
+        obj.splitByGrapheme = !!obj.splitByGrapheme;
+        if (obj.minWidth == null || !Number.isFinite(parseFloat(obj.minWidth)) || parseFloat(obj.minWidth) < 20) {
+            obj.minWidth = 20;
+        }
+        if (!Array.isArray(obj.styles)) obj.styles = [];
+
+        if (typeof obj.textBaseline === 'string') {
+            const baseline = obj.textBaseline.toLowerCase();
+            obj.textBaseline = VALID_TEXT_BASELINES.has(baseline) ? baseline : 'alphabetic';
+        } else if (obj.textBaseline != null) {
+            obj.textBaseline = 'alphabetic';
+        }
+
+        const sx = Math.abs(normalizeNumeric(obj.scaleX, 1) || 1);
+        const sy = Math.abs(normalizeNumeric(obj.scaleY, 1) || 1);
+        const baseWidth = Math.max(120, normalizeNumeric(obj.width, 260));
+        const normalizedWidth = Math.min(pageWidth * 0.95, Math.max(120, baseWidth * sx));
+        const normalizedFontSize = Math.max(8, normalizeNumeric(obj.fontSize, 24) * sy);
+        obj.width = normalizedWidth;
+        obj.fontSize = normalizedFontSize;
+        obj.scaleX = 1;
+        obj.scaleY = 1;
+
         obj.curveAmount = clampTextCurveAmount(obj.curveAmount);
         if (obj.path) delete obj.path;
         obj.padding = 0;
+        if (obj.lockUniScaling == null) obj.lockUniScaling = true;
     }
 
     if (obj.type === 'path' || obj.isSvgGroup || obj.type === 'group') {
@@ -6445,7 +6533,20 @@ function syncCurrentPageStateFromCanvas() {
     const pageLeft = pageRect ? normalizeNumeric(pageRect.left, getPageLayoutLeft(currentPageIndex)) : getPageLayoutLeft(currentPageIndex);
     const pageTop = pageRect ? normalizeNumeric(pageRect.top, 0) : 0;
     normalizeTextboxPathsForSerialization();
-    const serializedCanvas = canvas.toJSON(SERIALIZE_PROPS);
+    let serializedCanvas = null;
+    try {
+        serializedCanvas = canvas.toJSON(SERIALIZE_PROPS);
+    } catch (error) {
+        console.warn('Canvas serialization failed; attempting text object repair.', error);
+        try {
+            repairLiveCanvasTextObjectsForSerialization();
+            normalizeTextboxPathsForSerialization();
+            serializedCanvas = canvas.toJSON(SERIALIZE_PROPS);
+        } catch (retryError) {
+            console.error('Canvas serialization failed after repair attempt.', retryError);
+            return;
+        }
+    }
     if (Array.isArray(serializedCanvas.objects)) {
         serializedCanvas.objects = serializedCanvas.objects
             .filter(obj => {
@@ -6465,8 +6566,12 @@ function syncCurrentPageStateFromCanvas() {
                 }
                 if (Number.isFinite(parseFloat(next.left))) next.left = parseFloat(next.left) - pageLeft;
                 if (Number.isFinite(parseFloat(next.top))) next.top = parseFloat(next.top) - pageTop;
-                return next;
-            });
+                return sanitizeCanvasObject(next, {
+                    pageWidth: pageState.width,
+                    pageHeight: pageState.height
+                });
+            })
+            .filter(Boolean);
     }
     pageState.canvas = serializedCanvas;
     pageState.bindings = Array.from(bindings.entries());
@@ -12836,6 +12941,7 @@ window.addEventListener('keyup', e => {
             const AI_CANVAS_SNAPSHOT_QUALITY = 0.4;
             const AI_REQUEST_TIMEOUT_MS = 36000;
             const AI_TEMPLATE_REQUEST_TIMEOUT_MS = 95000;
+            const AI_TEMPLATE_RETRY_TIMEOUT_MS = 60000;
             const AI_MAX_CONVERSATION_ITEMS = 6;
             const AI_MAX_CONVERSATION_CHARS = 240;
             const AI_MAX_APPLIED_ACTIONS = 8;
@@ -12843,8 +12949,41 @@ window.addEventListener('keyup', e => {
             const AI_MAX_CONTEXT_COLUMNS = 14;
             const AI_MAX_CANVAS_JSON_CHARS = 24000;
             const AI_MAX_CANVAS_JSON_OBJECTS = 80;
+            const AI_MAX_TEMPLATE_CONTEXT_CHARS = 52000;
+            const AI_MAX_TEMPLATE_OBJECTS_PER_PAGE = 120;
+            const AI_MAX_TEMPLATE_PAGES_CONTEXT = 10;
+            const AI_ATTACHMENT_IMAGE_MAX_SIDE = 1400;
+            const AI_ATTACHMENT_IMAGE_QUALITY = 0.78;
+            const AI_ATTACHMENT_IMAGE_TARGET_BASE64 = 900000;
+            const AI_RETRY_TEXT_ATTACHMENT_CHARS = 6000;
+            const AI_STRICT_MAX_PAGES = 24;
+            const AI_STRICT_MAX_OBJECTS_PER_PAGE = 280;
+            const AI_STRICT_MAX_GROUP_CHILDREN = 60;
+            const AI_STRICT_MAX_OBJECT_DEPTH = 3;
+            const AI_STRICT_MAX_TEXT_LENGTH = 5000;
+            const AI_STRICT_MAX_IMAGE_SRC_CHARS = 16000;
+            const AI_STRICT_MAX_PATH_SEGMENTS = 220;
+            const AI_STRICT_MAX_HEADERS = 200;
+            const AI_STRICT_MAX_ROWS = 5000;
+            const AI_STRICT_ALLOWED_TYPES = new Set([
+                'rect',
+                'circle',
+                'triangle',
+                'textbox',
+                'image',
+                'line',
+                'path',
+                'group',
+                'polygon',
+                'polyline',
+                'ellipse'
+            ]);
+            const AI_STRICT_ALLOWED_TEXT_ALIGNS = new Set(['left', 'center', 'right', 'justify']);
             const AI_MODEL_NAME = 'gemini-2.5-flash';
             const AI_MODEL_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${AI_MODEL_NAME}:generateContent`;
+            const AI_MODEL_STREAM_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${AI_MODEL_NAME}:streamGenerateContent?alt=sse`;
+            const AI_CREATIVE_REQUEST_TIMEOUT_MS = 90000;
+            const AI_LIVE_RENDER_DELAY_MS = 28;
             const AI_JSON_RESPONSE_SCHEMA = {
                 type: 'OBJECT',
                 properties: {
@@ -12987,21 +13126,83 @@ window.addEventListener('keyup', e => {
                     || name.endsWith('.svg');
             }
 
+            async function readFileAsDataUrl(file) {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => resolve(String(e.target?.result || ''));
+                    reader.onerror = () => reject(new Error('Failed to read image file.'));
+                    reader.readAsDataURL(file);
+                });
+            }
+
+            async function optimizeImageDataUrl(dataUrl, maxSide = AI_ATTACHMENT_IMAGE_MAX_SIDE, quality = AI_ATTACHMENT_IMAGE_QUALITY) {
+                const parsed = String(dataUrl || '').match(/^data:(.*?);base64,(.*)$/);
+                if (!parsed?.[1] || !parsed?.[2]) return null;
+                const sourceMime = parsed[1];
+                const sourceBase64 = parsed[2];
+                if (!sourceMime.startsWith('image/')) {
+                    return { mimeType: sourceMime, base64Data: sourceBase64 };
+                }
+                if (sourceBase64.length <= 900000) {
+                    return { mimeType: sourceMime, base64Data: sourceBase64 };
+                }
+                try {
+                    const img = await new Promise((resolve, reject) => {
+                        const el = new Image();
+                        el.onload = () => resolve(el);
+                        el.onerror = () => reject(new Error('Failed to decode image attachment.'));
+                        el.src = dataUrl;
+                    });
+                    const naturalW = Math.max(1, parseInt(img.naturalWidth, 10) || parseInt(img.width, 10) || 1);
+                    const naturalH = Math.max(1, parseInt(img.naturalHeight, 10) || parseInt(img.height, 10) || 1);
+                    const aggressiveMaxSide = sourceBase64.length > 2200000 ? Math.min(maxSide, 1100) : maxSide;
+                    const ratio = Math.min(1, aggressiveMaxSide / Math.max(naturalW, naturalH));
+                    const targetW = Math.max(1, Math.round(naturalW * ratio));
+                    const targetH = Math.max(1, Math.round(naturalH * ratio));
+                    const canvasEl = document.createElement('canvas');
+                    canvasEl.width = targetW;
+                    canvasEl.height = targetH;
+                    const ctx = canvasEl.getContext('2d', { alpha: false });
+                    if (!ctx) return { mimeType: sourceMime, base64Data: sourceBase64 };
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(0, 0, targetW, targetH);
+                    ctx.drawImage(img, 0, 0, targetW, targetH);
+                    const qualitySteps = [quality, 0.68, 0.58, 0.48, 0.4]
+                        .filter((value, index, arr) => Number.isFinite(value) && value > 0.2 && arr.indexOf(value) === index);
+                    let bestMime = sourceMime;
+                    let bestBase64 = sourceBase64;
+                    for (let i = 0; i < qualitySteps.length; i++) {
+                        const compressedDataUrl = canvasEl.toDataURL('image/jpeg', qualitySteps[i]);
+                        const compressedMatch = String(compressedDataUrl).match(/^data:(.*?);base64,(.*)$/);
+                        if (!compressedMatch?.[1] || !compressedMatch?.[2]) continue;
+                        bestMime = compressedMatch[1];
+                        bestBase64 = compressedMatch[2];
+                        if (bestBase64.length <= AI_ATTACHMENT_IMAGE_TARGET_BASE64) break;
+                    }
+                    if (!bestMime || !bestBase64) {
+                        return { mimeType: sourceMime, base64Data: sourceBase64 };
+                    }
+                    return {
+                        mimeType: bestMime,
+                        base64Data: bestBase64
+                    };
+                } catch (_) {
+                    return { mimeType: sourceMime, base64Data: sourceBase64 };
+                }
+            }
+
             async function toAttachmentPayload(file) {
                 if (!file) return null;
 
                 if (file.type && file.type.startsWith('image/')) {
-                    const dataUrl = await new Promise((resolve, reject) => {
-                        const reader = new FileReader();
-                        reader.onload = (e) => resolve(e.target.result);
-                        reader.onerror = () => reject(new Error('Failed to read image file.'));
-                        reader.readAsDataURL(file);
-                    });
-                    const [, mimeType, base64Data] = String(dataUrl).match(/^data:(.*?);base64,(.*)$/) || [];
+                    const dataUrl = await readFileAsDataUrl(file);
+                    const optimized = await optimizeImageDataUrl(dataUrl);
+                    const mimeType = optimized?.mimeType;
+                    const base64Data = optimized?.base64Data;
                     if (!mimeType || !base64Data) throw new Error('Invalid image attachment format.');
                     return {
                         name: file.name || 'image',
-                        size: file.size || 0,
+                        size: Math.max(file.size || 0, Math.ceil(base64Data.length * 0.75)),
                         kind: 'inline',
                         mimeType,
                         inlineData: base64Data
@@ -14350,6 +14551,12 @@ ${userPrompt || '(Attachment-only request)'}
                 }
             }
 
+            function isAiTimeoutError(error) {
+                if (!error) return false;
+                const message = String(error.message || '');
+                return /timed out|timeout|abort/i.test(message) || error.name === 'AbortError';
+            }
+
             function buildAiRepairPrompt(userPrompt, rawResponse) {
                 return `
 Convert the assistant output below into strict JSON (no markdown):
@@ -14393,6 +14600,391 @@ ${rawResponse}
                 }
             }
 
+            function buildGoogleFontsHint(maxItems = 140) {
+                const pool = Array.isArray(globalThis.GOOGLE_FONT_FAMILIES)
+                    ? globalThis.GOOGLE_FONT_FAMILIES
+                    : (Array.isArray(typeof GOOGLE_FONT_FAMILIES !== 'undefined' ? GOOGLE_FONT_FAMILIES : null)
+                        ? GOOGLE_FONT_FAMILIES
+                        : []);
+                if (!pool.length) {
+                    return 'All Google Fonts available in the editor are allowed for fontFamily.';
+                }
+                const sample = pool.slice(0, Math.max(20, maxItems)).join(', ');
+                const truncated = pool.length > maxItems ? ', ...' : '';
+                return `All Google Fonts are available for fontFamily (${pool.length} families). Use any Google font name exactly. Sample list: ${sample}${truncated}`;
+            }
+
+            function getCurrentPageDimensionsForAi() {
+                const page = documentPages[currentPageIndex] || {};
+                return {
+                    width: parsePositiveInt(page.width, DEFAULT_PAGE_WIDTH),
+                    height: parsePositiveInt(page.height, DEFAULT_PAGE_HEIGHT)
+                };
+            }
+
+            function buildCreativeFabricPrompt(userPrompt, { pageWidth, pageHeight } = {}) {
+                const width = parsePositiveInt(pageWidth, DEFAULT_PAGE_WIDTH);
+                const height = parsePositiveInt(pageHeight, DEFAULT_PAGE_HEIGHT);
+                return `
+You are a senior UI/visual designer working directly with Fabric.js object JSON.
+Return ONLY a JSON array of drawable Fabric.js objects for ONE page.
+Do not return markdown, explanations, wrappers, template schemas, or top-level objects.
+
+Canvas size:
+- width: ${width}
+- height: ${height}
+
+Allowed object types only:
+rect, circle, triangle, textbox, image, line, path, group, polygon, polyline, ellipse.
+
+Strict rules:
+- Never include pageRect/isArtboard objects.
+- Use top-left anchors: "originX":"left", "originY":"top".
+- Keep every object fully inside canvas bounds.
+- Prefer "textbox" for text. Keep text wrapping using sensible width.
+- For textboxes: keep scaleX=1 and scaleY=1, size via width/fontSize.
+- If styles is present on text, use an array.
+- Never use textBaseline "alphabetical" (use "alphabetic" or omit).
+- Do not use clipPath, transformMatrix, filters, scripts, or non-Fabric custom code.
+- Use professional layout quality (spacing rhythm, alignment, readable hierarchy).
+${buildGoogleFontsHint()}
+
+User request:
+${userPrompt || '(Attachment-only request)'}
+
+Return format example:
+[
+  { "type":"rect","originX":"left","originY":"top","left":0,"top":0,"width":${width},"height":120,"fill":"#0f172a" },
+  { "type":"textbox","originX":"left","originY":"top","left":36,"top":34,"width":420,"text":"Invoice","fontSize":42,"fontFamily":"Inter","fill":"#ffffff","scaleX":1,"scaleY":1,"styles":[] }
+]
+`.trim();
+            }
+
+            function shouldReplaceCurrentCanvasForAi(promptText = '', hasAttachment = false) {
+                if (hasAttachment) return true;
+                const text = String(promptText || '').toLowerCase();
+                if (!text.trim()) return false;
+                const replaceIntent = /\b(recreate|create|design|redesign|from scratch|start over|new layout|build a|make a)\b/i.test(text);
+                const additiveIntent = /\b(add|append|insert|place|include)\b/i.test(text) && !replaceIntent;
+                if (replaceIntent) return true;
+                if (additiveIntent) return false;
+                return true;
+            }
+
+            function buildCreativeAiRequestParts(promptText, { pageWidth, pageHeight, retry = false } = {}) {
+                const parts = [{ text: buildCreativeFabricPrompt(promptText, { pageWidth, pageHeight }) }];
+                if (!aiAttachment) return parts;
+                parts.push({ text: `Reference attachment: ${aiAttachment.name}. Recreate/align design to this reference when relevant.` });
+                if (aiAttachment.kind === 'inline') {
+                    parts.push({
+                        inline_data: {
+                            mime_type: aiAttachment.mimeType || 'application/octet-stream',
+                            data: aiAttachment.inlineData
+                        }
+                    });
+                } else if (aiAttachment.kind === 'text') {
+                    const maxChars = retry ? AI_RETRY_TEXT_ATTACHMENT_CHARS : AI_MAX_TEXT_ATTACHMENT_CHARS;
+                    const rawText = String(aiAttachment.text || '');
+                    const attachmentText = rawText.length > maxChars
+                        ? `${rawText.slice(0, maxChars)}\n...[truncated]`
+                        : rawText;
+                    parts.push({ text: `Attached file text:\n${attachmentText}` });
+                }
+                return parts;
+            }
+
+            function extractCandidateTextFromGeminiChunk(data) {
+                const parts = data?.candidates?.[0]?.content?.parts;
+                if (!Array.isArray(parts)) return '';
+                return parts
+                    .map((part) => (typeof part?.text === 'string' ? part.text : ''))
+                    .join('');
+            }
+
+            function computeStreamTextDelta(nextText, state) {
+                const incoming = String(nextText || '');
+                if (!incoming) return '';
+                if (!state.lastText) {
+                    state.lastText = incoming;
+                    return incoming;
+                }
+                if (incoming === state.lastText) return '';
+                if (incoming.startsWith(state.lastText)) {
+                    const delta = incoming.slice(state.lastText.length);
+                    state.lastText = incoming;
+                    return delta;
+                }
+                if (state.lastText.startsWith(incoming)) {
+                    state.lastText = incoming;
+                    return '';
+                }
+                let prefixLen = 0;
+                const max = Math.min(state.lastText.length, incoming.length);
+                while (prefixLen < max && state.lastText[prefixLen] === incoming[prefixLen]) {
+                    prefixLen += 1;
+                }
+                state.lastText = incoming;
+                return incoming.slice(prefixLen);
+            }
+
+            async function requestAiResponseTextStream(
+                apiKey,
+                parts,
+                {
+                    onProgress = null,
+                    timeoutMs = AI_CREATIVE_REQUEST_TIMEOUT_MS,
+                    onTextChunk = null,
+                    temperature = 0.72
+                } = {}
+            ) {
+                const payload = {
+                    contents: [{ parts }],
+                    generationConfig: {
+                        temperature,
+                        responseMimeType: 'application/json'
+                    }
+                };
+                const abortController = new AbortController();
+                const timeoutId = setTimeout(() => abortController.abort(), timeoutMs);
+                const streamState = { lastText: '' };
+                let assembledText = '';
+                try {
+                    if (typeof onProgress === 'function') onProgress('Opening live stream');
+                    const response = await fetch(AI_MODEL_STREAM_ENDPOINT, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-goog-api-key': apiKey
+                        },
+                        body: JSON.stringify(payload),
+                        signal: abortController.signal
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json().catch(() => ({}));
+                        const message = errorData.error?.message || `HTTP ${response.status}`;
+                        throw new Error(`API Error ${response.status}: ${message}`);
+                    }
+
+                    if (!response.body || typeof response.body.getReader !== 'function') {
+                        throw new Error('Streaming response body is unavailable.');
+                    }
+
+                    const reader = response.body.getReader();
+                    const decoder = new TextDecoder('utf-8');
+                    let sseBuffer = '';
+
+                    while (true) {
+                        const { done, value } = await reader.read();
+                        if (done) break;
+                        sseBuffer += decoder.decode(value, { stream: true });
+
+                        let boundaryMatch = sseBuffer.match(/\r?\n\r?\n/);
+                        while (boundaryMatch && Number.isFinite(boundaryMatch.index)) {
+                            const boundaryIndex = boundaryMatch.index;
+                            const separatorLength = boundaryMatch[0].length || 2;
+                            const eventBlock = sseBuffer.slice(0, boundaryIndex);
+                            sseBuffer = sseBuffer.slice(boundaryIndex + separatorLength);
+                            boundaryMatch = sseBuffer.match(/\r?\n\r?\n/);
+
+                            const lines = eventBlock.split(/\r?\n/);
+                            const dataLines = lines
+                                .filter((line) => line.startsWith('data:'))
+                                .map((line) => line.slice(5).trimStart());
+                            if (!dataLines.length) continue;
+                            const dataText = dataLines.join('\n').trim();
+                            if (!dataText || dataText === '[DONE]') continue;
+
+                            let chunkData = null;
+                            try {
+                                chunkData = JSON.parse(dataText);
+                            } catch (_) {
+                                continue;
+                            }
+                            const candidateText = extractCandidateTextFromGeminiChunk(chunkData);
+                            if (!candidateText) continue;
+                            const delta = computeStreamTextDelta(candidateText, streamState);
+                            if (!delta) continue;
+                            assembledText += delta;
+                            if (typeof onTextChunk === 'function') onTextChunk(delta, assembledText);
+                        }
+                    }
+
+                    const finalFlush = decoder.decode();
+                    if (finalFlush) {
+                        sseBuffer += finalFlush;
+                    }
+                    if (sseBuffer.trim()) {
+                        const lines = sseBuffer.split(/\r?\n/);
+                        const dataLines = lines
+                            .filter((line) => line.startsWith('data:'))
+                            .map((line) => line.slice(5).trimStart());
+                        const dataText = dataLines.join('\n').trim();
+                        if (dataText && dataText !== '[DONE]') {
+                            try {
+                                const chunkData = JSON.parse(dataText);
+                                const candidateText = extractCandidateTextFromGeminiChunk(chunkData);
+                                const delta = computeStreamTextDelta(candidateText, streamState);
+                                if (delta) {
+                                    assembledText += delta;
+                                    if (typeof onTextChunk === 'function') onTextChunk(delta, assembledText);
+                                }
+                            } catch (_) {
+                                // ignore incomplete final event
+                            }
+                        }
+                    }
+                    return assembledText;
+                } catch (error) {
+                    if (error?.name === 'AbortError') {
+                        throw new Error(`AI request timed out after ${Math.round(timeoutMs / 1000)}s. Try a shorter prompt.`);
+                    }
+                    throw error;
+                } finally {
+                    clearTimeout(timeoutId);
+                }
+            }
+
+            function createStreamingFabricArrayParser() {
+                let text = '';
+                let scanIndex = 0;
+                let startedArray = false;
+                let objectStart = -1;
+                let objectDepth = 0;
+                let inString = false;
+                let escaped = false;
+                const parsedObjects = [];
+
+                const push = (chunkText) => {
+                    const incoming = String(chunkText || '');
+                    if (!incoming) return [];
+                    text += incoming;
+                    const newObjects = [];
+
+                    for (let i = scanIndex; i < text.length; i++) {
+                        const ch = text[i];
+                        if (!startedArray) {
+                            if (ch === '[') startedArray = true;
+                            continue;
+                        }
+
+                        if (objectStart < 0) {
+                            if (ch === '{') {
+                                objectStart = i;
+                                objectDepth = 1;
+                                inString = false;
+                                escaped = false;
+                            }
+                            continue;
+                        }
+
+                        if (escaped) {
+                            escaped = false;
+                            continue;
+                        }
+
+                        if (ch === '\\' && inString) {
+                            escaped = true;
+                            continue;
+                        }
+
+                        if (ch === '"') {
+                            inString = !inString;
+                            continue;
+                        }
+
+                        if (!inString) {
+                            if (ch === '{') {
+                                objectDepth += 1;
+                            } else if (ch === '}') {
+                                objectDepth -= 1;
+                                if (objectDepth === 0) {
+                                    const objectText = text.slice(objectStart, i + 1);
+                                    objectStart = -1;
+                                    try {
+                                        const parsed = JSON.parse(objectText);
+                                        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+                                            parsedObjects.push(parsed);
+                                            newObjects.push(parsed);
+                                        }
+                                    } catch (_) {
+                                        // Ignore malformed fragment; final parse fallback handles this.
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    scanIndex = text.length;
+                    return newObjects;
+                };
+
+                const finalize = () => {
+                    const parsed = parseAiJsonResponse(text);
+                    if (Array.isArray(parsed)) {
+                        const missing = parsed.slice(parsedObjects.length).filter(obj => obj && typeof obj === 'object' && !Array.isArray(obj));
+                        if (missing.length) parsedObjects.push(...missing);
+                        return missing;
+                    }
+                    if (parsed && typeof parsed === 'object' && Array.isArray(parsed.objects)) {
+                        const missing = parsed.objects
+                            .slice(parsedObjects.length)
+                            .filter(obj => obj && typeof obj === 'object' && !Array.isArray(obj));
+                        if (missing.length) parsedObjects.push(...missing);
+                        return missing;
+                    }
+                    return [];
+                };
+
+                return {
+                    push,
+                    finalize,
+                    getText: () => text,
+                    getCount: () => parsedObjects.length
+                };
+            }
+
+            function parseAiFabricObjectsFromText(rawText) {
+                const parsed = parseAiJsonResponse(rawText);
+                if (Array.isArray(parsed)) {
+                    return parsed.filter(obj => obj && typeof obj === 'object' && !Array.isArray(obj));
+                }
+                if (parsed && typeof parsed === 'object' && Array.isArray(parsed.objects)) {
+                    return parsed.objects.filter(obj => obj && typeof obj === 'object' && !Array.isArray(obj));
+                }
+                return [];
+            }
+
+            function enlivenFabricObjectsSafe(rawObjects = []) {
+                return new Promise((resolve) => {
+                    if (!Array.isArray(rawObjects) || !rawObjects.length) {
+                        resolve([]);
+                        return;
+                    }
+                    try {
+                        fabric.util.enlivenObjects(rawObjects, (objects) => {
+                            resolve(Array.isArray(objects) ? objects.filter(Boolean) : []);
+                        }, null);
+                    } catch (error) {
+                        console.warn('enlivenObjects failed:', error);
+                        resolve([]);
+                    }
+                });
+            }
+
+            function clearCurrentPageDrawableObjects() {
+                const objects = getEditableCanvasObjects();
+                objects.forEach((obj) => canvas.remove(obj));
+                canvas.discardActiveObject();
+                canvas.requestRenderAll();
+            }
+
+            function delayMs(ms) {
+                const wait = Math.max(0, parseInt(ms, 10) || 0);
+                if (!wait) return Promise.resolve();
+                return new Promise((resolve) => setTimeout(resolve, wait));
+            }
+
             function buildTemplateJsonEditPrompt(userPrompt) {
                 return `
 You are the CSVLink Template JSON Editor.
@@ -14405,6 +14997,20 @@ Critical output rules:
 - You may change page dimensions, add/remove/reorder pages, and edit canvas objects per request.
 - Every page must include a pageRect object (oid="pageRect") sized to that page.
 - If a reference file/image is attached, follow it closely in the generated layout.
+- Use top-left object anchoring consistently: set "originX":"left" and "originY":"top" on drawable objects.
+- Treat "left"/"top" as the object top-left corner (not center).
+- Allowed drawable Fabric object types: rect, circle, triangle, textbox, image, line, path, group, polygon, polyline, ellipse.
+- Do NOT use clipPath, transformMatrix, filters, or custom script-like fields.
+- For text, prefer Fabric "textbox" objects (not "text" or "i-text") so wrapping works.
+- For textboxes, keep "scaleX"/"scaleY" at 1 and control size via "fontSize" + "width".
+- If "styles" is present on text objects, keep it as an array ("[]" when unused).
+- Never use textBaseline "alphabetical"; use "alphabetic" or omit textBaseline.
+- Ensure professional composition:
+  - Keep all text fully inside page bounds (no clipping).
+  - Keep readable typography and consistent spacing.
+  - Use sensible textbox widths so long lines wrap instead of overflowing.
+  - Maintain a clean margin (about 20-28px) from page edges for text content.
+${buildGoogleFontsHint()}
 
 Expected top-level shape:
 {
@@ -14451,6 +15057,400 @@ ${userPrompt || '(Attachment-only request)'}
                 };
             }
 
+            function clampStringForAi(value, maxChars = 220) {
+                if (value == null) return '';
+                const text = typeof value === 'string'
+                    ? value
+                    : (typeof value === 'number' || typeof value === 'boolean')
+                        ? String(value)
+                        : (() => {
+                            try {
+                                return JSON.stringify(value);
+                            } catch (_) {
+                                return String(value);
+                            }
+                        })();
+                if (text.length <= maxChars) return text;
+                return `${text.slice(0, Math.max(12, maxChars - 3))}...`;
+            }
+
+            function compactAiScalar(value, maxChars = 120) {
+                if (value == null) return '';
+                if (typeof value === 'number' && Number.isFinite(value)) return value;
+                if (typeof value === 'boolean') return value;
+                return clampStringForAi(value, maxChars);
+            }
+
+            function roundFinite(value, digits = 2) {
+                const num = Number(value);
+                if (!Number.isFinite(num)) return null;
+                const factor = Math.pow(10, digits);
+                return Math.round(num * factor) / factor;
+            }
+
+            function compactCanvasObjectForAi(obj, options = {}) {
+                if (!obj || typeof obj !== 'object') return null;
+                const depth = parseInt(options.depth, 10) || 0;
+                const maxDepth = Math.max(1, parseInt(options.maxDepth, 10) || 2);
+                const maxTextChars = Math.max(60, parsePositiveInt(options.maxTextChars, 220));
+                const maxSrcChars = Math.max(80, parsePositiveInt(options.maxSrcChars, 260));
+                const maxChildObjects = Math.max(2, parsePositiveInt(options.maxChildObjects, 8));
+
+                const compacted = {};
+                const type = clampStringForAi(obj.type || 'object', 28);
+                compacted.type = type;
+                if (obj.oid != null) compacted.oid = clampStringForAi(obj.oid, 80);
+                if (obj.name != null) compacted.name = clampStringForAi(obj.name, 80);
+
+                const numericKeys = [
+                    'left', 'top', 'width', 'height', 'scaleX', 'scaleY', 'angle', 'opacity',
+                    'strokeWidth', 'fontSize', 'lineHeight', 'charSpacing', 'rx', 'ry', 'radius'
+                ];
+                numericKeys.forEach((key) => {
+                    const rounded = roundFinite(obj[key], 2);
+                    if (rounded !== null) compacted[key] = rounded;
+                });
+
+                const stringKeys = [
+                    'fill', 'stroke', 'fontFamily', 'fontWeight', 'fontStyle', 'textAlign', 'textBaseline',
+                    'originX', 'originY', 'strokeDashArray', 'globalCompositeOperation'
+                ];
+                stringKeys.forEach((key) => {
+                    if (typeof obj[key] === 'string' && obj[key].trim()) {
+                        const limit = key === 'fontFamily' ? 90 : 50;
+                        compacted[key] = clampStringForAi(obj[key], limit);
+                    }
+                });
+
+                if (typeof obj.visible === 'boolean') compacted.visible = obj.visible;
+                if (typeof obj.selectable === 'boolean') compacted.selectable = obj.selectable;
+
+                if (typeof obj.text === 'string') {
+                    compacted.text = clampStringForAi(obj.text, maxTextChars);
+                }
+                if (typeof obj.src === 'string') {
+                    compacted.src = clampStringForAi(obj.src, maxSrcChars);
+                }
+                if (Array.isArray(obj.styles) || (obj.styles && typeof obj.styles === 'object')) {
+                    compacted.styles = [];
+                }
+
+                if (Array.isArray(obj.points) && obj.points.length) {
+                    const pointLimit = Math.min(10, obj.points.length);
+                    compacted.points = obj.points.slice(0, pointLimit).map((point) => ({
+                        x: roundFinite(point?.x, 1) ?? 0,
+                        y: roundFinite(point?.y, 1) ?? 0
+                    }));
+                    if (obj.points.length > pointLimit) {
+                        compacted.__pointsTruncated = obj.points.length - pointLimit;
+                    }
+                }
+
+                if (Array.isArray(obj.path) && obj.path.length) {
+                    const pathLimit = Math.min(8, obj.path.length);
+                    compacted.path = obj.path.slice(0, pathLimit).map((segment) =>
+                        Array.isArray(segment) ? segment.slice(0, 5) : segment
+                    );
+                    if (obj.path.length > pathLimit) {
+                        compacted.__pathTruncated = obj.path.length - pathLimit;
+                    }
+                }
+
+                if (Array.isArray(obj.objects) && obj.objects.length && depth < maxDepth) {
+                    const childLimit = Math.min(maxChildObjects, obj.objects.length);
+                    compacted.objects = obj.objects
+                        .slice(0, childLimit)
+                        .map((child) => compactCanvasObjectForAi(child, {
+                            ...options,
+                            depth: depth + 1,
+                            maxChildObjects: Math.max(2, Math.floor(maxChildObjects * 0.75))
+                        }))
+                        .filter(Boolean);
+                    if (obj.objects.length > childLimit) {
+                        compacted.__objectsTruncated = obj.objects.length - childLimit;
+                    }
+                }
+
+                if (obj.clipPath && typeof obj.clipPath === 'object' && depth < maxDepth) {
+                    const compactClip = compactCanvasObjectForAi(obj.clipPath, {
+                        ...options,
+                        depth: depth + 1,
+                        maxChildObjects: Math.max(2, Math.floor(maxChildObjects * 0.6))
+                    });
+                    if (compactClip) compacted.clipPath = compactClip;
+                }
+
+                return compacted;
+            }
+
+            function compactCanvasForAi(canvasPayload, options = {}) {
+                const source = canvasPayload && typeof canvasPayload === 'object' ? canvasPayload : {};
+                const sourceObjects = Array.isArray(source.objects) ? source.objects : [];
+                const maxObjectsPerPage = Math.max(12, parsePositiveInt(options.maxObjectsPerPage, AI_MAX_TEMPLATE_OBJECTS_PER_PAGE));
+                const includedObjects = sourceObjects
+                    .slice(0, maxObjectsPerPage)
+                    .map((obj) => compactCanvasObjectForAi(obj, options))
+                    .filter(Boolean);
+                const compacted = {
+                    version: clampStringForAi(source.version || '5.3.0', 16),
+                    background: typeof source.background === 'string' ? clampStringForAi(source.background, 40) : 'transparent',
+                    objects: includedObjects
+                };
+                if (sourceObjects.length > includedObjects.length) {
+                    compacted.__truncatedObjects = sourceObjects.length - includedObjects.length;
+                }
+                if (sourceObjects.length) compacted.__objectCount = sourceObjects.length;
+                return compacted;
+            }
+
+            function compactBindingsForAi(bindings, options = {}) {
+                if (!Array.isArray(bindings) || !bindings.length) return [];
+                const maxBindings = Math.max(8, parsePositiveInt(options.maxBindings, 80));
+                return bindings
+                    .slice(0, maxBindings)
+                    .map((binding) => {
+                        if (Array.isArray(binding)) {
+                            return [
+                                clampStringForAi(binding[0], 100),
+                                clampStringForAi(binding[1], 180)
+                            ];
+                        }
+                        if (binding && typeof binding === 'object') {
+                            const compacted = {};
+                            const keys = ['oid', 'column', 'property', 'path', 'source', 'target', 'type', 'key'];
+                            keys.forEach((key) => {
+                                if (binding[key] != null) {
+                                    compacted[key] = compactAiScalar(binding[key], 140);
+                                }
+                            });
+                            return Object.keys(compacted).length ? compacted : null;
+                        }
+                        return clampStringForAi(binding, 180);
+                    })
+                    .filter(Boolean);
+            }
+
+            function compactDataRowsForAi(rows, headers, options = {}) {
+                if (!Array.isArray(rows) || !rows.length) return [];
+                const maxRows = Math.max(0, parseInt(options.maxRows, 10) || 0);
+                if (maxRows <= 0) return [];
+                const maxCols = Math.max(1, parsePositiveInt(options.maxCols, 12));
+                const maxCellChars = Math.max(24, parsePositiveInt(options.maxCellChars, 80));
+                return rows.slice(0, maxRows).map((row) => {
+                    if (Array.isArray(row)) {
+                        return row
+                            .slice(0, maxCols)
+                            .map((cell) => compactAiScalar(cell, maxCellChars));
+                    }
+                    if (row && typeof row === 'object') {
+                        const keys = Array.isArray(headers) && headers.length
+                            ? headers.slice(0, maxCols)
+                            : Object.keys(row).slice(0, maxCols);
+                        const compacted = {};
+                        keys.forEach((key) => {
+                            compacted[key] = compactAiScalar(row[key], maxCellChars);
+                        });
+                        return compacted;
+                    }
+                    return compactAiScalar(row, maxCellChars);
+                });
+            }
+
+            function compactTemplatePayloadForAi(templatePayload, options = {}) {
+                const source = templatePayload && typeof templatePayload === 'object' ? templatePayload : {};
+                const fallbackPageWidth = parsePositiveInt(source?.page?.width, DEFAULT_PAGE_WIDTH);
+                const fallbackPageHeight = parsePositiveInt(source?.page?.height, DEFAULT_PAGE_HEIGHT);
+                const sourcePages = Array.isArray(source.pages) && source.pages.length
+                    ? source.pages
+                    : [{
+                        width: fallbackPageWidth,
+                        height: fallbackPageHeight,
+                        canvas: source.canvas || { version: '5.3.0', background: 'transparent', objects: [] },
+                        bindings: source.bindings || []
+                    }];
+                const totalPages = sourcePages.length;
+                const maxPages = Math.max(1, parsePositiveInt(options.maxPages, AI_MAX_TEMPLATE_PAGES_CONTEXT));
+                const limitedPages = sourcePages.slice(0, maxPages);
+                const currentPage = parseInt(source.currentPageIndex, 10);
+                const currentPageIndex = Number.isFinite(currentPage) ? Math.max(0, currentPage) : 0;
+
+                const pages = limitedPages.map((page, idx) => {
+                    const width = parsePositiveInt(page?.width, fallbackPageWidth);
+                    const height = parsePositiveInt(page?.height, fallbackPageHeight);
+                    const canvasPayload = page?.canvas && typeof page.canvas === 'object'
+                        ? page.canvas
+                        : (idx === currentPageIndex ? source.canvas : null);
+                    const canvasCompact = compactCanvasForAi(canvasPayload, options);
+                    const pageBindings = compactBindingsForAi(page?.bindings, options);
+                    const compactedPage = { width, height, canvas: canvasCompact, bindings: pageBindings };
+                    if (page?.name != null) compactedPage.name = clampStringForAi(page.name, 80);
+                    if (page?.title != null) compactedPage.title = clampStringForAi(page.title, 80);
+                    if (pageBindings.length < (Array.isArray(page?.bindings) ? page.bindings.length : 0)) {
+                        compactedPage.__truncatedBindings = (page.bindings.length - pageBindings.length);
+                    }
+                    return compactedPage;
+                });
+
+                const maxHeaders = Math.max(8, parsePositiveInt(options.maxHeaders, 48));
+                const headerValues = Array.isArray(source?.data?.headers) ? source.data.headers : [];
+                const headersCompact = headerValues
+                    .slice(0, maxHeaders)
+                    .map((header) => clampStringForAi(header, 120));
+                const rowsCompact = compactDataRowsForAi(source?.data?.rows, headersCompact, options);
+
+                const payload = {
+                    version: clampStringForAi(source.version || 'csvlink-template-v2', 48),
+                    page: {
+                        title: clampStringForAi(source?.page?.title || 'Untitled_Template', 120),
+                        width: parsePositiveInt(source?.page?.width, fallbackPageWidth),
+                        height: parsePositiveInt(source?.page?.height, fallbackPageHeight)
+                    },
+                    currentPageIndex: Math.min(currentPageIndex, Math.max(0, pages.length - 1)),
+                    pages,
+                    data: {
+                        headers: headersCompact,
+                        rows: rowsCompact,
+                        identifierColumn: clampStringForAi(source?.data?.identifierColumn || '', 120)
+                    }
+                };
+
+                if (source.canvas && typeof source.canvas === 'object') {
+                    payload.canvas = compactCanvasForAi(source.canvas, options);
+                }
+                const rootBindings = compactBindingsForAi(source.bindings, options);
+                if (rootBindings.length) payload.bindings = rootBindings;
+
+                payload.__meta = {
+                    totalPages,
+                    includedPages: pages.length,
+                    truncatedPages: Math.max(0, totalPages - pages.length),
+                    contextMode: options.tight ? 'tight' : 'standard'
+                };
+                if (headerValues.length > headersCompact.length) {
+                    payload.__meta.truncatedHeaders = headerValues.length - headersCompact.length;
+                }
+                if (Array.isArray(source?.data?.rows) && source.data.rows.length > rowsCompact.length) {
+                    payload.__meta.truncatedRows = source.data.rows.length - rowsCompact.length;
+                }
+                return payload;
+            }
+
+            function buildTemplateContextForAi(templatePayload, options = {}) {
+                const tight = options.tight === true;
+                const maxChars = Math.max(12000, parsePositiveInt(options.maxChars, AI_MAX_TEMPLATE_CONTEXT_CHARS));
+                let config = {
+                    tight,
+                    maxPages: tight ? Math.min(4, AI_MAX_TEMPLATE_PAGES_CONTEXT) : AI_MAX_TEMPLATE_PAGES_CONTEXT,
+                    maxObjectsPerPage: tight ? Math.max(24, Math.floor(AI_MAX_TEMPLATE_OBJECTS_PER_PAGE * 0.45)) : AI_MAX_TEMPLATE_OBJECTS_PER_PAGE,
+                    maxBindings: tight ? 30 : 80,
+                    maxHeaders: tight ? 20 : 48,
+                    maxRows: tight ? 1 : 2,
+                    maxCols: tight ? 8 : 12,
+                    maxCellChars: tight ? 60 : 84,
+                    maxTextChars: tight ? 120 : 220,
+                    maxSrcChars: tight ? 140 : 280,
+                    maxChildObjects: tight ? 4 : 8,
+                    maxDepth: tight ? 1 : 2
+                };
+
+                let compactPayload = null;
+                let jsonText = '';
+                for (let attempt = 0; attempt < 6; attempt++) {
+                    compactPayload = compactTemplatePayloadForAi(templatePayload, config);
+                    jsonText = JSON.stringify(compactPayload);
+                    if (jsonText.length <= maxChars) {
+                        return {
+                            jsonText,
+                            charCount: jsonText.length,
+                            config,
+                            summary: compactPayload.__meta || {}
+                        };
+                    }
+                    config = {
+                        ...config,
+                        maxPages: Math.max(1, Math.floor(config.maxPages * 0.75)),
+                        maxObjectsPerPage: Math.max(12, Math.floor(config.maxObjectsPerPage * 0.68)),
+                        maxBindings: Math.max(8, Math.floor(config.maxBindings * 0.65)),
+                        maxHeaders: Math.max(8, Math.floor(config.maxHeaders * 0.75)),
+                        maxRows: attempt >= 1 ? 0 : Math.max(0, config.maxRows - 1),
+                        maxCols: Math.max(4, Math.floor(config.maxCols * 0.75)),
+                        maxCellChars: Math.max(30, Math.floor(config.maxCellChars * 0.85)),
+                        maxTextChars: Math.max(70, Math.floor(config.maxTextChars * 0.82)),
+                        maxSrcChars: Math.max(90, Math.floor(config.maxSrcChars * 0.78)),
+                        maxChildObjects: Math.max(2, Math.floor(config.maxChildObjects * 0.75)),
+                        maxDepth: attempt >= 2 ? 1 : config.maxDepth
+                    };
+                }
+
+                const source = templatePayload && typeof templatePayload === 'object' ? templatePayload : {};
+                const summaryPages = (Array.isArray(source.pages) ? source.pages : [])
+                    .slice(0, 6)
+                    .map((page, idx) => ({
+                        index: idx,
+                        width: parsePositiveInt(page?.width, DEFAULT_PAGE_WIDTH),
+                        height: parsePositiveInt(page?.height, DEFAULT_PAGE_HEIGHT),
+                        objectCount: Array.isArray(page?.canvas?.objects) ? page.canvas.objects.length : 0
+                    }));
+                const fallback = {
+                    version: clampStringForAi(source.version || 'csvlink-template-v2', 48),
+                    page: {
+                        title: clampStringForAi(source?.page?.title || 'Untitled_Template', 120),
+                        width: parsePositiveInt(source?.page?.width, DEFAULT_PAGE_WIDTH),
+                        height: parsePositiveInt(source?.page?.height, DEFAULT_PAGE_HEIGHT)
+                    },
+                    currentPageIndex: Math.max(0, parseInt(source.currentPageIndex, 10) || 0),
+                    data: {
+                        headers: Array.isArray(source?.data?.headers)
+                            ? source.data.headers.slice(0, 16).map((header) => clampStringForAi(header, 100))
+                            : [],
+                        rows: [],
+                        identifierColumn: clampStringForAi(source?.data?.identifierColumn || '', 100)
+                    },
+                    pageSummaries: summaryPages,
+                    __meta: {
+                        contextMode: 'fallback',
+                        note: 'Template context trimmed to page summaries due payload size.'
+                    }
+                };
+                const fallbackText = JSON.stringify(fallback);
+                return {
+                    jsonText: fallbackText,
+                    charCount: fallbackText.length,
+                    config,
+                    summary: fallback.__meta || {}
+                };
+            }
+
+            function buildTemplateEditorRequestParts(promptText, contextPacket, { retry = false } = {}) {
+                const parts = [
+                    { text: buildTemplateJsonEditPrompt(promptText) },
+                    {
+                        text: `Current template JSON context (${contextPacket?.charCount || 0} chars):\n${contextPacket?.jsonText || '{}'}`
+                    }
+                ];
+
+                if (!aiAttachment) return parts;
+                parts.push({ text: `Attached reference file: ${aiAttachment.name}` });
+                if (aiAttachment.kind === 'inline') {
+                    parts.push({
+                        inline_data: {
+                            mime_type: aiAttachment.mimeType || 'application/octet-stream',
+                            data: aiAttachment.inlineData
+                        }
+                    });
+                    return parts;
+                }
+                if (aiAttachment.kind === 'text') {
+                    const maxChars = retry ? AI_RETRY_TEXT_ATTACHMENT_CHARS : AI_MAX_TEXT_ATTACHMENT_CHARS;
+                    const rawText = String(aiAttachment.text || '');
+                    const attachmentText = rawText.length > maxChars
+                        ? `${rawText.slice(0, maxChars)}\n...[truncated]`
+                        : rawText;
+                    parts.push({ text: `Attached file text:\n${attachmentText}` });
+                }
+                return parts;
+            }
+
             function normalizeAiTemplatePayload(raw) {
                 if (!raw || typeof raw !== 'object') return null;
                 if (raw.template && typeof raw.template === 'object') return raw.template;
@@ -14458,6 +15458,698 @@ ${userPrompt || '(Attachment-only request)'}
                 if (raw.output && typeof raw.output === 'object') return raw.output;
                 if (raw.pages || raw.canvas || raw.page) return raw;
                 return null;
+            }
+
+            function toFiniteNumber(value, fallback = 0) {
+                const num = parseFloat(value);
+                return Number.isFinite(num) ? num : fallback;
+            }
+
+            function clampFiniteNumber(value, minValue, maxValue, fallback = minValue) {
+                const safeMin = Number.isFinite(minValue) ? minValue : fallback;
+                const safeMax = Number.isFinite(maxValue) ? maxValue : fallback;
+                if (safeMax < safeMin) return safeMin;
+                const num = toFiniteNumber(value, fallback);
+                return Math.min(safeMax, Math.max(safeMin, num));
+            }
+
+            function sanitizeSafeString(value, maxChars = 120, fallback = '') {
+                if (value == null) return fallback;
+                const text = String(value).replace(/\u0000/g, '').trim();
+                if (!text) return fallback;
+                if (text.length <= maxChars) return text;
+                return text.slice(0, maxChars);
+            }
+
+            function sanitizeSafeColor(value, fallback = '#000000') {
+                if (typeof value !== 'string') return fallback;
+                const text = value.trim();
+                if (!text || text.length > 90) return fallback;
+                const lower = text.toLowerCase();
+                if (lower.includes('javascript:') || lower.includes('url(') || lower.includes('<') || lower.includes('>')) {
+                    return fallback;
+                }
+                if (/^#([0-9a-f]{3,8})$/i.test(text)) return text;
+                if (/^rgba?\(\s*[-\d.,%\s]+\)$/i.test(text)) return text;
+                if (/^hsla?\(\s*[-\d.,%\s]+\)$/i.test(text)) return text;
+                if (/^[a-z]{3,24}$/i.test(text)) return text;
+                if (lower === 'transparent' || lower === 'currentcolor' || lower === 'none') {
+                    return lower === 'none' ? 'transparent' : text;
+                }
+                return fallback;
+            }
+
+            function sanitizeSafeImageSrc(value) {
+                if (typeof value !== 'string') return '';
+                const src = value.trim();
+                if (!src || src.length > AI_STRICT_MAX_IMAGE_SRC_CHARS) return '';
+                if (/^https?:\/\//i.test(src)) return src;
+                if (/^data:image\//i.test(src)) return src;
+                if (/^blob:/i.test(src)) return src;
+                return '';
+            }
+
+            function sanitizeSafeFontFamily(value) {
+                const fallback = 'Arial';
+                const requested = sanitizeSafeString(value, 90, '');
+                if (!requested) return fallback;
+                const normalized = requested.replace(/^["']+|["']+$/g, '').trim();
+                if (!normalized) return fallback;
+
+                if (typeof GOOGLE_FONT_FAMILY_MAP !== 'undefined' && GOOGLE_FONT_FAMILY_MAP instanceof Map) {
+                    const mapped = GOOGLE_FONT_FAMILY_MAP.get(normalized.toLowerCase());
+                    if (mapped) return mapped;
+                }
+
+                if (typeof FONT_LIST !== 'undefined' && Array.isArray(FONT_LIST)) {
+                    const found = FONT_LIST.find((name) => String(name).toLowerCase() === normalized.toLowerCase());
+                    if (found) return found;
+                }
+
+                return normalized;
+            }
+
+            function sanitizeSafeStrokeDashArray(rawDash) {
+                if (!Array.isArray(rawDash)) return undefined;
+                const dash = rawDash
+                    .map((item) => clampFiniteNumber(item, 0, 400, 0))
+                    .filter((item) => Number.isFinite(item) && item >= 0)
+                    .slice(0, 12);
+                return dash.length ? dash : undefined;
+            }
+
+            function sanitizeSafePath(rawPath) {
+                if (!rawPath) return null;
+                if (typeof rawPath === 'string') {
+                    const text = rawPath.trim();
+                    if (!text || text.length > 6000 || text.includes('<')) return null;
+                    return text;
+                }
+                if (!Array.isArray(rawPath)) return null;
+                const segments = rawPath.slice(0, AI_STRICT_MAX_PATH_SEGMENTS);
+                const nextSegments = [];
+                for (let i = 0; i < segments.length; i++) {
+                    const segment = segments[i];
+                    if (!Array.isArray(segment) || !segment.length) continue;
+                    const cmd = sanitizeSafeString(segment[0], 2, '');
+                    if (!cmd) continue;
+                    const args = segment
+                        .slice(1, 10)
+                        .map((value) => clampFiniteNumber(value, -20000, 20000, 0));
+                    nextSegments.push([cmd, ...args]);
+                }
+                return nextSegments.length ? nextSegments : null;
+            }
+
+            function sanitizeSafePoints(rawPoints, { pageWidth, pageHeight }) {
+                if (!Array.isArray(rawPoints)) return [];
+                return rawPoints
+                    .slice(0, 220)
+                    .map((point) => {
+                        if (!point || typeof point !== 'object') return null;
+                        const x = clampFiniteNumber(point.x, -pageWidth, pageWidth * 2, 0);
+                        const y = clampFiniteNumber(point.y, -pageHeight, pageHeight * 2, 0);
+                        return { x, y };
+                    })
+                    .filter(Boolean);
+            }
+
+            function estimateStrictObjectSize(obj, { pageWidth, pageHeight }) {
+                if (!obj || typeof obj !== 'object') return { width: 1, height: 1 };
+                const type = String(obj.type || '').toLowerCase();
+                if (type === 'circle') {
+                    const radius = Math.max(1, toFiniteNumber(obj.radius, 24));
+                    return { width: radius * 2, height: radius * 2 };
+                }
+                if (type === 'textbox') {
+                    const width = Math.max(40, toFiniteNumber(obj.width, Math.min(280, pageWidth)));
+                    const fontSize = Math.max(8, toFiniteNumber(obj.fontSize, 24));
+                    const lineHeight = Math.max(0.9, toFiniteNumber(obj.lineHeight, 1.16));
+                    const lines = Math.max(1, String(obj.text || '').split('\n').length);
+                    const height = Math.max(fontSize * lineHeight * lines + 12, fontSize + 10);
+                    return { width, height };
+                }
+                if (type === 'line') {
+                    const width = Math.abs(toFiniteNumber(obj.x2, 120) - toFiniteNumber(obj.x1, 0));
+                    const height = Math.abs(toFiniteNumber(obj.y2, 0) - toFiniteNumber(obj.y1, 0));
+                    return { width: Math.max(2, width), height: Math.max(2, height) };
+                }
+                const width = Math.max(1, toFiniteNumber(obj.width, 120));
+                const height = Math.max(1, toFiniteNumber(obj.height, 80));
+                return { width, height };
+            }
+
+            function clampStrictObjectToPage(obj, { pageWidth, pageHeight }) {
+                if (!obj || typeof obj !== 'object') return obj;
+                const size = estimateStrictObjectSize(obj, { pageWidth, pageHeight });
+                const objectWidth = Math.max(1, Math.min(pageWidth, size.width));
+                const objectHeight = Math.max(1, Math.min(pageHeight, size.height));
+                const maxLeft = Math.max(0, pageWidth - objectWidth);
+                const maxTop = Math.max(0, pageHeight - objectHeight);
+                obj.left = clampFiniteNumber(obj.left, 0, maxLeft, obj.left);
+                obj.top = clampFiniteNumber(obj.top, 0, maxTop, obj.top);
+
+                if (obj.type === 'textbox') {
+                    const availableWidth = Math.max(80, pageWidth - obj.left - 8);
+                    obj.width = clampFiniteNumber(obj.width, 80, availableWidth, Math.min(availableWidth, obj.width));
+                }
+
+                return obj;
+            }
+
+            function sanitizeAiFabricObjectStrict(rawObject, context, report) {
+                if (!rawObject || typeof rawObject !== 'object') {
+                    report.droppedObjects += 1;
+                    return null;
+                }
+
+                const depth = parseInt(context.depth, 10) || 0;
+                if (depth > AI_STRICT_MAX_OBJECT_DEPTH) {
+                    report.droppedObjects += 1;
+                    return null;
+                }
+
+                let type = sanitizeSafeString(rawObject.type || '', 24, '').toLowerCase();
+                if (type === 'text' || type === 'i-text') type = 'textbox';
+                if (rawObject.oid === 'pageRect' || rawObject.isArtboard) {
+                    report.droppedObjects += 1;
+                    return null;
+                }
+                if (!AI_STRICT_ALLOWED_TYPES.has(type)) {
+                    report.droppedObjects += 1;
+                    return null;
+                }
+
+                const pageWidth = parsePositiveInt(context.pageWidth, DEFAULT_PAGE_WIDTH);
+                const pageHeight = parsePositiveInt(context.pageHeight, DEFAULT_PAGE_HEIGHT);
+
+                const out = {
+                    type,
+                    originX: 'left',
+                    originY: 'top',
+                    left: clampFiniteNumber(rawObject.left, 0, pageWidth, 0),
+                    top: clampFiniteNumber(rawObject.top, 0, pageHeight, 0),
+                    angle: clampFiniteNumber(rawObject.angle, -360, 360, 0),
+                    opacity: clampFiniteNumber(rawObject.opacity, 0, 1, 1)
+                };
+
+                const oid = sanitizeSafeString(rawObject.oid, 90, '');
+                if (oid) out.oid = oid;
+                const name = sanitizeSafeString(rawObject.name, 90, '');
+                if (name) out.name = name;
+                if (typeof rawObject.locked === 'boolean') out.locked = rawObject.locked;
+                if (typeof rawObject.selectable === 'boolean') out.selectable = rawObject.selectable;
+                if (typeof rawObject.evented === 'boolean') out.evented = rawObject.evented;
+
+                if (type === 'textbox') {
+                    const maxTextWidth = Math.max(80, pageWidth - 16);
+                    out.text = sanitizeSafeString(rawObject.text ?? '', AI_STRICT_MAX_TEXT_LENGTH, '');
+                    out.width = clampFiniteNumber(rawObject.width, 80, maxTextWidth, Math.min(360, maxTextWidth));
+                    out.fontSize = clampFiniteNumber(rawObject.fontSize, 8, 180, 24);
+                    out.fontFamily = sanitizeSafeFontFamily(rawObject.fontFamily);
+                    out.fill = sanitizeSafeColor(rawObject.fill, '#111827');
+                    out.stroke = sanitizeSafeColor(rawObject.stroke, '');
+                    out.strokeWidth = out.stroke ? clampFiniteNumber(rawObject.strokeWidth, 0, 16, 0) : 0;
+                    out.textAlign = AI_STRICT_ALLOWED_TEXT_ALIGNS.has(String(rawObject.textAlign || '').toLowerCase())
+                        ? String(rawObject.textAlign).toLowerCase()
+                        : 'left';
+                    out.lineHeight = clampFiniteNumber(rawObject.lineHeight, 0.9, 2.4, 1.16);
+                    out.charSpacing = clampFiniteNumber(rawObject.charSpacing, -250, 2400, 0);
+                    out.styles = Array.isArray(rawObject.styles) ? rawObject.styles : [];
+                    out.scaleX = 1;
+                    out.scaleY = 1;
+                    out.minWidth = clampFiniteNumber(rawObject.minWidth, 20, out.width, 20);
+                    out.padding = 0;
+                    out.splitByGrapheme = !!rawObject.splitByGrapheme;
+                    const baseline = String(rawObject.textBaseline || '').toLowerCase();
+                    if (['top', 'hanging', 'middle', 'alphabetic', 'ideographic', 'bottom'].includes(baseline)) {
+                        out.textBaseline = baseline;
+                    }
+                    if (rawObject.fontWeight != null) out.fontWeight = sanitizeSafeString(rawObject.fontWeight, 20, '');
+                    if (rawObject.fontStyle != null) out.fontStyle = sanitizeSafeString(rawObject.fontStyle, 20, '');
+                    if (rawObject.curveAmount != null) {
+                        out.curveAmount = clampFiniteNumber(rawObject.curveAmount, -100, 100, 0);
+                    }
+                } else if (type === 'rect' || type === 'triangle') {
+                    out.width = clampFiniteNumber(rawObject.width, 6, pageWidth, 180);
+                    out.height = clampFiniteNumber(rawObject.height, 6, pageHeight, 120);
+                    out.fill = sanitizeSafeColor(rawObject.fill, '#cbd5e1');
+                    out.stroke = sanitizeSafeColor(rawObject.stroke, '');
+                    out.strokeWidth = out.stroke ? clampFiniteNumber(rawObject.strokeWidth, 0, 18, 0) : 0;
+                    if (type === 'rect') {
+                        out.rx = clampFiniteNumber(rawObject.rx ?? rawObject.radius, 0, out.width / 2, 0);
+                        out.ry = clampFiniteNumber(rawObject.ry ?? rawObject.radius, 0, out.height / 2, out.rx);
+                    }
+                } else if (type === 'ellipse') {
+                    out.rx = clampFiniteNumber(rawObject.rx, 3, pageWidth / 2, 48);
+                    out.ry = clampFiniteNumber(rawObject.ry, 3, pageHeight / 2, 30);
+                    out.fill = sanitizeSafeColor(rawObject.fill, '#cbd5e1');
+                    out.stroke = sanitizeSafeColor(rawObject.stroke, '');
+                    out.strokeWidth = out.stroke ? clampFiniteNumber(rawObject.strokeWidth, 0, 18, 0) : 0;
+                    out.width = out.rx * 2;
+                    out.height = out.ry * 2;
+                } else if (type === 'circle') {
+                    out.radius = clampFiniteNumber(rawObject.radius ?? (toFiniteNumber(rawObject.width, 80) / 2), 4, Math.min(pageWidth, pageHeight) / 2, 40);
+                    out.fill = sanitizeSafeColor(rawObject.fill, '#cbd5e1');
+                    out.stroke = sanitizeSafeColor(rawObject.stroke, '');
+                    out.strokeWidth = out.stroke ? clampFiniteNumber(rawObject.strokeWidth, 0, 18, 0) : 0;
+                    out.width = out.radius * 2;
+                    out.height = out.radius * 2;
+                } else if (type === 'line') {
+                    const lineWidth = clampFiniteNumber(
+                        rawObject.width ?? Math.abs(toFiniteNumber(rawObject.x2, 120) - toFiniteNumber(rawObject.x1, 0)),
+                        8,
+                        pageWidth,
+                        180
+                    );
+                    const lineHeight = clampFiniteNumber(
+                        rawObject.height ?? Math.abs(toFiniteNumber(rawObject.y2, 0) - toFiniteNumber(rawObject.y1, 0)),
+                        0,
+                        pageHeight,
+                        0
+                    );
+                    out.x1 = 0;
+                    out.y1 = 0;
+                    out.x2 = lineWidth;
+                    out.y2 = lineHeight;
+                    out.stroke = sanitizeSafeColor(rawObject.stroke || rawObject.fill, '#334155');
+                    out.strokeWidth = clampFiniteNumber(rawObject.strokeWidth, 1, 18, 2);
+                    out.fill = 'transparent';
+                    out.width = lineWidth;
+                    out.height = Math.max(1, lineHeight);
+                    const lineCap = sanitizeSafeString(rawObject.strokeLineCap, 16, 'round').toLowerCase();
+                    out.strokeLineCap = ['butt', 'round', 'square'].includes(lineCap) ? lineCap : 'round';
+                } else if (type === 'path') {
+                    const safePath = sanitizeSafePath(rawObject.path);
+                    if (!safePath) {
+                        report.droppedObjects += 1;
+                        return null;
+                    }
+                    out.path = safePath;
+                    out.fill = sanitizeSafeColor(rawObject.fill, 'transparent');
+                    out.stroke = sanitizeSafeColor(rawObject.stroke, '#334155');
+                    out.strokeWidth = clampFiniteNumber(rawObject.strokeWidth, 0, 18, out.stroke === 'transparent' ? 0 : 2);
+                    out.width = clampFiniteNumber(rawObject.width, 8, pageWidth, 180);
+                    out.height = clampFiniteNumber(rawObject.height, 8, pageHeight, 80);
+                    out.objectCaching = false;
+                } else if (type === 'polygon' || type === 'polyline') {
+                    const safePoints = sanitizeSafePoints(rawObject.points, { pageWidth, pageHeight });
+                    if (safePoints.length < 2) {
+                        report.droppedObjects += 1;
+                        return null;
+                    }
+                    out.points = safePoints;
+                    out.fill = type === 'polyline' ? 'transparent' : sanitizeSafeColor(rawObject.fill, '#cbd5e1');
+                    out.stroke = sanitizeSafeColor(rawObject.stroke, '#334155');
+                    out.strokeWidth = clampFiniteNumber(rawObject.strokeWidth, 0, 18, 2);
+                    out.width = clampFiniteNumber(rawObject.width, 8, pageWidth, 180);
+                    out.height = clampFiniteNumber(rawObject.height, 8, pageHeight, 100);
+                } else if (type === 'image') {
+                    const src = sanitizeSafeImageSrc(rawObject.src || rawObject._src || rawObject.imageSrc);
+                    if (!src) {
+                        report.droppedObjects += 1;
+                        return null;
+                    }
+                    out.src = src;
+                    out.width = clampFiniteNumber(rawObject.width, 16, pageWidth, Math.min(260, pageWidth));
+                    out.height = clampFiniteNumber(rawObject.height, 16, pageHeight, Math.min(220, pageHeight));
+                    out.crossOrigin = sanitizeSafeString(rawObject.crossOrigin, 22, 'anonymous') || 'anonymous';
+                } else if (type === 'group') {
+                    const rawChildren = Array.isArray(rawObject.objects) ? rawObject.objects : [];
+                    const limitedChildren = rawChildren.slice(0, AI_STRICT_MAX_GROUP_CHILDREN);
+                    const childObjects = limitedChildren
+                        .map((child) => sanitizeAiFabricObjectStrict(child, { ...context, depth: depth + 1 }, report))
+                        .filter(Boolean);
+                    if (!childObjects.length) {
+                        report.droppedObjects += 1;
+                        return null;
+                    }
+                    out.objects = childObjects;
+                    out.objectCaching = false;
+                    out.subTargetCheck = false;
+                    out.width = clampFiniteNumber(rawObject.width, 10, pageWidth, 220);
+                    out.height = clampFiniteNumber(rawObject.height, 10, pageHeight, 160);
+                    if (rawChildren.length > limitedChildren.length) {
+                        report.truncatedObjects += rawChildren.length - limitedChildren.length;
+                    }
+                }
+
+                const dash = sanitizeSafeStrokeDashArray(rawObject.strokeDashArray);
+                if (dash) out.strokeDashArray = dash;
+
+                if (out.fill === undefined) out.fill = 'transparent';
+                if (out.stroke === undefined) out.stroke = '';
+                if (!Number.isFinite(out.strokeWidth)) out.strokeWidth = out.stroke ? 1 : 0;
+
+                if (typeof out.shadow === 'object') delete out.shadow;
+                if (out.clipPath) delete out.clipPath;
+                if (out.transformMatrix) delete out.transformMatrix;
+                if (out.filters) delete out.filters;
+
+                clampStrictObjectToPage(out, { pageWidth, pageHeight });
+                report.keptObjects += 1;
+                return out;
+            }
+
+            function sanitizeAiCanvasStateStrict(rawCanvas, { pageWidth, pageHeight }) {
+                const sourceCanvas = rawCanvas && typeof rawCanvas === 'object' ? rawCanvas : {};
+                const sourceObjects = Array.isArray(sourceCanvas.objects) ? sourceCanvas.objects : [];
+                const limitedObjects = sourceObjects.slice(0, AI_STRICT_MAX_OBJECTS_PER_PAGE);
+                const report = {
+                    sourceObjects: sourceObjects.length,
+                    keptObjects: 0,
+                    droppedObjects: 0,
+                    truncatedObjects: Math.max(0, sourceObjects.length - limitedObjects.length)
+                };
+                report.droppedObjects += report.truncatedObjects;
+
+                const usedOids = new Set(['pageRect']);
+                const objects = limitedObjects
+                    .map((rawObject, index) => {
+                        const safeObject = sanitizeAiFabricObjectStrict(rawObject, { pageWidth, pageHeight, depth: 0 }, report);
+                        if (!safeObject) return null;
+                        const baseOid = sanitizeSafeString(safeObject.oid, 90, '') || `ai_obj_${index + 1}`;
+                        let nextOid = baseOid;
+                        let seq = 2;
+                        while (usedOids.has(nextOid)) {
+                            nextOid = `${baseOid}_${seq}`;
+                            seq += 1;
+                        }
+                        usedOids.add(nextOid);
+                        safeObject.oid = nextOid;
+                        return safeObject;
+                    })
+                    .filter(Boolean);
+
+                const pageRectPayload = typeof createPageRectPayload === 'function'
+                    ? createPageRectPayload(pageWidth, pageHeight)
+                    : {
+                        type: 'rect',
+                        oid: 'pageRect',
+                        isArtboard: true,
+                        left: 0,
+                        top: 0,
+                        width: pageWidth,
+                        height: pageHeight,
+                        fill: '#fff',
+                        stroke: '#d1d5db',
+                        strokeWidth: 1,
+                        originX: 'left',
+                        originY: 'top',
+                        selectable: false,
+                        evented: false
+                    };
+
+                const canvasState = {
+                    version: '5.3.0',
+                    background: 'transparent',
+                    objects: [pageRectPayload, ...objects]
+                };
+
+                return { canvasState, report };
+            }
+
+            function sanitizeAiDataCell(value) {
+                if (value == null) return '';
+                if (typeof value === 'number' && Number.isFinite(value)) return value;
+                if (typeof value === 'boolean') return value;
+                if (typeof value === 'string') return value.length > 1800 ? value.slice(0, 1800) : value;
+                try {
+                    const text = JSON.stringify(value);
+                    return text.length > 1800 ? text.slice(0, 1800) : text;
+                } catch (_) {
+                    return String(value).slice(0, 1800);
+                }
+            }
+
+            function sanitizeAiTemplatePayloadStrict(templatePayload) {
+                const source = templatePayload && typeof templatePayload === 'object' ? templatePayload : {};
+                const sourcePages = Array.isArray(source.pages) && source.pages.length
+                    ? source.pages
+                    : [{
+                        width: source?.page?.width ?? DEFAULT_PAGE_WIDTH,
+                        height: source?.page?.height ?? DEFAULT_PAGE_HEIGHT,
+                        canvas: source.canvas || { version: '5.3.0', background: 'transparent', objects: [] },
+                        bindings: source.bindings || [],
+                        title: source?.page?.title || 'Page 1'
+                    }];
+                const rootBindings = Array.isArray(source.bindings) ? source.bindings : [];
+                const limitedPages = sourcePages.slice(0, AI_STRICT_MAX_PAGES);
+                const report = {
+                    sourcePages: sourcePages.length,
+                    keptPages: limitedPages.length,
+                    truncatedPages: Math.max(0, sourcePages.length - limitedPages.length),
+                    sourceObjects: 0,
+                    keptObjects: 0,
+                    droppedObjects: 0,
+                    truncatedObjects: 0,
+                    truncatedRows: 0
+                };
+
+                const pages = limitedPages.map((rawPage, index) => {
+                    const width = parsePositiveInt(rawPage?.width ?? source?.page?.width, DEFAULT_PAGE_WIDTH);
+                    const height = parsePositiveInt(rawPage?.height ?? source?.page?.height, DEFAULT_PAGE_HEIGHT);
+                    const title = sanitizeSafeString(rawPage?.title, 120, `Page ${index + 1}`) || `Page ${index + 1}`;
+                    const { canvasState, report: canvasReport } = sanitizeAiCanvasStateStrict(rawPage?.canvas, { pageWidth: width, pageHeight: height });
+                    report.sourceObjects += canvasReport.sourceObjects;
+                    report.keptObjects += canvasReport.keptObjects;
+                    report.droppedObjects += canvasReport.droppedObjects;
+                    report.truncatedObjects += canvasReport.truncatedObjects;
+
+                    const finalCanvas = (typeof sanitizeCanvasStateForEditor === 'function')
+                        ? sanitizeCanvasStateForEditor(canvasState, { pageWidth: width, pageHeight: height })
+                        : canvasState;
+                    const rawBindings = Array.isArray(rawPage?.bindings) ? rawPage.bindings : (index === 0 ? rootBindings : []);
+                    const pageBindings = typeof sanitizeBindingsEntries === 'function'
+                        ? sanitizeBindingsEntries(rawBindings)
+                        : [];
+
+                    return {
+                        id: sanitizeSafeString(rawPage?.id, 80, '') || (typeof createUid === 'function' ? createUid('page') : `page_${index + 1}`),
+                        title,
+                        width,
+                        height,
+                        canvas: finalCanvas,
+                        bindings: pageBindings
+                    };
+                });
+
+                const selectedIndex = Math.max(
+                    0,
+                    Math.min(
+                        pages.length - 1,
+                        parseInt(source.currentPageIndex, 10) || 0
+                    )
+                );
+                const activePage = pages[selectedIndex] || pages[0] || {
+                    title: 'Page 1',
+                    width: DEFAULT_PAGE_WIDTH,
+                    height: DEFAULT_PAGE_HEIGHT,
+                    canvas: {
+                        version: '5.3.0',
+                        background: 'transparent',
+                        objects: [
+                            typeof createPageRectPayload === 'function'
+                                ? createPageRectPayload(DEFAULT_PAGE_WIDTH, DEFAULT_PAGE_HEIGHT)
+                                : {
+                                    type: 'rect',
+                                    oid: 'pageRect',
+                                    isArtboard: true,
+                                    left: 0,
+                                    top: 0,
+                                    width: DEFAULT_PAGE_WIDTH,
+                                    height: DEFAULT_PAGE_HEIGHT,
+                                    fill: '#fff',
+                                    stroke: '#d1d5db',
+                                    strokeWidth: 1,
+                                    originX: 'left',
+                                    originY: 'top'
+                                }
+                        ]
+                    },
+                    bindings: []
+                };
+
+                const rawHeaders = Array.isArray(source?.data?.headers) ? source.data.headers : [];
+                const headers = rawHeaders
+                    .slice(0, AI_STRICT_MAX_HEADERS)
+                    .map((header) => sanitizeSafeString(header, 120, ''))
+                    .filter(Boolean);
+                const rawRows = Array.isArray(source?.data?.rows) ? source.data.rows : [];
+                const rows = rawRows
+                    .slice(0, AI_STRICT_MAX_ROWS)
+                    .map((row) => {
+                        if (Array.isArray(row)) {
+                            const next = {};
+                            headers.forEach((header, idx) => {
+                                next[header] = sanitizeAiDataCell(row[idx]);
+                            });
+                            return next;
+                        }
+                        if (row && typeof row === 'object') {
+                            const keys = headers.length ? headers : Object.keys(row).slice(0, AI_STRICT_MAX_HEADERS);
+                            const next = {};
+                            keys.forEach((key) => {
+                                next[key] = sanitizeAiDataCell(row[key]);
+                            });
+                            return next;
+                        }
+                        return null;
+                    })
+                    .filter(Boolean);
+                report.truncatedRows = Math.max(0, rawRows.length - rows.length);
+
+                let identifier = sanitizeSafeString(source?.data?.identifierColumn, 120, '');
+                if (identifier && headers.length && !headers.includes(identifier)) identifier = '';
+
+                return {
+                    payload: {
+                        version: 'csvlink-template-v2',
+                        page: {
+                            title: sanitizeSafeString(source?.page?.title, 140, activePage.title) || activePage.title,
+                            width: activePage.width,
+                            height: activePage.height
+                        },
+                        canvas: activePage.canvas,
+                        bindings: activePage.bindings,
+                        pages,
+                        currentPageIndex: selectedIndex,
+                        data: {
+                            headers,
+                            rows,
+                            identifierColumn: identifier
+                        }
+                    },
+                    report
+                };
+            }
+
+            function isTextLikeCanvasObject(obj) {
+                const type = String(obj?.type || '').toLowerCase();
+                return type === 'text' || type === 'i-text' || type === 'textbox';
+            }
+
+            function clampNumber(value, minValue, maxValue) {
+                const safeMin = Number.isFinite(minValue) ? minValue : value;
+                const safeMax = Number.isFinite(maxValue) ? maxValue : value;
+                return Math.min(safeMax, Math.max(safeMin, value));
+            }
+
+            function translateCanvasObject(obj, dx = 0, dy = 0) {
+                if (!obj) return false;
+                if (!Number.isFinite(dx) || !Number.isFinite(dy)) return false;
+                if (Math.abs(dx) < 0.01 && Math.abs(dy) < 0.01) return false;
+                obj.set({
+                    left: normalizeNumeric(obj.left, 0) + dx,
+                    top: normalizeNumeric(obj.top, 0) + dy
+                });
+                if (typeof obj.setCoords === 'function') obj.setCoords();
+                return true;
+            }
+
+            function fitTextObjectWithinFrame(obj, frame, margin = 22) {
+                if (!obj || !isTextLikeCanvasObject(obj)) return false;
+                let changed = false;
+                const maxWidth = Math.max(120, frame.width - margin * 2);
+                const maxHeight = Math.max(80, frame.height - margin * 2);
+                if (obj.type === 'textbox') {
+                    const currentWidth = parseFloat(obj.width);
+                    const nextWidth = Number.isFinite(currentWidth)
+                        ? Math.min(maxWidth, Math.max(120, currentWidth))
+                        : maxWidth;
+                    if (!Number.isFinite(currentWidth) || Math.abs(nextWidth - currentWidth) > 0.5) {
+                        obj.set({ width: nextWidth });
+                        changed = true;
+                    }
+                }
+
+                for (let i = 0; i < 24; i++) {
+                    if (typeof obj.setCoords === 'function') obj.setCoords();
+                    const bounds = obj.getBoundingRect(true, true);
+                    if (!bounds) break;
+                    const tooWide = bounds.width > maxWidth + 0.5;
+                    const tooTall = bounds.height > maxHeight + 0.5;
+                    if (!tooWide && !tooTall) break;
+                    const currentFontSize = parseFloat(obj.fontSize);
+                    if (!Number.isFinite(currentFontSize) || currentFontSize <= 10) break;
+                    obj.set({ fontSize: Math.max(10, currentFontSize - 1) });
+                    changed = true;
+                }
+
+                if (typeof obj.setCoords === 'function') obj.setCoords();
+                const finalBounds = obj.getBoundingRect(true, true);
+                if (
+                    finalBounds
+                    && obj.type !== 'textbox'
+                    && finalBounds.width > maxWidth + 1
+                    && Number.isFinite(finalBounds.width)
+                    && finalBounds.width > 0
+                ) {
+                    const factor = Math.max(0.65, maxWidth / finalBounds.width);
+                    if (factor < 0.999) {
+                        obj.set({
+                            scaleX: normalizeNumeric(obj.scaleX, 1) * factor,
+                            scaleY: normalizeNumeric(obj.scaleY, 1) * factor
+                        });
+                        changed = true;
+                    }
+                }
+
+                if (changed && typeof obj.setCoords === 'function') obj.setCoords();
+                return changed;
+            }
+
+            function keepObjectInsideFrame(obj, frame, { marginX = 0, marginY = 0 } = {}) {
+                if (!obj) return false;
+                if (typeof obj.setCoords === 'function') obj.setCoords();
+                const bounds = obj.getBoundingRect(true, true);
+                if (!bounds) return false;
+
+                const minLeft = frame.left + marginX;
+                const minTop = frame.top + marginY;
+                const maxLeft = Math.max(minLeft, frame.left + frame.width - marginX - bounds.width);
+                const maxTop = Math.max(minTop, frame.top + frame.height - marginY - bounds.height);
+                const targetLeft = clampNumber(bounds.left, minLeft, maxLeft);
+                const targetTop = clampNumber(bounds.top, minTop, maxTop);
+                const dx = targetLeft - bounds.left;
+                const dy = targetTop - bounds.top;
+                return translateCanvasObject(obj, dx, dy);
+            }
+
+            function polishCurrentPageLayoutForProfessionalOutput() {
+                const frame = getCurrentPageFrame();
+                const objects = getEditableCanvasObjects();
+                let changed = false;
+                objects.forEach(obj => {
+                    if (!obj) return;
+                    const textLike = isTextLikeCanvasObject(obj);
+                    if (textLike) {
+                        if (fitTextObjectWithinFrame(obj, frame, 22)) changed = true;
+                    }
+                    if (keepObjectInsideFrame(obj, frame, { marginX: textLike ? 20 : 0, marginY: textLike ? 16 : 0 })) {
+                        changed = true;
+                    }
+                });
+                if (changed) canvas.requestRenderAll();
+                return changed;
+            }
+
+            async function runProfessionalLayoutPass({ onProgress = null } = {}) {
+                if (!Array.isArray(documentPages) || !documentPages.length) return 0;
+                const returnIndex = currentPageIndex;
+                let changedPages = 0;
+                for (let i = 0; i < documentPages.length; i++) {
+                    if (typeof onProgress === 'function') onProgress(`Polishing page ${i + 1}/${documentPages.length}`);
+                    if (i !== currentPageIndex) {
+                        await switchToCanvasPage(i, { fitView: false, skipSave: true, suppressHistory: true });
+                    }
+                    if (polishCurrentPageLayoutForProfessionalOutput()) changedPages += 1;
+                    syncCurrentPageStateFromCanvas();
+                }
+                if (currentPageIndex !== returnIndex) {
+                    await switchToCanvasPage(returnIndex, { fitView: true, skipSave: true, suppressHistory: true });
+                }
+                return changedPages;
             }
 
             async function tryRepairTemplateFromText(
@@ -14497,44 +16189,65 @@ ${rawResponse}
 
             async function callAiTemplateEditor(apiKey, promptText, { onProgress = null } = {}) {
                 const currentTemplate = getCurrentTemplatePayloadForAi();
-                const currentTemplateText = JSON.stringify(currentTemplate);
-                const parts = [
-                    { text: buildTemplateJsonEditPrompt(promptText) },
-                    { text: `Current template JSON:\n${currentTemplateText}` }
-                ];
+                if (typeof onProgress === 'function') onProgress('Preparing template context');
+                const primaryContext = buildTemplateContextForAi(currentTemplate, {
+                    tight: false,
+                    maxChars: AI_MAX_TEMPLATE_CONTEXT_CHARS
+                });
+                const retryContext = buildTemplateContextForAi(currentTemplate, {
+                    tight: true,
+                    maxChars: Math.max(16000, Math.floor(AI_MAX_TEMPLATE_CONTEXT_CHARS * 0.7))
+                });
+                const hasInlineAttachment = aiAttachment?.kind === 'inline';
+                const primaryTimeoutMs = hasInlineAttachment || primaryContext.charCount > 30000
+                    ? Math.min(AI_TEMPLATE_REQUEST_TIMEOUT_MS, 70000)
+                    : Math.min(AI_TEMPLATE_REQUEST_TIMEOUT_MS, 52000);
+                const retryTimeoutMs = Math.min(AI_TEMPLATE_RETRY_TIMEOUT_MS, hasInlineAttachment ? 50000 : 42000);
 
-                if (typeof onProgress === 'function') onProgress('Preparing request');
-                if (aiAttachment) {
-                    parts.push({ text: `Attached reference file: ${aiAttachment.name}` });
-                    if (aiAttachment.kind === 'inline') {
-                        parts.push({
-                            inline_data: {
-                                mime_type: aiAttachment.mimeType || 'application/octet-stream',
-                                data: aiAttachment.inlineData
-                            }
-                        });
-                    } else if (aiAttachment.kind === 'text') {
-                        parts.push({ text: `Attached file text:\n${aiAttachment.text}` });
+                let responseText = '';
+                try {
+                    const parts = buildTemplateEditorRequestParts(promptText, primaryContext, { retry: false });
+                    if (typeof onProgress === 'function') {
+                        onProgress(`Sending template request (${Math.round(primaryContext.charCount / 1000)}k chars context)`);
                     }
+                    responseText = await requestAiResponseText(
+                        apiKey,
+                        parts,
+                        {
+                            enforceJson: true,
+                            onProgress,
+                            timeoutMs: primaryTimeoutMs,
+                            responseSchema: null
+                        }
+                    );
+                } catch (error) {
+                    if (!isAiTimeoutError(error)) throw error;
+                    const parts = buildTemplateEditorRequestParts(promptText, retryContext, { retry: true });
+                    if (typeof onProgress === 'function') {
+                        onProgress(`Timed out, retrying with smaller context (${Math.round(retryContext.charCount / 1000)}k chars)`);
+                    }
+                    responseText = await requestAiResponseText(
+                        apiKey,
+                        parts,
+                        {
+                            enforceJson: true,
+                            onProgress,
+                            timeoutMs: retryTimeoutMs,
+                            responseSchema: null
+                        }
+                    );
                 }
 
-                const responseText = await requestAiResponseText(
-                    apiKey,
-                    parts,
-                    {
-                        enforceJson: true,
-                        onProgress,
-                        timeoutMs: AI_TEMPLATE_REQUEST_TIMEOUT_MS,
-                        responseSchema: null
-                    }
-                );
                 if (!responseText) throw new Error('No template JSON returned by AI.');
 
                 if (typeof onProgress === 'function') onProgress('Parsing template JSON');
                 const parsed = parseAiJsonResponse(responseText);
                 let templatePayload = normalizeAiTemplatePayload(parsed);
                 if (!templatePayload) {
-                    templatePayload = await tryRepairTemplateFromText(apiKey, promptText, responseText, { onProgress });
+                    templatePayload = await tryRepairTemplateFromText(apiKey, promptText, responseText, {
+                        onProgress,
+                        timeoutMs: Math.min(AI_TEMPLATE_RETRY_TIMEOUT_MS, 35000)
+                    });
                 }
                 if (!templatePayload) {
                     throw new Error('AI response was not valid template JSON.');
@@ -14547,25 +16260,221 @@ ${rawResponse}
                     throw new Error('Invalid AI template payload.');
                 }
                 const payload = JSON.parse(JSON.stringify(templatePayload));
-                if (payload.page?.title) {
-                    $('#titleInput').value = String(payload.page.title);
+                const strictResult = sanitizeAiTemplatePayloadStrict(payload);
+                const safePayload = strictResult?.payload && typeof strictResult.payload === 'object'
+                    ? strictResult.payload
+                    : payload;
+                const strictReport = strictResult?.report || null;
+                if (safePayload.page?.title) {
+                    $('#titleInput').value = String(safePayload.page.title);
                 }
-                if (payload.data && typeof payload.data === 'object') {
-                    headers = Array.isArray(payload.data.headers) ? payload.data.headers : [];
-                    dataRows = Array.isArray(payload.data.rows) ? payload.data.rows : [];
-                    identifierColumn = String(payload.data.identifierColumn || '');
+                if (safePayload.data && typeof safePayload.data === 'object') {
+                    headers = Array.isArray(safePayload.data.headers) ? safePayload.data.headers : [];
+                    dataRows = Array.isArray(safePayload.data.rows) ? safePayload.data.rows : [];
+                    identifierColumn = String(safePayload.data.identifierColumn || '');
                 }
-                const selectedIndex = Number.isFinite(parseInt(payload.currentPageIndex, 10))
-                    ? parseInt(payload.currentPageIndex, 10)
+                const selectedIndex = Number.isFinite(parseInt(safePayload.currentPageIndex, 10))
+                    ? parseInt(safePayload.currentPageIndex, 10)
                     : currentPageIndex;
-                await setDocumentPagesFromTemplate(payload, { fitView: true, selectedIndex });
-                bindings = new Map(documentPages[currentPageIndex]?.bindings || payload.bindings || []);
+                await setDocumentPagesFromTemplate(safePayload, { fitView: true, selectedIndex });
+                const polishedPages = await runProfessionalLayoutPass();
+                bindings = new Map(documentPages[currentPageIndex]?.bindings || safePayload.bindings || []);
                 historyStack = [];
                 historyIndex = -1;
                 lastHistorySig = null;
                 requestSaveState();
                 renderLayers();
                 refreshCanvasPageControlsDebounced();
+                return {
+                    pageCount: Array.isArray(documentPages) ? documentPages.length : 1,
+                    polishedPages,
+                    strictReport
+                };
+            }
+
+            async function callAiCreativeFabricDesigner(
+                apiKey,
+                promptText,
+                {
+                    onProgress = null,
+                    onRawObject = null
+                } = {}
+            ) {
+                const { width: pageWidth, height: pageHeight } = getCurrentPageDimensionsForAi();
+                const primaryParts = buildCreativeAiRequestParts(promptText, { pageWidth, pageHeight, retry: false });
+                const retryParts = buildCreativeAiRequestParts(promptText, { pageWidth, pageHeight, retry: true });
+                const parser = createStreamingFabricArrayParser();
+                let emittedCount = 0;
+                let streamError = null;
+
+                const emitRawObjects = (objects = [], source = 'stream') => {
+                    if (!Array.isArray(objects) || !objects.length) return;
+                    objects.forEach((obj) => {
+                        if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return;
+                        emittedCount += 1;
+                        if (typeof onRawObject === 'function') {
+                            try {
+                                onRawObject(obj, { index: emittedCount, source });
+                            } catch (err) {
+                                console.warn('Live AI object callback failed:', err);
+                            }
+                        }
+                    });
+                };
+
+                try {
+                    if (typeof onProgress === 'function') onProgress('Streaming design objects');
+                    const streamText = await requestAiResponseTextStream(
+                        apiKey,
+                        primaryParts,
+                        {
+                            onProgress,
+                            timeoutMs: AI_CREATIVE_REQUEST_TIMEOUT_MS,
+                            onTextChunk: (deltaText) => {
+                                const nextObjects = parser.push(deltaText);
+                                emitRawObjects(nextObjects, 'stream');
+                            },
+                            temperature: 0.72
+                        }
+                    );
+                    emitRawObjects(parser.finalize(), 'stream-finalize');
+                    if (emittedCount > 0) {
+                        return {
+                            emittedCount,
+                            streamUsed: true,
+                            partial: false,
+                            rawText: parser.getText() || streamText || ''
+                        };
+                    }
+
+                    const parsedFromStreamText = parseAiFabricObjectsFromText(streamText || parser.getText());
+                    emitRawObjects(parsedFromStreamText, 'stream-full');
+                    if (emittedCount > 0) {
+                        return {
+                            emittedCount,
+                            streamUsed: true,
+                            partial: false,
+                            rawText: parser.getText() || streamText || ''
+                        };
+                    }
+                    throw new Error('Stream completed but returned no Fabric object array.');
+                } catch (error) {
+                    streamError = error;
+                    if (emittedCount > 0) {
+                        return {
+                            emittedCount,
+                            streamUsed: true,
+                            partial: true,
+                            warning: `Live stream interrupted. Applied ${emittedCount} object${emittedCount === 1 ? '' : 's'} so far.`
+                        };
+                    }
+                }
+
+                if (typeof onProgress === 'function') onProgress('Fallback: requesting object array');
+                let responseText = '';
+                try {
+                    responseText = await requestAiResponseText(
+                        apiKey,
+                        retryParts,
+                        {
+                            enforceJson: true,
+                            onProgress,
+                            timeoutMs: Math.min(AI_CREATIVE_REQUEST_TIMEOUT_MS, 65000),
+                            responseSchema: null
+                        }
+                    );
+                } catch (fallbackError) {
+                    if (streamError) {
+                        throw new Error(`${streamError.message} Fallback failed: ${fallbackError.message}`);
+                    }
+                    throw fallbackError;
+                }
+
+                const fallbackObjects = parseAiFabricObjectsFromText(responseText);
+                emitRawObjects(fallbackObjects, 'fallback');
+                if (emittedCount <= 0) {
+                    const prefix = streamError ? `${streamError.message} ` : '';
+                    throw new Error(`${prefix}AI returned no valid Fabric objects.`);
+                }
+                return {
+                    emittedCount,
+                    streamUsed: false,
+                    partial: false,
+                    warning: streamError ? 'Live stream unavailable. Fallback object array applied.' : ''
+                };
+            }
+
+            async function applyAiRawFabricObjectLive(rawObject, context = {}) {
+                const pageWidth = parsePositiveInt(context.pageWidth, DEFAULT_PAGE_WIDTH);
+                const pageHeight = parsePositiveInt(context.pageHeight, DEFAULT_PAGE_HEIGHT);
+                const pageId = context.pageId || currentCanvasPageId();
+                const usedOids = context.usedOids instanceof Set ? context.usedOids : new Set();
+                const report = context.report && typeof context.report === 'object'
+                    ? context.report
+                    : { sourceObjects: 0, keptObjects: 0, droppedObjects: 0, truncatedObjects: 0, appliedObjects: 0, failedEnliven: 0 };
+                report.sourceObjects += 1;
+
+                const safeObject = sanitizeAiFabricObjectStrict(
+                    rawObject,
+                    { pageWidth, pageHeight, depth: 0 },
+                    report
+                );
+                if (!safeObject) return false;
+
+                const baseOid = sanitizeSafeString(safeObject.oid, 90, '') || `ai_gen_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+                let nextOid = baseOid;
+                let attempt = 2;
+                while (usedOids.has(nextOid)) {
+                    nextOid = `${baseOid}_${attempt}`;
+                    attempt += 1;
+                }
+                usedOids.add(nextOid);
+                safeObject.oid = nextOid;
+                safeObject.pageId = pageId;
+                safeObject.name = sanitizeSafeString(safeObject.name, 120, '') || getUniqueName(safeObject.type || 'object');
+
+                const enlivened = await enlivenFabricObjectsSafe([safeObject]);
+                if (!enlivened.length) {
+                    report.failedEnliven += 1;
+                    return false;
+                }
+
+                const obj = enlivened[0];
+                obj.set({
+                    oid: safeObject.oid,
+                    name: safeObject.name,
+                    pageId,
+                    originX: 'left',
+                    originY: 'top'
+                });
+
+                if (
+                    obj.type === 'image'
+                    && Number.isFinite(safeObject.width)
+                    && Number.isFinite(safeObject.height)
+                    && Number.isFinite(obj.width)
+                    && Number.isFinite(obj.height)
+                    && obj.width > 0
+                    && obj.height > 0
+                ) {
+                    obj.set({
+                        scaleX: safeObject.width / obj.width,
+                        scaleY: safeObject.height / obj.height
+                    });
+                }
+
+                canvas.add(obj);
+                if (isTextLikeCanvasObject(obj)) {
+                    fitTextObjectWithinFrame(obj, getCurrentPageFrame(), 22);
+                }
+                keepObjectInsideFrame(obj, getCurrentPageFrame(), {
+                    marginX: isTextLikeCanvasObject(obj) ? 20 : 0,
+                    marginY: isTextLikeCanvasObject(obj) ? 16 : 0
+                });
+                if (typeof obj.setCoords === 'function') obj.setCoords();
+                canvas.requestRenderAll();
+                report.appliedObjects += 1;
+                return true;
             }
 
             async function callAiCopilot(apiKey, promptText, {
@@ -14673,19 +16582,91 @@ ${rawResponse}
                 setAiBusy(true);
 
                 try {
-                    const templatePayload = await callAiTemplateEditor(apiKey, prompt, {
-                        onProgress: (stage) => thinkingTicker.setStage(stage)
-                    });
+                    const replaceCanvas = shouldReplaceCurrentCanvasForAi(prompt, !!aiAttachment);
+                    const pageInfo = getCurrentPageDimensionsForAi();
+                    const pageId = currentCanvasPageId();
+                    const usedOids = new Set(
+                        canvas.getObjects()
+                            .map((obj) => sanitizeSafeString(obj?.oid, 90, ''))
+                            .filter(Boolean)
+                    );
+                    const liveReport = {
+                        sourceObjects: 0,
+                        keptObjects: 0,
+                        droppedObjects: 0,
+                        truncatedObjects: 0,
+                        appliedObjects: 0,
+                        failedEnliven: 0
+                    };
+
+                    if (replaceCanvas) {
+                        thinkingTicker.setStage('Clearing current canvas');
+                        clearCurrentPageDrawableObjects();
+                        bindings = new Map();
+                        syncCurrentPageStateFromCanvas();
+                    }
+
+                    let applyQueue = Promise.resolve();
+                    const enqueueRawObject = (rawObject, meta = {}) => {
+                        applyQueue = applyQueue.then(async () => {
+                            try {
+                                const nextLabel = liveReport.appliedObjects + 1;
+                                thinkingTicker.setStage(`Drawing object ${nextLabel}`);
+                                await applyAiRawFabricObjectLive(rawObject, {
+                                    pageWidth: pageInfo.width,
+                                    pageHeight: pageInfo.height,
+                                    pageId,
+                                    usedOids,
+                                    report: liveReport
+                                });
+                                if (liveReport.appliedObjects > 0 && liveReport.appliedObjects % 3 === 0) {
+                                    syncCurrentPageStateFromCanvas();
+                                    renderLayers();
+                                    refreshCanvasPageControlsDebounced();
+                                }
+                                if (meta?.source === 'stream') {
+                                    await delayMs(AI_LIVE_RENDER_DELAY_MS);
+                                }
+                            } catch (err) {
+                                console.warn('Live object apply failed:', err);
+                            }
+                        });
+                    };
+
+                    const creativeSummary = await callAiCreativeFabricDesigner(
+                        apiKey,
+                        prompt,
+                        {
+                            onProgress: (stage) => thinkingTicker.setStage(stage),
+                            onRawObject: enqueueRawObject
+                        }
+                    );
+                    await applyQueue;
+
+                    if (liveReport.appliedObjects <= 0) {
+                        throw new Error('AI returned no drawable objects after validation.');
+                    }
+
+                    const polished = polishCurrentPageLayoutForProfessionalOutput() ? 1 : 0;
+                    syncCurrentPageStateFromCanvas();
+                    requestSaveState();
+                    renderLayers();
+                    refreshCanvasPageControlsDebounced();
 
                     thinkingTicker.stop();
-                    thinkingEl.textContent = 'Applying returned template JSON...';
                     thinkingEl.className = 'ai-chat-message assistant';
-
-                    await applyAiTemplatePayload(templatePayload);
-                    const pageCount = Array.isArray(documentPages) ? documentPages.length : 1;
-                    const appliedMsg = `Loaded AI template JSON (${pageCount} page${pageCount === 1 ? '' : 's'}).`;
-                    appendAiChatMessage('status', appliedMsg);
-                    aiConversation.push({ role: 'assistant', text: appliedMsg });
+                    const filtered = Math.max(0, parseInt(liveReport.droppedObjects, 10) || 0);
+                    const failedEnliven = Math.max(0, parseInt(liveReport.failedEnliven, 10) || 0);
+                    const streamFlag = creativeSummary?.streamUsed ? ' (live stream)' : ' (fallback mode)';
+                    const partialNote = creativeSummary?.partial ? ' Partial result preserved.' : '';
+                    const warningNote = creativeSummary?.warning ? ` ${creativeSummary.warning}` : '';
+                    const polishNote = polished > 0 ? ' Professional polish applied.' : '';
+                    const filterNote = (filtered > 0 || failedEnliven > 0)
+                        ? ` Sanitizer filtered ${filtered} and skipped ${failedEnliven}.`
+                        : '';
+                    const finalMsg = `Applied ${liveReport.appliedObjects} AI object${liveReport.appliedObjects === 1 ? '' : 's'}${streamFlag}.${polishNote}${filterNote}${partialNote}${warningNote}`;
+                    thinkingEl.textContent = finalMsg;
+                    aiConversation.push({ role: 'assistant', text: finalMsg });
                 } catch (error) {
                     thinkingTicker.stop();
                     console.error('AI Copilot Error:', error);
