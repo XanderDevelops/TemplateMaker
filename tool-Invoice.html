@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" href="assets/images/android-chrome-192x192.png" type="image/png" />
+    <title>CSVLink - Invoices</title>
+    <script src="https://app.lemonsqueezy.com/js/lemon.js" defer></script>
+    <!-- Fabric.js -->
+    <script src="https://cdn.jsdelivr.net/npm/fabric@5.3.0/dist/fabric.min.js"></script>
+    <!-- SheetJS -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <!-- JSZip & FileSaver -->
+    <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+    <!-- jsPDF -->
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+    <link rel="stylesheet" href="tools/tool.css?v=20260220h" />
+</head>
+
+<body class="light-mode">
+    <nav>
+        <a href="dashboard.html" class="logo">
+            <img src="assets/images/android-chrome-512x512.png" alt="CSVLink Logo" class="logo-icon">
+            <span>CSVLink</span>
+        </a>
+        <div class="nav-links" id="nav-links">
+            <!-- Auth links will be injected here by JS -->
+        </div>
+    </nav>
+
+    <input type="file" id="imageUpload" accept="image/*" style="display:none;" />
+    <input type="file" id="imageFillUpload" accept="image/*" style="display:none;" />
+    <input type="file" id="fontUpload" accept=".ttf,.otf,.woff,.woff2" style="display:none;" />
+    <input type="file" id="jsonUpload" accept=".json" style="display:none;" />
+
+
+    <div class="app">
+        <header>
+            <input id="titleInput" type="text" placeholder="Untitled" value="Untitled_Template" />
+            <div class="toolbar-group" id="globalPageSizeGroup" title="General size (updates matching pages only)">
+                <span class="muted toolbar-label">General</span>
+                <input id="pageWidth" type="number" value="768" min="100" max="10000" title="General Width" />
+                <span class="muted">×</span>
+                <input id="pageHeight" type="number" value="1024" min="100" max="10000" title="General Height" />
+            </div>
+
+            <div class="toolbar-group">
+                <button id="undoBtn" class="btn ghost" title="Undo"><svg width="14" height="14" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 7v6h6" />
+                        <path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3l3 2.7" />
+                    </svg></button>
+                <button id="redoBtn" class="btn ghost" title="Redo"><svg width="14" height="14" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 7v6h-6" />
+                        <path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l-3 2.7" />
+                    </svg></button>
+            </div>
+
+            <div class="toolbar-group">
+                <button id="toolbarLoadTemplateBtn" class="btn ghost"><svg width="14" height="14" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                    </svg> Templates</button>
+            </div>
+
+            <div style="flex: 1;"></div>
+
+            <span id="saveStatus" class="muted" style="font-size: 11px;"></span>
+            <button id="start-tour-btn" class="btn ghost" title="Tutorial">?</button>
+            <label for="csvInput" class="btn ghost" style="font-size: 11px;"><svg width="12" height="12"
+                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="17 8 12 3 7 8" />
+                    <line x1="12" y1="3" x2="12" y2="15" />
+                </svg> Load Data</label>
+            <button id="csvViewBtn" class="btn ghost" title="View/Edit data" style="font-size: 11px;">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 3h18v18H3z"></path>
+                    <path d="M3 9h18"></path>
+                    <path d="M9 21V9"></path>
+                </svg>
+                CSV Data
+            </button>
+            <input id="csvInput" type="file" accept=".csv,.xlsx,.xls" style="display:none;" />
+            <span id="fileName" class="muted"
+                style="max-width: 80px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 10px;"></span>
+            <span id="unloadDataBtn" title="Unload" style="display:none; cursor: pointer;">&times;</span>
+            <button id="settingsBtn" class="btn ghost" title="Settings"><svg width="14" height="14" viewBox="0 0 24 24"
+                    fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="3" />
+                    <path
+                        d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 0 2l-.15.08a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l-.22-.38a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1 0 2l.15.08a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+                </svg></button>
+            <button id="themeIconBtn" class="btn ghost icon-only" title="Toggle theme" aria-label="Toggle theme">
+                <svg id="themeIconSvg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="4"></circle>
+                    <path d="M12 2v2"></path>
+                    <path d="M12 20v2"></path>
+                    <path d="M4.93 4.93l1.41 1.41"></path>
+                    <path d="M17.66 17.66l1.41 1.41"></path>
+                    <path d="M2 12h2"></path>
+                    <path d="M20 12h2"></path>
+                    <path d="M4.93 19.07l1.41-1.41"></path>
+                    <path d="M17.66 6.34l1.41-1.41"></path>
+                </svg>
+            </button>
+        </header>
+
+        <main class="main" id="main-layout">
+            <div class="panel left" id="left-panel">
+                <button id="left-panel-toggle" class="panel-toggle" title="Toggle Left Panel"><svg
+                        xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg></button>
+                <div class="left-panel-content">
+                    <div class="left-panel-split">
+                        <div class="left-panel-top">
+                            <div class="panel-tabs">
+                                <button id="components-tab-btn" class="panel-tab-btn active"
+                                    data-target="components-content">Components</button>
+                                <button id="layers-tab-btn" class="panel-tab-btn"
+                                    data-target="layers-content">Layers</button>
+                                <button id="elements-tab-btn" class="panel-tab-btn"
+                                    data-target="elements-content">Elements</button>
+                            </div>
+
+                            <div class="left-panel-top-body">
+                                <div id="components-content" class="panel-tab-content active">
+                                    <div id="componentsMainView" class="components-view">
+                                        <div class="components-grid">
+                                            <div class="shape-chip" draggable="true" data-add="text"><svg
+                                                    viewBox="0 0 24 24">
+                                                    <path d="M5 4h14M12 4v16M8 20h8" fill="none" stroke-linecap="round"
+                                                        stroke-linejoin="round"></path>
+                                                </svg><span>Text</span></div>
+                                            <div class="shape-chip" draggable="true" data-add="image"><svg
+                                                    viewBox="0 0 24 24">
+                                                    <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+                                                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                                    <path d="M21 15l-5-5L5 21" fill="none"></path>
+                                                </svg><span>Image</span></div>
+                                            <div class="shape-chip shape-chip-nav" id="openShapesMenuBtn" role="button"
+                                                tabindex="0" aria-label="Open shapes">
+                                                <svg viewBox="0 0 24 24">
+                                                    <rect x="3.5" y="3.5" width="6.5" height="6.5" rx="1"></rect>
+                                                    <circle cx="17.25" cy="6.75" r="3.25"></circle>
+                                                    <path d="M3.75 19.75L7 14.25l3.25 5.5z"></path>
+                                                    <path
+                                                        d="M17.25 12.75l1.05 2.15 2.4.35-1.75 1.7.4 2.4-2.1-1.1-2.1 1.1.4-2.4-1.75-1.7 2.4-.35z">
+                                                    </path>
+                                                </svg>
+                                                <span>Shapes</span>
+                                            </div>
+                                            <div class="shape-chip" draggable="true" data-add="line"><svg
+                                                    viewBox="0 0 24 24">
+                                                    <path d="M4 12h16" fill="none"></path>
+                                                </svg><span>Line</span></div>
+                                            <div class="shape-chip" draggable="true" data-add="arrow"><svg
+                                                    viewBox="0 0 24 24">
+                                                    <path d="M5 12h14M12 5l7 7-7 7" fill="none"></path>
+                                                </svg><span>Arrow</span></div>
+                                            <div class="shape-chip" draggable="true" data-add="table"><svg
+                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                                    stroke-linecap="round" stroke-linejoin="round">
+                                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                                    <line x1="3" y1="9" x2="21" y2="9"></line>
+                                                    <line x1="3" y1="15" x2="21" y2="15"></line>
+                                                    <line x1="9" y1="3" x2="9" y2="21"></line>
+                                                    <line x1="15" y1="3" x2="15" y2="21"></line>
+                                                </svg><span>Table</span></div>
+                                        </div>
+                                    </div>
+                                    <div id="componentsShapesView" class="components-view" hidden>
+                                        <div class="components-subheader">
+                                            <button id="backToComponentsBtn" type="button" class="btn ghost">
+                                                <svg viewBox="0 0 24 24" width="14" height="14" fill="none"
+                                                    stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                                    stroke-linejoin="round">
+                                                    <path d="M15 18l-6-6 6-6"></path>
+                                                </svg>
+                                                Back
+                                            </button>
+                                            <span class="muted">Shapes</span>
+                                        </div>
+                                        <div class="components-grid">
+                                            <div class="shape-chip" draggable="true" data-add="square"><svg
+                                                    viewBox="0 0 24 24">
+                                                    <rect x="5" y="5" width="14" height="14" rx="1"></rect>
+                                                </svg><span>Square</span></div>
+                                            <div class="shape-chip" draggable="true" data-add="circle"><svg
+                                                    viewBox="0 0 24 24">
+                                                    <circle cx="12" cy="12" r="8"></circle>
+                                                </svg><span>Circle</span></div>
+                                            <div class="shape-chip" draggable="true" data-add="star"><svg
+                                                    viewBox="0 0 24 24">
+                                                    <path
+                                                        d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z">
+                                                    </path>
+                                                </svg><span>Star</span></div>
+                                            <div class="shape-chip" draggable="true" data-add="triangle"><svg
+                                                    viewBox="0 0 24 24">
+                                                    <path d="M12 2L2 22h20L12 2z"></path>
+                                                </svg><span>Triangle</span></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div id="templates-content" class="panel-tab-content">
+                                    <div id="sidebar-templates-grid" class="stack" style="gap:12px; padding: 4px;">
+                                        <p class="muted" style="font-size: 11px; text-align: center; padding: 20px;">
+                                            Open the
+                                            template library to browse and load professional designs.</p>
+                                        <button id="openLoaderFromSidebar" class="btn primary" style="width: 100%;">Open
+                                            Template
+                                            Library</button>
+                                    </div>
+                                </div>
+
+                                <div id="layers-content" class="panel-tab-content">
+                                    <div id="layersList" class="layers-list stack"></div>
+                                </div>
+
+                                <div id="elements-content" class="panel-tab-content">
+                                    <input type="search" id="element-search" placeholder="Search elements...">
+                                    <div id="elements-grid"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="left-panel-bottom">
+                            <div id="aiAssistantPanel" class="ai-chat-panel">
+                                <div class="ai-chat-header">
+                                    <h4>AI Copilot</h4>
+                                    <button id="aiResetChatBtn" class="btn ghost" type="button">Reset Chat</button>
+                                </div>
+
+                                <div class="stack" style="gap:8px;">
+                                    <label for="aiApiKeyPanel">Google AI Studio API Key</label>
+                                    <input type="password" id="aiApiKeyPanel" placeholder="Paste API key" />
+                                </div>
+
+                                <div id="aiChatLog" class="ai-chat-log">
+                                    <div class="ai-chat-empty muted">
+                                        Ask for layout ideas, canvas changes, dimensions, icons, and iterative edits.
+                                    </div>
+                                </div>
+
+                                <div id="aiAttachmentMeta" class="ai-attachment-meta muted"></div>
+
+                                <div class="stack" style="gap:8px;">
+                                    <label for="aiChatPrompt">Message</label>
+                                    <div class="ai-prompt-wrap">
+                                        <textarea id="aiChatPrompt" rows="4"
+                                            placeholder="Example: create 3 canvases, set each to 1080x1350, and design a clean inbox UI."></textarea>
+                                        <div class="ai-prompt-tools">
+                                            <label for="aiChatFile" class="btn ghost icon-only ai-attach-btn"
+                                                title="Attach file" aria-label="Attach file">
+                                                <svg viewBox="0 0 24 24" aria-hidden="true">
+                                                    <path
+                                                        d="M21.44 11.05 12.25 20.24a6 6 0 0 1-8.49-8.49l9.2-9.19a4 4 0 0 1 5.65 5.66l-9.2 9.19a2 2 0 1 1-2.83-2.83l8.49-8.48">
+                                                    </path>
+                                                </svg>
+                                            </label>
+                                            <button id="aiClearFileBtn" class="btn ghost ai-clear-inline"
+                                                type="button">Clear</button>
+                                        </div>
+                                    </div>
+                                    <input id="aiChatFile" type="file" accept="image/*,.txt,.md,.csv,.json,.svg,.pdf"
+                                        style="display:none;" />
+                                </div>
+
+                                <div class="row" style="justify-content:flex-end;">
+                                    <button id="aiChatSendBtn" class="btn primary" type="button">
+                                        <span id="aiChatSendText">Send</span>
+                                        <span id="aiChatSpinner"
+                                            style="display:none;"><span>.</span><span>.</span><span>.</span></span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="resizer" id="left-resizer"></div>
+
+            <div class="canvas-container-wrapper">
+                <div id="canvasPagesPanel" class="canvas-pages-panel">
+                    <div class="canvas-pages-header-row">
+                        <button id="toggleCanvasPagesPanelBtn" class="canvas-pages-header" type="button" aria-expanded="false"
+                            title="Expand pages panel">
+                            <span class="label">Pages</span>
+                        </button>
+                        <button id="hideCanvasPagesPanelBtn" class="btn ghost canvas-pages-hide-btn" type="button" title="Hide pages panel">Hide</button>
+                    </div>
+                    <div id="canvasPagesStrip" class="canvas-pages-strip"></div>
+                </div>
+                <div class="canvas-editor-stage">
+                    <div class="canvas-wrap"><canvas id="c"></canvas></div>
+                    <div id="pageActionToolbar" class="page-action-toolbar hidden"></div>
+                    <button id="openDataLinksManagerBtn" class="btn"
+                        style="position: absolute; top: 12px; right: 12px; z-index: 10; box-shadow: 0 4px 12px rgba(0,0,0,.3);"><svg
+                            width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.72"></path>
+                            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.72-1.72"></path>
+                        </svg><span>Data Links</span></button>
+                </div>
+            </div>
+            <div class="resizer" id="right-resizer"></div>
+            <div class="panel right" id="right-panel">
+                <button id="right-panel-toggle" class="panel-toggle" title="Toggle Right Panel"><svg
+                        xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg></button>
+                <div id="inspectorWrap">
+                    <h3>Inspector</h3>
+                    <div id="noSelection">
+                        <h4>Page Properties</h4>
+                        <div class="stack" id="pageInspector">
+                            <p class="muted" style="margin:0 0 12px; font-size:13px; text-align:center;">Select an
+                                element to edit its properties or modify the page below.</p>
+                        </div>
+                    </div>
+                    <div id="inspector" style="display:none;"></div>
+                    <div id="multiSelectInspector" style="display:none;"></div>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <div class="toolbar-group">
+                <select id="exportFormatSelect">
+                    <option value="pdf">PDF</option>
+                    <option value="png">PNG ★</option>
+                    <option value="jpg">JPG ★</option>
+                    <option value="json">JSON</option>
+                </select>
+                <button id="exportBtn" class="btn">Export</button>
+                <button id="exportSinglePdfBtn" class="btn primary">Export as Single PDF</button>
+                <div id="exportPageSelectorWrap" class="export-page-selector-wrap" style="display:none;">
+                    <button id="exportPageSelectorBtn" class="btn ghost" type="button" aria-expanded="false">Pages: All</button>
+                    <div id="exportPageSelectorMenu" class="export-page-selector-menu" style="display:none;">
+                        <label class="export-page-all-toggle">
+                            <input id="exportAllPagesToggle" type="checkbox" checked />
+                            <span>All pages</span>
+                        </label>
+                        <div id="exportPageCheckboxList" class="export-page-checkbox-list"></div>
+                    </div>
+                </div>
+                <button id="exportAllCanvasesBtn" class="btn">Export Pages</button>
+            </div>
+            <div class="toolbar">
+                <button id="centerViewBtn" class="btn ghost" title="Reset View"><svg width="16" height="16"
+                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path
+                            d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
+                    </svg></button>
+                <div id="zoomLevel" class="muted">Zoom: 100%</div>
+            </div>
+            <div class="toolbar-group">
+                <label for="gridSizeInput" class="muted" style="font-size:12px; margin-left:8px;">Size:</label>
+                <input type="number" id="gridSizeInput" min="12" max="64" style="width: 60px; padding: 4px 8px;">
+                <button id="toggleGridBtn" class="btn ghost">Toggle Grid</button>
+                <button id="toggleSnapBtn" class="btn ghost active">Toggle Snap</button>
+            </div>
+        </footer>
+    </div>
+
+    <!-- FLOATING AND MODAL ELEMENTS (placed at end of body) -->
+    <div id="template-loader-modal" class="floating-modal" style="width: 320px;"></div>
+
+    <div id="floating-linker">
+        <div class="floating-linker-actions">
+            <button id="floatingLinkBtn" class="btn ghost"></button>
+            <button id="bringToFrontBtn" title="Bring to Front" class="btn ghost"><svg width="14" height="14"
+                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 5l6 6m-6-6l-6 6M12 19V5" />
+                </svg></button>
+            <button id="sendToBackBtn" title="Send to Back" class="btn ghost"><svg width="14" height="14"
+                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 19l-6-6m6 6l6-6M12 5v14" />
+                </svg></button>
+            <button id="duplicateBtn" title="Duplicate" class="btn ghost"><svg width="14" height="14"
+                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                </svg></button>
+            <button id="deleteBtn" title="Delete" class="btn ghost"><svg width="14" height="14" viewBox="0 0 24 24"
+                    fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                </svg></button>
+        </div>
+        <div id="floatingColumnList" class="floating-modal" style="position: static; display: none; width: 200px;">
+            <input type="search" id="floatingColumnSearch" placeholder="Search..."
+                style="margin-bottom: 8px; width: 100%;">
+            <div id="floatingColumnListContent" class="col-list" style="max-height: 150px; margin-top: 0;"></div>
+        </div>
+    </div>
+
+    <div id="toast-container"></div>
+
+    <div id="proLimitModal" class="modal-backdrop">
+        <div class="modal" style="width: 420px;">
+            <div class="row" style="justify-content:space-between;align-items:center;gap:12px;">
+                <h3>Pro Feature</h3><button id="closeProLimitModal" class="btn ghost">&times;</button>
+            </div>
+            <div class="stack" style="margin-top: 16px; gap: 12px; text-align: center;">
+                <p>Your current plan allows exporting up to 15 pages at a time.</p>
+                <p>You've exported the first 15 rows. Upgrade to Pro for unlimited exports, API access, and more!</p>
+            </div>
+            <div class="row" style="margin-top: 24px; justify-content:center; gap: 8px;">
+                <a href="/#pricing" class="btn primary" style="text-decoration: none;">Upgrade to Pro</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Links Manager Modal -->
+    <div id="dataLinksManagerModal" class="modal-backdrop">
+        <div class="modal"
+            style="width: 800px; max-width: 90vw; height: 70vh; max-height: 600px; display: flex; flex-direction: column;">
+            <div class="row" style="justify-content:space-between;align-items:center;gap:12px; flex-shrink: 0;">
+                <h3>Data Links Manager</h3>
+                <button id="closeDataLinksManagerModal" class="btn ghost">Close</button>
+            </div>
+            <div class="main-content"
+                style="display: grid; grid-template-columns: 250px 1fr; gap: 16px; margin-top: 16px; flex-grow: 1; min-height: 0;">
+                <div class="objects-list-container stack"
+                    style="border: 1px solid var(--border); border-radius: 12px; padding: 8px; overflow-y: auto;">
+                    <h4 style="padding: 0 8px;">Canvas Objects</h4>
+                    <div id="dataLinksObjectsList" class="stack"></div>
+                </div>
+                <div class="bindings-editor-container"
+                    style="border: 1px solid var(--border); border-radius: 12px; padding: 12px; overflow-y: auto;">
+                    <div id="dataLinksEditorContent" class="stack">
+                        <p class="muted" style="text-align:center; padding-top: 24px;">Select an object from the left to
+                            manage its data links.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Column Selection Modal for Data Links Manager -->
+    <div id="columnSelectModal" class="modal-backdrop">
+        <div class="modal" style="width: 700px;">
+            <div class="row" style="justify-content:space-between;align-items:center;gap:12px;">
+                <h3>Link to Column</h3><button id="closeColumnSelectModal" class="btn ghost">&times;</button>
+            </div>
+            <input id="columnSelectSearch" type="search" placeholder="Search columns..." style="margin: 16px 0 8px 0;">
+            <div id="columnSelectList" class="col-list"></div>
+            <div class="row" style="margin-top:12px; justify-content:flex-end;">
+                <button id="confirmColumnSelect" class="btn">Confirm Link</button>
+            </div>
+        </div>
+    </div>
+
+
+
+    <!-- Table Creator Modal -->
+    <div id="tableCreatorModal" class="modal-backdrop">
+        <div class="modal" style="width: 360px;">
+            <div class="row" style="justify-content:space-between;align-items:center;gap:12px;">
+                <h3>Create Table</h3><button id="closeTableCreator" class="btn ghost">&times;</button>
+            </div>
+            <div class="stack" style="margin-top: 16px; gap: 12px;">
+                <div class="stack"><label for="tableRows">Rows</label><input type="number" id="tableRows" value="3"
+                        min="1" max="100"></div>
+                <div class="stack"><label for="tableCols">Columns</label><input type="number" id="tableCols" value="3"
+                        min="1" max="100"></div>
+                <div class="stack"><label for="tableCellWidth">Cell Width</label><input type="number"
+                        id="tableCellWidth" value="120" min="20" max="2000"></div>
+                <div class="stack"><label for="tableCellHeight">Cell Height</label><input type="number"
+                        id="tableCellHeight" value="50" min="20" max="2000"></div>
+                <div class="stack"><label for="tableHeaderRows">Header Rows</label><input type="number"
+                        id="tableHeaderRows" value="1" min="0" max="10"></div>
+            </div>
+            <div class="row" style="margin-top: 24px; justify-content:flex-end; gap: 8px;">
+                <button id="cancelTableCreate" class="btn ghost">Cancel</button>
+                <button id="confirmTableCreate" class="btn">Create Table</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Visual Crop Modal -->
+    <div id="visualCropModal" class="modal-backdrop">
+        <div class="modal">
+            <div class="row" style="justify-content:space-between;align-items:center;gap:12px;">
+                <h3>Crop Image</h3><button id="closeVisualCropModal" class="btn ghost">&times;</button>
+            </div>
+            <div id="visualCropContainer" style="margin-top: 16px;"><canvas id="cropCanvas"></canvas></div>
+            <div class="row" style="margin-top:16px; justify-content:flex-end; gap: 8px;">
+                <button id="cancelCropBtn" class="btn ghost">Cancel</button>
+                <button id="applyCropBtn" class="btn">Apply Crop</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="settingsModal" class="modal-backdrop">
+        <div class="modal" style="width: 550px;">
+            <div class="row" style="justify-content:space-between;align-items:center;gap:12px;">
+                <h3>Settings & API Keys</h3><button id="closeSettingsModal" class="btn ghost">&times;</button>
+            </div>
+            <div id="settingsContent" class="stack" style="margin-top: 16px; gap: 12px;"></div>
+        </div>
+    </div>
+
+    <div id="csvViewModal" class="modal-backdrop">
+        <div class="modal"
+            style="width: 1000px; max-width: calc(100vw - 40px); height: 85vh; display: flex; flex-direction: column;">
+            <div class="row"
+                style="justify-content:space-between;align-items:center;gap:12px; padding-bottom: 12px; border-bottom: 1px solid var(--border);">
+                <div class="row" style="gap: 12px; align-items: center;">
+                    <h3 style="margin: 0;">Data Manager</h3>
+                    <span id="csvViewMeta" class="muted" style="font-size: 11px;"></span>
+                </div>
+                <div class="row" style="gap: 8px;">
+                    <button id="clearDataBtn" class="btn ghost" style="color:var(--danger)">Clear All</button>
+                    <button id="closeCsvView" class="btn ghost" style="font-size: 20px;">&times;</button>
+                </div>
+            </div>
+
+            <div class="row" style="margin-top:16px; gap:12px; align-items:center; flex-wrap: wrap;">
+                <div style="position: relative; flex: 1; min-width: 180px;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--muted);">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    <input id="csvViewSearch" type="text" placeholder="Search data..."
+                        style="width: 100%; padding-left: 32px;" />
+                </div>
+                <div class="row" style="gap: 8px; align-items: center;">
+                    <label style="font-size: 11px; color: var(--muted); margin: 0; white-space: nowrap;">Grouped Data
+                        By:</label>
+                    <select id="csvIdentifierColumnDropdown" style="min-width: 130px; font-size: 12px;">
+                        <option value="">(None)</option>
+                    </select>
+                </div>
+                <div class="row" style="gap: 10px;">
+                    <button id="addRowBtn" class="btn primary"><svg width="14" height="14" viewBox="0 0 24 24"
+                            fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg> Add Row</button>
+                    <button id="addColBtn" class="btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg> Add Column</button>
+                    <label for="csvInput" class="btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                            <polyline points="17 8 12 3 7 8" />
+                            <line x1="12" y1="3" x2="12" y2="15" />
+                        </svg> Import File</button>
+                </div>
+            </div>
+
+            <div id="csvDropZone"
+                style="flex: 1; border: 2px dashed var(--border); border-radius: 12px; margin-top: 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; background: rgba(255,255,255,0.02); transition: all 0.2s;">
+                <div
+                    style="width: 64px; height: 64px; border-radius: 50%; background: var(--panel-2); display: flex; align-items: center; justify-content: center; color: var(--accent);">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="17 8 12 3 7 8" />
+                        <line x1="12" y1="3" x2="12" y2="15" />
+                    </svg>
+                </div>
+                <div style="text-align: center;">
+                    <h4 style="margin-bottom: 4px;">Import your data</h4>
+                    <p class="muted">Drag & drop CSV or Excel file here, or paste from clipboard.</p>
+                </div>
+                <button class="btn" onclick="document.getElementById('csvInput').click()">Browse Files</button>
+            </div>
+
+            <div id="csvViewContent"
+                style="display: none; flex: 1; margin-top:16px; overflow:auto; border:1px solid var(--border); border-radius: var(--radius); position: relative;">
+                <!-- Table will be injected here -->
+            </div>
+        </div>
+    </div>
+
+    <div id="tour-highlight"></div>
+    <div id="tour-modal">
+        <div id="tour-modal-header">
+            <h4 id="tour-modal-title">Welcome!</h4>
+            <div id="tour-modal-controls" class="row"><button id="tour-close-btn" class="btn ghost"
+                    title="Close Tutorial">&times;</button></div>
+        </div>
+        <div id="tour-modal-content">
+            <p>This is an interactive tour to guide you through the main features of the editor.</p>
+        </div>
+        <div id="tour-modal-nav"><button id="tour-prev-btn" class="btn ghost">Previous</button>
+            <div id="tour-step-counter" class="muted"></div><button id="tour-next-btn" class="btn">Next</button><button
+                id="tour-finish-btn" class="btn" style="display: none;">Finish</button>
+        </div>
+    </div>
+
+    <script type="module" src="assets/js/supabase-client.js"></script>
+    <script type="module" src="assets/js/auth.js"></script>
+    <script type="module" src="tools/tool.js?v=20260220l"></script>
+
+    <!-- Grouped Data By Modal -->
+    <div id="identifierColumnModal" class="modal-backdrop" style="z-index: 10001;">
+        <div class="modal" style="width: 500px;">
+            <div class="row" style="justify-content:space-between;align-items:center;gap:12px;">
+                <h3>Grouped Data By</h3>
+                <button id="closeIdentifierColumnModal" class="btn ghost">&times;</button>
+            </div>
+            <div class="stack" style="margin-top: 12px; gap: 10px;">
+                <p class="muted" style="margin: 0; font-size: 14px;">
+                    Optional. Use this when multiple rows belong to one entity (product/order/etc.) so one page can use
+                    related rows.
+                </p>
+                <div class="stack">
+                    <label for="identifierColumnSelect">Select column to group data by:</label>
+                    <select id="identifierColumnSelect" class="btn ghost" style="text-align: left;"></select>
+                </div>
+                <div id="identifierColumnPreview" class="muted"
+                    style="font-size: 12px; font-style: italic; min-height: 1.5em;"></div>
+            </div>
+            <div class="row" style="margin-top: 24px; justify-content: flex-end; gap: 10px;">
+                <button id="skipIdentifierColumnBtn" class="btn ghost">Skip</button>
+                <button id="confirmIdentifierColumnBtn" class="btn primary">Apply Grouping</button>
+            </div>
+        </div>
+    </div>
+
+</body>
+
+</html>
