@@ -306,25 +306,32 @@
         }
 
         #first-feature {
-            flex-direction: column;
-            align-items: stretch;
-            gap: 1.8rem;
+            flex-wrap: wrap;
+            align-items: flex-start;
+        }
+
+        #first-feature .first-feature-heading {
+            width: 100%;
+        }
+
+        #first-feature .first-feature-heading h2 {
+            margin: 0;
         }
 
         #first-feature .feature-content {
-            width: 100%;
-            max-width: none;
+            flex: 1 1 460px;
+            min-width: 0;
         }
 
         #first-feature .feature-image {
-            width: 100%;
+            flex: 0 1 560px;
             display: flex;
             justify-content: center;
         }
 
         #first-feature .feature-image img {
-            width: min(100%, 760px);
-            max-width: 100%;
+            width: 100%;
+            max-width: 560px;
         }
 
         /* Bulk Generation Specifics */
@@ -965,8 +972,10 @@
         </section>
         
         <section id="first-feature" class="feature-section animated-section">
-            <div class="feature-content">
+            <div class="first-feature-heading">
                 <h2>Made for real invoice spreadsheets, not generic mail merge</h2>
+            </div>
+            <div class="feature-content">
                 <p>Whether your billing data comes from accounting software, ERP exports, or a manually maintained spreadsheet, CSVLink turns that table into a reusable invoice workflow without forcing you into a rigid template.</p>
                 <ul class="bulk-steps">
                     <li><strong>Prepare your invoice data:</strong> Keep clear fields such as invoice number, client name, due date, subtotal, tax, and balance due.</li>
