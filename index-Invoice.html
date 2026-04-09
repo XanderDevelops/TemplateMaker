@@ -74,35 +74,41 @@
             align-items: center;
             justify-content: center;
             justify-self: center;
-            gap: 10px;
+            gap: 0;
+            row-gap: 8px;
             min-width: 0;
             flex-wrap: wrap;
         }
 
         .invoice-page-link {
+            display: inline-flex;
+            align-items: center;
             text-decoration: none;
             color: #41516f;
             font-size: 0.9rem;
             font-weight: 700;
-            padding: 8px 14px;
-            border-radius: 999px;
-            border: 1px solid rgba(148, 163, 184, 0.35);
-            background: rgba(255, 255, 255, 0.66);
+            padding: 0;
+            border: none;
+            background: transparent;
             transition: all 0.18s ease;
             white-space: nowrap;
         }
 
+        .invoice-page-link + .invoice-page-link::before {
+            content: '|';
+            color: #94a3b8;
+            margin: 0 10px;
+        }
+
         .invoice-page-link:hover {
             color: var(--fg);
-            border-color: rgba(37, 99, 235, 0.35);
-            background: rgba(59, 130, 246, 0.08);
+            background: transparent;
         }
 
         .invoice-page-link.is-active {
             color: var(--accent);
-            border-color: rgba(37, 99, 235, 0.35);
-            background: rgba(59, 130, 246, 0.12);
-            box-shadow: inset 0 0 0 1px rgba(37, 99, 235, 0.08);
+            background: transparent;
+            box-shadow: none;
         }
 
         .nav-links {
@@ -305,6 +311,35 @@
             border-radius: 16px;
             border: 1px solid var(--border);
             box-shadow: var(--shadow-lg);
+        }
+
+        #first-feature {
+            flex-wrap: wrap;
+            align-items: flex-start;
+        }
+
+        #first-feature .first-feature-heading {
+            width: 100%;
+        }
+
+        #first-feature .first-feature-heading h2 {
+            margin: 0;
+        }
+
+        #first-feature .feature-content {
+            flex: 1 1 460px;
+            min-width: 0;
+        }
+
+        #first-feature .feature-image {
+            flex: 0 1 560px;
+            display: flex;
+            justify-content: center;
+        }
+
+        #first-feature .feature-image img {
+            width: 100%;
+            max-width: 560px;
         }
 
         /* Bulk Generation Specifics */
@@ -902,15 +937,15 @@
 </head>
 <body>
     <nav>
-        <a href="index-Invoice.html" class="logo">
+        <a href="/invoices" class="logo">
             <img src="assets/images/android-chrome-512x512.png" alt="CSVLink Logo" class="logo-icon">
             <span>CSVLink</span>
         </a>
         <div class="invoice-page-nav" aria-label="Invoice pages">
-            <a href="index-Invoice.html" class="invoice-page-link is-active">Overview</a>
-            <a href="invoice-use-cases-Invoice.html" class="invoice-page-link">Use Cases</a>
-            <a href="invoice-how-it-works-Invoice.html" class="invoice-page-link">How It Works</a>
-            <a href="excel-to-invoice-Invoice.html" class="invoice-page-link">Excel to Invoice</a>
+            <a href="/invoices" class="invoice-page-link is-active">Overview</a>
+            <a href="/invoice-use-cases" class="invoice-page-link">Use Cases</a>
+            <a href="/invoice-how-it-works" class="invoice-page-link">How It Works</a>
+            <a href="/excel-to-invoice" class="invoice-page-link">Excel to Invoice</a>
         </div>
         <div class="nav-links" id="nav-links">
             <!-- Auth links will be injected here by JS -->
@@ -923,7 +958,7 @@
             <h1>Bulk generate invoices from your Excel or CSV using your own template.</h1>
             <p>Bring your branded invoice design, connect customer names, invoice numbers, dates, taxes, totals, and line items, then export a full invoice batch in minutes instead of editing each file by hand.</p>
             <div class="hero-actions">
-                <a href="tool-Invoice.html" class="btn">Start Building</a>
+                <a href="/tool-Invoice" class="btn">Start Building</a>
                 <a href="#templates" class="btn ghost">See Invoice Templates</a>
             </div>
             <p style="font-size: 0.95rem; color: #51617d; margin-top: 1rem; margin-bottom: 0;">Free to use. No login required to start.</p>
@@ -945,8 +980,10 @@
         </section>
         
         <section id="first-feature" class="feature-section animated-section">
-            <div class="feature-content">
+            <div class="first-feature-heading">
                 <h2>Made for real invoice spreadsheets, not generic mail merge</h2>
+            </div>
+            <div class="feature-content">
                 <p>Whether your billing data comes from accounting software, ERP exports, or a manually maintained spreadsheet, CSVLink turns that table into a reusable invoice workflow without forcing you into a rigid template.</p>
                 <ul class="bulk-steps">
                     <li><strong>Prepare your invoice data:</strong> Keep clear fields such as invoice number, client name, due date, subtotal, tax, and balance due.</li>
@@ -1066,7 +1103,7 @@
                         </ul>
                     </div>
                     <div class="card-footer">
-                        <a href="tool-Invoice.html" class="btn">Get Started</a>
+                        <a href="/tool-Invoice" class="btn">Get Started</a>
                     </div>
                 </div>
                 <div class="pricing-card recommended">
@@ -1134,7 +1171,7 @@
                 if (!invoiceNavLinks) return;
                 invoiceNavLinks.querySelectorAll('a').forEach((link) => {
                     if (link.getAttribute('href') === '/#pricing') {
-                        link.setAttribute('href', 'index-Invoice.html#pricing');
+                        link.setAttribute('href', '/invoices#pricing');
                     }
                 });
             };
@@ -1165,7 +1202,7 @@
                 }
                 templates.forEach(template => {
                     const card = document.createElement('a');
-                    card.href = `tool-Invoice.html?id=${template.id}&public=true`;
+                    card.href = `/tool-Invoice?id=${template.id}&public=true`;
                     card.className = 'template-card';
                     card.title = `Use ${template.title}`;
                     const canvasId = `preview-canvas-${template.id}`;

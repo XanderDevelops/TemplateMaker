@@ -3877,9 +3877,7 @@ const canvasEditorStage = $('.canvas-editor-stage');
 const pageActionToolbar = $('#pageActionToolbar');
 const canvasPagesPanel = $('#canvasPagesPanel');
 const canvasPagesStrip = $('#canvasPagesStrip');
-const toggleCanvasPagesPanelBtn = $('#toggleCanvasPagesPanelBtn');
 const hideCanvasPagesPanelBtn = $('#hideCanvasPagesPanelBtn');
-const canvasPagesHeaderRow = canvasPagesPanel?.querySelector('.canvas-pages-header-row');
 // 9. Preserve layer stacking
 const canvas = new fabric.Canvas('c', { backgroundColor: 'transparent', selection: true, preserveObjectStacking: true });
 // High-quality rendering (avoid blurry output)
@@ -5311,13 +5309,8 @@ function syncGeneralPageSizeInputs() {
 }
 
 function applyCanvasPagesPanelState() {
-    if (!canvasPagesPanel || !toggleCanvasPagesPanelBtn) return;
+    if (!canvasPagesPanel) return;
     canvasPagesPanel.classList.toggle('collapsed', isCanvasPagesPanelCollapsed);
-    const stateLabel = toggleCanvasPagesPanelBtn.querySelector('.state');
-    if (stateLabel) stateLabel.textContent = isCanvasPagesPanelCollapsed ? 'Show' : '';
-    toggleCanvasPagesPanelBtn.setAttribute('aria-expanded', String(!isCanvasPagesPanelCollapsed));
-    toggleCanvasPagesPanelBtn.setAttribute('aria-disabled', 'false');
-    toggleCanvasPagesPanelBtn.setAttribute('title', isCanvasPagesPanelCollapsed ? 'Show pages panel' : 'Hide pages panel');
     if (hideCanvasPagesPanelBtn) {
         hideCanvasPagesPanelBtn.textContent = isCanvasPagesPanelCollapsed ? 'Show' : 'Hide';
         hideCanvasPagesPanelBtn.setAttribute('title', isCanvasPagesPanelCollapsed ? 'Show pages panel' : 'Hide pages panel');
@@ -7712,17 +7705,8 @@ function initializeCanvas() {
         isCanvasPagesPanelCollapsed = !isCanvasPagesPanelCollapsed;
         applyCanvasPagesPanelState();
     };
-    if (toggleCanvasPagesPanelBtn) {
-        toggleCanvasPagesPanelBtn.addEventListener('click', toggleCanvasPagesPanel);
-    }
     if (hideCanvasPagesPanelBtn) {
         hideCanvasPagesPanelBtn.addEventListener('click', toggleCanvasPagesPanel);
-    }
-    if (canvasPagesHeaderRow) {
-        canvasPagesHeaderRow.addEventListener('click', (event) => {
-            if (event.target instanceof Element && event.target.closest('button')) return;
-            toggleCanvasPagesPanel(event);
-        });
     }
 
     const OBJECT_CLICK_DRAG_DEADZONE_PX = 4;

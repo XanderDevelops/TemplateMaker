@@ -22,11 +22,14 @@
         nav { position: fixed; top: 0; z-index: 1000; width: 100%; box-sizing: border-box; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 24px; height: 60px; padding: 0 24px; background: rgba(255,255,255,0.88); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); }
         .logo { display: flex; align-items: center; gap: 10px; color: var(--fg); text-decoration: none; font-family: 'Space Grotesk', sans-serif; font-size: 1.25rem; font-weight: 700; }
         .logo-icon { width: 32px; height: 32px; border-radius: 10px; }
-        .invoice-page-nav, .nav-links { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .invoice-page-nav, .nav-links { display: flex; align-items: center; flex-wrap: wrap; }
         .invoice-page-nav { justify-self: center; justify-content: center; }
         .nav-links { justify-self: end; justify-content: flex-end; }
-        .invoice-page-link { text-decoration: none; color: #41516f; font-size: 0.9rem; font-weight: 700; padding: 8px 14px; border-radius: 999px; border: 1px solid rgba(148,163,184,0.35); background: rgba(255,255,255,0.66); }
-        .invoice-page-link.is-active { color: var(--accent); border-color: rgba(37,99,235,0.35); background: rgba(59,130,246,0.12); }
+        .invoice-page-nav { gap: 0; row-gap: 8px; }
+        .nav-links { gap: 10px; }
+        .invoice-page-link { display: inline-flex; align-items: center; text-decoration: none; color: #41516f; font-size: 0.9rem; font-weight: 700; padding: 0; border: none; background: transparent; }
+        .invoice-page-link + .invoice-page-link::before { content: '|'; color: #94a3b8; margin: 0 10px; }
+        .invoice-page-link.is-active { color: var(--accent); }
         .container { width: min(1160px, calc(100% - 32px)); margin: 0 auto; padding: 96px 0 48px; }
         .hero, .panel { border: 1px solid var(--border); border-radius: 24px; box-shadow: var(--shadow); }
         .hero { padding: 42px 36px; background: radial-gradient(circle at 10% 16%, rgba(37,99,235,0.18), transparent 30%), radial-gradient(circle at 86% 14%, rgba(14,165,233,0.16), transparent 25%), linear-gradient(140deg, #ffffff 0%, #f6f9ff 58%, #eef4ff 100%); }
@@ -60,15 +63,15 @@
 </head>
 <body>
     <nav>
-        <a href="index-Invoice.html" class="logo">
+        <a href="/invoices" class="logo">
             <img src="assets/images/android-chrome-512x512.png" alt="CSVLink Logo" class="logo-icon">
             <span>CSVLink</span>
         </a>
         <div class="invoice-page-nav" aria-label="Invoice pages">
-            <a href="index-Invoice.html" class="invoice-page-link">Overview</a>
-            <a href="invoice-use-cases-Invoice.html" class="invoice-page-link is-active">Use Cases</a>
-            <a href="invoice-how-it-works-Invoice.html" class="invoice-page-link">How It Works</a>
-            <a href="excel-to-invoice-Invoice.html" class="invoice-page-link">Excel to Invoice</a>
+            <a href="/invoices" class="invoice-page-link">Overview</a>
+            <a href="/invoice-use-cases" class="invoice-page-link is-active">Use Cases</a>
+            <a href="/invoice-how-it-works" class="invoice-page-link">How It Works</a>
+            <a href="/excel-to-invoice" class="invoice-page-link">Excel to Invoice</a>
         </div>
         <div class="nav-links" id="nav-links"></div>
     </nav>
@@ -79,8 +82,8 @@
             <h1>Where bulk invoice generation saves the most time.</h1>
             <p>Invoice automation works best when your billing data already exists in a spreadsheet and your team just needs a faster way to turn it into polished, branded invoices. These are the workflows where CSVLink fits best.</p>
             <div class="hero-actions">
-                <a href="tool-Invoice.html" class="btn">Open Invoice Builder</a>
-                <a href="invoice-how-it-works-Invoice.html" class="btn ghost">See How It Works</a>
+                <a href="/tool-Invoice" class="btn">Open Invoice Builder</a>
+                <a href="/invoice-how-it-works" class="btn ghost">See How It Works</a>
             </div>
             <div class="tag-row">
                 <span class="tag">Freelancers</span>
@@ -113,17 +116,17 @@
                 <article class="card"><h3>Line item fields</h3><p>Item name, description, quantity, unit rate, and per-line totals when invoices are grouped across multiple rows.</p></article>
             </div>
             <div class="hero-actions">
-                <a href="tool-Invoice.html" class="btn">Start Building Invoices</a>
-                <a href="excel-to-invoice-Invoice.html" class="btn ghost">Prepare Your Spreadsheet</a>
+                <a href="/tool-Invoice" class="btn">Start Building Invoices</a>
+                <a href="/excel-to-invoice" class="btn ghost">Prepare Your Spreadsheet</a>
             </div>
         </section>
     </main>
 
     <footer>
         <div class="footer-links">
-            <a href="index-Invoice.html">Overview</a>
-            <a href="invoice-how-it-works-Invoice.html">How It Works</a>
-            <a href="excel-to-invoice-Invoice.html">Excel to Invoice</a>
+            <a href="/invoices">Overview</a>
+            <a href="/invoice-how-it-works">How It Works</a>
+            <a href="/excel-to-invoice">Excel to Invoice</a>
             <a href="refunds.html">Refund Policy</a>
         </div>
         <div class="copyright"><p>&copy; 2026 CSVLink. All Rights Reserved.</p></div>
@@ -137,7 +140,7 @@
             const syncInvoiceAuthLinks = () => {
                 if (!navLinks) return;
                 navLinks.querySelectorAll('a').forEach((link) => {
-                    if (link.getAttribute('href') === '/#pricing') link.setAttribute('href', 'index-Invoice.html#pricing');
+                    if (link.getAttribute('href') === '/#pricing') link.setAttribute('href', '/invoices#pricing');
                 });
             };
             if (navLinks) {

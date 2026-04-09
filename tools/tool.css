@@ -628,6 +628,14 @@
             outline-offset: -2px;
         }
 
+        .canvas-pages-title {
+            cursor: default;
+        }
+
+        .canvas-pages-title:hover {
+            background: transparent;
+        }
+
         .canvas-pages-header .label {
             font-size: 11px;
             text-transform: uppercase;
