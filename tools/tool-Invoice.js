@@ -11680,7 +11680,7 @@ canvas.on('selection:cleared', () => {
             }
             const columnName = select.value;
             if (!columnName) {
-                preview.textContent = 'Choose the invoice column that should tie related item rows together. As soon as you pick one, a live preview will appear below using your uploaded data.';
+                preview.textContent = '';
                 renderIdentifierGroupedDataPreview('');
                 updateIdentifierConfirmButton();
                 return;
@@ -11768,6 +11768,18 @@ canvas.on('selection:cleared', () => {
         bindIdentifierModeCard('#identifierGroupedCard', () => {
             setIdentifierModeSelection('grouped');
             updateIdentifierColumnPreview();
+            const select = $('#identifierColumnSelect');
+            if (!select) return;
+            window.requestAnimationFrame(() => {
+                select.focus();
+                if (typeof select.showPicker === 'function') {
+                    try {
+                        select.showPicker();
+                    } catch (_) {
+                        // Fallback to focus when the browser blocks programmatic opening.
+                    }
+                }
+            });
         });
 
         on('#identifierColumnSelect', 'change', updateIdentifierColumnPreview);
