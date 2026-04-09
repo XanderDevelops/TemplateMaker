@@ -305,6 +305,28 @@
             box-shadow: var(--shadow-lg);
         }
 
+        #first-feature {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 1.8rem;
+        }
+
+        #first-feature .feature-content {
+            width: 100%;
+            max-width: none;
+        }
+
+        #first-feature .feature-image {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+        }
+
+        #first-feature .feature-image img {
+            width: min(100%, 760px);
+            max-width: 100%;
+        }
+
         /* Bulk Generation Specifics */
         .bulk-steps {
             list-style: none;
