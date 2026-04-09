@@ -3917,6 +3917,7 @@ let pendingIdentifierColumnChoice = '';
 let invoiceCsvPromptDismissed = false;
 let pendingIdentifierModalAfterTableClose = false;
 let pendingInvoiceFieldsHelper = false;
+let pendingInvoiceStartChoice = false;
 let invoiceFieldsHelperVisible = false;
 let invoiceAiHelperVisible = false;
 let selectedCsvTableColumnIndex = -1;
@@ -3929,7 +3930,7 @@ let historyLocked = false;
 let isRestoringHistory = false;
 let _clipboard = null;
 let _clipboardMeta = null;
-const INVOICE_AI_STARTER_PROMPT = 'Create an invoice template with my table fields';
+const INVOICE_AI_STARTER_PROMPT = 'Create an invoice template with my table fields. Use my imported column headers as linked placeholders. Every dynamic value must be a standalone textbox whose full text is exactly {{Exact Column Header}} so CSVLink can bind it automatically.';
 const SYSTEM_FONT_LIST = ['Arial', 'Helvetica', 'Times New Roman', 'Georgia', 'Courier New', 'Verdana', 'Impact', 'Comic Sans MS'];
 const GOOGLE_FONT_FAMILY_MAP = new Map(GOOGLE_FONT_FAMILIES.map(name => [String(name).toLowerCase(), String(name)]));
 const FONT_LIST = Array.from(new Set([...SYSTEM_FONT_LIST, ...GOOGLE_FONT_FAMILIES]))
@@ -6910,6 +6911,7 @@ function hideInvoiceFieldsHelper() {
 }
 
 function hideInvoiceAiHelper() {
+    pendingInvoiceStartChoice = false;
     invoiceAiHelperVisible = false;
     const highlight = $('#invoiceAiHelperHighlight');
     const modal = $('#invoiceAiHelperModal');
@@ -7023,6 +7025,7 @@ function showInvoiceFieldsHelper() {
 function showInvoiceAiHelper() {
     if (!hasInvoiceTableStructure()) return;
     hideInvoiceFieldsHelper();
+    pendingInvoiceStartChoice = false;
     const panel = $('#aiAssistantPanel');
     if (panel && typeof panel.scrollIntoView === 'function') {
         panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -7033,9 +7036,22 @@ function showInvoiceAiHelper() {
 
 function continueAfterInvoiceFieldsHelper() {
     hideInvoiceFieldsHelper();
+}
+
+function queueInvoiceStartChoice() {
+    pendingInvoiceStartChoice = true;
+    window.requestAnimationFrame(() => {
+        window.requestAnimationFrame(() => {
+            if (pendingInvoiceStartChoice) showInvoiceAiHelper();
+        });
+    });
+}
+
+function flushInvoiceStartChoice() {
+    if (!pendingInvoiceStartChoice) return;
     window.setTimeout(() => {
-        if (hasInvoiceTableStructure()) showInvoiceAiHelper();
-    }, 120);
+        if (pendingInvoiceStartChoice) showInvoiceAiHelper();
+    }, 140);
 }
 
 function queueInvoiceFieldsHelper() {
@@ -7062,6 +7078,7 @@ function renderInvoiceCsvFieldsPanel() {
     if (!hasInvoiceTableStructure()) {
         hideInvoiceFieldsHelper();
         hideInvoiceAiHelper();
+        pendingInvoiceStartChoice = false;
         panel.style.display = 'none';
         list.innerHTML = '';
         return;
@@ -8614,6 +8631,7 @@ function cacheLocalDataState() {
 function processFileData(arrayBuffer, fileName, opts = {}) {
     try {
         hideInvoiceFieldsHelper();
+        hideInvoiceAiHelper();
         pendingIdentifierModalAfterTableClose = false;
         pendingIdentifierColumnChoice = '';
         selectedCsvTableColumnIndex = -1;
@@ -8641,10 +8659,10 @@ function processFileData(arrayBuffer, fileName, opts = {}) {
 
         // Show identifier column modal on fresh file load
         if (!opts.skipIdentifierModal) {
-            if (shouldShowFieldsHelper) pendingInvoiceFieldsHelper = true;
+            if (shouldShowFieldsHelper) pendingInvoiceStartChoice = true;
             showIdentifierColumnModal();
         } else if (shouldShowFieldsHelper) {
-            queueInvoiceFieldsHelper();
+            queueInvoiceStartChoice();
         }
     } catch (err) {
         showNotification('Error reading file.');
@@ -8653,6 +8671,9 @@ function processFileData(arrayBuffer, fileName, opts = {}) {
 }
 // 5. Unload data function
 function unloadData() {
+    hideInvoiceFieldsHelper();
+    hideInvoiceAiHelper();
+    pendingInvoiceStartChoice = false;
     pendingIdentifierModalAfterTableClose = false;
     pendingIdentifierColumnChoice = '';
     selectedCsvTableColumnIndex = -1;
@@ -8731,7 +8752,9 @@ on('#dismissInvoiceFieldsHelperBtn', 'click', continueAfterInvoiceFieldsHelper);
 on('#closeInvoiceAiHelperBtn', 'click', hideInvoiceAiHelper);
 on('#dismissInvoiceAiHelperBtn', 'click', () => {
     hideInvoiceAiHelper();
-    $('#aiChatPrompt')?.focus();
+    window.setTimeout(() => {
+        if (hasInvoiceDataLoaded()) showInvoiceFieldsHelper();
+    }, 120);
 });
 on('#invoiceAiHelperSendBtn', 'click', () => {
     const aiPromptEl = $('#aiChatPrompt');
@@ -9593,6 +9616,104 @@ function addLinkedCsvFieldToCanvas(columnName, x, y) {
     refreshInspector({ target: textObject });
     showNotification(`Linked field "${safeColumnName}" added to canvas.`, 'success', 1600);
     return textObject;
+}
+
+function buildLinkedPlaceholderText(columnName) {
+    return `{{${String(columnName || '').trim()}}}`;
+}
+
+function normalizeInvoiceHeaderLookupKey(value) {
+    return String(value || '')
+        .replace(/^\{\{\s*|\s*\}\}$/g, '')
+        .replace(/^\[\[\s*|\s*\]\]$/g, '')
+        .toLowerCase()
+        .replace(/[_\-./]+/g, ' ')
+        .replace(/[^a-z0-9]+/g, ' ')
+        .trim()
+        .replace(/\s+/g, ' ');
+}
+
+function findMatchingInvoiceHeaderForAiText(rawText, { allowBareHeaderMatch = false, explicitOnly = false } = {}) {
+    if (!Array.isArray(headers) || !headers.length) return '';
+    const text = String(rawText || '').trim();
+    if (!text) return '';
+
+    const explicitCandidates = [];
+    const moustacheMatch = text.match(/^\{\{\s*([^{}]+?)\s*\}\}$/);
+    if (moustacheMatch) explicitCandidates.push(moustacheMatch[1]);
+    const bracketMatch = text.match(/^\[\[\s*([^[\]]+?)\s*\]\]$/);
+    if (bracketMatch) explicitCandidates.push(bracketMatch[1]);
+
+    const tryFindHeader = (candidateText) => {
+        const exact = headers.find((header) => String(header || '').trim() === String(candidateText || '').trim());
+        if (exact) return exact;
+        const normalizedCandidate = normalizeInvoiceHeaderLookupKey(candidateText);
+        if (!normalizedCandidate) return '';
+        return headers.find((header) => normalizeInvoiceHeaderLookupKey(header) === normalizedCandidate) || '';
+    };
+
+    for (const candidate of explicitCandidates) {
+        const match = tryFindHeader(candidate);
+        if (match) return match;
+    }
+
+    if (explicitOnly || !allowBareHeaderMatch) return '';
+    if (/[\r\n]/.test(text)) return '';
+    return tryFindHeader(text);
+}
+
+function isAiBindableTextObject(obj) {
+    const type = String(obj?.type || '').toLowerCase();
+    return type === 'textbox' || type === 'text' || type === 'i-text';
+}
+
+function autoBindAiTextObject(obj, { allowBareHeaderMatch = false } = {}) {
+    if (!isAiBindableTextObject(obj)) return 0;
+    const matchedHeader = findMatchingInvoiceHeaderForAiText(obj.text, { allowBareHeaderMatch });
+    if (!matchedHeader) return 0;
+
+    const placeholderText = buildLinkedPlaceholderText(matchedHeader);
+        if (String(obj.text || '').trim() !== placeholderText) {
+            obj.set({ text: placeholderText });
+            if (obj.type === 'textbox') {
+                const currentWidth = normalizeNumeric(obj.width, 0);
+                const maxWidth = Math.max(180, (pageRect?.width || DEFAULT_PAGE_WIDTH) - 40);
+                const suggestedWidth = Math.min(maxWidth, Math.max(180, placeholderText.length * 11));
+                obj.set({ width: Math.max(currentWidth, suggestedWidth) });
+            }
+            if (typeof obj.initDimensions === 'function') obj.initDimensions();
+            if (obj.type === 'textbox' && typeof refreshTextboxCurve === 'function') {
+                refreshTextboxCurve(obj, { skipRender: true });
+            }
+        }
+
+    saveBinding(obj, { column: matchedHeader, property: 'Text Content' });
+    if (typeof obj.setCoords === 'function') obj.setCoords();
+    return 1;
+}
+
+function autoBindAiTableObject(table) {
+    if (!table?.isTable) return 0;
+    ensureTableCellData(table);
+    let linkedCount = 0;
+
+    table.cellData.forEach((cell, cellIndex) => {
+        const matchedHeader = findMatchingInvoiceHeaderForAiText(cell?.text, { explicitOnly: true });
+        if (!matchedHeader) return;
+        const placeholderText = buildLinkedPlaceholderText(matchedHeader);
+        if (table.cellData[cellIndex]) table.cellData[cellIndex].text = placeholderText;
+        saveBinding(table, { column: matchedHeader, property: 'Cell Text', cellIndex });
+        linkedCount += 1;
+    });
+
+    if (linkedCount > 0) updateTableLayout(table);
+    return linkedCount;
+}
+
+function autoBindAiGeneratedObject(obj, { allowBareHeaderMatch = false } = {}) {
+    if (!obj) return 0;
+    if (obj.isTable) return autoBindAiTableObject(obj);
+    return autoBindAiTextObject(obj, { allowBareHeaderMatch });
 }
 // 6. Restored Table Code
 function updateTableLayout(table, preservedCenter = null) {
@@ -12076,7 +12197,7 @@ canvas.on('selection:cleared', () => {
             if (modal) modal.style.display = 'none';
             if (previewModal) previewModal.style.display = 'none';
             setIdentifierModeSelection('');
-            if (flushHelper) flushInvoiceFieldsHelper();
+            if (flushHelper) flushInvoiceStartChoice();
         }
 
         function showIdentifierColumnModal(options = {}) {
@@ -15472,6 +15593,7 @@ ${rawResponse}
                     : [];
                 if (!rawHeaders.length) return 'Imported data columns: none.';
                 const visibleHeaders = rawHeaders.slice(0, 36);
+                const visiblePlaceholders = visibleHeaders.slice(0, 18).map((header) => `{{${header}}}`);
                 const sampleRows = compactDataRowsForAi(dataRows, visibleHeaders, {
                     maxRows: 2,
                     maxCols: Math.max(1, Math.min(12, visibleHeaders.length)),
@@ -15479,8 +15601,11 @@ ${rawResponse}
                 });
                 return [
                     `Imported data columns (${rawHeaders.length}): ${visibleHeaders.join(', ')}${rawHeaders.length > visibleHeaders.length ? ', ...' : ''}`,
+                    `Available linked placeholders: ${visiblePlaceholders.join(', ')}${visibleHeaders.length > visiblePlaceholders.length ? ', ...' : ''}`,
                     `Sample data rows: ${sampleRows.length ? JSON.stringify(sampleRows) : '[]'}`,
-                    'If the user asks for a template that uses table fields, use these columns to shape the invoice layout and use the real field names in visible placeholder text where helpful.'
+                    'If the user asks for a template that uses table fields, every dynamic value must be a standalone textbox whose full text is exactly {{Exact Column Header}} using one of the imported headers.',
+                    'Keep static labels separate from linked values. Do not combine labels and placeholders in the same textbox.',
+                    'Do not place linked placeholders inside groups, and do not use plain sample values where linked data should appear.'
                 ].join('\n');
             }
 
@@ -15505,6 +15630,9 @@ Strict rules:
 - Keep every object fully inside canvas bounds.
 - Prefer "textbox" for text. Keep text wrapping using sensible width.
 - For textboxes: keep scaleX=1 and scaleY=1, size via width/fontSize.
+- When imported data is available, any dynamic field must be its own standalone textbox with text exactly {{Exact Column Header}}.
+- Keep labels like "Invoice Number" and linked values in separate objects.
+- Do not put linked placeholder textboxes inside groups.
 - If styles is present on text, use an array.
 - Never use textBaseline "alphabetical" (use "alphabetic" or omit).
 - Do not use clipPath, transformMatrix, filters, scripts, or non-Fabric custom code.
@@ -15534,6 +15662,17 @@ Return format example:
                 if (replaceIntent) return true;
                 if (additiveIntent) return false;
                 return true;
+            }
+
+            function shouldAutoLinkFieldsForPrompt(promptText = '') {
+                if (!Array.isArray(headers) || !headers.length) return false;
+                const text = String(promptText || '').toLowerCase();
+                if (!text.trim()) return false;
+                if (text.includes('{{')) return true;
+                if (/\b(linked placeholder|linked placeholders)\b/.test(text)) return true;
+                const fieldTerms = /\b(field|fields|column|columns|header|headers|csv|table|data)\b/.test(text);
+                const templateTerms = /\b(invoice|template|layout|design|draft|create|build|generate)\b/.test(text);
+                return fieldTerms && templateTerms;
             }
 
             function buildCreativeAiRequestParts(promptText, { pageWidth, pageHeight, retry = false } = {}) {
@@ -15868,6 +16007,8 @@ Critical output rules:
 - Do NOT use clipPath, transformMatrix, filters, or custom script-like fields.
 - For text, prefer Fabric "textbox" objects (not "text" or "i-text") so wrapping works.
 - For textboxes, keep "scaleX"/"scaleY" at 1 and control size via "fontSize" + "width".
+- When imported data should appear in the template, use standalone textboxes whose full text is exactly {{Exact Column Header}} and add matching bindings.
+- Keep labels separate from linked placeholders instead of combining them in a single text object.
 - If "styles" is present on text objects, keep it as an array ("[]" when unused).
 - Never use textBaseline "alphabetical"; use "alphabetic" or omit textBaseline.
 - Ensure professional composition:
@@ -17274,9 +17415,10 @@ ${rawResponse}
                 const pageHeight = parsePositiveInt(context.pageHeight, DEFAULT_PAGE_HEIGHT);
                 const pageId = context.pageId || currentCanvasPageId();
                 const usedOids = context.usedOids instanceof Set ? context.usedOids : new Set();
+                const autoLinkFields = !!context.autoLinkFields;
                 const report = context.report && typeof context.report === 'object'
                     ? context.report
-                    : { sourceObjects: 0, keptObjects: 0, droppedObjects: 0, truncatedObjects: 0, appliedObjects: 0, failedEnliven: 0 };
+                    : { sourceObjects: 0, keptObjects: 0, droppedObjects: 0, truncatedObjects: 0, appliedObjects: 0, failedEnliven: 0, linkedFields: 0 };
                 report.sourceObjects += 1;
 
                 const safeObject = sanitizeAiFabricObjectStrict(
@@ -17329,6 +17471,9 @@ ${rawResponse}
                 }
 
                 canvas.add(obj);
+                if (autoLinkFields) {
+                    report.linkedFields += autoBindAiGeneratedObject(obj, { allowBareHeaderMatch: true });
+                }
                 if (isTextLikeCanvasObject(obj)) {
                     fitTextObjectWithinFrame(obj, getCurrentPageFrame(), 22);
                 }
@@ -17442,6 +17587,7 @@ ${rawResponse}
 
                 try {
                     const replaceCanvas = shouldReplaceCurrentCanvasForAi(prompt, !!aiAttachment);
+                    const autoLinkAiFields = shouldAutoLinkFieldsForPrompt(prompt);
                     const pageInfo = getCurrentPageDimensionsForAi();
                     const pageId = currentCanvasPageId();
                     const usedOids = new Set(
@@ -17455,7 +17601,8 @@ ${rawResponse}
                         droppedObjects: 0,
                         truncatedObjects: 0,
                         appliedObjects: 0,
-                        failedEnliven: 0
+                        failedEnliven: 0,
+                        linkedFields: 0
                     };
 
                     if (replaceCanvas) {
@@ -17476,7 +17623,8 @@ ${rawResponse}
                                     pageHeight: pageInfo.height,
                                     pageId,
                                     usedOids,
-                                    report: liveReport
+                                    report: liveReport,
+                                    autoLinkFields: autoLinkAiFields
                                 });
                                 if (liveReport.appliedObjects > 0 && liveReport.appliedObjects % 3 === 0) {
                                     syncCurrentPageStateFromCanvas();
@@ -17520,10 +17668,15 @@ ${rawResponse}
                     const partialNote = creativeSummary?.partial ? ' Partial result preserved.' : '';
                     const warningNote = creativeSummary?.warning ? ` ${creativeSummary.warning}` : '';
                     const polishNote = polished > 0 ? ' Professional polish applied.' : '';
+                    const linkNote = autoLinkAiFields
+                        ? liveReport.linkedFields > 0
+                            ? ` Linked ${liveReport.linkedFields} field placeholder${liveReport.linkedFields === 1 ? '' : 's'} automatically.`
+                            : ' No linked placeholders were detected automatically.'
+                        : '';
                     const filterNote = (filtered > 0 || failedEnliven > 0)
                         ? ` Sanitizer filtered ${filtered} and skipped ${failedEnliven}.`
                         : '';
-                    const finalMsg = `Applied ${liveReport.appliedObjects} AI object${liveReport.appliedObjects === 1 ? '' : 's'}${streamFlag}.${polishNote}${filterNote}${partialNote}${warningNote}`;
+                    const finalMsg = `Applied ${liveReport.appliedObjects} AI object${liveReport.appliedObjects === 1 ? '' : 's'}${streamFlag}.${polishNote}${linkNote}${filterNote}${partialNote}${warningNote}`;
                     thinkingEl.textContent = finalMsg;
                     aiConversation.push({ role: 'assistant', text: finalMsg });
                 } catch (error) {

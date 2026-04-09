@@ -24,7 +24,7 @@
     <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
     <!-- jsPDF -->
     <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-    <link rel="stylesheet" href="tools/tool-Invoice.css?v=20260409d" />
+    <link rel="stylesheet" href="tools/tool-Invoice.css?v=20260409e" />
     <!-- Vercel Web Analytics -->
     <script defer src="/_vercel/insights/script.js"></script>
 </head>
@@ -673,23 +673,23 @@
     <div id="invoiceAiHelperHighlight"></div>
     <div id="invoiceAiHelperModal">
         <div class="invoice-fields-helper-header">
-            <h4>Don't start from scratch</h4>
+            <h4>How would you like to start?</h4>
             <button id="closeInvoiceAiHelperBtn" class="btn ghost" type="button" title="Close AI helper">&times;</button>
         </div>
         <div class="invoice-fields-helper-content">
-            <p>Ask the AI <strong>"Create an invoice template with my table fields"</strong>.</p>
-            <p>It will use your imported column headers to draft the invoice structure for you.</p>
-            <div class="invoice-ai-helper-prompt">Create an invoice template with my table fields</div>
+            <p>Your invoice fields are ready. Choose whether you want to build the layout yourself or let AI draft it for you first.</p>
+            <p>If you use AI, it will place your imported fields as <strong>linked placeholders</strong>, not plain sample text.</p>
+            <div class="invoice-ai-helper-prompt">Linked placeholders the AI should use: {{Invoice Number}}, {{Customer Name}}, {{Due Date}}, {{Total Due}}</div>
         </div>
         <div class="invoice-ai-helper-actions">
-            <button id="invoiceAiHelperSendBtn" class="btn primary" type="button">Send Prompt</button>
-            <button id="dismissInvoiceAiHelperBtn" class="btn ghost" type="button">Create My Own Template</button>
+            <button id="invoiceAiHelperSendBtn" class="btn primary" type="button">Use AI to Create My Template</button>
+            <button id="dismissInvoiceAiHelperBtn" class="btn ghost" type="button">Create My Template from Scratch</button>
         </div>
     </div>
 
     <script type="module" src="assets/js/supabase-client.js"></script>
     <script type="module" src="assets/js/auth.js"></script>
-    <script type="module" src="tools/tool-Invoice.js?v=20260409d"></script>
+    <script type="module" src="tools/tool-Invoice.js?v=20260409e"></script>
 
     <!-- Grouped Data By Modal -->
     <div id="identifierColumnModal" class="modal-backdrop" style="z-index: 10001;">
