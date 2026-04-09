@@ -7023,15 +7023,8 @@ function showInvoiceFieldsHelper() {
 }
 
 function showInvoiceAiHelper() {
-    if (!hasInvoiceTableStructure()) return;
-    hideInvoiceFieldsHelper();
     pendingInvoiceStartChoice = false;
-    const panel = $('#aiAssistantPanel');
-    if (panel && typeof panel.scrollIntoView === 'function') {
-        panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }
-    invoiceAiHelperVisible = true;
-    positionInvoiceAiHelper();
+    showInvoiceFieldsHelper();
 }
 
 function continueAfterInvoiceFieldsHelper() {
