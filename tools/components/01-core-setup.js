@@ -3193,10 +3193,22 @@ on('#addRowBtn', 'click', () => {
     requestSaveState();
 });
 
+function getNextAvailableColumnName(existingHeaders = headers) {
+    const usedNumbers = new Set(
+        (Array.isArray(existingHeaders) ? existingHeaders : [])
+            .map((header) => {
+                const match = /^column\s+(\d+)$/i.exec(String(header || '').trim());
+                return match ? Number(match[1]) : null;
+            })
+            .filter((value) => Number.isInteger(value) && value > 0)
+    );
+    let nextNumber = 1;
+    while (usedNumbers.has(nextNumber)) nextNumber += 1;
+    return `Column ${nextNumber}`;
+}
+
 on('#addColBtn', 'click', () => {
-    const newColName = prompt('Enter new column name:', `Column ${headers.length + 1}`);
-    if (!newColName) return;
-    if (headers.includes(newColName)) { alert('Column already exists.'); return; }
+    const newColName = getNextAvailableColumnName();
     headers.push(newColName);
     dataRows.forEach(r => r[newColName] = '');
     renderCsvView($('#csvViewSearch')?.value);

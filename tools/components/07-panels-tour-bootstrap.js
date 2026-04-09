@@ -233,9 +233,9 @@
                 element: '#aiAssistantPanel'
             },
             {
-                title: "AI Setup",
-                content: `You will need a <a href="https://aistudio.google.com/apikey" target="_blank">Google AI Studio API key</a>.</p><ul><li>Login to your Google Account.</li><li>Create an API key.</li><li>Paste it in the AI panel.</li></ul>`,
-                element: '#aiApiKeyPanel'
+                title: "AI Access",
+                content: `<p>Built-in AI access is already enabled for this tool.</p><p>Open the copilot and start prompting right away. No API key is required.</p>`,
+                element: '#aiAccessNote'
             },
             {
                 title: "AI Prompting",

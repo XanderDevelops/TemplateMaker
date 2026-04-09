@@ -3913,9 +3913,12 @@ let generalPageSize = { width: DEFAULT_PAGE_WIDTH, height: DEFAULT_PAGE_HEIGHT }
 let bindings = new Map();
 let workbook, worksheet, headers = [], dataRows = [];
 let identifierColumn = '';
+let pendingIdentifierColumnChoice = '';
 let invoiceCsvPromptDismissed = false;
+let pendingIdentifierModalAfterTableClose = false;
 let pendingInvoiceFieldsHelper = false;
 let invoiceFieldsHelperVisible = false;
+let selectedCsvTableColumnIndex = -1;
 let gridEnabled = false, snapEnabled = true;
 let gridCellSize = 32;
 let historyStack = [];// history snapshots
@@ -6875,11 +6878,15 @@ function hasInvoiceDataLoaded() {
     return Array.isArray(headers) && headers.length > 0 && Array.isArray(dataRows) && dataRows.length > 0;
 }
 
+function hasInvoiceTableStructure() {
+    return Array.isArray(headers) && headers.length > 0;
+}
+
 function syncInvoiceCsvPromptState(options = {}) {
     const modal = $('#invoiceCsvPromptModal');
     if (!modal) return;
-    const hasData = hasInvoiceDataLoaded();
-    if (hasData) {
+    const hasTable = hasInvoiceTableStructure();
+    if (hasTable) {
         modal.style.display = 'none';
         invoiceCsvPromptDismissed = false;
         return;
@@ -6974,7 +6981,7 @@ function renderInvoiceCsvFieldsPanel() {
     const list = $('#invoiceCsvFieldsList');
     if (!panel || !list) return;
 
-    if (!hasInvoiceDataLoaded()) {
+    if (!hasInvoiceTableStructure()) {
         hideInvoiceFieldsHelper();
         panel.style.display = 'none';
         list.innerHTML = '';
@@ -7003,6 +7010,60 @@ function renderInvoiceCsvFieldsPanel() {
     });
 }
 
+function setSelectedCsvColumn(index = -1) {
+    selectedCsvTableColumnIndex = Number.isInteger(index) ? index : -1;
+    if (selectedCsvTableColumnIndex < 0 || selectedCsvTableColumnIndex >= headers.length) {
+        selectedCsvTableColumnIndex = -1;
+    }
+    if ($('#csvViewModal')?.style.display === 'flex') {
+        renderCsvView($('#csvViewSearch')?.value);
+    }
+}
+
+function clearSelectedCsvColumn() {
+    if (selectedCsvTableColumnIndex === -1) return;
+    selectedCsvTableColumnIndex = -1;
+    if ($('#csvViewModal')?.style.display === 'flex') {
+        renderCsvView($('#csvViewSearch')?.value);
+    }
+}
+
+window.selectCsvColumn = (index) => {
+    if (!Number.isInteger(index)) index = parseInt(index, 10);
+    if (!Number.isFinite(index)) return;
+    selectedCsvTableColumnIndex = selectedCsvTableColumnIndex === index ? -1 : index;
+    renderCsvView($('#csvViewSearch')?.value);
+};
+
+window.clearSelectedCsvColumn = clearSelectedCsvColumn;
+
+function createInvoicePlatformTable({ columnCount = 6, rowCount = 10, openModal = true } = {}) {
+    headers = Array.from({ length: columnCount }, (_, index) => `Column ${index + 1}`);
+    dataRows = Array.from({ length: rowCount }, () => {
+        const row = {};
+        headers.forEach((header) => {
+            row[header] = '';
+        });
+        return row;
+    });
+    identifierColumn = '';
+    pendingIdentifierColumnChoice = '';
+    pendingIdentifierModalAfterTableClose = true;
+    selectedCsvTableColumnIndex = -1;
+    $('#fileName').textContent = 'Table';
+    localStorage.removeItem('cachedFileData');
+    localStorage.setItem('cachedFileName', 'Table');
+    refreshIdentifierDropdown();
+    renderCsvView();
+    updateExportUI();
+    updateFloatingLinker(canvas.getActiveObject());
+    requestSaveState();
+    cacheLocalDataState();
+    syncInvoiceCsvPromptState();
+    if (openModal) openCsvView();
+    showNotification('Table created. Add your invoice data, then close the table to continue.', 'success', 2600);
+}
+
 function renderCsvView(filterText = '') {
     const wrap = $('#csvViewContent');
     const dropZone = $('#csvDropZone');
@@ -7010,10 +7071,11 @@ function renderCsvView(filterText = '') {
     const csvViewBtn = $('#csvViewBtn');
     renderInvoiceCsvFieldsPanel();
     syncInvoiceCsvPromptState();
-    if (csvViewBtn) csvViewBtn.style.display = hasInvoiceDataLoaded() ? 'inline-flex' : 'none';
+    if (csvViewBtn) csvViewBtn.style.display = 'inline-flex';
     if (!wrap) return;
 
-    if (!headers || headers.length === 0 || !dataRows || dataRows.length === 0) {
+    if (!hasInvoiceTableStructure()) {
+        selectedCsvTableColumnIndex = -1;
         wrap.style.display = 'none';
         if (dropZone) dropZone.style.display = 'flex';
         if (meta) meta.textContent = '';
@@ -7037,10 +7099,13 @@ function renderCsvView(filterText = '') {
     // Headers
     html += '<thead><tr>';
     headers.forEach((h, i) => {
-        html += `<th style="position:sticky; top:0; background:var(--panel-2); border-bottom:1px solid var(--border); border-right:1px solid var(--border); padding:0; text-align:left; min-width:140px; z-index: 10;">
+        const isSelectedColumn = selectedCsvTableColumnIndex === i;
+        const headerBackground = isSelectedColumn ? 'rgba(59,130,246,0.10)' : 'var(--panel-2)';
+        const headerBoxShadow = isSelectedColumn ? 'inset 0 0 0 2px rgba(59,130,246,0.55)' : 'none';
+        html += `<th data-col-index="${i}" onclick="selectCsvColumn(${i})" style="position:sticky; top:0; background:${headerBackground}; border-bottom:1px solid var(--border); border-right:1px solid var(--border); padding:0; text-align:left; min-width:140px; z-index: 10; box-shadow:${headerBoxShadow};">
         <div style="display:flex; align-items:center; group">
-          <div contenteditable="true" onblur="updateHeader(${i}, this.innerText)" style="flex:1; padding:12px; outline:none; font-weight: 600; color: var(--fg); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(String(h))}</div>
-          <button onclick="deleteColumn(${i})" style="background:none; border:none; color:var(--muted); cursor:pointer; padding:8px 12px; font-size:16px; transition: color 0.2s;" onmouseover="this.style.color='var(--danger)'" onmouseout="this.style.color='var(--muted)'" title="Delete Column">&times;</button>
+          <div contenteditable="true" onblur="updateHeader(${i}, this.innerText)" onclick="event.stopPropagation(); selectCsvColumn(${i})" style="flex:1; padding:12px; outline:none; font-weight: 600; color: var(--fg); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(String(h))}</div>
+          <button onclick="event.stopPropagation(); deleteColumn(${i})" style="background:none; border:none; color:var(--muted); cursor:pointer; padding:8px 12px; font-size:16px; transition: color 0.2s;" onmouseover="this.style.color='var(--danger)'" onmouseout="this.style.color='var(--muted)'" title="Delete Column">&times;</button>
         </div>
       </th>`;
     });
@@ -7058,6 +7123,7 @@ function renderCsvView(filterText = '') {
             const val = escapeHtml(String(row[h] ?? ''));
             return `<td contenteditable="true" 
             data-row-index="${dataIndex}" data-col-index="${colIndex}"
+            onclick="clearSelectedCsvColumn()"
             onblur="updateCsvCell(${dataIndex}, '${escapeHtml(h)}', this.innerText)" 
             style="border-bottom:1px solid var(--border); border-right:1px solid var(--border); padding:10px 12px; color:var(--fg); outline:none; max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: text; user-select: text;">${val}</td>`;
         }).join('') + `
@@ -7065,6 +7131,17 @@ function renderCsvView(filterText = '') {
         <button onclick="deleteRow(${dataIndex})" style="background:none; border:none; color:var(--muted); cursor:pointer; font-size:18px; padding: 4px 10px; transition: color 0.2s;" onmouseover="this.style.color='var(--danger)'" onmouseout="this.style.color='var(--muted)'" title="Delete Row">&times;</button>
       </td>
     </tr>`;
+    }
+
+    if (visibleIndices.length === 0) {
+        const emptyMessage = q && dataRows.length > 0
+            ? 'No rows match your search.'
+            : 'This table is empty. Add a row, paste data, or import a file.';
+        html += `<tr>
+    <td colspan="${headers.length + 1}" style="padding: 22px 16px; text-align: center; color: var(--muted); border-bottom:1px solid var(--border);">
+      ${escapeHtml(emptyMessage)}
+    </td>
+  </tr>`;
     }
 
     // Last row for "Add Row" button
@@ -7133,11 +7210,15 @@ window.updateHeader = (index, newVal) => {
         delete row[oldVal];
     });
     bindings.forEach((b) => { if (b.column === oldVal) b.column = newVal; });
+    if (identifierColumn === oldVal) identifierColumn = newVal;
+    if (pendingIdentifierColumnChoice === oldVal) pendingIdentifierColumnChoice = newVal;
+    refreshIdentifierDropdown();
     renderCsvView();
     requestSaveState();
 };
 
 window.deleteRow = (index) => {
+    clearSelectedCsvColumn();
     dataRows.splice(index, 1);
     renderCsvView($('#csvViewSearch')?.value);
     requestSaveState();
@@ -7153,6 +7234,11 @@ window.deleteColumn = (index) => {
             const filtered = bArr.filter(b => b.column !== colName);
             bindings.set(oid, filtered);
         });
+        if (selectedCsvTableColumnIndex === index) selectedCsvTableColumnIndex = -1;
+        else if (selectedCsvTableColumnIndex > index) selectedCsvTableColumnIndex -= 1;
+        if (identifierColumn === colName) identifierColumn = '';
+        if (pendingIdentifierColumnChoice === colName) pendingIdentifierColumnChoice = '';
+        refreshIdentifierDropdown();
         renderCsvView($('#csvViewSearch')?.value);
         requestSaveState();
     }
@@ -7167,23 +7253,69 @@ on('#addRowBtn', 'click', () => {
     requestSaveState();
 });
 
+function getNextAvailableColumnName(existingHeaders = headers) {
+    const usedNumbers = new Set(
+        (Array.isArray(existingHeaders) ? existingHeaders : [])
+            .map((header) => {
+                const match = /^column\s+(\d+)$/i.exec(String(header || '').trim());
+                return match ? Number(match[1]) : null;
+            })
+            .filter((value) => Number.isInteger(value) && value > 0)
+    );
+    let nextNumber = 1;
+    while (usedNumbers.has(nextNumber)) nextNumber += 1;
+    return `Column ${nextNumber}`;
+}
+
 on('#addColBtn', 'click', () => {
-    const newColName = prompt('Enter new column name:', `Column ${headers.length + 1}`);
-    if (!newColName) return;
-    if (headers.includes(newColName)) { alert('Column already exists.'); return; }
+    clearSelectedCsvColumn();
+    const newColName = getNextAvailableColumnName();
     headers.push(newColName);
     dataRows.forEach(r => r[newColName] = '');
+    refreshIdentifierDropdown();
     renderCsvView($('#csvViewSearch')?.value);
     requestSaveState();
 });
 
+function openClearTableConfirmModal() {
+    const modal = $('#clearTableConfirmModal');
+    if (!modal) return;
+    modal.style.display = 'flex';
+}
+
+function closeClearTableConfirmModal() {
+    const modal = $('#clearTableConfirmModal');
+    if (!modal) return;
+    modal.style.display = 'none';
+}
+
+function clearCurrentTableRows() {
+    clearSelectedCsvColumn();
+    dataRows = [];
+    pendingIdentifierColumnChoice = identifierColumn || '';
+    invoiceCsvPromptDismissed = true;
+    refreshIdentifierDropdown();
+    renderCsvView($('#csvViewSearch')?.value);
+    updateExportUI();
+    updateFloatingLinker(canvas.getActiveObject());
+    requestSaveState();
+    cacheLocalDataState();
+    closeClearTableConfirmModal();
+    showNotification('Table cleared.', 'success', 2200);
+}
+
 on('#clearDataBtn', 'click', () => {
-    if (confirm('Are you sure you want to clear all data? This will also remove your column headers.')) {
-        headers = [];
-        dataRows = [];
-        renderCsvView();
-        requestSaveState();
+    if (!hasInvoiceTableStructure()) {
+        showNotification('There is no table to clear.', 'info', 2000);
+        return;
     }
+    openClearTableConfirmModal();
+});
+on('#cancelClearTableBtn', 'click', closeClearTableConfirmModal);
+on('#closeClearTableConfirmModal', 'click', closeClearTableConfirmModal);
+on('#confirmClearTableBtn', 'click', clearCurrentTableRows);
+on('#clearTableConfirmModal', 'click', (e) => {
+    if (e.target === e.currentTarget) closeClearTableConfirmModal();
 });
 
 on('#csvViewSearch', 'input', (e) => {
@@ -7253,7 +7385,30 @@ function openCsvView() {
     renderCsvView($('#csvViewSearch')?.value);
 }
 
-function closeCsvView() { $('#csvViewModal').style.display = 'none'; }
+function closeCsvView() {
+    $('#csvViewModal').style.display = 'none';
+    clearSelectedCsvColumn();
+    if (pendingIdentifierModalAfterTableClose && hasInvoiceDataLoaded()) {
+        pendingIdentifierModalAfterTableClose = false;
+        showIdentifierColumnModal({
+            preferredMode: identifierColumn ? 'grouped' : '',
+            preferredColumn: pendingIdentifierColumnChoice || identifierColumn || ''
+        });
+    }
+}
+
+window.addEventListener('keydown', (event) => {
+    if ($('#csvViewModal')?.style.display !== 'flex') return;
+    if ((event.key !== 'Delete' && event.key !== 'Backspace') || selectedCsvTableColumnIndex < 0) return;
+    const target = event.target;
+    if (target instanceof HTMLElement) {
+        const tagName = target.tagName;
+        if (tagName === 'INPUT' || tagName === 'TEXTAREA' || tagName === 'SELECT' || target.isContentEditable) return;
+    }
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    deleteColumn(selectedCsvTableColumnIndex);
+});
 
 
 // components/02-auth-and-session.js
@@ -7342,7 +7497,7 @@ async function initializeEditor() {
     if (!localStorage.getItem('hasSeenTour')) startTour();
     initializeLeftPanelTabs();
     renderInvoiceCsvFieldsPanel();
-    syncInvoiceCsvPromptState({ forceOpen: !hasInvoiceDataLoaded() });
+    syncInvoiceCsvPromptState({ forceOpen: !hasInvoiceTableStructure() });
 
     // Bind Load Template buttons
     const bindLoader = (id) => on(id, 'click', (e) => toggleTemplateLoader(e.currentTarget));
@@ -8380,6 +8535,9 @@ function cacheLocalDataState() {
 function processFileData(arrayBuffer, fileName, opts = {}) {
     try {
         hideInvoiceFieldsHelper();
+        pendingIdentifierModalAfterTableClose = false;
+        pendingIdentifierColumnChoice = '';
+        selectedCsvTableColumnIndex = -1;
         workbook = XLSX.read(arrayBuffer, { type: 'array' });
         const sheetName = workbook.SheetNames[0];
         worksheet = workbook.Sheets[sheetName];
@@ -8391,7 +8549,6 @@ function processFileData(arrayBuffer, fileName, opts = {}) {
         console.log('Processed Data:', { headers, rowCount: dataRows.length, sample: dataRows[0] });
         $('#fileName').textContent = fileName;
         $('#unloadDataBtn').style.display = 'inline';
-        $('#csvViewBtn').style.display = 'inline-flex';
         showNotification(`Loaded "${sheetName}" with ${dataRows.length} rows.`);
         refreshInspector({ target: canvas.getActiveObject() });
         updateExportUI();
@@ -8417,6 +8574,9 @@ function processFileData(arrayBuffer, fileName, opts = {}) {
 }
 // 5. Unload data function
 function unloadData() {
+    pendingIdentifierModalAfterTableClose = false;
+    pendingIdentifierColumnChoice = '';
+    selectedCsvTableColumnIndex = -1;
     workbook = null; worksheet = null; headers = []; dataRows = []; identifierColumn = '';
     $('#fileName').textContent = 'No file selected';
     $('#unloadDataBtn').style.display = 'none';
@@ -8426,7 +8586,6 @@ function unloadData() {
     localStorage.removeItem('cachedDataRows');
     localStorage.removeItem('cachedIdentifierColumn');
     $('#csvInput').value = '';
-    $('#csvViewBtn').style.display = 'none';
     updateExportUI();
     updateFloatingLinker(null);
     renderCsvView();
@@ -8455,9 +8614,9 @@ async function loadCachedData() {
             headers = JSON.parse(cachedHeaders);
             dataRows = JSON.parse(cachedRows);
             identifierColumn = cachedIdCol || '';
+            pendingIdentifierColumnChoice = identifierColumn || '';
             $('#fileName').textContent = fileName || 'Restored Data';
             $('#unloadDataBtn').style.display = 'inline';
-            $('#csvViewBtn').style.display = 'inline-flex';
             refreshIdentifierDropdown();
             renderCsvView();
             updateExportUI();
@@ -8482,6 +8641,7 @@ on('#csvInput', 'change', async (e) => {
     processFileData(data, file.name);
 });
 on('#invoiceCsvPromptChooseBtn', 'click', () => $('#csvInput')?.click());
+on('#invoiceCsvPromptCreateTableBtn', 'click', () => createInvoicePlatformTable());
 on('#invoiceCsvFieldsChooseBtn', 'click', () => $('#csvInput')?.click());
 on('#invoiceCsvPromptSkipBtn', 'click', () => {
     invoiceCsvPromptDismissed = true;
@@ -11481,19 +11641,27 @@ canvas.on('selection:cleared', () => {
         // --- IDENTIFIER COLUMN LOGIC ---
         function refreshIdentifierDropdown() {
             const dropdown = $('#csvIdentifierColumnDropdown');
-            if (!dropdown) return;
-            dropdown.innerHTML = '<option value="">(None)</option>';
-            headers.forEach(h => {
-                const opt = document.createElement('option');
-                opt.value = h;
-                opt.textContent = h;
-                if (h === identifierColumn) opt.selected = true;
-                dropdown.appendChild(opt);
-            });
+            if (dropdown) {
+                dropdown.innerHTML = '<option value="">(None)</option>';
+                headers.forEach(h => {
+                    const opt = document.createElement('option');
+                    opt.value = h;
+                    opt.textContent = h;
+                    if (h === identifierColumn) opt.selected = true;
+                    dropdown.appendChild(opt);
+                });
+            }
+
+            const identifierModeModalOpen = $('#identifierColumnModal')?.style.display === 'flex';
+            const identifierPreviewModalOpen = $('#identifierGroupedPreviewModal')?.style.display === 'flex';
+            if (identifierModeModalOpen || identifierPreviewModalOpen) {
+                populateIdentifierColumnOptions(getPreferredIdentifierColumnChoice());
+            }
         }
 
         on('#csvIdentifierColumnDropdown', 'change', (e) => {
             identifierColumn = e.target.value;
+            pendingIdentifierColumnChoice = identifierColumn || '';
             requestSaveState();
         });
 
@@ -11514,6 +11682,18 @@ canvas.on('selection:cleared', () => {
                 if (match) return match;
             }
             return headers[0] || '';
+        }
+
+        function getValidIdentifierColumnChoice(columnName = '') {
+            return columnName && headers.includes(columnName) ? columnName : '';
+        }
+
+        function getPreferredIdentifierColumnChoice(preferredColumn = '') {
+            return getValidIdentifierColumnChoice(preferredColumn)
+                || getValidIdentifierColumnChoice(pendingIdentifierColumnChoice)
+                || getValidIdentifierColumnChoice(identifierColumn)
+                || guessPreferredIdentifierColumn()
+                || '';
         }
 
         function getIdentifierColumnStats(columnName) {
@@ -11576,21 +11756,16 @@ canvas.on('selection:cleared', () => {
         }
 
         function renderIdentifierGroupedDataPreview(columnName) {
-            const previewPanel = $('#identifierGroupedPreviewPanel');
-            const previewBody = $('#identifierGroupedDataPreview');
-            if (!previewPanel || !previewBody) return;
+            const previewBody = $('#identifierGroupedPreviewBody');
+            if (!previewBody) return;
 
-            const modal = $('#identifierColumnModal');
-            const selectedMode = modal?.dataset.selectedMode || '';
-            if (selectedMode !== 'grouped' || !columnName) {
-                previewPanel.classList.add('is-hidden');
-                previewBody.innerHTML = '';
+            if (!columnName) {
+                previewBody.innerHTML = '<p class="identifier-grouped-preview-empty">Choose a column to preview how your invoice rows will be grouped.</p>';
                 return;
             }
 
             const previewGroups = getIdentifierPreviewGroups(columnName);
             if (!previewGroups.length) {
-                previewPanel.classList.remove('is-hidden');
                 previewBody.innerHTML = '<p class="identifier-grouped-preview-empty">No preview is available because this column does not contain any filled values yet.</p>';
                 return;
             }
@@ -11642,11 +11817,20 @@ canvas.on('selection:cleared', () => {
                 ? ` Showing the first ${groupsToShow.length} group(s) out of ${previewGroups.length}.`
                 : '';
 
-            previewPanel.classList.remove('is-hidden');
             previewBody.innerHTML = `
                 <p class="identifier-grouped-preview-note">Previewing ${totalRows} row(s) grouped by <strong>${escapeHtml(String(columnName))}</strong>.${moreGroupsText}</p>
                 <div class="identifier-grouped-preview-grid">${cardsHtml}</div>
             `;
+        }
+
+        function syncIdentifierColumnSelects(columnName = '') {
+            const nextColumn = getValidIdentifierColumnChoice(columnName);
+            ['#identifierColumnSelect', '#identifierPreviewColumnSelect'].forEach((selector) => {
+                const select = $(selector);
+                if (!select) return;
+                const hasOption = Array.from(select.options).some(option => option.value === nextColumn);
+                select.value = hasOption ? nextColumn : '';
+            });
         }
 
         function setIdentifierModeSelection(mode = '') {
@@ -11665,30 +11849,62 @@ canvas.on('selection:cleared', () => {
 
             const modal = $('#identifierColumnModal');
             if (modal) modal.dataset.selectedMode = mode;
-            updateIdentifierConfirmButton();
+            if (mode === 'grouped' && !getValidIdentifierColumnChoice(pendingIdentifierColumnChoice)) {
+                pendingIdentifierColumnChoice = getPreferredIdentifierColumnChoice();
+                syncIdentifierColumnSelects(pendingIdentifierColumnChoice);
+            }
+            updateIdentifierColumnPreview();
+            updateIdentifierGroupedPreview();
         }
 
         function updateIdentifierColumnPreview() {
             const select = $('#identifierColumnSelect');
             const preview = $('#identifierColumnPreview');
             if (!select || !preview) return;
-            if (select.disabled) {
+            const selectedMode = $('#identifierColumnModal')?.dataset.selectedMode || '';
+            if (selectedMode !== 'grouped' || select.disabled) {
                 preview.textContent = 'Select the Grouped Data option to enable this field.';
-                renderIdentifierGroupedDataPreview('');
                 updateIdentifierConfirmButton();
                 return;
             }
-            const columnName = select.value;
+            const columnName = getValidIdentifierColumnChoice(select.value) || getValidIdentifierColumnChoice(pendingIdentifierColumnChoice);
             if (!columnName) {
-                preview.textContent = '';
-                renderIdentifierGroupedDataPreview('');
+                preview.textContent = 'Choose the column that identifies each invoice.';
                 updateIdentifierConfirmButton();
                 return;
             }
             const stats = getIdentifierColumnStats(columnName);
             preview.textContent = `Grouping by "${columnName}" would produce ${stats.uniqueCount} invoice group(s), with ${stats.multiRowCount} group(s) containing multiple rows.`;
-            renderIdentifierGroupedDataPreview(columnName);
             updateIdentifierConfirmButton();
+        }
+
+        function updateIdentifierGroupedPreview() {
+            const select = $('#identifierPreviewColumnSelect');
+            const summary = $('#identifierPreviewColumnSummary');
+            const button = $('#confirmIdentifierGroupedPreviewBtn');
+            if (!select || !summary || !button) return;
+
+            const columnName = getValidIdentifierColumnChoice(select.value) || getValidIdentifierColumnChoice(pendingIdentifierColumnChoice);
+            if (!columnName) {
+                summary.textContent = 'Choose the column that identifies each invoice to preview your grouped rows.';
+                renderIdentifierGroupedDataPreview('');
+                button.disabled = true;
+                button.textContent = 'Choose Grouping Column';
+                return;
+            }
+
+            const stats = getIdentifierColumnStats(columnName);
+            summary.textContent = `Grouping by "${columnName}" would produce ${stats.uniqueCount} invoice group(s), with ${stats.multiRowCount} group(s) containing multiple rows.`;
+            renderIdentifierGroupedDataPreview(columnName);
+            button.disabled = false;
+            button.textContent = `Use Grouped Data by ${columnName}`;
+        }
+
+        function setPendingIdentifierColumnChoice(columnName = '') {
+            pendingIdentifierColumnChoice = getValidIdentifierColumnChoice(columnName) || '';
+            syncIdentifierColumnSelects(pendingIdentifierColumnChoice);
+            updateIdentifierColumnPreview();
+            updateIdentifierGroupedPreview();
         }
 
         function updateIdentifierConfirmButton() {
@@ -11705,14 +11921,14 @@ canvas.on('selection:cleared', () => {
             }
 
             if (selectedMode === 'grouped') {
-                const nextIdentifierColumn = select?.value || '';
+                const nextIdentifierColumn = getValidIdentifierColumnChoice(select?.value) || getValidIdentifierColumnChoice(pendingIdentifierColumnChoice);
                 if (!nextIdentifierColumn) {
                     button.disabled = true;
                     button.textContent = 'Choose Grouping Column';
                     return;
                 }
                 button.disabled = false;
-                button.textContent = `Use Grouped Data by ${nextIdentifierColumn}`;
+                button.textContent = 'Preview Grouped Invoices';
                 return;
             }
 
@@ -11720,34 +11936,70 @@ canvas.on('selection:cleared', () => {
             button.textContent = 'Choose a Mode to Continue';
         }
 
-        function populateIdentifierColumnOptions() {
-            const select = $('#identifierColumnSelect');
-            if (!select) return;
-            select.innerHTML = '';
-            const placeholderOption = document.createElement('option');
-            placeholderOption.value = '';
-            placeholderOption.textContent = 'Select a grouping column';
-            select.appendChild(placeholderOption);
-            headers.forEach(header => {
-                const option = document.createElement('option');
-                option.value = header;
-                option.textContent = header;
-                select.appendChild(option);
+        function populateIdentifierColumnOptions(preferredColumn = '') {
+            ['#identifierColumnSelect', '#identifierPreviewColumnSelect'].forEach((selector) => {
+                const select = $(selector);
+                if (!select) return;
+                select.innerHTML = '';
+                const placeholderOption = document.createElement('option');
+                placeholderOption.value = '';
+                placeholderOption.textContent = 'Select a grouping column';
+                select.appendChild(placeholderOption);
+                headers.forEach(header => {
+                    const option = document.createElement('option');
+                    option.value = header;
+                    option.textContent = header;
+                    select.appendChild(option);
+                });
             });
-            const preferred = identifierColumn && headers.includes(identifierColumn)
-                ? identifierColumn
-                : '';
-            select.value = preferred;
+
+            pendingIdentifierColumnChoice = getPreferredIdentifierColumnChoice(preferredColumn);
+            syncIdentifierColumnSelects(pendingIdentifierColumnChoice);
             updateIdentifierColumnPreview();
+            updateIdentifierGroupedPreview();
         }
 
-        function showIdentifierColumnModal() {
+        function hideIdentifierModalFlow(options = {}) {
+            const { flushHelper = false } = options;
+            const modal = $('#identifierColumnModal');
+            const previewModal = $('#identifierGroupedPreviewModal');
+            if (modal) modal.style.display = 'none';
+            if (previewModal) previewModal.style.display = 'none';
+            setIdentifierModeSelection('');
+            if (flushHelper) flushInvoiceFieldsHelper();
+        }
+
+        function showIdentifierColumnModal(options = {}) {
             const modal = $('#identifierColumnModal');
             if (!modal) return;
-            populateIdentifierColumnOptions();
-            setIdentifierModeSelection(identifierColumn ? 'grouped' : '');
-            updateIdentifierColumnPreview();
+            const previewModal = $('#identifierGroupedPreviewModal');
+            const preferredMode = ['single', 'grouped'].includes(options.preferredMode)
+                ? options.preferredMode
+                : (identifierColumn ? 'grouped' : '');
+            const preferredColumn = preferredMode === 'grouped'
+                ? getPreferredIdentifierColumnChoice(options.preferredColumn)
+                : getValidIdentifierColumnChoice(options.preferredColumn) || getValidIdentifierColumnChoice(identifierColumn);
+
+            populateIdentifierColumnOptions(preferredColumn);
+            setIdentifierModeSelection(preferredMode);
+            if (previewModal) previewModal.style.display = 'none';
             modal.style.display = 'flex';
+        }
+
+        function openIdentifierGroupedPreviewModal(preferredColumn = '') {
+            const previewModal = $('#identifierGroupedPreviewModal');
+            if (!previewModal) return;
+
+            const nextIdentifierColumn = getPreferredIdentifierColumnChoice(preferredColumn);
+            if (!nextIdentifierColumn) {
+                showNotification('Choose a column to group your invoices by.', 'info', 2200);
+                return;
+            }
+
+            populateIdentifierColumnOptions(nextIdentifierColumn);
+            $('#identifierColumnModal').style.display = 'none';
+            previewModal.style.display = 'flex';
+            updateIdentifierGroupedPreview();
         }
 
         const bindIdentifierModeCard = (selector, handler) => {
@@ -11763,11 +12015,9 @@ canvas.on('selection:cleared', () => {
 
         bindIdentifierModeCard('#identifierSingleRowCard', () => {
             setIdentifierModeSelection('single');
-            updateIdentifierColumnPreview();
         });
         bindIdentifierModeCard('#identifierGroupedCard', () => {
             setIdentifierModeSelection('grouped');
-            updateIdentifierColumnPreview();
             const select = $('#identifierColumnSelect');
             if (!select) return;
             window.requestAnimationFrame(() => {
@@ -11782,36 +12032,67 @@ canvas.on('selection:cleared', () => {
             });
         });
 
-        on('#identifierColumnSelect', 'change', updateIdentifierColumnPreview);
+        on('#identifierColumnSelect', 'change', (e) => {
+            setPendingIdentifierColumnChoice(e.target.value);
+            const selectedMode = $('#identifierColumnModal')?.dataset.selectedMode || '';
+            const nextIdentifierColumn = getValidIdentifierColumnChoice(e.target.value) || getValidIdentifierColumnChoice(pendingIdentifierColumnChoice);
+            if (selectedMode !== 'grouped' || !nextIdentifierColumn) return;
+            window.requestAnimationFrame(() => {
+                openIdentifierGroupedPreviewModal(nextIdentifierColumn);
+            });
+        });
+        on('#identifierPreviewColumnSelect', 'change', (e) => setPendingIdentifierColumnChoice(e.target.value));
         on('#confirmIdentifierColumnBtn', 'click', () => {
             const selectedMode = $('#identifierColumnModal')?.dataset.selectedMode || '';
             const select = $('#identifierColumnSelect');
             if (selectedMode === 'grouped') {
-                const nextIdentifierColumn = select ? select.value : '';
+                const nextIdentifierColumn = getValidIdentifierColumnChoice(select?.value) || getValidIdentifierColumnChoice(pendingIdentifierColumnChoice);
                 if (!nextIdentifierColumn) {
                     showNotification('Choose a column to group your invoices by.', 'info', 2200);
                     return;
                 }
-                identifierColumn = nextIdentifierColumn;
+                setPendingIdentifierColumnChoice(nextIdentifierColumn);
+                openIdentifierGroupedPreviewModal(nextIdentifierColumn);
+                return;
             } else if (selectedMode === 'single') {
                 identifierColumn = '';
+                pendingIdentifierColumnChoice = '';
             } else {
                 showNotification('Choose one of the two invoice data modes to continue.', 'info', 2200);
                 return;
             }
             refreshIdentifierDropdown();
             requestSaveState();
-            $('#identifierColumnModal').style.display = 'none';
-            setIdentifierModeSelection('');
-            renderIdentifierGroupedDataPreview('');
-            flushInvoiceFieldsHelper();
+            hideIdentifierModalFlow({ flushHelper: true });
+        });
+
+        on('#confirmIdentifierGroupedPreviewBtn', 'click', () => {
+            const nextIdentifierColumn = getValidIdentifierColumnChoice($('#identifierPreviewColumnSelect')?.value)
+                || getValidIdentifierColumnChoice(pendingIdentifierColumnChoice);
+            if (!nextIdentifierColumn) {
+                showNotification('Choose a column to group your invoices by.', 'info', 2200);
+                return;
+            }
+            identifierColumn = nextIdentifierColumn;
+            pendingIdentifierColumnChoice = nextIdentifierColumn;
+            refreshIdentifierDropdown();
+            requestSaveState();
+            hideIdentifierModalFlow({ flushHelper: true });
+        });
+
+        on('#backIdentifierGroupedPreviewBtn', 'click', () => {
+            showIdentifierColumnModal({
+                preferredMode: 'grouped',
+                preferredColumn: $('#identifierPreviewColumnSelect')?.value || pendingIdentifierColumnChoice || identifierColumn || ''
+            });
         });
 
         on('#closeIdentifierColumnModal', 'click', () => {
-            $('#identifierColumnModal').style.display = 'none';
-            setIdentifierModeSelection('');
-            renderIdentifierGroupedDataPreview('');
-            flushInvoiceFieldsHelper();
+            hideIdentifierModalFlow({ flushHelper: true });
+        });
+
+        on('#closeIdentifierGroupedPreviewModal', 'click', () => {
+            hideIdentifierModalFlow({ flushHelper: true });
         });
 
         function openDataLinksManager() {
@@ -13433,6 +13714,7 @@ window.addEventListener('keyup', e => {
             ]);
             const AI_STRICT_ALLOWED_TEXT_ALIGNS = new Set(['left', 'center', 'right', 'justify']);
             const AI_MODEL_NAME = 'gemini-2.5-flash';
+            const STATIC_GOOGLE_AI_API_KEY = 'AIzaSyDhC0C59ViLC6bnzLZoMqAmXo_ozIYkTVI';
             const AI_MODEL_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${AI_MODEL_NAME}:generateContent`;
             const AI_MODEL_STREAM_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${AI_MODEL_NAME}:streamGenerateContent?alt=sse`;
             const AI_CREATIVE_REQUEST_TIMEOUT_MS = 90000;
@@ -13454,8 +13736,7 @@ window.addEventListener('keyup', e => {
             let aiConversation = [];
             let aiAttachment = null;
 
-            const savedApiKey = localStorage.getItem('googleAiApiKey');
-            if (savedApiKey) aiApiKeyInput.value = savedApiKey;
+            aiApiKeyInput.value = STATIC_GOOGLE_AI_API_KEY;
 
             function setAiBusy(isBusy) {
                 aiSendBtn.disabled = isBusy;
@@ -17012,18 +17293,12 @@ ${rawResponse}
             }
 
             async function handleAiSend() {
-                const apiKey = aiApiKeyInput.value.trim();
+                const apiKey = STATIC_GOOGLE_AI_API_KEY;
                 const prompt = aiPromptInput.value.trim();
-                if (!apiKey) {
-                    alert('Please enter your Google AI Studio API key.');
-                    return;
-                }
                 if (!prompt && !aiAttachment) {
                     alert('Please enter a message or attach a file.');
                     return;
                 }
-
-                localStorage.setItem('googleAiApiKey', apiKey);
 
                 const userLine = prompt || '(Attachment only)';
                 appendAiChatMessage('user', userLine);
@@ -17423,9 +17698,9 @@ ${rawResponse}
                 element: '#aiAssistantPanel'
             },
             {
-                title: "AI Setup",
-                content: `You will need a <a href="https://aistudio.google.com/apikey" target="_blank">Google AI Studio API key</a>.</p><ul><li>Login to your Google Account.</li><li>Create an API key.</li><li>Paste it in the AI panel.</li></ul>`,
-                element: '#aiApiKeyPanel'
+                title: "AI Access",
+                content: `<p>Built-in AI access is already enabled for this tool.</p><p>Open the copilot and start prompting right away. No API key is required.</p>`,
+                element: '#aiAccessNote'
             },
             {
                 title: "AI Prompting",

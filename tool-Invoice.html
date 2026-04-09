@@ -16,7 +16,7 @@
     <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
     <!-- jsPDF -->
     <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-    <link rel="stylesheet" href="tools/tool-Invoice.css?v=20260409a" />
+    <link rel="stylesheet" href="tools/tool-Invoice.css?v=20260409c" />
     <!-- Vercel Web Analytics -->
     <script defer src="/_vercel/insights/script.js"></script>
 </head>
@@ -73,20 +73,20 @@
 
             <span id="saveStatus" class="muted" style="font-size: 11px;"></span>
             <button id="start-tour-btn" class="btn ghost" title="Tutorial">?</button>
+            <button id="csvViewBtn" class="btn ghost" title="Open table" style="font-size: 11px;">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 3h18v18H3z"></path>
+                    <path d="M3 9h18"></path>
+                    <path d="M9 21V9"></path>
+                </svg>
+                Table
+            </button>
             <label for="csvInput" class="btn ghost" style="font-size: 11px;"><svg width="12" height="12"
                     viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                     <polyline points="17 8 12 3 7 8" />
                     <line x1="12" y1="3" x2="12" y2="15" />
                 </svg> Load Data</label>
-            <button id="csvViewBtn" class="btn ghost" title="View/Edit data" style="font-size: 11px;">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M3 3h18v18H3z"></path>
-                    <path d="M3 9h18"></path>
-                    <path d="M9 21V9"></path>
-                </svg>
-                CSV Data
-            </button>
             <input id="csvInput" type="file" accept=".csv,.xlsx,.xls" style="display:none;" />
             <span id="fileName" class="muted"
                 style="max-width: 80px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 10px;"></span>
@@ -242,9 +242,10 @@
                                     <button id="aiResetChatBtn" class="btn ghost" type="button">Reset Chat</button>
                                 </div>
 
-                                <div class="stack" style="gap:8px;">
-                                    <label for="aiApiKeyPanel">Google AI Studio API Key</label>
-                                    <input type="password" id="aiApiKeyPanel" placeholder="Paste API key" />
+                                <div id="aiAccessNote" class="ai-access-note" aria-live="polite">
+                                    <strong>AI access is built in.</strong>
+                                    <p class="muted">No API key is required for the invoice copilot.</p>
+                                    <input type="hidden" id="aiApiKeyPanel" value="" />
                                 </div>
 
                                 <div id="aiChatLog" class="ai-chat-log">
@@ -480,7 +481,7 @@
     <div id="tableCreatorModal" class="modal-backdrop">
         <div class="modal" style="width: 360px;">
             <div class="row" style="justify-content:space-between;align-items:center;gap:12px;">
-                <h3>Create Table</h3><button id="closeTableCreator" class="btn ghost">&times;</button>
+                <h3>Create New Table</h3><button id="closeTableCreator" class="btn ghost">&times;</button>
             </div>
             <div class="stack" style="margin-top: 16px; gap: 12px;">
                 <div class="stack"><label for="tableRows">Rows</label><input type="number" id="tableRows" value="3"
@@ -496,7 +497,7 @@
             </div>
             <div class="row" style="margin-top: 24px; justify-content:flex-end; gap: 8px;">
                 <button id="cancelTableCreate" class="btn ghost">Cancel</button>
-                <button id="confirmTableCreate" class="btn">Create Table</button>
+                <button id="confirmTableCreate" class="btn">Create New Table</button>
             </div>
         </div>
     </div>
@@ -530,7 +531,7 @@
             <div class="row"
                 style="justify-content:space-between;align-items:center;gap:12px; padding-bottom: 12px; border-bottom: 1px solid var(--border);">
                 <div class="row" style="gap: 12px; align-items: center;">
-                    <h3 style="margin: 0;">Data Manager</h3>
+                    <h3 style="margin: 0;">Table</h3>
                     <span id="csvViewMeta" class="muted" style="font-size: 11px;"></span>
                 </div>
                 <div class="row" style="gap: 8px;">
@@ -622,9 +623,26 @@
                 <h3>Upload Invoice Data</h3>
                 <p class="muted" style="margin: 0;">Start by selecting the CSV or Excel file that contains your invoice fields. After loading it, you can drag field names from the Inspector onto the canvas.</p>
             </div>
-            <div class="row" style="margin-top: 20px; justify-content:flex-end; gap: 8px;">
+            <div class="invoice-csv-prompt-actions">
+                <button id="invoiceCsvPromptChooseBtn" class="btn invoice-csv-prompt-excel-btn" type="button">Upload Excel Table</button>
+                <button id="invoiceCsvPromptCreateTableBtn" class="btn ghost invoice-csv-prompt-create-btn" type="button">Create New Table</button>
                 <button id="invoiceCsvPromptSkipBtn" class="btn ghost" type="button">Continue Without Data</button>
-                <button id="invoiceCsvPromptChooseBtn" class="btn primary" type="button">Choose CSV File</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="clearTableConfirmModal" class="modal-backdrop" style="z-index: 10003;">
+        <div class="modal table-clear-confirm-modal">
+            <div class="stack" style="gap: 10px;">
+                <div class="row" style="justify-content:space-between;align-items:center;gap:12px;">
+                    <h3 style="margin: 0;">Clear Table?</h3>
+                    <button id="closeClearTableConfirmModal" class="btn ghost" type="button">&times;</button>
+                </div>
+                <p class="muted" style="margin: 0;">This will remove all rows from the current table and keep your columns in place.</p>
+            </div>
+            <div class="row" style="margin-top: 18px; justify-content:flex-end; gap: 8px;">
+                <button id="cancelClearTableBtn" class="btn ghost" type="button">Cancel</button>
+                <button id="confirmClearTableBtn" class="btn table-clear-confirm-btn" type="button">Clear Table</button>
             </div>
         </div>
     </div>
@@ -646,7 +664,7 @@
 
     <script type="module" src="assets/js/supabase-client.js"></script>
     <script type="module" src="assets/js/auth.js"></script>
-    <script type="module" src="tools/tool-Invoice.js?v=20260409a"></script>
+    <script type="module" src="tools/tool-Invoice.js?v=20260409c"></script>
 
     <!-- Grouped Data By Modal -->
     <div id="identifierColumnModal" class="modal-backdrop" style="z-index: 10001;">
@@ -666,6 +684,7 @@
                         <div class="identifier-mode-copy">
                             <h4>One Row Per Invoice</h4>
                             <p class="muted">Use this when each row already contains one full invoice, including line-item fields spread across separate columns.</p>
+                            <div class="identifier-mode-copy-spacer" aria-hidden="true"></div>
                         </div>
                         <div class="identifier-mode-example">
                             <table class="identifier-preview-table identifier-preview-table--one-row">
@@ -829,18 +848,41 @@
                     </div>
                 </div>
 
-                <div id="identifierGroupedPreviewPanel" class="identifier-grouped-preview stack is-hidden" style="gap: 10px;">
+                <div class="row" style="margin-top: 12px; justify-content: flex-end; gap: 10px;">
+                    <button id="confirmIdentifierColumnBtn" class="btn primary" type="button" disabled>Choose a Mode to Continue</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="identifierGroupedPreviewModal" class="modal-backdrop" style="z-index: 10002;">
+        <div class="modal" style="width: 980px; max-width: 94vw;">
+            <div class="row" style="justify-content:space-between;align-items:center;gap:12px;">
+                <h3>Preview Grouped Invoices</h3>
+                <button id="closeIdentifierGroupedPreviewModal" class="btn ghost">&times;</button>
+            </div>
+
+            <div class="stack" style="margin-top: 12px; gap: 14px;">
+                <div class="stack" style="gap: 8px;">
+                    <label for="identifierPreviewColumnSelect">By what column would you like to group your invoices?</label>
+                    <select id="identifierPreviewColumnSelect" class="btn ghost identifier-column-select" style="text-align: left;"></select>
+                    <div id="identifierPreviewColumnSummary" class="muted"
+                        style="font-size: 12px; font-style: italic; min-height: 1.5em;"></div>
+                </div>
+
+                <div class="identifier-grouped-preview stack" style="gap: 10px;">
                     <div class="stack" style="gap: 6px;">
                         <h4 style="margin: 0;">Preview with Your Data</h4>
                         <p class="muted" style="margin: 0; font-size: 13px;">
                             This preview uses your uploaded CSV/Excel rows so you can confirm how invoices will be grouped before continuing.
                         </p>
                     </div>
-                    <div id="identifierGroupedDataPreview" class="identifier-grouped-preview-body"></div>
+                    <div id="identifierGroupedPreviewBody" class="identifier-grouped-preview-body"></div>
                 </div>
 
-                <div class="row" style="margin-top: 12px; justify-content: flex-end; gap: 10px;">
-                    <button id="confirmIdentifierColumnBtn" class="btn primary" type="button" disabled>Choose a Mode to Continue</button>
+                <div class="row" style="margin-top: 12px; justify-content:space-between; gap: 10px;">
+                    <button id="backIdentifierGroupedPreviewBtn" class="btn ghost" type="button">Go Back</button>
+                    <button id="confirmIdentifierGroupedPreviewBtn" class="btn primary" type="button" disabled>Use Grouped Data</button>
                 </div>
             </div>
         </div>

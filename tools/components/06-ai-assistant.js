@@ -72,6 +72,7 @@
             ]);
             const AI_STRICT_ALLOWED_TEXT_ALIGNS = new Set(['left', 'center', 'right', 'justify']);
             const AI_MODEL_NAME = 'gemini-2.5-flash';
+            const STATIC_GOOGLE_AI_API_KEY = 'AIzaSyDhC0C59ViLC6bnzLZoMqAmXo_ozIYkTVI';
             const AI_MODEL_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${AI_MODEL_NAME}:generateContent`;
             const AI_MODEL_STREAM_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${AI_MODEL_NAME}:streamGenerateContent?alt=sse`;
             const AI_CREATIVE_REQUEST_TIMEOUT_MS = 90000;
@@ -93,8 +94,7 @@
             let aiConversation = [];
             let aiAttachment = null;
 
-            const savedApiKey = localStorage.getItem('googleAiApiKey');
-            if (savedApiKey) aiApiKeyInput.value = savedApiKey;
+            aiApiKeyInput.value = STATIC_GOOGLE_AI_API_KEY;
 
             function setAiBusy(isBusy) {
                 aiSendBtn.disabled = isBusy;
@@ -3885,18 +3885,12 @@ ${rawResponse}
             }
 
             async function handleAiSend() {
-                const apiKey = aiApiKeyInput.value.trim();
+                const apiKey = STATIC_GOOGLE_AI_API_KEY;
                 const prompt = aiPromptInput.value.trim();
-                if (!apiKey) {
-                    alert('Please enter your Google AI Studio API key.');
-                    return;
-                }
                 if (!prompt && !aiAttachment) {
                     alert('Please enter a message or attach a file.');
                     return;
                 }
-
-                localStorage.setItem('googleAiApiKey', apiKey);
 
                 const userLine = prompt || '(Attachment only)';
                 appendAiChatMessage('user', userLine);
