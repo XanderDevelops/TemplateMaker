@@ -16,7 +16,7 @@
     <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
     <!-- jsPDF -->
     <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-    <link rel="stylesheet" href="tools/tool.css?v=20260220h" />
+    <link rel="stylesheet" href="tools/tool-Invoice.css?v=20260409a" />
 </head>
 
 <body class="light-mode">
@@ -292,10 +292,9 @@
             <div class="canvas-container-wrapper">
                 <div id="canvasPagesPanel" class="canvas-pages-panel">
                     <div class="canvas-pages-header-row">
-                        <button id="toggleCanvasPagesPanelBtn" class="canvas-pages-header" type="button" aria-expanded="false"
-                            title="Expand pages panel">
+                        <div id="canvasPagesTitle" class="canvas-pages-header canvas-pages-title" role="heading" aria-level="2">
                             <span class="label">Pages</span>
-                        </button>
+                        </div>
                         <button id="hideCanvasPagesPanelBtn" class="btn ghost canvas-pages-hide-btn" type="button" title="Hide pages panel">Hide</button>
                     </div>
                     <div id="canvasPagesStrip" class="canvas-pages-strip"></div>
@@ -321,6 +320,16 @@
                     </svg></button>
                 <div id="inspectorWrap">
                     <h3>Inspector</h3>
+                    <div id="invoiceCsvFieldsPanel" class="invoice-csv-fields-panel" style="display:none;">
+                        <div class="invoice-csv-fields-header">
+                            <div>
+                                <h4>CSV Fields</h4>
+                                <p class="muted">Drag a field onto the canvas to create a linked text placeholder.</p>
+                            </div>
+                            <button id="invoiceCsvFieldsChooseBtn" class="btn ghost" type="button">Choose CSV</button>
+                        </div>
+                        <div id="invoiceCsvFieldsList" class="invoice-csv-fields-list"></div>
+                    </div>
                     <div id="noSelection">
                         <h4>Page Properties</h4>
                         <div class="stack" id="pageInspector">
@@ -605,32 +614,229 @@
         </div>
     </div>
 
+    <div id="invoiceCsvPromptModal" class="modal-backdrop">
+        <div class="modal" style="width: 440px;">
+            <div class="stack" style="gap: 12px;">
+                <h3>Upload Invoice Data</h3>
+                <p class="muted" style="margin: 0;">Start by selecting the CSV or Excel file that contains your invoice fields. After loading it, you can drag field names from the Inspector onto the canvas.</p>
+            </div>
+            <div class="row" style="margin-top: 20px; justify-content:flex-end; gap: 8px;">
+                <button id="invoiceCsvPromptSkipBtn" class="btn ghost" type="button">Continue Without Data</button>
+                <button id="invoiceCsvPromptChooseBtn" class="btn primary" type="button">Choose CSV File</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="invoiceFieldsHelperHighlight"></div>
+    <div id="invoiceFieldsHelperModal">
+        <div class="invoice-fields-helper-header">
+            <h4>Drag These CSV Fields</h4>
+            <button id="closeInvoiceFieldsHelperBtn" class="btn ghost" type="button" title="Close helper">&times;</button>
+        </div>
+        <div class="invoice-fields-helper-content">
+            <p>These are the column names from your imported CSV/Excel file.</p>
+            <p>Drag any field onto the canvas to create a linked placeholder. When you export or print, each linked field will be replaced with the matching value from that row in your dataset.</p>
+        </div>
+        <div class="row" style="justify-content:flex-end;">
+            <button id="dismissInvoiceFieldsHelperBtn" class="btn primary" type="button">Got It</button>
+        </div>
+    </div>
+
     <script type="module" src="assets/js/supabase-client.js"></script>
     <script type="module" src="assets/js/auth.js"></script>
-    <script type="module" src="tools/tool.js?v=20260220l"></script>
+    <script type="module" src="tools/tool-Invoice.js?v=20260409a"></script>
 
     <!-- Grouped Data By Modal -->
     <div id="identifierColumnModal" class="modal-backdrop" style="z-index: 10001;">
-        <div class="modal" style="width: 500px;">
+        <div class="modal" style="width: 980px; max-width: 94vw;">
             <div class="row" style="justify-content:space-between;align-items:center;gap:12px;">
-                <h3>Grouped Data By</h3>
+                <h3>Choose Invoice Data Mode</h3>
                 <button id="closeIdentifierColumnModal" class="btn ghost">&times;</button>
             </div>
-            <div class="stack" style="margin-top: 12px; gap: 10px;">
+
+            <div id="identifierModeStep" class="identifier-modal-step stack" style="margin-top: 12px; gap: 14px;">
                 <p class="muted" style="margin: 0; font-size: 14px;">
-                    Optional. Use this when multiple rows belong to one entity (product/order/etc.) so one page can use
-                    related rows.
+                    Choose the structure that matches your invoice file. Click anywhere on an option to select it.
                 </p>
-                <div class="stack">
-                    <label for="identifierColumnSelect">Select column to group data by:</label>
-                    <select id="identifierColumnSelect" class="btn ghost" style="text-align: left;"></select>
+
+                <div class="identifier-mode-options">
+                    <div id="identifierSingleRowCard" class="identifier-mode-card" role="button" tabindex="0">
+                        <div class="identifier-mode-copy">
+                            <h4>One Row Per Invoice</h4>
+                            <p class="muted">Use this when each row already contains one full invoice, including line-item fields spread across separate columns.</p>
+                        </div>
+                        <div class="identifier-mode-example">
+                            <table class="identifier-preview-table identifier-preview-table--one-row">
+                                <thead>
+                                    <tr>
+                                        <th>Invoice No.</th>
+                                        <th>Customer Name</th>
+                                        <th class="accent-green">Item 1</th>
+                                        <th class="accent-green">Description 1</th>
+                                        <th class="accent-green">Price 1</th>
+                                        <th class="accent-orange">Item 2</th>
+                                        <th class="accent-orange">Description 2</th>
+                                        <th class="accent-orange">Price 2</th>
+                                        <th class="accent-blue">Item 3</th>
+                                        <th class="accent-blue">Description 3</th>
+                                        <th class="accent-blue">Price 3</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>001</td>
+                                        <td>James</td>
+                                        <td class="accent-green">Item 1</td>
+                                        <td class="accent-green">This is James Item 1</td>
+                                        <td class="accent-green">$ 15.00</td>
+                                        <td class="accent-orange">Item 2</td>
+                                        <td class="accent-orange">This is James Item 2</td>
+                                        <td class="accent-orange">$ 12.00</td>
+                                        <td class="accent-blue">Item 3</td>
+                                        <td class="accent-blue">This is James Item 3</td>
+                                        <td class="accent-blue">$ 12.00</td>
+                                    </tr>
+                                    <tr>
+                                        <td>002</td>
+                                        <td>John</td>
+                                        <td class="accent-green">Item</td>
+                                        <td class="accent-green">This is John Item 1</td>
+                                        <td class="accent-green">$ 27.00</td>
+                                        <td class="accent-orange">Item</td>
+                                        <td class="accent-orange"></td>
+                                        <td class="accent-orange"></td>
+                                        <td class="accent-blue"></td>
+                                        <td class="accent-blue"></td>
+                                        <td class="accent-blue"></td>
+                                    </tr>
+                                    <tr>
+                                        <td>003</td>
+                                        <td>Charles</td>
+                                        <td class="accent-green">Item</td>
+                                        <td class="accent-green">This is Charles Item 1</td>
+                                        <td class="accent-green">$ 19.00</td>
+                                        <td class="accent-orange">Item</td>
+                                        <td class="accent-orange">This is Charles Item 2</td>
+                                        <td class="accent-orange">$ 18.00</td>
+                                        <td class="accent-blue"></td>
+                                        <td class="accent-blue">This is Charles Item 3</td>
+                                        <td class="accent-blue">$ 25.00</td>
+                                    </tr>
+                                    <tr>
+                                        <td>004</td>
+                                        <td>Tom</td>
+                                        <td class="accent-green">Item</td>
+                                        <td class="accent-green">This is Tom Item 1</td>
+                                        <td class="accent-green">$ 26.00</td>
+                                        <td class="accent-orange">Item</td>
+                                        <td class="accent-orange">This is Tom Item 2</td>
+                                        <td class="accent-orange">$ 26.00</td>
+                                        <td class="accent-blue">Item 3</td>
+                                        <td class="accent-blue">This is Tom Item 3</td>
+                                        <td class="accent-blue"></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div id="identifierGroupedCard" class="identifier-mode-card" role="button" tabindex="0">
+                        <div class="identifier-mode-copy">
+                            <h4>Grouped Data</h4>
+                            <p class="muted">Use this when one invoice spans multiple rows and each row represents one item or related record for that invoice.</p>
+                        </div>
+                        <div class="identifier-mode-example">
+                            <table class="identifier-preview-table identifier-preview-table--grouped">
+                                <thead>
+                                    <tr>
+                                        <th>Invoice No.</th>
+                                        <th>Customer Name</th>
+                                        <th class="accent-green">Item</th>
+                                        <th class="accent-green">Description</th>
+                                        <th class="accent-green">Price</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td class="accent-green">001</td>
+                                        <td class="accent-green">James</td>
+                                        <td class="accent-green">Item 1</td>
+                                        <td class="accent-green">This is James Item 1</td>
+                                        <td class="accent-green">$ 15.00</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="accent-green">001</td>
+                                        <td class="accent-green">James</td>
+                                        <td class="accent-green">Item 2</td>
+                                        <td class="accent-green">This is James Item 2</td>
+                                        <td class="accent-green">$ 12.00</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="accent-orange">002</td>
+                                        <td class="accent-orange">John</td>
+                                        <td class="accent-orange">Item 1</td>
+                                        <td class="accent-orange">This is John Item 1</td>
+                                        <td class="accent-orange">$ 27.00</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="accent-blue">003</td>
+                                        <td class="accent-blue">Charles</td>
+                                        <td class="accent-blue">Item 1</td>
+                                        <td class="accent-blue">This is Charles Item 1</td>
+                                        <td class="accent-blue">$ 19.00</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="accent-blue">003</td>
+                                        <td class="accent-blue">Charles</td>
+                                        <td class="accent-blue">Item 2</td>
+                                        <td class="accent-blue">This is Charles Item 2</td>
+                                        <td class="accent-blue">$ 18.00</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="accent-blue">003</td>
+                                        <td class="accent-blue">Charles</td>
+                                        <td class="accent-blue">Item 3</td>
+                                        <td class="accent-blue">This is Charles Item 3</td>
+                                        <td class="accent-blue">$ 25.00</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="accent-pink">004</td>
+                                        <td class="accent-pink">Tom</td>
+                                        <td class="accent-pink">Item 1</td>
+                                        <td class="accent-pink">This is Tom Item 1</td>
+                                        <td class="accent-pink">$ 26.00</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="accent-pink">004</td>
+                                        <td class="accent-pink">Tom</td>
+                                        <td class="accent-pink">Item 2</td>
+                                        <td class="accent-pink">This is Tom Item 2</td>
+                                        <td class="accent-pink">$ 22.00</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
-                <div id="identifierColumnPreview" class="muted"
-                    style="font-size: 12px; font-style: italic; min-height: 1.5em;"></div>
-            </div>
-            <div class="row" style="margin-top: 24px; justify-content: flex-end; gap: 10px;">
-                <button id="skipIdentifierColumnBtn" class="btn ghost">Skip</button>
-                <button id="confirmIdentifierColumnBtn" class="btn primary">Apply Grouping</button>
+
+                <div id="identifierGroupingPanel" class="identifier-grouping-panel stack is-disabled" style="gap: 10px;">
+                    <div class="stack" style="gap: 8px;">
+                        <h4 style="margin: 0;">By what column would you like to group your invoices?</h4>
+                        <p class="muted" style="margin: 0; font-size: 14px;">
+                            <strong>Grouped Data</strong>. Pick the column that repeats across all rows for the same invoice, such as <strong>Invoice No.</strong> or <strong>Order ID</strong>.
+                        </p>
+                    </div>
+                    <div class="stack">
+                        <label for="identifierColumnSelect">Grouping column</label>
+                        <select id="identifierColumnSelect" class="btn ghost" style="text-align: left;" disabled></select>
+                    </div>
+                    <div id="identifierColumnPreview" class="muted"
+                        style="font-size: 12px; font-style: italic; min-height: 1.5em;">Select the Grouped Data option to enable this field.</div>
+                </div>
+
+                <div class="row" style="margin-top: 12px; justify-content: flex-end; gap: 10px;">
+                    <button id="confirmIdentifierColumnBtn" class="btn primary" type="button" disabled>Choose a Mode to Continue</button>
+                </div>
             </div>
         </div>
     </div>
