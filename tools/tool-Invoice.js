@@ -11531,6 +11531,124 @@ canvas.on('selection:cleared', () => {
             };
         }
 
+        function getIdentifierPreviewGroups(columnName) {
+            if (!columnName) return [];
+            const groups = [];
+            const groupedMap = new Map();
+            dataRows.forEach((row) => {
+                const rawValue = row?.[columnName];
+                const value = String(rawValue ?? '').trim();
+                if (!value) return;
+                if (!groupedMap.has(value)) {
+                    const group = { value, rows: [] };
+                    groupedMap.set(value, group);
+                    groups.push(group);
+                }
+                groupedMap.get(value).rows.push(row);
+            });
+            return groups;
+        }
+
+        function getIdentifierPreviewColumns(columnName, previewGroups) {
+            const nonGroupingHeaders = headers.filter(header => header !== columnName);
+            if (!nonGroupingHeaders.length) return [];
+
+            const rows = previewGroups.flatMap(group => group.rows);
+            const ranked = nonGroupingHeaders.map((header, index) => {
+                const filledCount = rows.reduce((count, row) => {
+                    const value = String(row?.[header] ?? '').trim();
+                    return value ? count + 1 : count;
+                }, 0);
+                return { header, filledCount, index };
+            });
+
+            const populatedHeaders = ranked
+                .filter(item => item.filledCount > 0)
+                .sort((a, b) => {
+                    if (b.filledCount !== a.filledCount) return b.filledCount - a.filledCount;
+                    return a.index - b.index;
+                })
+                .slice(0, 4)
+                .map(item => item.header);
+
+            if (populatedHeaders.length) return populatedHeaders;
+            return nonGroupingHeaders.slice(0, 4);
+        }
+
+        function renderIdentifierGroupedDataPreview(columnName) {
+            const previewPanel = $('#identifierGroupedPreviewPanel');
+            const previewBody = $('#identifierGroupedDataPreview');
+            if (!previewPanel || !previewBody) return;
+
+            const modal = $('#identifierColumnModal');
+            const selectedMode = modal?.dataset.selectedMode || '';
+            if (selectedMode !== 'grouped' || !columnName) {
+                previewPanel.classList.add('is-hidden');
+                previewBody.innerHTML = '';
+                return;
+            }
+
+            const previewGroups = getIdentifierPreviewGroups(columnName);
+            if (!previewGroups.length) {
+                previewPanel.classList.remove('is-hidden');
+                previewBody.innerHTML = '<p class="identifier-grouped-preview-empty">No preview is available because this column does not contain any filled values yet.</p>';
+                return;
+            }
+
+            const groupsToShow = previewGroups.slice(0, 3);
+            const previewColumns = getIdentifierPreviewColumns(columnName, groupsToShow);
+            const totalRows = groupsToShow.reduce((sum, group) => sum + group.rows.length, 0);
+            const headerHtml = previewColumns.map(header => `<th>${escapeHtml(String(header))}</th>`).join('');
+            const cardsHtml = groupsToShow.map((group) => {
+                const rowsToShow = group.rows.slice(0, 4);
+                const rowsHtml = rowsToShow.map((row) => {
+                    const cellHtml = previewColumns.map((header) => {
+                        return `<td>${escapeHtml(String(row?.[header] ?? ''))}</td>`;
+                    }).join('');
+                    return `<tr>${cellHtml}</tr>`;
+                }).join('');
+                const hiddenRowCount = group.rows.length - rowsToShow.length;
+                const hiddenRowsHtml = hiddenRowCount > 0
+                    ? `<p class="identifier-grouped-preview-note">+ ${hiddenRowCount} more row(s) in this invoice group.</p>`
+                    : '';
+                const emptyStateHtml = previewColumns.length
+                    ? `
+                        <div class="identifier-grouped-preview-table-wrap">
+                            <table class="identifier-preview-table identifier-preview-table--live">
+                                <thead><tr>${headerHtml}</tr></thead>
+                                <tbody>${rowsHtml}</tbody>
+                            </table>
+                        </div>
+                    `
+                    : '<div class="identifier-grouped-preview-table-wrap"><p class="identifier-grouped-preview-empty">All remaining columns are empty in this sample.</p></div>';
+
+                return `
+                    <section class="identifier-grouped-preview-card">
+                        <div class="identifier-grouped-preview-header">
+                            <div>
+                                <span class="identifier-grouped-preview-label">${escapeHtml(String(columnName))}</span>
+                                <div class="identifier-grouped-preview-value">${escapeHtml(group.value)}</div>
+                            </div>
+                            <div class="identifier-grouped-preview-meta">${group.rows.length} row(s)</div>
+                        </div>
+                        ${emptyStateHtml}
+                        ${hiddenRowsHtml}
+                    </section>
+                `;
+            }).join('');
+
+            const moreGroupsCount = previewGroups.length - groupsToShow.length;
+            const moreGroupsText = moreGroupsCount > 0
+                ? ` Showing the first ${groupsToShow.length} group(s) out of ${previewGroups.length}.`
+                : '';
+
+            previewPanel.classList.remove('is-hidden');
+            previewBody.innerHTML = `
+                <p class="identifier-grouped-preview-note">Previewing ${totalRows} row(s) grouped by <strong>${escapeHtml(String(columnName))}</strong>.${moreGroupsText}</p>
+                <div class="identifier-grouped-preview-grid">${cardsHtml}</div>
+            `;
+        }
+
         function setIdentifierModeSelection(mode = '') {
             const singleCard = $('#identifierSingleRowCard');
             const groupedCard = $('#identifierGroupedCard');
@@ -11556,17 +11674,20 @@ canvas.on('selection:cleared', () => {
             if (!select || !preview) return;
             if (select.disabled) {
                 preview.textContent = 'Select the Grouped Data option to enable this field.';
+                renderIdentifierGroupedDataPreview('');
                 updateIdentifierConfirmButton();
                 return;
             }
             const columnName = select.value;
             if (!columnName) {
-                preview.textContent = 'Choose the invoice column that should tie related item rows together.';
+                preview.textContent = 'Choose the invoice column that should tie related item rows together. As soon as you pick one, a live preview will appear below using your uploaded data.';
+                renderIdentifierGroupedDataPreview('');
                 updateIdentifierConfirmButton();
                 return;
             }
             const stats = getIdentifierColumnStats(columnName);
             preview.textContent = `Grouping by "${columnName}" would produce ${stats.uniqueCount} invoice group(s), with ${stats.multiRowCount} group(s) containing multiple rows.`;
+            renderIdentifierGroupedDataPreview(columnName);
             updateIdentifierConfirmButton();
         }
 
@@ -11603,14 +11724,20 @@ canvas.on('selection:cleared', () => {
             const select = $('#identifierColumnSelect');
             if (!select) return;
             select.innerHTML = '';
+            const placeholderOption = document.createElement('option');
+            placeholderOption.value = '';
+            placeholderOption.textContent = 'Select a grouping column';
+            select.appendChild(placeholderOption);
             headers.forEach(header => {
                 const option = document.createElement('option');
                 option.value = header;
                 option.textContent = header;
                 select.appendChild(option);
             });
-            const preferred = guessPreferredIdentifierColumn();
-            if (preferred) select.value = preferred;
+            const preferred = identifierColumn && headers.includes(identifierColumn)
+                ? identifierColumn
+                : '';
+            select.value = preferred;
             updateIdentifierColumnPreview();
         }
 
@@ -11619,6 +11746,7 @@ canvas.on('selection:cleared', () => {
             if (!modal) return;
             populateIdentifierColumnOptions();
             setIdentifierModeSelection(identifierColumn ? 'grouped' : '');
+            updateIdentifierColumnPreview();
             modal.style.display = 'flex';
         }
 
@@ -11638,7 +11766,6 @@ canvas.on('selection:cleared', () => {
             updateIdentifierColumnPreview();
         });
         bindIdentifierModeCard('#identifierGroupedCard', () => {
-            populateIdentifierColumnOptions();
             setIdentifierModeSelection('grouped');
             updateIdentifierColumnPreview();
         });
@@ -11664,12 +11791,14 @@ canvas.on('selection:cleared', () => {
             requestSaveState();
             $('#identifierColumnModal').style.display = 'none';
             setIdentifierModeSelection('');
+            renderIdentifierGroupedDataPreview('');
             flushInvoiceFieldsHelper();
         });
 
         on('#closeIdentifierColumnModal', 'click', () => {
             $('#identifierColumnModal').style.display = 'none';
             setIdentifierModeSelection('');
+            renderIdentifierGroupedDataPreview('');
             flushInvoiceFieldsHelper();
         });
 

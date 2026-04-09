@@ -744,6 +744,14 @@
                         <div class="identifier-mode-copy">
                             <h4>Grouped Data</h4>
                             <p class="muted">Use this when one invoice spans multiple rows and each row represents one item or related record for that invoice.</p>
+                            <div id="identifierGroupingPanel" class="identifier-grouping-panel stack is-disabled" style="gap: 10px;">
+                                <div class="stack">
+                                    <label for="identifierColumnSelect">By what column would you like to group your invoices?</label>
+                                    <select id="identifierColumnSelect" class="btn ghost identifier-column-select" style="text-align: left;" disabled></select>
+                                </div>
+                                <div id="identifierColumnPreview" class="muted"
+                                    style="font-size: 12px; font-style: italic; min-height: 1.5em;">Select the Grouped Data option to enable this field.</div>
+                            </div>
                         </div>
                         <div class="identifier-mode-example">
                             <table class="identifier-preview-table identifier-preview-table--grouped">
@@ -819,19 +827,14 @@
                     </div>
                 </div>
 
-                <div id="identifierGroupingPanel" class="identifier-grouping-panel stack is-disabled" style="gap: 10px;">
-                    <div class="stack" style="gap: 8px;">
-                        <h4 style="margin: 0;">By what column would you like to group your invoices?</h4>
-                        <p class="muted" style="margin: 0; font-size: 14px;">
-                            <strong>Grouped Data</strong>. Pick the column that repeats across all rows for the same invoice, such as <strong>Invoice No.</strong> or <strong>Order ID</strong>.
+                <div id="identifierGroupedPreviewPanel" class="identifier-grouped-preview stack is-hidden" style="gap: 10px;">
+                    <div class="stack" style="gap: 6px;">
+                        <h4 style="margin: 0;">Preview with Your Data</h4>
+                        <p class="muted" style="margin: 0; font-size: 13px;">
+                            This preview uses your uploaded CSV/Excel rows so you can confirm how invoices will be grouped before continuing.
                         </p>
                     </div>
-                    <div class="stack">
-                        <label for="identifierColumnSelect">Grouping column</label>
-                        <select id="identifierColumnSelect" class="btn ghost" style="text-align: left;" disabled></select>
-                    </div>
-                    <div id="identifierColumnPreview" class="muted"
-                        style="font-size: 12px; font-style: italic; min-height: 1.5em;">Select the Grouped Data option to enable this field.</div>
+                    <div id="identifierGroupedDataPreview" class="identifier-grouped-preview-body"></div>
                 </div>
 
                 <div class="row" style="margin-top: 12px; justify-content: flex-end; gap: 10px;">
