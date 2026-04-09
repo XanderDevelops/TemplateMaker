@@ -7,10 +7,12 @@ const toggleSignupLink = document.getElementById('toggle-signup');
 const authError = document.getElementById('auth-error');
 const forgotPasswordLink = document.getElementById('forgot-password');
 const forgotPasswordContainer = document.getElementById('forgot-password-container');
+const submitBtn = loginForm?.querySelector('button[type="submit"]');
 const params = new URLSearchParams(window.location.search);
 const redirectTo = params.get("redirect") || "/dashboard.html";
 
 let isSignup = false;
+let authBusy = false;
 
 function pushDataLayerEvent(eventName, payload = {}) {
     if (typeof window === 'undefined') return;
@@ -57,6 +59,26 @@ async function trackSuccessfulSignup(method = 'email') {
     });
 }
 
+function setAuthBusy(isBusy) {
+    authBusy = Boolean(isBusy);
+
+    if (submitBtn) {
+        submitBtn.disabled = authBusy;
+        submitBtn.textContent = authBusy
+            ? (isSignup ? 'Creating account...' : 'Logging in...')
+            : (isSignup ? 'Sign Up' : 'Log in');
+    }
+
+    if (googleLoginBtn) {
+        googleLoginBtn.disabled = authBusy;
+    }
+
+    if (toggleSignupLink) {
+        toggleSignupLink.style.pointerEvents = authBusy ? 'none' : '';
+        toggleSignupLink.style.opacity = authBusy ? '0.65' : '';
+    }
+}
+
 // --- Render Nav Links based on Auth State ---
 const renderNav = (user) => {
     if (!navLinksContainer) return;
@@ -94,24 +116,45 @@ const renderNav = (user) => {
 if (loginForm) {
     loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
+        if (authBusy) return;
         authError.textContent = '';
+        authError.style.color = 'var(--danger)';
         const email = document.getElementById('email').value;
         const password = document.getElementById('password').value;
 
-        let response;
-        if (isSignup) {
-            response = await supabase.auth.signUp({ email, password });
-        } else {
-            response = await supabase.auth.signInWithPassword({ email, password });
-        }
+        setAuthBusy(true);
 
-        if (response.error) {
-            authError.textContent = response.error.message;
-        } else {
+        try {
+            let response;
+            if (isSignup) {
+                response = await supabase.auth.signUp({ email, password });
+            } else {
+                response = await supabase.auth.signInWithPassword({ email, password });
+            }
+
+            if (response.error) {
+                const message = String(response.error.message || '').trim();
+                if (isSignup && /rate limit/i.test(message)) {
+                    authError.textContent = 'Too many signup emails were requested. Wait a bit, then try again, or log in if this account already exists.';
+                } else {
+                    authError.textContent = message || 'Authentication failed.';
+                }
+                return;
+            }
+
             if (isSignup) {
                 await trackSuccessfulSignup('email');
+
+                if (!response.data?.session) {
+                    authError.style.color = 'green';
+                    authError.textContent = 'Account created. Check your email to confirm your account before logging in.';
+                    return;
+                }
             }
+
             window.location.href = '/dashboard';
+        } finally {
+            setAuthBusy(false);
         }
     });
 }
@@ -119,6 +162,7 @@ if (loginForm) {
 // --- Handle Google Auth ---
 if (googleLoginBtn) {
     googleLoginBtn.addEventListener('click', async () => {
+        if (authBusy) return;
         const { error } = await supabase.auth.signInWithOAuth({
             provider: 'google',
             options: {
@@ -136,23 +180,22 @@ if (toggleSignupLink) {
         isSignup = !isSignup;
         const formContainer = document.querySelector('.form-container');
         const h1 = formContainer.querySelector('h1');
-        const submitBtn = formContainer.querySelector('button[type="submit"]');
 
         if (isSignup) {
             h1.textContent = 'Sign Up';
-            submitBtn.textContent = 'Sign Up';
             toggleSignupLink.textContent = 'Log in';
             formContainer.querySelector('p:last-of-type').childNodes[0].nodeValue = 'Already have an account? ';
             // Hide forgot password on signup
             if (forgotPasswordContainer) forgotPasswordContainer.style.display = 'none';
         } else {
             h1.textContent = 'Log in';
-            submitBtn.textContent = 'Log in';
             toggleSignupLink.textContent = 'Sign up';
             formContainer.querySelector('p:last-of-type').childNodes[0].nodeValue = "Don't have an account? ";
             // Show forgot password on login
             if (forgotPasswordContainer) forgotPasswordContainer.style.display = 'block';
         }
+
+        setAuthBusy(false);
     });
 }
 
