@@ -1,4 +1,4 @@
-﻿        // --- AI ASSISTANT ---
+        // --- AI ASSISTANT ---
         const aiApiKeyInput = $('#aiApiKeyPanel');
         const aiPromptInput = $('#aiChatPrompt');
         const aiSendBtn = $('#aiChatSendBtn');
@@ -134,10 +134,10 @@
             function createAiThinkingTicker(targetEl) {
                 const startTime = Date.now();
                 const stages = [
-                    'Thinking',
-                    'Reviewing canvas context',
-                    'Planning design actions',
-                    'Preparing response'
+                    'Starting',
+                    'Preparing request',
+                    'Streaming output',
+                    'Applying live changes'
                 ];
                 let stageIndex = 0;
                 let stageOverride = '';
@@ -474,6 +474,9 @@ Design quality rules:
 - Build strong hierarchy: one clear headline, supporting subtext, then details.
 - Favor subtle strokes (#cbd5e1), readable contrast, and rounded corners (8-18).
 - Keep outputs modular: several focused actions, not one giant monolithic change.
+- ENSURE the right size of objects (e.g. textboxes wide enough, shapes scaled proportionally).
+- MANAGE LAYERS correctly: background elements first, then content, then interactive/top layers last.
+- PREVENT OVERLAPPING objects unless intentionally designing a grouped complex shape. Distribute elements with adequate spacing.
 
 Icon source (preferred):
 ${AI_ICON_BASE}/{icon-name}.svg
@@ -1719,26 +1722,35 @@ ${rawResponse}
                 const height = parsePositiveInt(pageHeight, DEFAULT_PAGE_HEIGHT);
                 return `
 You are a senior UI/visual designer working directly with Fabric.js object JSON.
-Return ONLY a JSON array of drawable Fabric.js objects for ONE page.
-Do not return markdown, explanations, wrappers, template schemas, or top-level objects.
+Return ONLY a JSON array of operations. No markdown, no explanations.
 
-Canvas size:
+Current page canvas size:
 - width: ${width}
 - height: ${height}
 
-Allowed object types only:
+Allowed Fabric object types:
 rect, circle, triangle, textbox, image, line, path, group, polygon, polyline, ellipse.
 
-Strict rules:
-- Never include pageRect/isArtboard objects.
-- Use top-left anchors: "originX":"left", "originY":"top".
-- Keep every object fully inside canvas bounds.
-- Prefer "textbox" for text. Keep text wrapping using sensible width.
-- For textboxes: keep scaleX=1 and scaleY=1, size via width/fontSize.
-- If styles is present on text, use an array.
+Operation types (use as needed):
+1) {"op":"set_page_size","index":"current|number","width":number,"height":number}
+2) {"op":"add_page","width":number,"height":number,"switchToNew":true|false}
+3) {"op":"remove_page","index":"current|number"}
+4) {"op":"switch_page","index":"number"}
+5) {"op":"add_object","object":{FabricObject}}
+
+Rules:
+- Start output immediately with decisive operations, no planning text. Be fast and real-time.
+- If user asks to recreate or redesign, usually begin with set_page_size and then add_object items.
+- You may add/remove/switch pages whenever useful for the design.
+- For add_object, never include pageRect/isArtboard.
+- Use top-left anchors in objects: "originX":"left", "originY":"top".
+- Keep objects fully inside page bounds and prevent overlapping elements. Space items out appropriately.
+- Ensure correct sizing and layer ordering (backgrounds first, text/foreground last).
+- Prefer textbox for text, with wrapping-friendly widths.
+- For textbox: scaleX=1, scaleY=1, styles as array if present.
 - Never use textBaseline "alphabetical" (use "alphabetic" or omit).
-- Do not use clipPath, transformMatrix, filters, scripts, or non-Fabric custom code.
-- Use professional layout quality (spacing rhythm, alignment, readable hierarchy).
+- Do not use clipPath, transformMatrix, filters, scripts, or custom executable fields.
+- Use professional spacing, hierarchy, alignment, and contrast.
 ${buildGoogleFontsHint()}
 
 User request:
@@ -1746,8 +1758,9 @@ ${userPrompt || '(Attachment-only request)'}
 
 Return format example:
 [
-  { "type":"rect","originX":"left","originY":"top","left":0,"top":0,"width":${width},"height":120,"fill":"#0f172a" },
-  { "type":"textbox","originX":"left","originY":"top","left":36,"top":34,"width":420,"text":"Invoice","fontSize":42,"fontFamily":"Inter","fill":"#ffffff","scaleX":1,"scaleY":1,"styles":[] }
+  { "op":"set_page_size","index":"current","width":${width},"height":${height} },
+  { "op":"add_object","object":{"type":"rect","originX":"left","originY":"top","left":0,"top":0,"width":${width},"height":120,"fill":"#0f172a"} },
+  { "op":"add_object","object":{"type":"textbox","originX":"left","originY":"top","left":36,"top":34,"width":420,"text":"Invoice","fontSize":42,"fontFamily":"Inter","fill":"#ffffff","scaleX":1,"scaleY":1,"styles":[]}}
 ]
 `.trim();
             }
@@ -1764,7 +1777,10 @@ Return format example:
             }
 
             function buildCreativeAiRequestParts(promptText, { pageWidth, pageHeight, retry = false } = {}) {
-                const parts = [{ text: buildCreativeFabricPrompt(promptText, { pageWidth, pageHeight }) }];
+                const parts = [
+                    { text: buildCreativeFabricPrompt(promptText, { pageWidth, pageHeight }) },
+                    { text: `Recent conversation:\n${buildConversationSummary(6) || 'None.'}` }
+                ];
                 if (!aiAttachment) return parts;
                 parts.push({ text: `Reference attachment: ${aiAttachment.name}. Recreate/align design to this reference when relevant.` });
                 if (aiAttachment.kind === 'inline') {
@@ -2099,6 +2115,8 @@ Critical output rules:
 - Never use textBaseline "alphabetical"; use "alphabetic" or omit textBaseline.
 - Ensure professional composition:
   - Keep all text fully inside page bounds (no clipping).
+  - Prevent overlapping objects (unless strictly necessary) by calculating proper width/height constraints and spacing.
+  - Order layers sequentially (background shapes first, foreground details/text later).
   - Keep readable typography and consistent spacing.
   - Use sensible textbox widths so long lines wrap instead of overflowing.
   - Maintain a clean margin (about 20-28px) from page edges for text content.
@@ -3496,6 +3514,222 @@ ${rawResponse}
                 };
             }
 
+            function parseAiCanvasIndex(value, fallbackIndex = currentPageIndex) {
+                if (typeof value === 'string') {
+                    const token = value.trim().toLowerCase();
+                    if (!token) return fallbackIndex;
+                    if (token === 'current' || token === 'active') return currentPageIndex;
+                    if (token === 'last' || token === 'end') return Math.max(0, documentPages.length - 1);
+                }
+                const raw = parseInt(value, 10);
+                if (!Number.isFinite(raw)) return fallbackIndex;
+                if (raw >= 1) return raw - 1;
+                return raw;
+            }
+
+            async function removeCanvasPageSilent(targetIndex = currentPageIndex) {
+                if (!Array.isArray(documentPages) || documentPages.length <= 1) return false;
+                if (typeof syncCurrentPageStateFromCanvas === 'function') syncCurrentPageStateFromCanvas();
+
+                const safeTargetIndex = Math.max(0, Math.min(documentPages.length - 1, parseInt(targetIndex, 10) || 0));
+                documentPages.splice(safeTargetIndex, 1);
+                if (!documentPages.length) return false;
+
+                if (safeTargetIndex < currentPageIndex) currentPageIndex = Math.max(0, currentPageIndex - 1);
+                if (safeTargetIndex === currentPageIndex) currentPageIndex = Math.max(0, currentPageIndex - 1);
+                if (currentPageIndex > documentPages.length - 1) currentPageIndex = documentPages.length - 1;
+
+                setCanvasPageSelection([currentPageIndex], { ensureCurrent: false });
+                canvasSelectionAnchorIndex = currentPageIndex;
+                refreshCanvasPageControls({ preserveScroll: true, ensureActiveVisible: true });
+                await switchToCanvasPage(currentPageIndex, { fitView: false, skipSave: true, suppressHistory: true });
+                requestSaveState();
+                return true;
+            }
+
+            function looksLikeFabricObjectPayload(rawItem) {
+                if (!rawItem || typeof rawItem !== 'object' || Array.isArray(rawItem)) return false;
+                const rawType = sanitizeSafeString(rawItem.type, 32, '').toLowerCase();
+                if (!rawType) return false;
+                if (rawType === 'text' || rawType === 'i-text' || rawType === 'textbox') return true;
+                return AI_STRICT_ALLOWED_TYPES.has(rawType);
+            }
+
+            function normalizeAiCreativeOp(rawItem) {
+                if (!rawItem || typeof rawItem !== 'object' || Array.isArray(rawItem)) return null;
+                const opToken = sanitizeSafeString(
+                    rawItem.op || rawItem.action || rawItem.command || rawItem.kind || '',
+                    48,
+                    ''
+                ).toLowerCase();
+
+                if (!opToken) {
+                    if (looksLikeFabricObjectPayload(rawItem)) {
+                        return { op: 'add_object', object: rawItem };
+                    }
+                    return null;
+                }
+
+                const aliasMap = {
+                    add_page: 'add_page',
+                    add_canvas: 'add_page',
+                    create_page: 'add_page',
+                    new_page: 'add_page',
+                    remove_page: 'remove_page',
+                    delete_page: 'remove_page',
+                    remove_canvas: 'remove_page',
+                    delete_canvas: 'remove_page',
+                    set_page_size: 'set_page_size',
+                    resize_page: 'set_page_size',
+                    set_canvas_size: 'set_page_size',
+                    switch_page: 'switch_page',
+                    switch_canvas: 'switch_page',
+                    add_object: 'add_object',
+                    place_object: 'add_object',
+                    object: 'add_object'
+                };
+
+                const mappedOp = aliasMap[opToken] || '';
+                if (!mappedOp) {
+                    if (looksLikeFabricObjectPayload(rawItem)) {
+                        return { op: 'add_object', object: rawItem };
+                    }
+                    return null;
+                }
+
+                if (mappedOp === 'add_object') {
+                    const objectPayload = rawItem.object && typeof rawItem.object === 'object'
+                        ? rawItem.object
+                        : rawItem.payload && typeof rawItem.payload === 'object'
+                            ? rawItem.payload
+                            : looksLikeFabricObjectPayload(rawItem)
+                                ? rawItem
+                                : null;
+                    if (!objectPayload) return null;
+                    return { op: 'add_object', object: objectPayload };
+                }
+
+                if (mappedOp === 'add_page') {
+                    return {
+                        op: 'add_page',
+                        width: rawItem.width,
+                        height: rawItem.height,
+                        count: rawItem.count,
+                        switchToNew: rawItem.switchToNew !== false
+                    };
+                }
+
+                if (mappedOp === 'remove_page') {
+                    return {
+                        op: 'remove_page',
+                        index: rawItem.index
+                    };
+                }
+
+                if (mappedOp === 'set_page_size') {
+                    return {
+                        op: 'set_page_size',
+                        index: rawItem.index,
+                        scope: rawItem.scope,
+                        width: rawItem.width,
+                        height: rawItem.height
+                    };
+                }
+
+                if (mappedOp === 'switch_page') {
+                    return {
+                        op: 'switch_page',
+                        index: rawItem.index
+                    };
+                }
+
+                return null;
+            }
+
+            function refreshLiveCreativeContext(context = {}) {
+                const dims = getCurrentPageDimensionsForAi();
+                context.pageWidth = dims.width;
+                context.pageHeight = dims.height;
+                context.pageId = currentCanvasPageId();
+                return context;
+            }
+
+            async function applyAiCreativeItemLive(rawItem, context = {}) {
+                const report = context.report && typeof context.report === 'object'
+                    ? context.report
+                    : { sourceObjects: 0, keptObjects: 0, droppedObjects: 0, truncatedObjects: 0, appliedObjects: 0, failedEnliven: 0, pageOps: 0 };
+                const normalized = normalizeAiCreativeOp(rawItem);
+                if (!normalized) {
+                    report.droppedObjects += 1;
+                    return false;
+                }
+
+                if (normalized.op === 'add_object') {
+                    refreshLiveCreativeContext(context);
+                    return applyAiRawFabricObjectLive(normalized.object, context);
+                }
+
+                if (normalized.op === 'add_page') {
+                    const count = Math.max(1, Math.min(4, parseInt(normalized.count, 10) || 1));
+                    const baseWidth = parsePositiveInt(normalized.width, parsePositiveInt(context.pageWidth, DEFAULT_PAGE_WIDTH));
+                    const baseHeight = parsePositiveInt(normalized.height, parsePositiveInt(context.pageHeight, DEFAULT_PAGE_HEIGHT));
+                    const returnIndex = currentPageIndex;
+                    for (let i = 0; i < count; i++) {
+                        await addCanvasPage(documentPages.length, { width: baseWidth, height: baseHeight });
+                    }
+                    if (normalized.switchToNew === false) {
+                        await switchToCanvasPage(returnIndex, { fitView: false, skipSave: true, suppressHistory: true });
+                    }
+                    report.pageOps += 1;
+                    refreshLiveCreativeContext(context);
+                    return true;
+                }
+
+                if (normalized.op === 'remove_page') {
+                    const target = parseAiCanvasIndex(normalized.index, currentPageIndex);
+                    const removed = await removeCanvasPageSilent(target);
+                    if (removed) {
+                        report.pageOps += 1;
+                        refreshLiveCreativeContext(context);
+                    }
+                    return removed;
+                }
+
+                if (normalized.op === 'set_page_size') {
+                    const width = parsePositiveInt(normalized.width, parsePositiveInt(context.pageWidth, DEFAULT_PAGE_WIDTH));
+                    const height = parsePositiveInt(normalized.height, parsePositiveInt(context.pageHeight, DEFAULT_PAGE_HEIGHT));
+                    const scope = sanitizeSafeString(normalized.scope, 20, '').toLowerCase();
+                    if (scope === 'all') {
+                        for (let i = 0; i < documentPages.length; i++) {
+                            setSingleCanvasDimensions(i, width, height);
+                        }
+                    } else {
+                        const target = parseAiCanvasIndex(normalized.index, currentPageIndex);
+                        const safeTarget = Math.max(0, Math.min(documentPages.length - 1, target));
+                        if (!documentPages[safeTarget]) return false;
+                        setSingleCanvasDimensions(safeTarget, width, height);
+                        if (safeTarget !== currentPageIndex) {
+                            await switchToCanvasPage(safeTarget, { fitView: false, skipSave: true, suppressHistory: true });
+                        }
+                    }
+                    report.pageOps += 1;
+                    refreshLiveCreativeContext(context);
+                    return true;
+                }
+
+                if (normalized.op === 'switch_page') {
+                    if (!Array.isArray(documentPages) || !documentPages.length) return false;
+                    const target = parseAiCanvasIndex(normalized.index, currentPageIndex);
+                    const safeTarget = Math.max(0, Math.min(documentPages.length - 1, target));
+                    await switchToCanvasPage(safeTarget, { fitView: false, skipSave: true, suppressHistory: true });
+                    report.pageOps += 1;
+                    refreshLiveCreativeContext(context);
+                    return true;
+                }
+
+                return false;
+            }
+
             async function applyAiRawFabricObjectLive(rawObject, context = {}) {
                 const pageWidth = parsePositiveInt(context.pageWidth, DEFAULT_PAGE_WIDTH);
                 const pageHeight = parsePositiveInt(context.pageHeight, DEFAULT_PAGE_HEIGHT);
@@ -3669,7 +3903,7 @@ ${rawResponse}
                 aiConversation.push({ role: 'user', text: userLine });
                 aiPromptInput.value = '';
 
-                const thinkingEl = appendAiChatMessage('status', 'Thinking...');
+                const thinkingEl = appendAiChatMessage('status', 'Starting...');
                 const thinkingTicker = createAiThinkingTicker(thinkingEl);
                 setAiBusy(true);
 
@@ -3688,7 +3922,15 @@ ${rawResponse}
                         droppedObjects: 0,
                         truncatedObjects: 0,
                         appliedObjects: 0,
-                        failedEnliven: 0
+                        failedEnliven: 0,
+                        pageOps: 0
+                    };
+                    const liveContext = {
+                        pageWidth: pageInfo.width,
+                        pageHeight: pageInfo.height,
+                        pageId,
+                        usedOids,
+                        report: liveReport
                     };
 
                     if (replaceCanvas) {
@@ -3702,16 +3944,10 @@ ${rawResponse}
                     const enqueueRawObject = (rawObject, meta = {}) => {
                         applyQueue = applyQueue.then(async () => {
                             try {
-                                const nextLabel = liveReport.appliedObjects + 1;
-                                thinkingTicker.setStage(`Drawing object ${nextLabel}`);
-                                await applyAiRawFabricObjectLive(rawObject, {
-                                    pageWidth: pageInfo.width,
-                                    pageHeight: pageInfo.height,
-                                    pageId,
-                                    usedOids,
-                                    report: liveReport
-                                });
-                                if (liveReport.appliedObjects > 0 && liveReport.appliedObjects % 3 === 0) {
+                                const nextLabel = liveReport.appliedObjects + liveReport.pageOps + 1;
+                                thinkingTicker.setStage(`Applying step ${nextLabel}`);
+                                await applyAiCreativeItemLive(rawObject, liveContext);
+                                if ((liveReport.appliedObjects + liveReport.pageOps) > 0 && (liveReport.appliedObjects + liveReport.pageOps) % 3 === 0) {
                                     syncCurrentPageStateFromCanvas();
                                     renderLayers();
                                     refreshCanvasPageControlsDebounced();
@@ -3735,8 +3971,8 @@ ${rawResponse}
                     );
                     await applyQueue;
 
-                    if (liveReport.appliedObjects <= 0) {
-                        throw new Error('AI returned no drawable objects after validation.');
+                    if ((liveReport.appliedObjects + liveReport.pageOps) <= 0) {
+                        throw new Error('AI returned no valid operations after validation.');
                     }
 
                     const polished = polishCurrentPageLayoutForProfessionalOutput() ? 1 : 0;
@@ -3749,6 +3985,7 @@ ${rawResponse}
                     thinkingEl.className = 'ai-chat-message assistant';
                     const filtered = Math.max(0, parseInt(liveReport.droppedObjects, 10) || 0);
                     const failedEnliven = Math.max(0, parseInt(liveReport.failedEnliven, 10) || 0);
+                    const pageOps = Math.max(0, parseInt(liveReport.pageOps, 10) || 0);
                     const streamFlag = creativeSummary?.streamUsed ? ' (live stream)' : ' (fallback mode)';
                     const partialNote = creativeSummary?.partial ? ' Partial result preserved.' : '';
                     const warningNote = creativeSummary?.warning ? ` ${creativeSummary.warning}` : '';
@@ -3756,7 +3993,7 @@ ${rawResponse}
                     const filterNote = (filtered > 0 || failedEnliven > 0)
                         ? ` Sanitizer filtered ${filtered} and skipped ${failedEnliven}.`
                         : '';
-                    const finalMsg = `Applied ${liveReport.appliedObjects} AI object${liveReport.appliedObjects === 1 ? '' : 's'}${streamFlag}.${polishNote}${filterNote}${partialNote}${warningNote}`;
+                    const finalMsg = `Applied ${liveReport.appliedObjects} object${liveReport.appliedObjects === 1 ? '' : 's'} and ${pageOps} page operation${pageOps === 1 ? '' : 's'}${streamFlag}.${polishNote}${filterNote}${partialNote}${warningNote}`;
                     thinkingEl.textContent = finalMsg;
                     aiConversation.push({ role: 'assistant', text: finalMsg });
                 } catch (error) {

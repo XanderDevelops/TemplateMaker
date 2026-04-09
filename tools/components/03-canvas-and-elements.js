@@ -674,7 +674,11 @@ function removeTableColumn(table) {
 const DEFAULT_SHAPE_FILL = '#dbe7f3';
 
 const adders = {
-    text: (x, y, content = 'Sample Text') => canvas.add(new fabric.Textbox(content, { left: x, top: y, fontSize: 28, fill: '#000000', fontFamily: 'Arial', originX: 'center', originY: 'center', styles: [], padding: 0, curveAmount: 0, name: getUniqueName('text'), lockUniScaling: true, pageId: currentCanvasPageId() })).setActiveObject(canvas.getObjects().pop()),
+    text: (x, y, content = 'Sample Text') => {
+        const t = new fabric.Textbox(content, { left: x, top: y, fontSize: 28, fill: '#000000', fontFamily: 'Arial', originX: 'center', originY: 'center', styles: [], padding: 0, curveAmount: 0, name: getUniqueName('text'), lockUniScaling: false, pageId: currentCanvasPageId() });
+        t.setControlsVisibility({ mt: false, mb: false });
+        canvas.add(t).setActiveObject(t);
+    },
     rect: ({ x, y, asSquare = true } = {}) => canvas.add(new fabric.Rect({ left: x, top: y, width: asSquare ? 150 : 220, height: 150, fill: DEFAULT_SHAPE_FILL, stroke: null, strokeWidth: 0, strokeUniform: true, originX: 'center', originY: 'center', name: getUniqueName(asSquare ? 'square' : 'rectangle'), pageId: currentCanvasPageId() })).setActiveObject(canvas.getObjects().pop()),
     circle: (x, y) => canvas.add(new fabric.Circle({ left: x, top: y, radius: 75, fill: DEFAULT_SHAPE_FILL, stroke: null, strokeWidth: 0, strokeUniform: true, originX: 'center', originY: 'center', name: getUniqueName('circle'), pageId: currentCanvasPageId() })).setActiveObject(canvas.getObjects().pop()),
     triangle: (x, y) => canvas.add(new fabric.Triangle({ left: x, top: y, width: 150, height: 130, fill: DEFAULT_SHAPE_FILL, stroke: null, strokeWidth: 0, strokeUniform: true, originX: 'center', originY: 'center', name: getUniqueName('triangle'), pageId: currentCanvasPageId() })).setActiveObject(canvas.getObjects().pop()),

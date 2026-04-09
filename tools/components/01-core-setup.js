@@ -724,6 +724,25 @@ function setTextboxCurve(textbox, curveAmount, { skipRender = false } = {}) {
         pathSide: 'left',
         pathStartOffset: 0
     });
+
+    if (!textbox.__customCurveHandlersSet) {
+        textbox._wrapLine = function (_line, lineIndex, desiredWidth) {
+            if (this.curveAmount && Math.abs(clampTextCurveAmount(this.curveAmount)) > TEXT_CURVE_EPSILON) {
+                return [[_line]];
+            }
+            return fabric.Textbox.prototype._wrapLine.call(this, _line, lineIndex, desiredWidth);
+        };
+        textbox.calcTextHeight = function () {
+            if (this.curveAmount && Math.abs(clampTextCurveAmount(this.curveAmount)) > TEXT_CURVE_EPSILON && this.path) {
+                return this.path.height + (parseFloat(this.fontSize) || 24);
+            }
+            return fabric.Textbox.prototype.calcTextHeight.call(this);
+        };
+        textbox.__customCurveHandlersSet = true;
+    }
+
+    textbox.set({ width: curvePath.width + fontSize });
+
     if (typeof textbox.initDimensions === 'function') textbox.initDimensions();
     if (typeof textbox.setCoords === 'function') textbox.setCoords();
     if (!skipRender) (textbox.canvas || canvas)?.requestRenderAll();
