@@ -12,6 +12,51 @@ const redirectTo = params.get("redirect") || "/dashboard.html";
 
 let isSignup = false;
 
+function pushDataLayerEvent(eventName, payload = {}) {
+    if (typeof window === 'undefined') return;
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({
+        event: eventName,
+        ...payload
+    });
+}
+
+async function trackSuccessfulSignup(method = 'email') {
+    const payload = {
+        signup_method: method,
+        page_path: window.location.pathname,
+        page_location: window.location.href
+    };
+
+    pushDataLayerEvent('signup_success', payload);
+
+    const sendTo = typeof window !== 'undefined'
+        ? String(window.CSVLINK_GOOGLE_ADS_SIGNUP_SEND_TO || '').trim()
+        : '';
+
+    if (typeof window.gtag !== 'function' || !sendTo || !sendTo.includes('/')) {
+        return;
+    }
+
+    await new Promise((resolve) => {
+        let settled = false;
+        const finish = () => {
+            if (settled) return;
+            settled = true;
+            resolve();
+        };
+
+        window.gtag('event', 'conversion', {
+            send_to: sendTo,
+            signup_method: method,
+            event_callback: finish
+        });
+
+        // Fallback in case the callback never fires before redirect.
+        window.setTimeout(finish, 1200);
+    });
+}
+
 // --- Render Nav Links based on Auth State ---
 const renderNav = (user) => {
     if (!navLinksContainer) return;
@@ -63,6 +108,9 @@ if (loginForm) {
         if (response.error) {
             authError.textContent = response.error.message;
         } else {
+            if (isSignup) {
+                await trackSuccessfulSignup('email');
+            }
             window.location.href = '/dashboard';
         }
     });
