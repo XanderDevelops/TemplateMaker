@@ -4,6 +4,7 @@
   "private": true,
   "dependencies": {
     "@supabase/supabase-js": "^2.56.0",
+    "@vercel/analytics": "^2.0.1",
     "pdf-lib": "^1.17.1"
   }
 }

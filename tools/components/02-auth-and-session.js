@@ -434,7 +434,7 @@ function renderSelectionRotateHandle(ctx, left, top, styleOverride = {}, fabricO
     if (ROTATION_ICON_PATH) {
         const iconSize = SELECTION_ROTATE_HANDLE_SIZE;
         const scale = iconSize / ROTATION_ICON_VIEWBOX;
-        ctx.translate(-iconSize / 2, -iconSize/2);
+        ctx.translate(-iconSize / 2, -iconSize / 2);
         ctx.scale(scale, scale);
         ctx.lineWidth = ROTATION_ICON_STROKE_WIDTH;
         ctx.stroke(ROTATION_ICON_PATH);
@@ -555,7 +555,7 @@ function initializeCanvas() {
     generalPageSize = getMostCommonPageSize();
     syncGeneralPageSizeInputs();
     refreshCanvasPageControls({ preserveScroll: false, ensureActiveVisible: true });
-    isCanvasPagesPanelCollapsed = false;
+    isCanvasPagesPanelCollapsed = localStorage.getItem(PAGE_STRIP_COLLAPSE_KEY) ? localStorage.getItem(PAGE_STRIP_COLLAPSE_KEY) === '1' : true;
     applyCanvasPagesPanelState();
     initPageActionToolbar();
     const toggleCanvasPagesPanel = (event) => {
@@ -738,11 +738,45 @@ function initializeCanvas() {
                 return;
             }
             if (await maybeReassignObjectToDominantPage(e?.target)) return;
+
+            let bakedText = false;
+            if (e.target && e.target.type === 'activeSelection') {
+                const sel = e.target;
+                const members = sel.getObjects();
+                if (members.some(m => m.type === 'textbox')) {
+                    canvas.discardActiveObject();
+                    members.forEach(obj => {
+                        if (obj.type === 'textbox' && (obj.scaleX !== 1 || obj.scaleY !== 1)) {
+                            obj.set({
+                                fontSize: Math.max(1, Math.round(obj.fontSize * obj.scaleX)),
+                                width: Math.max(10, obj.width * obj.scaleX),
+                                scaleX: 1,
+                                scaleY: 1
+                            });
+                            if (typeof refreshTextboxCurve === 'function') refreshTextboxCurve(obj, { skipRender: true });
+                            bakedText = true;
+                        }
+                    });
+                    const newSel = new fabric.ActiveSelection(members, { canvas });
+                    canvas.setActiveObject(newSel);
+                }
+            } else if (e.target && e.target.type === 'textbox' && (e.target.scaleX !== 1 || e.target.scaleY !== 1)) {
+                e.target.set({
+                    width: Math.max(10, e.target.width * e.target.scaleX),
+                    scaleX: 1,
+                    scaleY: 1
+                });
+                if (typeof refreshTextboxCurve === 'function') refreshTextboxCurve(e.target, { skipRender: true });
+                bakedText = true;
+            }
+
+            if (bakedText) canvas.requestRenderAll();
+
             applyObjectMaskForPage(e?.target, currentPageIndex);
             scheduleOutsideObjectsCleanup();
             requestSaveState();
             refreshCanvasPageControlsDebounced();
-            if (e.target) { refreshInspector({ target: e.target }); }
+            if (e.target && !bakedText) { refreshInspector({ target: e.target }); }
         },
         'object:moving': (e) => {
             scheduleOutsideObjectsCleanup.clear();
@@ -759,15 +793,13 @@ function initializeCanvas() {
             handleResizeSnapping(e);
             const obj = e.target;
             if (obj && obj.type === 'textbox') {
-                const newFontSize = Math.round(obj.fontSize * obj.scaleX);
                 const newWidth = obj.width * obj.scaleX;
                 obj.set({
-                    fontSize: newFontSize,
                     width: newWidth,
                     scaleX: 1,
                     scaleY: 1
                 });
-                refreshTextboxCurve(obj, { skipRender: true });
+                if (typeof refreshTextboxCurve === 'function') refreshTextboxCurve(obj, { skipRender: true });
             }
             updateLiveInspector(e);
             updateFloatingLinkerPosition(e.target);
@@ -1012,7 +1044,7 @@ function addWheelPanFix() {
 
 window.addEventListener('keydown', e => {
     if (e.code !== 'Space') return;
-    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) return;
     e.preventDefault();
     isSpaceDown = true;
     canvas.defaultCursor = 'grab';
@@ -1046,8 +1078,7 @@ canvas.on('mouse:wheel', function (opt) {
     if (zoom > 20) zoom = 20;
     if (zoom < 0.05) zoom = 0.05;
 
-    const pointer = canvas.getPointer(e);
-    canvas.zoomToPoint(new fabric.Point(pointer.x, pointer.y), zoom);
+    canvas.zoomToPoint(new fabric.Point(e.offsetX, e.offsetY), zoom);
     clampViewportTransform(canvas.viewportTransform);
     canvas.setViewportTransform(canvas.viewportTransform);
     canvas.requestRenderAll();

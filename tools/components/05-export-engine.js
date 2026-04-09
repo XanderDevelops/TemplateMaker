@@ -1136,17 +1136,36 @@ function renderLayers(e) {
 
         item.onclick = (e) => {
             if (obj.locked) return;
-            // 7. Layer multi-select
             if (e.shiftKey || e.ctrlKey || e.metaKey) {
-                if (canvas.getActiveObjects().includes(obj)) {
-                    canvas.getActiveObject().removeWithUpdate(obj);
+                const active = canvas.getActiveObject();
+                if (!active) {
+                    canvas.setActiveObject(obj);
+                } else if (active.type === 'activeSelection') {
+                    if (active.contains(obj)) {
+                        active.removeWithUpdate(obj);
+                        if (active.size() === 0) canvas.discardActiveObject();
+                        else if (active.size() === 1) {
+                            const last = active.item(0);
+                            canvas.discardActiveObject();
+                            canvas.setActiveObject(last);
+                        }
+                    } else {
+                        active.addWithUpdate(obj);
+                    }
                 } else {
-                    canvas.getActiveObject().addWithUpdate(obj);
+                    if (active === obj) {
+                        canvas.discardActiveObject();
+                    } else {
+                        const sel = new fabric.ActiveSelection([active, obj], { canvas });
+                        canvas.setActiveObject(sel);
+                    }
                 }
             } else {
                 canvas.setActiveObject(obj);
             }
-            canvas.renderAll();
+            canvas.requestRenderAll();
+            renderLayers();
+            refreshInspector({ target: canvas.getActiveObject() });
         };
 
         // DRAG AND DROP HANDLERS
