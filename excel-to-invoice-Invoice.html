@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Learn how to prepare your Excel or CSV so you can bulk generate invoices using CSVLink and a custom invoice template.">
+    <meta name="keywords" content="excel to invoice, csv to invoice, invoice spreadsheet template, invoice data prep">
+    <link rel="icon" href="assets/images/android-chrome-192x192.png" type="image/png" />
+    <title>Excel to Invoice Guide | CSVLink Invoices</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap');
+        body { margin: 0; font-family: 'Manrope', system-ui, sans-serif; background: var(--bg); color: var(--fg); }
+        nav { position: fixed; top: 0; z-index: 1000; width: 100%; box-sizing: border-box; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 24px; height: 60px; padding: 0 24px; background: rgba(255,255,255,0.88); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); }
+        .logo { display: flex; align-items: center; gap: 10px; color: var(--fg); text-decoration: none; font-family: 'Space Grotesk', sans-serif; font-size: 1.25rem; font-weight: 700; }
+        .logo-icon { width: 32px; height: 32px; border-radius: 10px; }
+        .invoice-page-nav, .nav-links { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .invoice-page-nav { justify-self: center; justify-content: center; }
+        .nav-links { justify-self: end; justify-content: flex-end; }
+        .invoice-page-link { text-decoration: none; color: #41516f; font-size: 0.9rem; font-weight: 700; padding: 8px 14px; border-radius: 999px; border: 1px solid rgba(148,163,184,0.35); background: rgba(255,255,255,0.66); }
+        .invoice-page-link.is-active { color: var(--accent); border-color: rgba(37,99,235,0.35); background: rgba(59,130,246,0.12); }
+        .container { width: min(1160px, calc(100% - 32px)); margin: 0 auto; padding: 96px 0 48px; }
+        .hero, .panel { border: 1px solid var(--border); border-radius: 24px; box-shadow: var(--shadow); }
+        .hero { padding: 42px 36px; background: radial-gradient(circle at 10% 16%, rgba(37,99,235,0.18), transparent 30%), radial-gradient(circle at 86% 14%, rgba(14,165,233,0.16), transparent 25%), linear-gradient(140deg, #ffffff 0%, #f6f9ff 58%, #eef4ff 100%); }
+        .eyebrow { display: inline-flex; margin-bottom: 14px; padding: 6px 12px; border-radius: 999px; background: rgba(37,99,235,0.08); color: var(--accent); font-size: 0.78rem; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; }
+        .hero h1 { margin: 0 0 14px; max-width: 14ch; font-family: 'Space Grotesk', sans-serif; font-size: clamp(2.2rem, 4.6vw, 4rem); line-height: 1.06; letter-spacing: -0.03em; color: #0b1328; }
+        .hero p, .panel p, .panel li { color: #53637d; line-height: 1.75; }
+        .hero p { max-width: 70ch; margin: 0; font-size: 1.05rem; }
+        .hero-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 22px; }
+        .btn { display: inline-flex; align-items: center; justify-content: center; height: 48px; padding: 0 26px; border-radius: 12px; text-decoration: none; font-weight: 700; border: none; background: var(--accent); color: var(--accent-fg); box-shadow: 0 4px 12px rgba(59,130,246,0.3); }
+        .btn.ghost { background: rgba(255,255,255,0.72); color: #173056; border: 1px solid rgba(148,163,184,0.34); box-shadow: none; }
+        .panel { margin-top: 24px; padding: 30px; background: var(--panel); }
+        .panel h2 { margin: 0 0 10px; font-family: 'Space Grotesk', sans-serif; font-size: clamp(1.6rem, 3vw, 2.7rem); letter-spacing: -0.02em; }
+        .stack { display: grid; gap: 12px; margin-top: 22px; }
+        .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: 22px; }
+        .card { padding: 20px; border: 1px solid var(--border); border-radius: 18px; background: #fff; }
+        .card h3 { margin: 0 0 10px; font-family: 'Space Grotesk', sans-serif; font-size: 1.02rem; color: #102447; }
+        .cta { background: linear-gradient(140deg, #f8fbff 0%, #eef4ff 100%); }
+        footer { margin-top: 44px; padding: 40px 24px; background: var(--panel); border-top: 1px solid var(--border); text-align: center; }
+        .footer-links { display: flex; justify-content: center; gap: 18px; flex-wrap: wrap; }
+        .footer-links a { color: var(--muted); text-decoration: none; }
+        .copyright { margin-top: 14px; color: var(--muted); font-size: 0.92rem; }
+        @media (max-width: 900px) {
+            nav { grid-template-columns: 1fr; height: auto; padding: 12px 18px; gap: 10px; }
+            .logo, .invoice-page-nav, .nav-links { justify-self: center; }
+            .container { padding-top: 148px; }
+            .hero, .panel { padding: 24px 20px; }
+            .grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="index-Invoice.html" class="logo">
+            <img src="assets/images/android-chrome-512x512.png" alt="CSVLink Logo" class="logo-icon">
+            <span>CSVLink</span>
+        </a>
+        <div class="invoice-page-nav" aria-label="Invoice pages">
+            <a href="index-Invoice.html" class="invoice-page-link">Overview</a>
+            <a href="invoice-use-cases-Invoice.html" class="invoice-page-link">Use Cases</a>
+            <a href="invoice-how-it-works-Invoice.html" class="invoice-page-link">How It Works</a>
+            <a href="excel-to-invoice-Invoice.html" class="invoice-page-link is-active">Excel to Invoice</a>
+        </div>
+        <div class="nav-links" id="nav-links"></div>
+    </nav>
+
+    <main class="container">
+        <section class="hero">
+            <span class="eyebrow">Excel to Invoice</span>
+            <h1>Turn your Excel or CSV into clean, ready-to-send invoices.</h1>
+            <p>The smoother your spreadsheet is structured, the smoother your invoice workflow becomes. CSVLink works best when your invoice data is clear, consistent, and easy to group when line items span multiple rows.</p>
+            <div class="hero-actions">
+                <a href="tool-Invoice.html" class="btn">Open Invoice Builder</a>
+                <a href="invoice-how-it-works-Invoice.html" class="btn ghost">Understand the Workflow</a>
+            </div>
+        </section>
+
+        <section class="panel">
+            <h2>Spreadsheet checklist before you import</h2>
+            <div class="stack">
+                <article class="card"><h3>Keep one clear header row</h3><p>Use readable column names like invoice_no, customer_name, due_date, subtotal, tax, and total_due instead of blank or duplicated headers.</p></article>
+                <article class="card"><h3>Use a stable invoice identifier</h3><p>If one invoice spans multiple rows, make sure every related row repeats the same invoice number or order ID so CSVLink can group them correctly.</p></article>
+                <article class="card"><h3>Normalize empty values where possible</h3><p>Blank cells are okay, but inconsistent labels, merged cells, or mixed formats tend to create avoidable mapping problems later.</p></article>
+                <article class="card"><h3>Separate summary fields from line items</h3><p>Know which columns belong in the invoice header and which ones should repeat in the item table so your mapping stays organized.</p></article>
+            </div>
+        </section>
+
+        <section class="panel">
+            <h2>Columns that are most useful in invoice spreadsheets</h2>
+            <div class="grid">
+                <article class="card"><h3>Invoice header columns</h3><p>invoice_no, issue_date, due_date, and payment_terms give the invoice its identity and timeline.</p></article>
+                <article class="card"><h3>Customer columns</h3><p>customer_name, billing_address, contact_email, and account references make the invoice ready to send.</p></article>
+                <article class="card"><h3>Financial columns</h3><p>subtotal, tax_amount, discount, and total_due make it easy to map the amounts that matter most.</p></article>
+            </div>
+        </section>
+
+        <section class="panel cta">
+            <h2>Common spreadsheet issues that slow invoice generation</h2>
+            <div class="grid">
+                <article class="card"><h3>Merged cells</h3><p>Merged rows often hide repeated values. For grouped invoices, every row should carry the invoice identifier explicitly.</p></article>
+                <article class="card"><h3>Mixed number formats</h3><p>Totals and prices are easier to map when the spreadsheet uses a consistent format for amounts, taxes, and currencies.</p></article>
+                <article class="card"><h3>Important data in notes only</h3><p>If invoice information only exists inside comments or inconsistent note columns, move it into dedicated fields before importing.</p></article>
+            </div>
+            <div class="hero-actions">
+                <a href="tool-Invoice.html" class="btn">Try with Your Data</a>
+                <a href="invoice-use-cases-Invoice.html" class="btn ghost">See Who Uses This</a>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="footer-links">
+            <a href="index-Invoice.html">Overview</a>
+            <a href="invoice-use-cases-Invoice.html">Use Cases</a>
+            <a href="invoice-how-it-works-Invoice.html">How It Works</a>
+            <a href="refunds.html">Refund Policy</a>
+        </div>
+        <div class="copyright"><p>&copy; 2026 CSVLink. All Rights Reserved.</p></div>
+    </footer>
+
+    <script type="module" src="assets/js/supabase-client.js"></script>
+    <script type="module" src="assets/js/auth.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const navLinks = document.getElementById('nav-links');
+            const syncInvoiceAuthLinks = () => {
+                if (!navLinks) return;
+                navLinks.querySelectorAll('a').forEach((link) => {
+                    if (link.getAttribute('href') === '/#pricing') link.setAttribute('href', 'index-Invoice.html#pricing');
+                });
+            };
+            if (navLinks) {
+                const navObserver = new MutationObserver(syncInvoiceAuthLinks);
+                navObserver.observe(navLinks, { childList: true, subtree: true });
+                syncInvoiceAuthLinks();
+            }
+        });
+    </script>
+</body>
+</html>

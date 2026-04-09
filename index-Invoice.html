@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Take your Excel or CSV, link your data to your designed template, and generate invoices, resumes, banners, flyers, and more in bulk with CSVLink.">
-    <meta name="keywords" content="bulk document generation, csv to document, excel to document, data mapping, invoice generator, resume generator, banner generator, flyer generator, template automation">
+    <meta name="description" content="Bulk generate invoices from Excel or CSV using your own branded invoice template. Link customer details, totals, due dates, and line items, then export every invoice in one run with CSVLink.">
+    <meta name="keywords" content="bulk invoice generator, excel invoice generator, csv invoice generator, invoice template automation, invoice batch pdf, grouped invoice rows, invoice mail merge">
     <link rel="icon" href="assets/images/android-chrome-192x192.png" type="image/png" />
-    <title>CSVLink | Link Spreadsheet Data to Any Template</title>
+    <title>CSVLink Invoices | Bulk Generate Invoices from Excel or CSV</title>
     <link rel="stylesheet" href="assets/css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/fabric@5.3.0/dist/fabric.min.js"></script>
     
@@ -28,9 +28,10 @@
 
         /* Navigation */
         nav {
-            display: flex;
-            justify-content: space-between;
+            display: grid;
+            grid-template-columns: auto minmax(0, 1fr) auto;
             align-items: center;
+            gap: 24px;
             padding: 0 24px;
             height: 60px;
             background-color: rgba(255, 255, 255, 0.86);
@@ -52,6 +53,57 @@
             display: flex;
             align-items: center;
             gap: 10px;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 10px;
+        }
+
+        .invoice-page-nav {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            justify-self: center;
+            gap: 10px;
+            min-width: 0;
+            flex-wrap: wrap;
+        }
+
+        .invoice-page-link {
+            text-decoration: none;
+            color: #41516f;
+            font-size: 0.9rem;
+            font-weight: 700;
+            padding: 8px 14px;
+            border-radius: 999px;
+            border: 1px solid rgba(148, 163, 184, 0.35);
+            background: rgba(255, 255, 255, 0.66);
+            transition: all 0.18s ease;
+            white-space: nowrap;
+        }
+
+        .invoice-page-link:hover {
+            color: var(--fg);
+            border-color: rgba(37, 99, 235, 0.35);
+            background: rgba(59, 130, 246, 0.08);
+        }
+
+        .invoice-page-link.is-active {
+            color: var(--accent);
+            border-color: rgba(37, 99, 235, 0.35);
+            background: rgba(59, 130, 246, 0.12);
+            box-shadow: inset 0 0 0 1px rgba(37, 99, 235, 0.08);
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            justify-self: end;
+            gap: 14px;
+            flex-wrap: wrap;
         }
 
         /* Hero Section */
@@ -677,7 +729,21 @@
         }
 
         @media (max-width: 900px) {
+            nav {
+                grid-template-columns: 1fr;
+                height: auto;
+                padding: 12px 18px;
+                gap: 10px;
+            }
+
+            .logo,
+            .invoice-page-nav,
+            .nav-links {
+                justify-self: center;
+            }
+
             .hero {
+                margin-top: 132px;
                 padding: 122px 22px 44px;
                 border-radius: 20px;
             }
@@ -828,10 +894,16 @@
 </head>
 <body>
     <nav>
-        <a href="/" class="logo">
+        <a href="index-Invoice.html" class="logo">
             <img src="assets/images/android-chrome-512x512.png" alt="CSVLink Logo" class="logo-icon">
             <span>CSVLink</span>
         </a>
+        <div class="invoice-page-nav" aria-label="Invoice pages">
+            <a href="index-Invoice.html" class="invoice-page-link is-active">Overview</a>
+            <a href="invoice-use-cases-Invoice.html" class="invoice-page-link">Use Cases</a>
+            <a href="invoice-how-it-works-Invoice.html" class="invoice-page-link">How It Works</a>
+            <a href="excel-to-invoice-Invoice.html" class="invoice-page-link">Excel to Invoice</a>
+        </div>
         <div class="nav-links" id="nav-links">
             <!-- Auth links will be injected here by JS -->
         </div>
@@ -840,93 +912,93 @@
     <main class="container">
         <!-- (Your Hero, Features, and Template sections go here...) -->
         <section class="hero">
-            <h1>Take your Excel or CSV and link your data to your designed template.</h1>
-            <p>Create invoices, resumes, banners, flyers, certificates, labels, and more in minutes. Build your layout once, map your columns, and generate all files in one run.</p>
+            <h1>Bulk generate invoices from your Excel or CSV using your own template.</h1>
+            <p>Bring your branded invoice design, connect customer names, invoice numbers, dates, taxes, totals, and line items, then export a full invoice batch in minutes instead of editing each file by hand.</p>
             <div class="hero-actions">
-                <a href="/tool" class="btn">Start Building</a>
-                <a href="#templates" class="btn ghost">Browse Templates</a>
+                <a href="tool-Invoice.html" class="btn">Start Building</a>
+                <a href="#templates" class="btn ghost">See Invoice Templates</a>
             </div>
             <p style="font-size: 0.95rem; color: #51617d; margin-top: 1rem; margin-bottom: 0;">Free to use. No login required to start.</p>
 
             <div class="hero-flow">
                 <article class="hero-flow-card">
-                    <h3>1. Upload your spreadsheet</h3>
-                    <p>Import CSV or XLSX data with one row per document.</p>
+                    <h3>1. Upload your invoice table</h3>
+                    <p>Import Excel or CSV data with one row per invoice or grouped rows for line items.</p>
                 </article>
                 <article class="hero-flow-card">
-                    <h3>2. Link fields to your layout</h3>
-                    <p>Map each column to text, images, and table placeholders.</p>
+                    <h3>2. Link invoice fields</h3>
+                    <p>Map customer details, due dates, totals, and item rows into your invoice layout.</p>
                 </article>
                 <article class="hero-flow-card">
-                    <h3>3. Export in bulk</h3>
-                    <p>Generate clean outputs for every record in one click.</p>
+                    <h3>3. Export every invoice</h3>
+                    <p>Generate polished invoices in one run, ready to send, store, or print.</p>
                 </article>
             </div>
         </section>
         
         <section id="first-feature" class="feature-section animated-section">
             <div class="feature-content">
-                <h2>One clear workflow from spreadsheet to finished files</h2>
-                <p>Your data stays structured. Your design stays reusable. CSVLink connects both so you can ship polished documents at scale without repetitive edits.</p>
+                <h2>Made for real invoice spreadsheets, not generic mail merge</h2>
+                <p>Whether your billing data comes from accounting software, ERP exports, or a manually maintained spreadsheet, CSVLink turns that table into a reusable invoice workflow without forcing you into a rigid template.</p>
                 <ul class="bulk-steps">
-                    <li><strong>Prepare your data:</strong> Keep clear column names like name, amount, role, or headline.</li>
-                    <li><strong>Design your template:</strong> Build invoices, resumes, reports, banners, or any custom layout.</li>
-                    <li><strong>Map and generate:</strong> Link placeholders once, then export all files with live row data.</li>
+                    <li><strong>Prepare your invoice data:</strong> Keep clear fields such as invoice number, client name, due date, subtotal, tax, and balance due.</li>
+                    <li><strong>Choose the right data mode:</strong> Use one row per invoice or grouped rows when each invoice spans multiple line items.</li>
+                    <li><strong>Link once and regenerate anytime:</strong> Reuse your invoice template whenever new billing data arrives.</li>
                 </ul>
 
                 <div class="mapping-demo">
                     <div class="mapping-column">
-                        <h4>Your CSV columns</h4>
-                        <span class="field-pill">full_name</span>
-                        <span class="field-pill">invoice_total</span>
-                        <span class="field-pill">job_title</span>
-                        <span class="field-pill">banner_text</span>
+                        <h4>Your invoice columns</h4>
+                        <span class="field-pill">invoice_no</span>
+                        <span class="field-pill">bill_to_name</span>
+                        <span class="field-pill">due_date</span>
+                        <span class="field-pill">amount_due</span>
                     </div>
                     <span class="mapping-arrow">Link data</span>
                     <div class="mapping-column">
                         <h4>Template placeholders</h4>
+                        <span class="field-pill">{{invoice_number}}</span>
                         <span class="field-pill">{{customer_name}}</span>
-                        <span class="field-pill">{{amount_due}}</span>
-                        <span class="field-pill">{{role_heading}}</span>
-                        <span class="field-pill">{{campaign_message}}</span>
+                        <span class="field-pill">{{payment_due}}</span>
+                        <span class="field-pill">{{total_due}}</span>
                     </div>
                 </div>
             </div>
 
             <div class="feature-image">
-                <img src="assets/images/editor-img-1.png" alt="Template editor used to link spreadsheet data to design placeholders">
+                <img src="assets/images/editor-img-1.png" alt="Invoice template editor used to link spreadsheet data to billing placeholders">
             </div>
         </section>
 
         <section class="use-cases-section animated-section">
             <div class="feature-content">
-                <h2>Create almost anything with the same system</h2>
-                <p>Use one platform for operations, marketing, sales, and recruiting docs. Swap templates, keep your process.</p>
+                <h2>Invoice workflows this page is built for</h2>
+                <p>From solo operators to finance teams, the same invoice engine adapts to different billing models and spreadsheet structures.</p>
             </div>
             <div class="use-cases-grid">
                 <article class="use-case-card">
-                    <h3>Invoices and receipts</h3>
-                    <p>Generate client-ready billing documents with totals, due dates, and item tables.</p>
+                    <h3>Freelancers and consultants</h3>
+                    <p>Send polished invoices with project descriptions, due dates, and taxes without rebuilding the same file every month.</p>
                 </article>
                 <article class="use-case-card">
-                    <h3>Resumes and certificates</h3>
-                    <p>Populate names, roles, skills, and dates into polished resume or certificate layouts.</p>
+                    <h3>Creative agencies and studios</h3>
+                    <p>Generate branded client invoices in batches while keeping custom layouts for different service packages.</p>
                 </article>
                 <article class="use-case-card">
-                    <h3>Banners and flyers</h3>
-                    <p>Build campaign visuals at scale by injecting product names and calls-to-action.</p>
+                    <h3>Wholesale and distribution teams</h3>
+                    <p>Turn exported order spreadsheets into invoice PDFs that include item tables, quantities, and totals.</p>
                 </article>
                 <article class="use-case-card">
-                    <h3>Reports and summaries</h3>
-                    <p>Turn structured data into branded summaries for teams, clients, or stakeholders.</p>
+                    <h3>Subscription and retainer billing</h3>
+                    <p>Reuse the same invoice template for recurring customers while swapping dates, line items, and balances automatically.</p>
                 </article>
                 <article class="use-case-card">
-                    <h3>Labels and ID cards</h3>
-                    <p>Automate repetitive production for labels, badges, and event materials.</p>
+                    <h3>Operations and finance teams</h3>
+                    <p>Standardize invoice output across departments while keeping spreadsheet-driven approval and accounting workflows.</p>
                 </article>
                 <article class="use-case-card">
-                    <h3>Any custom document</h3>
-                    <p>If you can design the template, CSVLink can merge data and generate final files in bulk.</p>
+                    <h3>Service businesses with itemized work</h3>
+                    <p>Map grouped rows into repeated invoice items so each customer gets the right breakdown of labor, parts, or deliverables.</p>
                 </article>
             </div>
         </section>
@@ -934,14 +1006,12 @@
         
         <!-- 6. Section 3: Template Gallery - REWORKED -->
         <section id="templates" class="templates-section animated-section">
-            <h2>Start from ready templates or build your own</h2>
-            <p style="color: var(--muted); max-width: 680px; margin: 0 auto 2rem;">Pick a template category and launch it in the editor. Replace sample content with your own data and export immediately.</p>
+            <h2>Start from invoice templates or build your own invoice layout</h2>
+            <p style="color: var(--muted); max-width: 680px; margin: 0 auto 2rem;">Open an invoice template, replace the sample branding, link your spreadsheet, and export a full billing run without starting from scratch.</p>
             
             <!-- Using the correct class name: "template-category-btn" -->
             <div class="template-categories">
                 <button class="template-category-btn active" data-category="invoice">Invoice Templates</button>
-                <button class="template-category-btn" data-category="report">Report Templates</button>
-                <button class="template-category-btn" data-category="resume">Resume Templates</button>
             </div>
 
             <div class="template-carousel-container">
@@ -954,23 +1024,23 @@
         <!-- Section 2: AI Design -->
         <section class="feature-section animated-section">
             <div class="feature-content">
-                <h2>Use AI to draft the layout, then link your real data</h2>
-                <p>Describe what you need, generate a starting design, and refine it with full control. Keep the speed of AI with the precision of manual editing.</p>
+                <h2>Use AI to draft the invoice layout, then connect your billing data</h2>
+                <p>Describe the invoice style you need, let AI generate the starting structure, and refine sections, branding, and totals before linking live spreadsheet columns.</p>
                 <ul class="bulk-steps" style="margin-top: 1rem;">
-                    <li><strong>Generate:</strong> Start from a simple prompt.</li>
-                    <li><strong>Adjust:</strong> Tweak fonts, structure, spacing, and brand details.</li>
-                    <li><strong>Publish:</strong> Map placeholders and export personalized files in bulk.</li>
+                    <li><strong>Generate:</strong> Start from a prompt describing the invoice layout you want.</li>
+                    <li><strong>Adjust:</strong> Refine sections for billing addresses, payment terms, tables, and brand details.</li>
+                    <li><strong>Export:</strong> Link your invoice fields and produce a full batch from Excel or CSV.</li>
                 </ul>
             </div>
             <div class="feature-image">
-                <img src="https://placehold.co/700x460/eaf2ff/1d4ed8?text=AI+Template+Draft" alt="AI assistant generating a starter template">
+                <img src="https://placehold.co/700x460/eaf2ff/1d4ed8?text=AI+Invoice+Layout+Draft" alt="AI assistant generating a starter invoice template">
             </div>
         </section>
 
         <section id="pricing" class="pricing-section animated-section">
             <div class="pricing-header">
-                <h2>Simple pricing that scales with your output</h2>
-                <p>Start free, then upgrade when you need unlimited templates and larger export workflows.</p>
+                <h2>Pricing for invoice teams that need clean batch exports</h2>
+                <p>Start free while you validate your invoice workflow, then upgrade when you need unlimited templates and higher-volume export runs.</p>
             </div>
             <div class="pricing-container">
                 <div class="pricing-card">
@@ -988,7 +1058,7 @@
                         </ul>
                     </div>
                     <div class="card-footer">
-                        <a href="/tool" class="btn">Get Started</a>
+                        <a href="tool-Invoice.html" class="btn">Get Started</a>
                     </div>
                 </div>
                 <div class="pricing-card recommended">
@@ -1051,6 +1121,20 @@
         import { supabase } from './assets/js/supabase-client.js';
 
         document.addEventListener('DOMContentLoaded', async function() {
+            const invoiceNavLinks = document.getElementById('nav-links');
+            const syncInvoiceAuthLinks = () => {
+                if (!invoiceNavLinks) return;
+                invoiceNavLinks.querySelectorAll('a').forEach((link) => {
+                    if (link.getAttribute('href') === '/#pricing') {
+                        link.setAttribute('href', 'index-Invoice.html#pricing');
+                    }
+                });
+            };
+            if (invoiceNavLinks) {
+                const navObserver = new MutationObserver(syncInvoiceAuthLinks);
+                navObserver.observe(invoiceNavLinks, { childList: true, subtree: true });
+                syncInvoiceAuthLinks();
+            }
 
             // --- ALL YOUR EXISTING PAGE LOGIC IS HERE ---
             const carouselTrack = document.querySelector('.template-carousel-track');
@@ -1067,13 +1151,13 @@
                 if (!carouselTrack) { console.error("Carousel track not found!"); return; }
                 carouselTrack.innerHTML = '';
                 if (!templates || templates.length === 0) {
-                    carouselTrack.innerHTML = `<p style="width: 100%; text-align: center;">No templates found.</p>`;
+                    carouselTrack.innerHTML = `<p style="width: 100%; text-align: center;">No invoice templates found.</p>`;
                     if (currentCarouselInterval) clearInterval(currentCarouselInterval);
                     return;
                 }
                 templates.forEach(template => {
                     const card = document.createElement('a');
-                    card.href = `/tool?id=${template.id}&public=true`;
+                    card.href = `tool-Invoice.html?id=${template.id}&public=true`;
                     card.className = 'template-card';
                     card.title = `Use ${template.title}`;
                     const canvasId = `preview-canvas-${template.id}`;
