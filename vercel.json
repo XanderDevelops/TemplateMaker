@@ -19,7 +19,7 @@
     { "source": "/dashboard", "destination": "/dashboard.html" },
     { "source": "/store", "destination": "/store.html" },
     { "source": "/tool", "destination": "/tool.html" },
-    { "source": "/tool-invoice", "destination": "/tool-invoice.html" },
+    { "source": "/tool-Invoice", "destination": "/tool-Invoice.html" },
     { "source": "/login", "destination": "/login.html" },
     { "source": "/api-documentation", "destination": "/api-documentation.html" },
     { "source": "/verify", "destination": "/verify.html" },
