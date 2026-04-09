@@ -1717,6 +1717,24 @@ ${rawResponse}
                 };
             }
 
+            function buildAiImportedDataContext() {
+                const rawHeaders = Array.isArray(headers)
+                    ? headers.map((header) => clampStringForAi(header, 90)).filter(Boolean)
+                    : [];
+                if (!rawHeaders.length) return 'Imported data columns: none.';
+                const visibleHeaders = rawHeaders.slice(0, 36);
+                const sampleRows = compactDataRowsForAi(dataRows, visibleHeaders, {
+                    maxRows: 2,
+                    maxCols: Math.max(1, Math.min(12, visibleHeaders.length)),
+                    maxCellChars: 48
+                });
+                return [
+                    `Imported data columns (${rawHeaders.length}): ${visibleHeaders.join(', ')}${rawHeaders.length > visibleHeaders.length ? ', ...' : ''}`,
+                    `Sample data rows: ${sampleRows.length ? JSON.stringify(sampleRows) : '[]'}`,
+                    'If the user asks for a template that uses table fields, use these columns to shape the invoice layout and use the real field names in visible placeholder text where helpful.'
+                ].join('\n');
+            }
+
             function buildCreativeFabricPrompt(userPrompt, { pageWidth, pageHeight } = {}) {
                 const width = parsePositiveInt(pageWidth, DEFAULT_PAGE_WIDTH);
                 const height = parsePositiveInt(pageHeight, DEFAULT_PAGE_HEIGHT);
@@ -1752,6 +1770,9 @@ Rules:
 - Do not use clipPath, transformMatrix, filters, scripts, or custom executable fields.
 - Use professional spacing, hierarchy, alignment, and contrast.
 ${buildGoogleFontsHint()}
+
+Imported data context:
+${buildAiImportedDataContext()}
 
 User request:
 ${userPrompt || '(Attachment-only request)'}

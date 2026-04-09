@@ -2182,6 +2182,55 @@
             margin: 0;
         }
 
+        #invoiceAiHelperHighlight {
+            position: fixed;
+            z-index: 29001;
+            background: rgba(16, 185, 129, 0.08);
+            border: 2px solid #10b981;
+            border-radius: 14px;
+            box-shadow: 0 0 0 9999px rgba(3, 5, 8, 0.54);
+            pointer-events: none;
+            display: none;
+            transition: all 0.2s ease;
+        }
+
+        #invoiceAiHelperModal {
+            position: fixed;
+            z-index: 30002;
+            width: 360px;
+            max-width: calc(100vw - 32px);
+            display: none;
+            flex-direction: column;
+            gap: 12px;
+            padding: 14px;
+            background: var(--panel);
+            border: 1px solid rgba(16, 185, 129, 0.24);
+            border-radius: 16px;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .invoice-ai-helper-prompt {
+            padding: 10px 12px;
+            border-radius: 12px;
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(59, 130, 246, 0.08));
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--fg);
+            line-height: 1.45;
+        }
+
+        .invoice-ai-helper-actions {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+            flex-wrap: wrap;
+        }
+
+        .invoice-ai-helper-actions .btn {
+            flex: 1 1 160px;
+        }
+
         /* Color picker compact */
         .color-picker-wrapper {
             height: 26px;

@@ -3918,6 +3918,7 @@ let invoiceCsvPromptDismissed = false;
 let pendingIdentifierModalAfterTableClose = false;
 let pendingInvoiceFieldsHelper = false;
 let invoiceFieldsHelperVisible = false;
+let invoiceAiHelperVisible = false;
 let selectedCsvTableColumnIndex = -1;
 let gridEnabled = false, snapEnabled = true;
 let gridCellSize = 32;
@@ -3928,6 +3929,7 @@ let historyLocked = false;
 let isRestoringHistory = false;
 let _clipboard = null;
 let _clipboardMeta = null;
+const INVOICE_AI_STARTER_PROMPT = 'Create an invoice template with my table fields';
 const SYSTEM_FONT_LIST = ['Arial', 'Helvetica', 'Times New Roman', 'Georgia', 'Courier New', 'Verdana', 'Impact', 'Comic Sans MS'];
 const GOOGLE_FONT_FAMILY_MAP = new Map(GOOGLE_FONT_FAMILIES.map(name => [String(name).toLowerCase(), String(name)]));
 const FONT_LIST = Array.from(new Set([...SYSTEM_FONT_LIST, ...GOOGLE_FONT_FAMILIES]))
@@ -6907,6 +6909,17 @@ function hideInvoiceFieldsHelper() {
     }
 }
 
+function hideInvoiceAiHelper() {
+    invoiceAiHelperVisible = false;
+    const highlight = $('#invoiceAiHelperHighlight');
+    const modal = $('#invoiceAiHelperModal');
+    if (highlight) highlight.style.display = 'none';
+    if (modal) {
+        modal.style.display = 'none';
+        modal.style.visibility = 'visible';
+    }
+}
+
 function positionInvoiceFieldsHelper() {
     if (!invoiceFieldsHelperVisible) return;
     const panel = $('#invoiceCsvFieldsPanel');
@@ -6953,11 +6966,76 @@ function positionInvoiceFieldsHelper() {
     modal.style.visibility = 'visible';
 }
 
+function positionInvoiceAiHelper() {
+    if (!invoiceAiHelperVisible) return;
+    const panel = $('#aiAssistantPanel');
+    const highlight = $('#invoiceAiHelperHighlight');
+    const modal = $('#invoiceAiHelperModal');
+    if (!panel || !highlight || !modal) {
+        hideInvoiceAiHelper();
+        return;
+    }
+
+    const rect = panel.getBoundingClientRect();
+    if (!rect.width || !rect.height) {
+        hideInvoiceAiHelper();
+        return;
+    }
+
+    const padding = 8;
+    highlight.style.display = 'block';
+    highlight.style.top = `${Math.max(8, rect.top - padding)}px`;
+    highlight.style.left = `${Math.max(8, rect.left - padding)}px`;
+    highlight.style.width = `${rect.width + padding * 2}px`;
+    highlight.style.height = `${rect.height + padding * 2}px`;
+
+    modal.style.display = 'flex';
+    modal.style.visibility = 'hidden';
+    modal.style.top = '16px';
+    modal.style.left = '16px';
+
+    const modalRect = modal.getBoundingClientRect();
+    let left = rect.right + 18;
+    if (left + modalRect.width > window.innerWidth - 16) {
+        left = rect.left - modalRect.width - 18;
+    }
+    if (left < 16) left = Math.max(16, window.innerWidth - modalRect.width - 16);
+
+    let top = rect.top + 8;
+    if (top + modalRect.height > window.innerHeight - 16) {
+        top = window.innerHeight - modalRect.height - 16;
+    }
+    top = Math.max(16, top);
+
+    modal.style.top = `${top}px`;
+    modal.style.left = `${left}px`;
+    modal.style.visibility = 'visible';
+}
+
 function showInvoiceFieldsHelper() {
     if (!hasInvoiceDataLoaded()) return;
+    hideInvoiceAiHelper();
     pendingInvoiceFieldsHelper = false;
     invoiceFieldsHelperVisible = true;
     positionInvoiceFieldsHelper();
+}
+
+function showInvoiceAiHelper() {
+    if (!hasInvoiceTableStructure()) return;
+    hideInvoiceFieldsHelper();
+    const panel = $('#aiAssistantPanel');
+    if (panel && typeof panel.scrollIntoView === 'function') {
+        panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+    invoiceAiHelperVisible = true;
+    positionInvoiceAiHelper();
+}
+
+function continueAfterInvoiceFieldsHelper() {
+    hideInvoiceFieldsHelper();
+    window.setTimeout(() => {
+        if (hasInvoiceTableStructure()) showInvoiceAiHelper();
+    }, 120);
 }
 
 function queueInvoiceFieldsHelper() {
@@ -6983,6 +7061,7 @@ function renderInvoiceCsvFieldsPanel() {
 
     if (!hasInvoiceTableStructure()) {
         hideInvoiceFieldsHelper();
+        hideInvoiceAiHelper();
         panel.style.display = 'none';
         list.innerHTML = '';
         return;
@@ -8647,11 +8726,42 @@ on('#invoiceCsvPromptSkipBtn', 'click', () => {
     invoiceCsvPromptDismissed = true;
     syncInvoiceCsvPromptState();
 });
-on('#closeInvoiceFieldsHelperBtn', 'click', hideInvoiceFieldsHelper);
-on('#dismissInvoiceFieldsHelperBtn', 'click', hideInvoiceFieldsHelper);
-window.addEventListener('resize', positionInvoiceFieldsHelper);
+on('#closeInvoiceFieldsHelperBtn', 'click', continueAfterInvoiceFieldsHelper);
+on('#dismissInvoiceFieldsHelperBtn', 'click', continueAfterInvoiceFieldsHelper);
+on('#closeInvoiceAiHelperBtn', 'click', hideInvoiceAiHelper);
+on('#dismissInvoiceAiHelperBtn', 'click', () => {
+    hideInvoiceAiHelper();
+    $('#aiChatPrompt')?.focus();
+});
+on('#invoiceAiHelperSendBtn', 'click', () => {
+    const aiPromptEl = $('#aiChatPrompt');
+    const aiSendEl = $('#aiChatSendBtn');
+    if (!aiPromptEl || !aiSendEl) {
+        showNotification('AI chat is not available right now.', 'info', 2200);
+        hideInvoiceAiHelper();
+        return;
+    }
+    aiPromptEl.value = INVOICE_AI_STARTER_PROMPT;
+    aiPromptEl.dispatchEvent(new Event('input', { bubbles: true }));
+    hideInvoiceAiHelper();
+    aiPromptEl.focus();
+    if (aiSendEl.disabled) {
+        showNotification('The starter prompt is ready in the AI chat.', 'info', 2200);
+        return;
+    }
+    window.requestAnimationFrame(() => aiSendEl.click());
+});
+window.addEventListener('resize', () => {
+    if (invoiceFieldsHelperVisible) positionInvoiceFieldsHelper();
+    if (invoiceAiHelperVisible) positionInvoiceAiHelper();
+});
 window.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape' && invoiceFieldsHelperVisible) hideInvoiceFieldsHelper();
+    if (event.key !== 'Escape') return;
+    if (invoiceFieldsHelperVisible) {
+        continueAfterInvoiceFieldsHelper();
+        return;
+    }
+    if (invoiceAiHelperVisible) hideInvoiceAiHelper();
 });
 $('#inspectorWrap')?.addEventListener('scroll', () => {
     if (invoiceFieldsHelperVisible) positionInvoiceFieldsHelper();
@@ -15356,6 +15466,24 @@ ${rawResponse}
                 };
             }
 
+            function buildAiImportedDataContext() {
+                const rawHeaders = Array.isArray(headers)
+                    ? headers.map((header) => clampStringForAi(header, 90)).filter(Boolean)
+                    : [];
+                if (!rawHeaders.length) return 'Imported data columns: none.';
+                const visibleHeaders = rawHeaders.slice(0, 36);
+                const sampleRows = compactDataRowsForAi(dataRows, visibleHeaders, {
+                    maxRows: 2,
+                    maxCols: Math.max(1, Math.min(12, visibleHeaders.length)),
+                    maxCellChars: 48
+                });
+                return [
+                    `Imported data columns (${rawHeaders.length}): ${visibleHeaders.join(', ')}${rawHeaders.length > visibleHeaders.length ? ', ...' : ''}`,
+                    `Sample data rows: ${sampleRows.length ? JSON.stringify(sampleRows) : '[]'}`,
+                    'If the user asks for a template that uses table fields, use these columns to shape the invoice layout and use the real field names in visible placeholder text where helpful.'
+                ].join('\n');
+            }
+
             function buildCreativeFabricPrompt(userPrompt, { pageWidth, pageHeight } = {}) {
                 const width = parsePositiveInt(pageWidth, DEFAULT_PAGE_WIDTH);
                 const height = parsePositiveInt(pageHeight, DEFAULT_PAGE_HEIGHT);
@@ -15382,6 +15510,9 @@ Strict rules:
 - Do not use clipPath, transformMatrix, filters, scripts, or non-Fabric custom code.
 - Use professional layout quality (spacing rhythm, alignment, readable hierarchy).
 ${buildGoogleFontsHint()}
+
+Imported data context:
+${buildAiImportedDataContext()}
 
 User request:
 ${userPrompt || '(Attachment-only request)'}
