@@ -190,6 +190,37 @@
             line-height: 1.75;
         }
 
+        .hero-layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1.02fr) minmax(340px, 0.98fr);
+            gap: 32px;
+            align-items: center;
+        }
+
+        .hero-copy {
+            min-width: 0;
+        }
+
+        .hero-visual {
+            margin: 0;
+            min-width: 0;
+        }
+
+        .hero-visual-frame {
+            padding: 14px;
+            border-radius: 26px;
+            background: linear-gradient(160deg, rgba(255, 255, 255, 0.96), rgba(239, 246, 255, 0.92));
+            border: 1px solid rgba(148, 163, 184, 0.25);
+            box-shadow: 0 26px 60px rgba(15, 23, 42, 0.12);
+        }
+
+        .hero-visual img {
+            display: block;
+            width: 100%;
+            height: auto;
+            border-radius: 18px;
+        }
+
         .hero-actions {
             margin-top: 1.2rem;
             display: flex;
@@ -216,6 +247,27 @@
             border-radius: 14px;
             background: rgba(255, 255, 255, 0.76);
             padding: 14px 16px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .hero-flow-card--visual {
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(248, 250, 252, 0.98));
+        }
+
+        .hero-flow-card-preview {
+            margin: 0 0 0.95rem;
+            overflow: hidden;
+            border-radius: 12px;
+            border: 1px solid rgba(148, 163, 184, 0.28);
+            background: #fff;
+            box-shadow: 0 12px 26px rgba(15, 23, 42, 0.08);
+        }
+
+        .hero-flow-card-preview img {
+            display: block;
+            width: 100%;
+            height: auto;
         }
 
         .hero-flow-card h3 {
@@ -791,6 +843,11 @@
                 border-radius: 20px;
             }
 
+            .hero-layout {
+                grid-template-columns: 1fr;
+                gap: 22px;
+            }
+
             .hero-flow,
             .use-cases-grid {
                 grid-template-columns: 1fr;
@@ -956,13 +1013,22 @@
     <main class="container">
         <!-- (Your Hero, Features, and Template sections go here...) -->
         <section class="hero">
-            <h1>Bulk generate invoices from your Excel or CSV using your own template.</h1>
-            <p>Bring your branded invoice design, connect customer names, invoice numbers, dates, taxes, totals, and line items, then export a full invoice batch in minutes instead of editing each file by hand.</p>
-            <div class="hero-actions">
-                <a href="/tool" class="btn">Start Building</a>
-                <a href="#templates" class="btn ghost">See Invoice Templates</a>
+            <div class="hero-layout">
+                <div class="hero-copy">
+                    <h1>Bulk generate invoices from your Excel or CSV using your own template.</h1>
+                    <p>Bring your branded invoice design, connect customer names, invoice numbers, dates, taxes, totals, and line items, then export a full invoice batch in minutes instead of editing each file by hand.</p>
+                    <div class="hero-actions">
+                        <a href="/tool" class="btn">Start Building</a>
+                        <a href="#templates" class="btn ghost">See Invoice Templates</a>
+                    </div>
+                    <p style="font-size: 0.95rem; color: #51617d; margin-top: 1rem; margin-bottom: 0;">Free to use. No login required to start.</p>
+                </div>
+                <figure class="hero-visual">
+                    <div class="hero-visual-frame">
+                        <img src="assets/images/invoice-hero-flow.png" alt="An Excel invoice table on the left flowing into a finished invoice on the right." width="1217" height="523" fetchpriority="high" decoding="async">
+                    </div>
+                </figure>
             </div>
-            <p style="font-size: 0.95rem; color: #51617d; margin-top: 1rem; margin-bottom: 0;">Free to use. No login required to start.</p>
 
             <div class="hero-flow">
                 <article class="hero-flow-card">
@@ -973,7 +1039,10 @@
                     <h3>2. Link invoice fields</h3>
                     <p>Map customer details, due dates, totals, and item rows into your invoice layout.</p>
                 </article>
-                <article class="hero-flow-card">
+                <article class="hero-flow-card hero-flow-card--visual">
+                    <div class="hero-flow-card-preview">
+                        <img src="assets/images/invoice-hero-flow.png" alt="Invoice spreadsheet data mapped into a ready-to-send invoice." width="1217" height="523" loading="lazy" decoding="async">
+                    </div>
                     <h3>3. Export every invoice</h3>
                     <p>Generate polished invoices in one run, ready to send, store, or print.</p>
                 </article>
