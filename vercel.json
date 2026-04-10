@@ -13,6 +13,7 @@
     }
   ],
   "rewrites": [
+    { "source": "/", "destination": "/index-Invoice.html" },
     { "source": "/privacy", "destination": "/privacy.html" },
     { "source": "/refunds", "destination": "/refunds.html" },
     { "source": "/terms", "destination": "/terms.html" },
