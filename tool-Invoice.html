@@ -24,7 +24,8 @@
     <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
     <!-- jsPDF -->
     <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-    <link rel="stylesheet" href="tools/tool-Invoice.css?v=20260409e" />
+    <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+    <link rel="stylesheet" href="tools/tool-Invoice.css?v=20260409f" />
     <!-- Vercel Web Analytics -->
     <script defer src="/_vercel/insights/script.js"></script>
 </head>
@@ -44,6 +45,7 @@
     <input type="file" id="imageFillUpload" accept="image/*" style="display:none;" />
     <input type="file" id="fontUpload" accept=".ttf,.otf,.woff,.woff2" style="display:none;" />
     <input type="file" id="jsonUpload" accept=".json" style="display:none;" />
+    <input type="file" id="invoicePdfTemplateInput" accept="application/pdf,.pdf" style="display:none;" />
 
 
     <div class="app">
@@ -663,7 +665,7 @@
         </div>
         <div class="invoice-fields-helper-content">
             <p>These are the column names from your imported CSV/Excel file.</p>
-            <p>Drag any field onto the canvas to create a linked placeholder. When you export or print, each linked field will be replaced with the matching value from that row in your dataset.</p>
+            <p id="invoiceFieldsHelperDetail">Drag any field onto the canvas to create a linked placeholder. When you export or print, each linked field will be replaced with the matching value from that row in your dataset.</p>
         </div>
         <div class="row" style="justify-content:flex-end;">
             <button id="dismissInvoiceFieldsHelperBtn" class="btn primary" type="button">Got It</button>
@@ -671,25 +673,30 @@
     </div>
 
     <div id="invoiceAiHelperHighlight"></div>
-    <div id="invoiceAiHelperModal">
-        <div class="invoice-fields-helper-header">
-            <h4>How would you like to start?</h4>
-            <button id="closeInvoiceAiHelperBtn" class="btn ghost" type="button" title="Close AI helper">&times;</button>
-        </div>
-        <div class="invoice-fields-helper-content">
-            <p>Your invoice fields are ready. Choose whether you want to build the layout yourself or let AI draft it for you first.</p>
-            <p>If you use AI, it will place your imported fields as <strong>linked placeholders</strong>, not plain sample text.</p>
-            <div class="invoice-ai-helper-prompt">Linked placeholders the AI should use: {{Invoice Number}}, {{Customer Name}}, {{Due Date}}, {{Total Due}}</div>
-        </div>
-        <div class="invoice-ai-helper-actions">
-            <button id="invoiceAiHelperSendBtn" class="btn primary" type="button">Use AI to Create My Template</button>
-            <button id="dismissInvoiceAiHelperBtn" class="btn ghost" type="button">Create My Template from Scratch</button>
+    <div id="invoiceAiHelperModal" class="modal-backdrop" style="z-index: 10004;">
+        <div class="modal invoice-template-start-modal">
+            <div class="row" style="justify-content:space-between;align-items:center;gap:12px;">
+                <h3>How would you like to start?</h3>
+                <button id="closeInvoiceAiHelperBtn" class="btn ghost" type="button" title="Close template start helper">&times;</button>
+            </div>
+            <p class="muted" style="margin: 0;">Your invoice fields are ready. Choose whether you want to import a finished invoice PDF or build the template from scratch.</p>
+            <div class="invoice-template-start-options">
+                <button id="invoiceAiHelperSendBtn" class="invoice-template-start-option invoice-template-start-option--primary" type="button">
+                    <span class="invoice-template-start-option-title">Import Invoice Template in PDF</span>
+                    <span class="invoice-template-start-option-copy">Upload a single-page PDF and place it as the locked invoice background before dragging your linked fields on top.</span>
+                </button>
+                <button id="dismissInvoiceAiHelperBtn" class="invoice-template-start-option" type="button">
+                    <span class="invoice-template-start-option-title">Create template from scratch</span>
+                    <span class="invoice-template-start-option-copy">Start with a blank invoice canvas, then drag your linked placeholders wherever you want them.</span>
+                </button>
+            </div>
+            <p id="invoiceTemplateStartStatus" class="muted invoice-template-start-note">PDF import supports one page only.</p>
         </div>
     </div>
 
     <script type="module" src="assets/js/supabase-client.js"></script>
     <script type="module" src="assets/js/auth.js"></script>
-    <script type="module" src="tools/tool-Invoice.js?v=20260409f"></script>
+    <script type="module" src="tools/tool-Invoice.js?v=20260409g"></script>
 
     <!-- Grouped Data By Modal -->
     <div id="identifierColumnModal" class="modal-backdrop" style="z-index: 10001;">

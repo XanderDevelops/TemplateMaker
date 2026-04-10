@@ -3870,6 +3870,13 @@ const onClick = (sel, handler) => { const el = $(sel); if (!el) return null; el.
 const setText = (sel, value) => { const el = $(sel); if (el) el.textContent = value; };
 
 const { jsPDF } = window.jspdf;
+const pdfjsLib = window.pdfjsLib || null;
+const PDF_TEMPLATE_BACKGROUND_PREFIX = 'pdfTemplateBackground';
+const INVOICE_TEMPLATE_START_DEFAULT_STATUS = 'PDF import supports one page only.';
+
+if (pdfjsLib?.GlobalWorkerOptions) {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+}
 
 // --- STATE ---
 const canvasWrapper = $('.canvas-wrap');
@@ -3930,7 +3937,6 @@ let historyLocked = false;
 let isRestoringHistory = false;
 let _clipboard = null;
 let _clipboardMeta = null;
-const INVOICE_AI_STARTER_PROMPT = 'Create an invoice template with my table fields. Use my imported column headers as linked placeholders. Every dynamic value must be a standalone textbox whose full text is exactly {{Exact Column Header}} so CSVLink can bind it automatically.';
 const SYSTEM_FONT_LIST = ['Arial', 'Helvetica', 'Times New Roman', 'Georgia', 'Courier New', 'Verdana', 'Impact', 'Comic Sans MS'];
 const GOOGLE_FONT_FAMILY_MAP = new Map(GOOGLE_FONT_FAMILIES.map(name => [String(name).toLowerCase(), String(name)]));
 const FONT_LIST = Array.from(new Set([...SYSTEM_FONT_LIST, ...GOOGLE_FONT_FAMILIES]))
@@ -6885,6 +6891,41 @@ function hasInvoiceTableStructure() {
     return Array.isArray(headers) && headers.length > 0;
 }
 
+function isInvoicePdfTemplateObject(obj) {
+    return !!obj && String(obj.oid || '').startsWith(`${PDF_TEMPLATE_BACKGROUND_PREFIX}_`);
+}
+
+function hasInvoicePdfTemplateBackground(pageIndex = currentPageIndex) {
+    if (pageIndex === currentPageIndex && typeof canvas?.getObjects === 'function') {
+        return canvas.getObjects().some(isInvoicePdfTemplateObject);
+    }
+
+    const page = Array.isArray(documentPages) ? documentPages[pageIndex] : null;
+    const objects = Array.isArray(page?.canvas?.objects) ? page.canvas.objects : [];
+    return objects.some(isInvoicePdfTemplateObject);
+}
+
+function syncInvoiceFieldsHelperCopy() {
+    const detail = $('#invoiceFieldsHelperDetail');
+    if (!detail) return;
+    detail.textContent = hasInvoicePdfTemplateBackground()
+        ? 'Drag any field onto the PDF to create a linked placeholder. When you export or print, each linked field will be replaced with the matching value from that row in your dataset.'
+        : 'Drag any field onto the canvas to create a linked placeholder. When you export or print, each linked field will be replaced with the matching value from that row in your dataset.';
+}
+
+function setInvoiceTemplateStartStatus(message = INVOICE_TEMPLATE_START_DEFAULT_STATUS) {
+    const status = $('#invoiceTemplateStartStatus');
+    if (status) status.textContent = message;
+}
+
+function setInvoiceTemplateStartBusy(isBusy, message = INVOICE_TEMPLATE_START_DEFAULT_STATUS) {
+    ['#invoiceAiHelperSendBtn', '#dismissInvoiceAiHelperBtn', '#closeInvoiceAiHelperBtn'].forEach((selector) => {
+        const button = $(selector);
+        if (button) button.disabled = !!isBusy;
+    });
+    setInvoiceTemplateStartStatus(message);
+}
+
 function syncInvoiceCsvPromptState(options = {}) {
     const modal = $('#invoiceCsvPromptModal');
     if (!modal) return;
@@ -6916,10 +6957,8 @@ function hideInvoiceAiHelper() {
     const highlight = $('#invoiceAiHelperHighlight');
     const modal = $('#invoiceAiHelperModal');
     if (highlight) highlight.style.display = 'none';
-    if (modal) {
-        modal.style.display = 'none';
-        modal.style.visibility = 'visible';
-    }
+    if (modal) modal.style.display = 'none';
+    setInvoiceTemplateStartBusy(false);
 }
 
 function positionInvoiceFieldsHelper() {
@@ -6970,61 +7009,30 @@ function positionInvoiceFieldsHelper() {
 
 function positionInvoiceAiHelper() {
     if (!invoiceAiHelperVisible) return;
-    const panel = $('#aiAssistantPanel');
-    const highlight = $('#invoiceAiHelperHighlight');
     const modal = $('#invoiceAiHelperModal');
-    if (!panel || !highlight || !modal) {
+    if (!modal) {
         hideInvoiceAiHelper();
         return;
     }
-
-    const rect = panel.getBoundingClientRect();
-    if (!rect.width || !rect.height) {
-        hideInvoiceAiHelper();
-        return;
-    }
-
-    const padding = 8;
-    highlight.style.display = 'block';
-    highlight.style.top = `${Math.max(8, rect.top - padding)}px`;
-    highlight.style.left = `${Math.max(8, rect.left - padding)}px`;
-    highlight.style.width = `${rect.width + padding * 2}px`;
-    highlight.style.height = `${rect.height + padding * 2}px`;
-
     modal.style.display = 'flex';
-    modal.style.visibility = 'hidden';
-    modal.style.top = '16px';
-    modal.style.left = '16px';
-
-    const modalRect = modal.getBoundingClientRect();
-    let left = rect.right + 18;
-    if (left + modalRect.width > window.innerWidth - 16) {
-        left = rect.left - modalRect.width - 18;
-    }
-    if (left < 16) left = Math.max(16, window.innerWidth - modalRect.width - 16);
-
-    let top = rect.top + 8;
-    if (top + modalRect.height > window.innerHeight - 16) {
-        top = window.innerHeight - modalRect.height - 16;
-    }
-    top = Math.max(16, top);
-
-    modal.style.top = `${top}px`;
-    modal.style.left = `${left}px`;
-    modal.style.visibility = 'visible';
 }
 
 function showInvoiceFieldsHelper() {
     if (!hasInvoiceDataLoaded()) return;
     hideInvoiceAiHelper();
     pendingInvoiceFieldsHelper = false;
+    syncInvoiceFieldsHelperCopy();
     invoiceFieldsHelperVisible = true;
     positionInvoiceFieldsHelper();
 }
 
 function showInvoiceAiHelper() {
+    if (!hasInvoiceDataLoaded()) return;
+    hideInvoiceFieldsHelper();
     pendingInvoiceStartChoice = false;
-    showInvoiceFieldsHelper();
+    invoiceAiHelperVisible = true;
+    setInvoiceTemplateStartBusy(false);
+    positionInvoiceAiHelper();
 }
 
 function continueAfterInvoiceFieldsHelper() {
@@ -7061,6 +7069,102 @@ function flushInvoiceFieldsHelper() {
     window.setTimeout(() => {
         if (pendingInvoiceFieldsHelper) showInvoiceFieldsHelper();
     }, 140);
+}
+
+async function buildInvoicePdfTemplateAsset(file) {
+    if (!file) throw new Error('Choose a PDF file to continue.');
+    if (!pdfjsLib) throw new Error('PDF import is not available right now.');
+
+    const arrayBuffer = await file.arrayBuffer();
+    const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) });
+    const pdf = await loadingTask.promise;
+
+    if (pdf.numPages !== 1) {
+        throw new Error('Please import a PDF with exactly one page.');
+    }
+
+    const pdfPage = await pdf.getPage(1);
+    const viewport = pdfPage.getViewport({ scale: 1 });
+    const pageWidth = Math.max(100, Math.round(viewport.width));
+    const pageHeight = Math.max(100, Math.round(viewport.height));
+    const renderViewport = pdfPage.getViewport({ scale: 2 });
+    const renderCanvas = document.createElement('canvas');
+    renderCanvas.width = Math.max(1, Math.ceil(renderViewport.width));
+    renderCanvas.height = Math.max(1, Math.ceil(renderViewport.height));
+
+    const renderContext = renderCanvas.getContext('2d', { alpha: false });
+    if (!renderContext) throw new Error('The PDF could not be rendered.');
+
+    renderContext.save();
+    renderContext.fillStyle = '#ffffff';
+    renderContext.fillRect(0, 0, renderCanvas.width, renderCanvas.height);
+    renderContext.restore();
+
+    await pdfPage.render({
+        canvasContext: renderContext,
+        viewport: renderViewport
+    }).promise;
+
+    return {
+        dataUrl: renderCanvas.toDataURL('image/png'),
+        pageWidth,
+        pageHeight
+    };
+}
+
+async function applyInvoicePdfTemplateAsset({ dataUrl, pageWidth, pageHeight }) {
+    if (!dataUrl) throw new Error('The PDF could not be converted into an invoice template.');
+
+    await setDocumentPagesFromTemplate({
+        pages: [createBlankPageState(0, pageWidth, pageHeight)],
+        currentPageIndex: 0
+    }, {
+        fitView: true,
+        selectedIndex: 0
+    });
+
+    if (!pageRect) throw new Error('The invoice page could not be prepared for the PDF import.');
+
+    await new Promise((resolve, reject) => {
+        fabric.Image.fromURL(dataUrl, (img) => {
+            if (!img) {
+                reject(new Error('The PDF preview image could not be loaded.'));
+                return;
+            }
+
+            img.set({
+                left: pageRect.left,
+                top: pageRect.top,
+                originX: 'left',
+                originY: 'top',
+                scaleX: pageWidth / Math.max(1, img.width || pageWidth),
+                scaleY: pageHeight / Math.max(1, img.height || pageHeight),
+                name: 'Invoice PDF Template',
+                oid: createUid(PDF_TEMPLATE_BACKGROUND_PREFIX),
+                locked: true,
+                pageId: currentCanvasPageId(),
+                objectCaching: false,
+                hoverCursor: 'default'
+            });
+
+            applyLockStateToObject(img);
+            canvas.insertAt(img, 1);
+            keepPageRectAtBack();
+            canvas.discardActiveObject();
+            canvas.requestRenderAll();
+            resolve(img);
+        }, { crossOrigin: 'anonymous' });
+    });
+
+    syncCurrentPageStateFromCanvas();
+    renderLayers();
+    refreshCanvasPageControls({ preserveScroll: true, ensureActiveVisible: true });
+    requestSaveState();
+}
+
+async function importInvoicePdfTemplate(file) {
+    const asset = await buildInvoicePdfTemplateAsset(file);
+    await applyInvoicePdfTemplateAsset(asset);
 }
 
 function renderInvoiceCsvFieldsPanel() {
@@ -8750,22 +8854,36 @@ on('#dismissInvoiceAiHelperBtn', 'click', () => {
     }, 120);
 });
 on('#invoiceAiHelperSendBtn', 'click', () => {
-    const aiPromptEl = $('#aiChatPrompt');
-    const aiSendEl = $('#aiChatSendBtn');
-    if (!aiPromptEl || !aiSendEl) {
-        showNotification('AI chat is not available right now.', 'info', 2200);
+    const pdfInput = $('#invoicePdfTemplateInput');
+    if (!pdfInput) {
+        showNotification('PDF import is not available right now.', 'info', 2200);
+        return;
+    }
+    pdfInput.value = '';
+    pdfInput.click();
+});
+on('#invoicePdfTemplateInput', 'change', async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) {
+        setInvoiceTemplateStartBusy(false);
+        return;
+    }
+
+    setInvoiceTemplateStartBusy(true, 'Importing your single-page PDF template...');
+    try {
+        await importInvoicePdfTemplate(file);
         hideInvoiceAiHelper();
-        return;
+        showNotification(`Imported "${file.name}" as your invoice template.`, 'success', 2600);
+        window.setTimeout(() => {
+            if (hasInvoiceDataLoaded()) showInvoiceFieldsHelper();
+        }, 120);
+    } catch (error) {
+        console.error('Invoice PDF import failed:', error);
+        setInvoiceTemplateStartBusy(false, INVOICE_TEMPLATE_START_DEFAULT_STATUS);
+        showNotification(error?.message || 'Unable to import that PDF template.', 'error', 3200);
+    } finally {
+        e.target.value = '';
     }
-    aiPromptEl.value = INVOICE_AI_STARTER_PROMPT;
-    aiPromptEl.dispatchEvent(new Event('input', { bubbles: true }));
-    hideInvoiceAiHelper();
-    aiPromptEl.focus();
-    if (aiSendEl.disabled) {
-        showNotification('The starter prompt is ready in the AI chat.', 'info', 2200);
-        return;
-    }
-    window.requestAnimationFrame(() => aiSendEl.click());
 });
 window.addEventListener('resize', () => {
     if (invoiceFieldsHelperVisible) positionInvoiceFieldsHelper();
