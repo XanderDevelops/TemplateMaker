@@ -13,13 +13,13 @@
     }
   ],
   "rewrites": [
-    { "source": "/", "destination": "/index-Invoice.html" },
     { "source": "/privacy", "destination": "/privacy.html" },
     { "source": "/refunds", "destination": "/refunds.html" },
     { "source": "/terms", "destination": "/terms.html" },
     { "source": "/dashboard", "destination": "/dashboard.html" },
     { "source": "/store", "destination": "/store.html" },
-    { "source": "/index", "destination": "/index.html" },
+    { "source": "/index", "destination": "/index-General.html" },
+    { "source": "/index/General", "destination": "/index-General.html" },
     { "source": "/index/Invoice", "destination": "/index-Invoice.html" },
     { "source": "/invoice/use-cases", "destination": "/invoice-use-cases-Invoice.html" },
     { "source": "/invoice/how-it-works", "destination": "/invoice-how-it-works-Invoice.html" },
