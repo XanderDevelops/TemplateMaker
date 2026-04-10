@@ -10849,16 +10849,17 @@ canvas.on('selection:cleared', () => {
 
             // Check if all selected objects are text
             const allText = objects.every(obj => obj.type === 'textbox');
+            const appendSelectionActions = () => {
+                multiInspector.appendChild(section('Actions', [
+                    buttonRow('Group', () => { if (selection.size() > 1) selection.toGroup(); canvas.requestRenderAll(); }),
+                    buttonRow('Remove', () => { removeCanvasObjects(objects); })
+                ]));
+                multiInspector.appendChild(section('Align Objects', [alignMultipleObjectsButtons()]));
+                multiInspector.appendChild(section('Align to Page', [alignToPageButtons(true)]));
+                multiInspector.appendChild(section('Distribute', [distributeButtons()]));
+            };
 
-            multiInspector.appendChild(section('Actions', [
-                buttonRow('Group', () => { if (selection.size() > 1) selection.toGroup(); canvas.requestRenderAll(); }),
-                buttonRow('Remove', () => { removeCanvasObjects(objects); })
-            ]));
-
-            // Alignment for multiple objects
-            multiInspector.appendChild(section('Align Objects', [alignMultipleObjectsButtons()]));
-            multiInspector.appendChild(section('Align to Page', [alignToPageButtons(true)]));
-            multiInspector.appendChild(section('Distribute', [distributeButtons()]));
+            if (!allText) appendSelectionActions();
 
             // If all selected are text, show text formatting
             if (allText) {
@@ -10873,7 +10874,7 @@ canvas.on('selection:cleared', () => {
 
                 multiInspector.appendChild(section('Text Formatting', [
                     inputRow('Font Size', commonFontSize || '', v => setCommonPropertyValue(objects, 'fontSize', parseFloat(v) || 14)),
-                    fontFamilyInputRow('Font Family', commonFontFamily || 'Arial', v => setCommonPropertyValue(objects, 'fontFamily', v)),
+                    fontFamilyInputRow('Font', commonFontFamily || 'Arial', v => setCommonPropertyValue(objects, 'fontFamily', v)),
                     colorInputRow('Text Color', commonFill || '#000000', v => setCommonPropertyValue(objects, 'fill', v)),
                     sliderRow('Curve', Number.isFinite(parseFloat(commonCurveAmount)) ? parseFloat(commonCurveAmount) : 0, v => setCommonPropertyValue(objects, 'curveAmount', parseFloat(v) || 0), { min: -100, max: 100, step: 1 }),
                     buttonGroupRow('Text Style', [
@@ -10901,6 +10902,7 @@ canvas.on('selection:cleared', () => {
                         requestSaveState();
                     })
                 ]));
+                appendSelectionActions();
             }
 
             multiInspector.appendChild(section('Common', [
@@ -10968,10 +10970,11 @@ canvas.on('selection:cleared', () => {
         function renderSingleObjectInspector(o) {
             inspector.innerHTML = '';
             const actions = [];
+            const deferActionsSection = o.type === 'textbox';
             if (o.type === 'group' && !o.isTable && !o.isSvgGroup) actions.push(buttonRow('Ungroup', () => o.toActiveSelection()));
             actions.push(buttonRow('Select Same Type', () => selectSameTypeObjects(o)));
             actions.push(buttonRow('Remove', () => removeCanvasObjects([o])));
-            inspector.appendChild(section('Actions', actions));
+            if (!deferActionsSection) inspector.appendChild(section('Actions', actions));
 
             inspector.appendChild(section('Advanced Links', [buttonRow(`Manage Links (${getBindingsFor(o).length})`, () => { selectedObjectForManager = o; openDataLinksManager(); })]));
             if (o.type === 'image') inspector.appendChild(section('Image', [buttonRow('Crop Image', () => openVisualCropper(o))]));
@@ -11163,7 +11166,7 @@ canvas.on('selection:cleared', () => {
                         o.set({ fontSize: parseFloat(v) });
                         refreshTextboxCurve(o, { skipRender: true });
                     }),
-                    fontFamilyInputRow('Font Family', o.fontFamily, (selectedFamily) => {
+                    fontFamilyInputRow('Font', o.fontFamily, (selectedFamily) => {
                         o.set({ fontFamily: selectedFamily });
                         if (typeof o.initDimensions === 'function') {
                             o.initDimensions();
@@ -11197,6 +11200,7 @@ canvas.on('selection:cleared', () => {
                         canvas.requestRenderAll();
                     })
                 ]));
+                inspector.appendChild(section('Actions', actions));
             }
             inspector.appendChild(section('Common', [
                 xyInputRow('Position', { x: o.left, y: o.top }, (p) => o.set({ left: p.x, top: p.y })),
@@ -11238,6 +11242,7 @@ canvas.on('selection:cleared', () => {
         function selectRow(label, opts, val, onChange) { const w = document.createElement('div'); w.className = 'stack full-width'; w.innerHTML = `<label>${label}</label>`; const s = document.createElement('select'); opts.forEach(opt => s.innerHTML += `<option value="${opt}" ${opt == val ? 'selected' : ''}>${opt}</option>`); s.onchange = e => { onChange(e.target.value); canvas.renderAll(); requestSaveState(); }; w.appendChild(s); return w; }
         function fontFamilyInputRow(label, value, onCommit, options = {}) {
             const showUploadButton = !!options.showUploadButton;
+            const useCompactDropdown = options.compactDropdown !== false;
             const w = document.createElement('div');
             w.className = 'stack full-width';
             w.innerHTML = `<label>${label}</label>`;
@@ -11249,11 +11254,13 @@ canvas.on('selection:cleared', () => {
             const selectedInput = document.createElement('input');
             selectedInput.type = 'text';
             selectedInput.value = value ?? '';
-            selectedInput.placeholder = 'Selected font family';
+            selectedInput.placeholder = 'Type or choose a font';
             selectedInput.autocomplete = 'off';
             selectedInput.spellcheck = false;
+            selectedInput.setAttribute('list', FONT_FAMILY_DATALIST_ID);
             selectedInput.style.flex = '1';
             selectedInput.style.fontFamily = `"${normalizeFontFamilyName(selectedInput.value) || 'Inter'}", var(--font), sans-serif`;
+            ensureFontFamilyDatalist();
 
             const commitSelected = () => {
                 const nextValue = normalizeFontFamilyName(selectedInput.value);
@@ -11270,7 +11277,13 @@ canvas.on('selection:cleared', () => {
                 e.preventDefault();
                 selectedInput.blur();
             });
+            selectedInput.addEventListener('input', () => {
+                const nextValue = normalizeFontFamilyName(selectedInput.value);
+                selectedInput.style.fontFamily = `"${nextValue || 'Inter'}", var(--font), sans-serif`;
+                if (nextValue) ensureFontFamilyLoaded(nextValue);
+            });
             selectedInput.addEventListener('change', commitSelected);
+            selectedInput.addEventListener('blur', commitSelected);
 
             topRow.appendChild(selectedInput);
 
@@ -11281,6 +11294,11 @@ canvas.on('selection:cleared', () => {
                 btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>';
                 btn.onclick = () => $('#fontUpload').click();
                 topRow.appendChild(btn);
+            }
+
+            if (useCompactDropdown) {
+                w.appendChild(topRow);
+                return w;
             }
 
             const controlsRow = document.createElement('div');
