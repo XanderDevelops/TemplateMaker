@@ -2182,6 +2182,39 @@
             margin: 0;
         }
 
+        .invoice-pdf-toggle-btn.active {
+            border-color: rgba(37, 99, 235, 0.45);
+            background: rgba(37, 99, 235, 0.12);
+            color: var(--accent);
+        }
+
+        #invoicePdfToggleHelperHighlight {
+            position: fixed;
+            z-index: 29000;
+            background: rgba(245, 158, 11, 0.1);
+            border: 2px solid #f59e0b;
+            border-radius: 12px;
+            box-shadow: 0 0 0 9999px rgba(3, 5, 8, 0.52);
+            pointer-events: none;
+            display: none;
+            transition: all 0.2s ease;
+        }
+
+        #invoicePdfToggleHelperModal {
+            position: fixed;
+            z-index: 30001;
+            width: 360px;
+            max-width: calc(100vw - 32px);
+            display: none;
+            flex-direction: column;
+            gap: 12px;
+            padding: 14px;
+            background: var(--panel);
+            border: 1px solid rgba(245, 158, 11, 0.28);
+            border-radius: 14px;
+            box-shadow: var(--shadow-lg);
+        }
+
         #invoiceAiHelperHighlight {
             display: none;
         }

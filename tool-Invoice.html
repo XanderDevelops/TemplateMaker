@@ -83,6 +83,7 @@
 
             <span id="saveStatus" class="muted" style="font-size: 11px;"></span>
             <button id="start-tour-btn" class="btn ghost" title="Tutorial">?</button>
+            <button id="pdfTemplateToggleBtn" class="btn ghost invoice-pdf-toggle-btn" type="button" title="Toggle imported PDF template" aria-pressed="false" style="font-size: 11px; display: none;">Canva/PDF</button>
             <button id="csvViewBtn" class="btn ghost" title="Open table" style="font-size: 11px;">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M3 3h18v18H3z"></path>
@@ -669,6 +670,21 @@
         </div>
         <div class="row" style="justify-content:flex-end;">
             <button id="dismissInvoiceFieldsHelperBtn" class="btn primary" type="button">Got It</button>
+        </div>
+    </div>
+
+    <div id="invoicePdfToggleHelperHighlight"></div>
+    <div id="invoicePdfToggleHelperModal">
+        <div class="invoice-fields-helper-header">
+            <h4>Use the Canva/PDF Button</h4>
+            <button id="closeInvoicePdfToggleHelperBtn" class="btn ghost" type="button" title="Close helper">&times;</button>
+        </div>
+        <div class="invoice-fields-helper-content">
+            <p>Your PDF invoice template is now loaded.</p>
+            <p>Use the <strong>Canva/PDF</strong> button in the top bar, just to the left of <strong>Table</strong>, to hide the PDF and work on the blank canvas. Click it again to bring the PDF back.</p>
+        </div>
+        <div class="row" style="justify-content:flex-end;">
+            <button id="dismissInvoicePdfToggleHelperBtn" class="btn primary" type="button">Got It</button>
         </div>
     </div>
 

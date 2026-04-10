@@ -3926,6 +3926,7 @@ let pendingIdentifierModalAfterTableClose = false;
 let pendingInvoiceFieldsHelper = false;
 let pendingInvoiceStartChoice = false;
 let invoiceFieldsHelperVisible = false;
+let invoicePdfToggleHelperVisible = false;
 let invoiceAiHelperVisible = false;
 let selectedCsvTableColumnIndex = -1;
 let gridEnabled = false, snapEnabled = true;
@@ -6694,6 +6695,7 @@ function switchToCanvasPage(index, { fitView = false, skipSave = false, suppress
                         $('#multiSelectInspector').style.display = 'none';
                         $('#noSelection').style.display = 'block';
                         updateFloatingLinker(null);
+                        syncInvoicePdfToggleButton();
 
                         if (fitView) centerAndFitPage();
                         else {
@@ -6891,26 +6893,90 @@ function hasInvoiceTableStructure() {
     return Array.isArray(headers) && headers.length > 0;
 }
 
+function getInvoicePdfTemplateObject(pageIndex = currentPageIndex) {
+    if (pageIndex === currentPageIndex && typeof canvas?.getObjects === 'function') {
+        return canvas.getObjects().find(isInvoicePdfTemplateObject) || null;
+    }
+
+    const page = Array.isArray(documentPages) ? documentPages[pageIndex] : null;
+    const objects = Array.isArray(page?.canvas?.objects) ? page.canvas.objects : [];
+    return objects.find(isInvoicePdfTemplateObject) || null;
+}
+
 function isInvoicePdfTemplateObject(obj) {
     return !!obj && String(obj.oid || '').startsWith(`${PDF_TEMPLATE_BACKGROUND_PREFIX}_`);
 }
 
 function hasInvoicePdfTemplateBackground(pageIndex = currentPageIndex) {
-    if (pageIndex === currentPageIndex && typeof canvas?.getObjects === 'function') {
-        return canvas.getObjects().some(isInvoicePdfTemplateObject);
-    }
+    return !!getInvoicePdfTemplateObject(pageIndex);
+}
 
-    const page = Array.isArray(documentPages) ? documentPages[pageIndex] : null;
-    const objects = Array.isArray(page?.canvas?.objects) ? page.canvas.objects : [];
-    return objects.some(isInvoicePdfTemplateObject);
+function isInvoicePdfTemplateVisible(pageIndex = currentPageIndex) {
+    const pdfObject = getInvoicePdfTemplateObject(pageIndex);
+    return !!pdfObject && pdfObject.visible !== false;
 }
 
 function syncInvoiceFieldsHelperCopy() {
     const detail = $('#invoiceFieldsHelperDetail');
     if (!detail) return;
-    detail.textContent = hasInvoicePdfTemplateBackground()
+    detail.textContent = isInvoicePdfTemplateVisible()
         ? 'Drag any field onto the PDF to create a linked placeholder. When you export or print, each linked field will be replaced with the matching value from that row in your dataset.'
         : 'Drag any field onto the canvas to create a linked placeholder. When you export or print, each linked field will be replaced with the matching value from that row in your dataset.';
+}
+
+function syncInvoicePdfToggleButton() {
+    const button = $('#pdfTemplateToggleBtn');
+    if (!button) return;
+
+    const hasPdfTemplate = hasInvoicePdfTemplateBackground();
+    if (!hasPdfTemplate) {
+        button.style.display = 'none';
+        button.disabled = true;
+        button.classList.remove('active');
+        button.setAttribute('aria-pressed', 'false');
+        button.title = 'Import a PDF template to enable this toggle';
+        return;
+    }
+
+    const pdfVisible = isInvoicePdfTemplateVisible();
+    button.style.display = 'inline-flex';
+    button.disabled = false;
+    button.classList.toggle('active', pdfVisible);
+    button.setAttribute('aria-pressed', pdfVisible ? 'true' : 'false');
+    button.title = pdfVisible
+        ? 'Hide the imported PDF and show the blank canvas'
+        : 'Show the imported PDF again';
+}
+
+function toggleInvoicePdfTemplateVisibility() {
+    const pdfObject = getInvoicePdfTemplateObject();
+    if (!pdfObject) {
+        syncInvoicePdfToggleButton();
+        showNotification('Import a PDF template first to use Canva/PDF.', 'info', 2200);
+        return;
+    }
+
+    const nextVisible = pdfObject.visible === false;
+    pdfObject.set({
+        visible: nextVisible,
+        selectable: false,
+        evented: false
+    });
+    applyLockStateToObject(pdfObject);
+    canvas.discardActiveObject();
+    canvas.requestRenderAll();
+    syncCurrentPageStateFromCanvas();
+    requestSaveState();
+    syncInvoicePdfToggleButton();
+    syncInvoiceFieldsHelperCopy();
+
+    showNotification(
+        nextVisible
+            ? 'The imported PDF is visible again.'
+            : 'The PDF is hidden. You are viewing the blank canvas.',
+        'info',
+        2200
+    );
 }
 
 function setInvoiceTemplateStartStatus(message = INVOICE_TEMPLATE_START_DEFAULT_STATUS) {
@@ -6944,6 +7010,17 @@ function hideInvoiceFieldsHelper() {
     invoiceFieldsHelperVisible = false;
     const highlight = $('#invoiceFieldsHelperHighlight');
     const modal = $('#invoiceFieldsHelperModal');
+    if (highlight) highlight.style.display = 'none';
+    if (modal) {
+        modal.style.display = 'none';
+        modal.style.visibility = 'visible';
+    }
+}
+
+function hideInvoicePdfToggleHelper() {
+    invoicePdfToggleHelperVisible = false;
+    const highlight = $('#invoicePdfToggleHelperHighlight');
+    const modal = $('#invoicePdfToggleHelperModal');
     if (highlight) highlight.style.display = 'none';
     if (modal) {
         modal.style.display = 'none';
@@ -7007,6 +7084,49 @@ function positionInvoiceFieldsHelper() {
     modal.style.visibility = 'visible';
 }
 
+function positionInvoicePdfToggleHelper() {
+    if (!invoicePdfToggleHelperVisible) return;
+    const button = $('#pdfTemplateToggleBtn');
+    const highlight = $('#invoicePdfToggleHelperHighlight');
+    const modal = $('#invoicePdfToggleHelperModal');
+    if (!button || !highlight || !modal || button.style.display === 'none') {
+        hideInvoicePdfToggleHelper();
+        return;
+    }
+
+    const rect = button.getBoundingClientRect();
+    if (!rect.width || !rect.height) {
+        hideInvoicePdfToggleHelper();
+        return;
+    }
+
+    const padding = 6;
+    highlight.style.display = 'block';
+    highlight.style.top = `${Math.max(8, rect.top - padding)}px`;
+    highlight.style.left = `${Math.max(8, rect.left - padding)}px`;
+    highlight.style.width = `${rect.width + padding * 2}px`;
+    highlight.style.height = `${rect.height + padding * 2}px`;
+
+    modal.style.display = 'flex';
+    modal.style.visibility = 'hidden';
+    modal.style.top = '16px';
+    modal.style.left = '16px';
+
+    const modalRect = modal.getBoundingClientRect();
+    let left = rect.left + (rect.width / 2) - (modalRect.width / 2);
+    left = Math.max(16, Math.min(left, window.innerWidth - modalRect.width - 16));
+
+    let top = rect.bottom + 18;
+    if (top + modalRect.height > window.innerHeight - 16) {
+        top = rect.top - modalRect.height - 18;
+    }
+    top = Math.max(16, top);
+
+    modal.style.top = `${top}px`;
+    modal.style.left = `${left}px`;
+    modal.style.visibility = 'visible';
+}
+
 function positionInvoiceAiHelper() {
     if (!invoiceAiHelperVisible) return;
     const modal = $('#invoiceAiHelperModal');
@@ -7019,6 +7139,7 @@ function positionInvoiceAiHelper() {
 
 function showInvoiceFieldsHelper() {
     if (!hasInvoiceDataLoaded()) return;
+    hideInvoicePdfToggleHelper();
     hideInvoiceAiHelper();
     pendingInvoiceFieldsHelper = false;
     syncInvoiceFieldsHelperCopy();
@@ -7028,6 +7149,7 @@ function showInvoiceFieldsHelper() {
 
 function showInvoiceAiHelper() {
     if (!hasInvoiceDataLoaded()) return;
+    hideInvoicePdfToggleHelper();
     hideInvoiceFieldsHelper();
     pendingInvoiceStartChoice = false;
     invoiceAiHelperVisible = true;
@@ -7037,6 +7159,23 @@ function showInvoiceAiHelper() {
 
 function continueAfterInvoiceFieldsHelper() {
     hideInvoiceFieldsHelper();
+}
+
+function showInvoicePdfToggleHelper() {
+    const button = $('#pdfTemplateToggleBtn');
+    if (!button || button.style.display === 'none') {
+        showInvoiceFieldsHelper();
+        return;
+    }
+    hideInvoiceFieldsHelper();
+    hideInvoiceAiHelper();
+    invoicePdfToggleHelperVisible = true;
+    positionInvoicePdfToggleHelper();
+}
+
+function continueAfterInvoicePdfToggleHelper() {
+    hideInvoicePdfToggleHelper();
+    if (hasInvoiceDataLoaded()) showInvoiceFieldsHelper();
 }
 
 function queueInvoiceStartChoice() {
@@ -7159,6 +7298,7 @@ async function applyInvoicePdfTemplateAsset({ dataUrl, pageWidth, pageHeight }) 
     syncCurrentPageStateFromCanvas();
     renderLayers();
     refreshCanvasPageControls({ preserveScroll: true, ensureActiveVisible: true });
+    syncInvoicePdfToggleButton();
     requestSaveState();
 }
 
@@ -7174,6 +7314,7 @@ function renderInvoiceCsvFieldsPanel() {
 
     if (!hasInvoiceTableStructure()) {
         hideInvoiceFieldsHelper();
+        hideInvoicePdfToggleHelper();
         hideInvoiceAiHelper();
         pendingInvoiceStartChoice = false;
         panel.style.display = 'none';
@@ -8846,6 +8987,9 @@ on('#invoiceCsvPromptSkipBtn', 'click', () => {
 });
 on('#closeInvoiceFieldsHelperBtn', 'click', continueAfterInvoiceFieldsHelper);
 on('#dismissInvoiceFieldsHelperBtn', 'click', continueAfterInvoiceFieldsHelper);
+on('#pdfTemplateToggleBtn', 'click', toggleInvoicePdfTemplateVisibility);
+on('#closeInvoicePdfToggleHelperBtn', 'click', continueAfterInvoicePdfToggleHelper);
+on('#dismissInvoicePdfToggleHelperBtn', 'click', continueAfterInvoicePdfToggleHelper);
 on('#closeInvoiceAiHelperBtn', 'click', hideInvoiceAiHelper);
 on('#dismissInvoiceAiHelperBtn', 'click', () => {
     hideInvoiceAiHelper();
@@ -8875,7 +9019,7 @@ on('#invoicePdfTemplateInput', 'change', async (e) => {
         hideInvoiceAiHelper();
         showNotification(`Imported "${file.name}" as your invoice template.`, 'success', 2600);
         window.setTimeout(() => {
-            if (hasInvoiceDataLoaded()) showInvoiceFieldsHelper();
+            if (hasInvoiceDataLoaded()) showInvoicePdfToggleHelper();
         }, 120);
     } catch (error) {
         console.error('Invoice PDF import failed:', error);
@@ -8887,12 +9031,17 @@ on('#invoicePdfTemplateInput', 'change', async (e) => {
 });
 window.addEventListener('resize', () => {
     if (invoiceFieldsHelperVisible) positionInvoiceFieldsHelper();
+    if (invoicePdfToggleHelperVisible) positionInvoicePdfToggleHelper();
     if (invoiceAiHelperVisible) positionInvoiceAiHelper();
 });
 window.addEventListener('keydown', (event) => {
     if (event.key !== 'Escape') return;
     if (invoiceFieldsHelperVisible) {
         continueAfterInvoiceFieldsHelper();
+        return;
+    }
+    if (invoicePdfToggleHelperVisible) {
+        continueAfterInvoicePdfToggleHelper();
         return;
     }
     if (invoiceAiHelperVisible) hideInvoiceAiHelper();
