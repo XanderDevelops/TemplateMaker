@@ -62,14 +62,14 @@
 </head>
 <body>
     <nav>
-        <a href="/invoices" class="logo">
+        <a href="/" class="logo">
             <img src="assets/images/android-chrome-512x512.png" alt="CSVLink Logo" class="logo-icon">
             <span>CSVLink</span>
         </a>
         <div class="invoice-page-nav" aria-label="Invoice pages">
-            <a href="/invoices" class="invoice-page-link">Overview</a>
-            <a href="/invoice-use-cases" class="invoice-page-link">Use Cases</a>
-            <a href="/invoice-how-it-works" class="invoice-page-link">How It Works</a>
+            <a href="/" class="invoice-page-link">Overview</a>
+            <a href="/invoice/use-cases" class="invoice-page-link">Use Cases</a>
+            <a href="/invoice/how-it-works" class="invoice-page-link">How It Works</a>
             <a href="/excel-to-invoice" class="invoice-page-link is-active">Excel to Invoice</a>
         </div>
         <div class="nav-links" id="nav-links"></div>
@@ -81,8 +81,8 @@
             <h1>Turn your Excel or CSV into clean, ready-to-send invoices.</h1>
             <p>The smoother your spreadsheet is structured, the smoother your invoice workflow becomes. CSVLink works best when your invoice data is clear, consistent, and easy to group when line items span multiple rows.</p>
             <div class="hero-actions">
-                <a href="/tool-Invoice" class="btn">Open Invoice Builder</a>
-                <a href="/invoice-how-it-works" class="btn ghost">Understand the Workflow</a>
+                <a href="/tool" class="btn">Open Invoice Builder</a>
+                <a href="/invoice/how-it-works" class="btn ghost">Understand the Workflow</a>
             </div>
         </section>
 
@@ -113,18 +113,18 @@
                 <article class="card"><h3>Important data in notes only</h3><p>If invoice information only exists inside comments or inconsistent note columns, move it into dedicated fields before importing.</p></article>
             </div>
             <div class="hero-actions">
-                <a href="/tool-Invoice" class="btn">Try with Your Data</a>
-                <a href="/invoice-use-cases" class="btn ghost">See Who Uses This</a>
+                <a href="/tool" class="btn">Try with Your Data</a>
+                <a href="/invoice/use-cases" class="btn ghost">See Who Uses This</a>
             </div>
         </section>
     </main>
 
     <footer>
         <div class="footer-links">
-            <a href="/invoices">Overview</a>
-            <a href="/invoice-use-cases">Use Cases</a>
-            <a href="/invoice-how-it-works">How It Works</a>
-            <a href="refunds.html">Refund Policy</a>
+            <a href="/">Overview</a>
+            <a href="/invoice/use-cases">Use Cases</a>
+            <a href="/invoice/how-it-works">How It Works</a>
+            <a href="/refunds">Refund Policy</a>
         </div>
         <div class="copyright"><p>&copy; 2026 CSVLink. All Rights Reserved.</p></div>
     </footer>
@@ -137,7 +137,7 @@
             const syncInvoiceAuthLinks = () => {
                 if (!navLinks) return;
                 navLinks.querySelectorAll('a').forEach((link) => {
-                    if (link.getAttribute('href') === '/#pricing') link.setAttribute('href', '/invoices#pricing');
+                    if (link.getAttribute('href') === '/#pricing') link.setAttribute('href', '/#pricing');
                 });
             };
             if (navLinks) {

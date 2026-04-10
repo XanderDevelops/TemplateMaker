@@ -64,14 +64,14 @@
 </head>
 <body>
     <nav>
-        <a href="/invoices" class="logo">
+        <a href="/" class="logo">
             <img src="assets/images/android-chrome-512x512.png" alt="CSVLink Logo" class="logo-icon">
             <span>CSVLink</span>
         </a>
         <div class="invoice-page-nav" aria-label="Invoice pages">
-            <a href="/invoices" class="invoice-page-link">Overview</a>
-            <a href="/invoice-use-cases" class="invoice-page-link">Use Cases</a>
-            <a href="/invoice-how-it-works" class="invoice-page-link is-active">How It Works</a>
+            <a href="/" class="invoice-page-link">Overview</a>
+            <a href="/invoice/use-cases" class="invoice-page-link">Use Cases</a>
+            <a href="/invoice/how-it-works" class="invoice-page-link is-active">How It Works</a>
             <a href="/excel-to-invoice" class="invoice-page-link">Excel to Invoice</a>
         </div>
         <div class="nav-links" id="nav-links"></div>
@@ -83,7 +83,7 @@
             <h1>From spreadsheet rows to finished invoices in four steps.</h1>
             <p>CSVLink keeps the process simple: bring your invoice data, choose the right invoice mode, connect fields to your template, and export a full invoice batch from the spreadsheet structure you already use.</p>
             <div class="hero-actions">
-                <a href="/tool-Invoice" class="btn">Open Invoice Builder</a>
+                <a href="/tool" class="btn">Open Invoice Builder</a>
                 <a href="/excel-to-invoice" class="btn ghost">Prepare Your Spreadsheet</a>
             </div>
         </section>
@@ -113,18 +113,18 @@
                 <article class="card"><h3>Dynamic spreadsheet fields</h3><p>Invoice number, dates, customer details, subtotal, tax, total due, and line items are the parts that update from the imported data.</p></article>
             </div>
             <div class="hero-actions">
-                <a href="/tool-Invoice" class="btn">Try the Invoice Tool</a>
-                <a href="/invoice-use-cases" class="btn ghost">See More Use Cases</a>
+                <a href="/tool" class="btn">Try the Invoice Tool</a>
+                <a href="/invoice/use-cases" class="btn ghost">See More Use Cases</a>
             </div>
         </section>
     </main>
 
     <footer>
         <div class="footer-links">
-            <a href="/invoices">Overview</a>
-            <a href="/invoice-use-cases">Use Cases</a>
+            <a href="/">Overview</a>
+            <a href="/invoice/use-cases">Use Cases</a>
             <a href="/excel-to-invoice">Excel to Invoice</a>
-            <a href="refunds.html">Refund Policy</a>
+            <a href="/refunds">Refund Policy</a>
         </div>
         <div class="copyright"><p>&copy; 2026 CSVLink. All Rights Reserved.</p></div>
     </footer>
@@ -137,7 +137,7 @@
             const syncInvoiceAuthLinks = () => {
                 if (!navLinks) return;
                 navLinks.querySelectorAll('a').forEach((link) => {
-                    if (link.getAttribute('href') === '/#pricing') link.setAttribute('href', '/invoices#pricing');
+                    if (link.getAttribute('href') === '/#pricing') link.setAttribute('href', '/#pricing');
                 });
             };
             if (navLinks) {

@@ -937,14 +937,14 @@
 </head>
 <body>
     <nav>
-        <a href="/invoices" class="logo">
+        <a href="/" class="logo">
             <img src="assets/images/android-chrome-512x512.png" alt="CSVLink Logo" class="logo-icon">
             <span>CSVLink</span>
         </a>
         <div class="invoice-page-nav" aria-label="Invoice pages">
-            <a href="/invoices" class="invoice-page-link is-active">Overview</a>
-            <a href="/invoice-use-cases" class="invoice-page-link">Use Cases</a>
-            <a href="/invoice-how-it-works" class="invoice-page-link">How It Works</a>
+            <a href="/" class="invoice-page-link is-active">Overview</a>
+            <a href="/invoice/use-cases" class="invoice-page-link">Use Cases</a>
+            <a href="/invoice/how-it-works" class="invoice-page-link">How It Works</a>
             <a href="/excel-to-invoice" class="invoice-page-link">Excel to Invoice</a>
         </div>
         <div class="nav-links" id="nav-links">
@@ -958,7 +958,7 @@
             <h1>Bulk generate invoices from your Excel or CSV using your own template.</h1>
             <p>Bring your branded invoice design, connect customer names, invoice numbers, dates, taxes, totals, and line items, then export a full invoice batch in minutes instead of editing each file by hand.</p>
             <div class="hero-actions">
-                <a href="/tool-Invoice" class="btn">Start Building</a>
+                <a href="/tool" class="btn">Start Building</a>
                 <a href="#templates" class="btn ghost">See Invoice Templates</a>
             </div>
             <p style="font-size: 0.95rem; color: #51617d; margin-top: 1rem; margin-bottom: 0;">Free to use. No login required to start.</p>
@@ -1103,7 +1103,7 @@
                         </ul>
                     </div>
                     <div class="card-footer">
-                        <a href="/tool-Invoice" class="btn">Get Started</a>
+                        <a href="/tool" class="btn">Get Started</a>
                     </div>
                 </div>
                 <div class="pricing-card recommended">
@@ -1171,7 +1171,7 @@
                 if (!invoiceNavLinks) return;
                 invoiceNavLinks.querySelectorAll('a').forEach((link) => {
                     if (link.getAttribute('href') === '/#pricing') {
-                        link.setAttribute('href', '/invoices#pricing');
+                        link.setAttribute('href', '/#pricing');
                     }
                 });
             };
@@ -1202,7 +1202,7 @@
                 }
                 templates.forEach(template => {
                     const card = document.createElement('a');
-                    card.href = `/tool-Invoice?id=${template.id}&public=true`;
+                    card.href = `/tool?id=${template.id}&public=true`;
                     card.className = 'template-card';
                     card.title = `Use ${template.title}`;
                     const canvasId = `preview-canvas-${template.id}`;
