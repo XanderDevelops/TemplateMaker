@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /dashboard
+Disallow: /login
+Disallow: /verify
+Disallow: /reset-password
+Disallow: /cambiar-contrasena
+
+Sitemap: https://csvlink.app/sitemap.xml
