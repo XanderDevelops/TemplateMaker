@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=AW-584610340"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', 'AW-584610340');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Convert CSV invoice data into branded PDF invoices. Import a CSV file, map billing fields to your own invoice template, group line items, and export invoices in batch.">
+    <meta name="robots" content="index,follow,max-image-preview:large">
+    <link rel="icon" href="/assets/images/android-chrome-192x192.png" type="image/png">
+    <link rel="canonical" href="https://csvlink.app/csv-to-invoice">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <title>CSV to Invoice Generator for Batch PDF Invoices | CSVLink</title>
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="CSVLink">
+    <meta property="og:title" content="CSV to Invoice Generator for Batch PDF Invoices | CSVLink">
+    <meta property="og:description" content="Convert CSV invoice data into branded PDF invoices. Import a CSV file, map billing fields to your own invoice template, group line items, and export invoices in batch.">
+    <meta property="og:url" content="https://csvlink.app/csv-to-invoice">
+    <meta property="og:image" content="https://csvlink.app/assets/images/invoice-hero-flow.png">
+    <meta property="og:image:alt" content="Spreadsheet invoice data flowing into a finished invoice template.">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="CSV to Invoice Generator for Batch PDF Invoices | CSVLink">
+    <meta name="twitter:description" content="Convert CSV invoice data into branded PDF invoices. Import a CSV file, map billing fields to your own invoice template, group line items, and export invoices in batch.">
+    <meta name="twitter:image" content="https://csvlink.app/assets/images/invoice-hero-flow.png">
+    <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@graph": [
+                        {
+                                    "@type": "WebPage",
+                                    "name": "CSV to Invoice Generator for Batch PDF Invoices | CSVLink",
+                                    "url": "https://csvlink.app/csv-to-invoice",
+                                    "description": "Convert CSV invoice data into branded PDF invoices. Import a CSV file, map billing fields to your own invoice template, group line items, and export invoices in batch."
+                        },
+                        {
+                                    "@type": "BreadcrumbList",
+                                    "itemListElement": [
+                                                {
+                                                            "@type": "ListItem",
+                                                            "position": 1,
+                                                            "name": "CSVLink",
+                                                            "item": "https://csvlink.app/"
+                                                },
+                                                {
+                                                            "@type": "ListItem",
+                                                            "position": 2,
+                                                            "name": "CSV to Invoice",
+                                                            "item": "https://csvlink.app/csv-to-invoice"
+                                                }
+                                    ]
+                        },
+                        {
+                                    "@type": "FAQPage",
+                                    "mainEntity": [
+                                                {
+                                                            "@type": "Question",
+                                                            "name": "Can I generate invoices directly from a CSV file?",
+                                                            "acceptedAnswer": {
+                                                                        "@type": "Answer",
+                                                                        "text": "Yes. Upload the CSV, map its columns into your invoice template, preview the layout, and export the invoice PDFs."
+                                                            }
+                                                },
+                                                {
+                                                            "@type": "Question",
+                                                            "name": "Can the CSV contain multiple rows for the same invoice?",
+                                                            "acceptedAnswer": {
+                                                                        "@type": "Answer",
+                                                                        "text": "Yes. Use grouped invoice mode when repeated invoice numbers represent line items for one final invoice."
+                                                            }
+                                                },
+                                                {
+                                                            "@type": "Question",
+                                                            "name": "Do I need to convert CSV to Excel first?",
+                                                            "acceptedAnswer": {
+                                                                        "@type": "Answer",
+                                                                        "text": "No. CSVLink accepts CSV directly, although Excel files are also supported when your data is stored as XLSX."
+                                                            }
+                                                }
+                                    ]
+                        }
+            ]
+}
+    </script>
+    <link rel="stylesheet" href="/assets/css/style.css">
+    <style>
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap');
+        body { margin: 0; font-family: 'Manrope', system-ui, sans-serif; background: var(--bg); color: var(--fg); }
+        nav { position: fixed; top: 0; z-index: 1000; width: 100%; box-sizing: border-box; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 24px; height: 60px; padding: 0 24px; background: rgba(255,255,255,0.88); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); }
+        .logo { display: flex; align-items: center; gap: 10px; color: var(--fg); text-decoration: none; font-family: 'Space Grotesk', sans-serif; font-size: 1.25rem; font-weight: 700; }
+        .logo-icon { width: 32px; height: 32px; border-radius: 10px; }
+        .invoice-page-nav, .nav-links { display: flex; align-items: center; flex-wrap: wrap; }
+        .invoice-page-nav { justify-self: center; justify-content: center; gap: 0; row-gap: 8px; }
+        .nav-links { justify-self: end; justify-content: flex-end; gap: 10px; }
+        .invoice-page-link { display: inline-flex; align-items: center; text-decoration: none; color: #41516f; font-size: 0.9rem; font-weight: 700; padding: 0; border: none; background: transparent; }
+        .invoice-page-link + .invoice-page-link::before { content: '|'; color: #94a3b8; margin: 0 10px; }
+        .invoice-page-link.is-active { color: var(--accent); }
+        .container { width: min(1180px, calc(100% - 32px)); margin: 0 auto; padding: 96px 0 48px; }
+        .hero, .panel { border: 1px solid var(--border); border-radius: 24px; box-shadow: var(--shadow); }
+        .hero { padding: 42px 36px; background: radial-gradient(circle at 10% 16%, rgba(37,99,235,0.18), transparent 30%), radial-gradient(circle at 86% 14%, rgba(14,165,233,0.16), transparent 25%), linear-gradient(140deg, #ffffff 0%, #f6f9ff 58%, #eef4ff 100%); }
+        .eyebrow { display: inline-flex; margin-bottom: 14px; padding: 6px 12px; border-radius: 999px; background: rgba(37,99,235,0.08); color: var(--accent); font-size: 0.78rem; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; }
+        .hero h1 { margin: 0 0 14px; max-width: 13ch; font-family: 'Space Grotesk', sans-serif; font-size: clamp(2.3rem, 4.8vw, 4.1rem); line-height: 1.04; letter-spacing: -0.03em; color: #0b1328; }
+        .hero p, .panel p, .panel li, .faq-answer { color: #53637d; line-height: 1.75; }
+        .hero p { max-width: 74ch; margin: 0; font-size: 1.05rem; }
+        .hero-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 22px; }
+        .btn { display: inline-flex; align-items: center; justify-content: center; height: 48px; padding: 0 26px; border-radius: 12px; text-decoration: none; font-weight: 700; border: none; background: var(--accent); color: var(--accent-fg); box-shadow: 0 4px 12px rgba(59,130,246,0.3); }
+        .btn.ghost { background: rgba(255,255,255,0.72); color: #173056; border: 1px solid rgba(148,163,184,0.34); box-shadow: none; }
+        .tag-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
+        .tag { padding: 8px 12px; border-radius: 999px; border: 1px solid rgba(148,163,184,0.35); background: rgba(255,255,255,0.72); color: #29456e; font-size: 0.82rem; font-weight: 700; }
+        .panel { margin-top: 24px; padding: 30px; background: var(--panel); }
+        .panel h2 { margin: 0 0 10px; font-family: 'Space Grotesk', sans-serif; font-size: clamp(1.6rem, 3vw, 2.7rem); letter-spacing: -0.02em; }
+        .grid-4, .grid-3, .grid-2, .faq-grid { display: grid; gap: 14px; margin-top: 22px; }
+        .grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+        .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        .grid-2, .faq-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .card, .faq-item { padding: 20px; border: 1px solid var(--border); border-radius: 18px; background: #fff; }
+        .card h3, .faq-question { margin: 0 0 10px; font-family: 'Space Grotesk', sans-serif; font-size: 1.02rem; color: #102447; }
+        .step-badge { display: inline-flex; margin-bottom: 10px; padding: 6px 10px; border-radius: 999px; background: rgba(37,99,235,0.08); color: var(--accent); font-size: 0.78rem; font-weight: 800; letter-spacing: 0.04em; }
+        .comparison-list, .faq-list { display: grid; gap: 12px; margin-top: 20px; }
+        .comparison-row { padding: 16px 18px; border: 1px solid var(--border); border-radius: 16px; background: #fff; }
+        .comparison-row strong { display: block; margin-bottom: 6px; color: #102447; }
+        .cta { background: linear-gradient(140deg, #f8fbff 0%, #eef4ff 100%); }
+        footer { margin-top: 44px; padding: 40px 24px; background: var(--panel); border-top: 1px solid var(--border); text-align: center; }
+        .footer-links { display: flex; justify-content: center; gap: 18px; flex-wrap: wrap; }
+        .footer-links a { color: var(--muted); text-decoration: none; }
+        .copyright { margin-top: 14px; color: var(--muted); font-size: 0.92rem; }
+        @media (max-width: 980px) {
+            .grid-4, .grid-3, .grid-2, .faq-grid { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 900px) {
+            nav { grid-template-columns: 1fr; height: auto; padding: 12px 18px; gap: 10px; }
+            .logo, .invoice-page-nav, .nav-links { justify-self: center; }
+            .container { padding-top: 148px; }
+            .hero, .panel { padding: 24px 20px; }
+        }
+        .resource-list { display: grid; gap: 12px; margin-top: 18px; }
+        .resource-link { display: block; padding: 18px; border: 1px solid var(--border); border-radius: 16px; background: #fff; color: inherit; text-decoration: none; transition: transform .2s ease, box-shadow .2s ease; }
+        .resource-link:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+        .resource-link strong { display: block; margin-bottom: 6px; color: #102447; font-family: 'Space Grotesk', sans-serif; }
+        .article-body { max-width: 840px; }
+        .article-body h2 { margin-top: 30px; }
+        .article-body h3 { margin-top: 22px; color: #102447; font-family: 'Space Grotesk', sans-serif; }
+        .article-body p, .article-body li { color: #53637d; line-height: 1.78; }
+        .mini-table { width: 100%; border-collapse: collapse; margin-top: 18px; overflow: hidden; border-radius: 14px; }
+        .mini-table th, .mini-table td { padding: 12px 14px; border: 1px solid var(--border); text-align: left; vertical-align: top; }
+        .mini-table th { background: #f8fbff; color: #102447; font-weight: 800; }
+        .mini-table td { background: #fff; color: #53637d; }
+
+    </style>
+    <script defer src="/_vercel/insights/script.js"></script>
+</head>
+<body>
+    <nav>
+        <a href="/" class="logo">
+            <img src="/assets/images/android-chrome-512x512.png" alt="CSVLink Logo" class="logo-icon" width="32" height="32" decoding="async">
+            <span>CSVLink</span>
+        </a>
+        <div class="invoice-page-nav" aria-label="Invoice pages">
+            <a href="/" class="invoice-page-link">Overview</a>
+            <a href="/invoice/use-cases" class="invoice-page-link">Use Cases</a>
+            <a href="/invoice/how-it-works" class="invoice-page-link">How It Works</a>
+            <a href="/excel-to-invoice" class="invoice-page-link">Excel to Invoice</a>
+            <a href="/bulk-invoice-generator" class="invoice-page-link">Bulk Invoice Generator</a>
+            <a href="/why-csvlink" class="invoice-page-link">Why CSVLink</a>
+            <a href="/ai-integration" class="invoice-page-link">AI Integration</a>
+        </div>
+        <div class="nav-links" id="nav-links"></div>
+    </nav>
+
+    <main class="container">
+        <section class="hero">
+            <span class="eyebrow">CSV to Invoice</span>
+            <h1>Convert CSV invoice data into branded invoice PDFs without rebuilding every document.</h1>
+            <p>CSVLink turns a clean CSV export into finished invoices by letting you map columns to a reusable invoice layout, handle itemized rows, and export the whole batch as PDFs.</p>
+            <div class="hero-actions">
+                <a href="/tool" class="btn">Open Invoice Builder</a>
+                <a href="/excel-to-invoice" class="btn ghost">Prepare Your Spreadsheet</a>
+            </div>
+            <div class="tag-row"><span class="tag">CSV invoice generator</span><span class="tag">CSV to PDF invoices</span><span class="tag">Batch invoices</span><span class="tag">Grouped line items</span></div>
+        </section>
+
+        <section class="panel">
+            <h2>Best CSV structures for invoice generation</h2>
+            <p>CSVLink works best when each column has one job and each invoice can be identified reliably.</p>
+            <div class="grid-3"><article class="card"><h3>One row per invoice</h3><p>Use this when each row already contains the customer, invoice number, date, total, and item summary for a single invoice.</p></article><article class="card"><h3>Grouped rows for itemized invoices</h3><p>Use a repeated invoice number when several rows belong to the same invoice and each row represents an item or service.</p></article><article class="card"><h3>Consistent headers</h3><p>Readable headers like invoice_no, bill_to_name, due_date, item_description, quantity, unit_price, and total_due make mapping faster.</p></article></div>
+        </section>
+        <section class="panel">
+            <h2>Why CSVLink is stronger than a generic CSV mail merge</h2>
+            
+            <div class="comparison-list"><div class="comparison-row"><strong>The invoice layout stays visual.</strong><span>You place CSV fields on the invoice canvas instead of writing merge syntax inside a document editor.</span></div><div class="comparison-row"><strong>The same template can be reused.</strong><span>Once fields are connected, you can import a new CSV later and produce a new invoice run from the same design.</span></div><div class="comparison-row"><strong>Line items are treated as invoice data.</strong><span>Grouped mode lets repeated rows become an item table instead of forcing one invoice per row.</span></div></div>
+        </section>
+        <section class="panel">
+            <h2>Recommended CSV columns</h2>
+            <p>These are practical columns to include when your billing data starts outside an invoice app.</p>
+            <table class="mini-table"><thead><tr><th>Column</th><th>Purpose</th><th>Example value</th></tr></thead><tbody><tr><td>invoice_no</td><td>Groups rows and names each invoice</td><td>INV-1048</td></tr><tr><td>bill_to_name</td><td>Customer or company name</td><td>Acme Services LLC</td></tr><tr><td>issue_date</td><td>Invoice issue date</td><td>2026-05-17</td></tr><tr><td>due_date</td><td>Payment deadline</td><td>2026-06-16</td></tr><tr><td>item_description</td><td>Line item service or product</td><td>Monthly support retainer</td></tr><tr><td>quantity</td><td>Item quantity</td><td>1</td></tr><tr><td>unit_price</td><td>Price per item</td><td>750.00</td></tr><tr><td>total_due</td><td>Final amount due</td><td>802.50</td></tr></tbody></table>
+        </section>
+
+        <section class="panel">
+            <h2>Related invoice automation resources</h2>
+            <div class="grid-3">
+                <article class="card"><h3><a href="/csv-to-invoice">CSV to invoice generator</a></h3><p>Turn clean CSV billing exports into reusable invoice PDFs with mapped fields and batch output.</p></article>
+                <article class="card"><h3><a href="/invoice-template-builder">Invoice template builder</a></h3><p>Build or import the invoice layout, then connect spreadsheet columns to the exact places they belong.</p></article>
+                <article class="card"><h3><a href="/itemized-invoice-generator">Itemized invoice generator</a></h3><p>Use grouped rows when one invoice needs multiple products, services, quantities, prices, or descriptions.</p></article>
+            </div>
+        </section>
+
+        <section class="panel">
+            <h2>Questions this page answers</h2>
+            <div class="faq-grid"><article class="faq-item"><h3 class="faq-question">Can I generate invoices directly from a CSV file?</h3><p class="faq-answer">Yes. Upload the CSV, map its columns into your invoice template, preview the layout, and export the invoice PDFs.</p></article><article class="faq-item"><h3 class="faq-question">Can the CSV contain multiple rows for the same invoice?</h3><p class="faq-answer">Yes. Use grouped invoice mode when repeated invoice numbers represent line items for one final invoice.</p></article><article class="faq-item"><h3 class="faq-question">Do I need to convert CSV to Excel first?</h3><p class="faq-answer">No. CSVLink accepts CSV directly, although Excel files are also supported when your data is stored as XLSX.</p></article></div>
+        </section>
+        <section class="panel cta">
+            <h2>Start with your existing CSV export</h2>
+            <p>Use the file your team already has, map the fields once, and turn the next billing batch into consistent invoice PDFs.</p>
+            <div class="hero-actions">
+                <a href="/tool" class="btn">Create Invoices from CSV</a>
+                <a href="/bulk-invoice-generator" class="btn ghost">See Bulk Workflow</a>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="footer-links">
+            <a href="/">Overview</a>
+            <a href="/excel-to-invoice">Excel to Invoice</a>
+            <a href="/csv-to-invoice">CSV to Invoice</a>
+            <a href="/bulk-invoice-generator">Bulk Invoice Generator</a>
+            <a href="/invoice-template-builder">Template Builder</a>
+            <a href="/itemized-invoice-generator">Itemized Invoices</a>
+            <a href="/excel-invoice-automation">Excel Invoice Automation</a>
+            <a href="/blog/create-invoices-from-excel">Excel Invoice Guide</a>
+            <a href="/blog/bulk-invoice-csv-format">CSV Format Guide</a>
+            <a href="/tool">Open Builder</a>
+            <a href="/privacy">Privacy</a>
+            <a href="/terms">Terms</a>
+            <a href="/refunds">Refunds</a>
+        </div>
+        <div class="copyright"><p>&copy; 2026 CSVLink. All Rights Reserved.</p></div>
+    </footer>
+
+    <script type="module" src="/assets/js/supabase-client.js"></script>
+    <script type="module" src="/assets/js/auth.js"></script>
+</body>
+</html>

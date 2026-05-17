@@ -5,53 +5,292 @@
     {
       "source": "/api/(.*)",
       "headers": [
-        { "key": "Access-Control-Allow-Credentials", "value": "true" },
-        { "key": "Access-Control-Allow-Origin", "value": "*" },
-        { "key": "Access-Control-Allow-Methods", "value": "GET,OPTIONS,PATCH,DELETE,POST,PUT" },
-        { "key": "Access-Control-Allow-Headers", "value": "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization" }
+        {
+          "key": "Access-Control-Allow-Credentials",
+          "value": "true"
+        },
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "*"
+        },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET,OPTIONS,PATCH,DELETE,POST,PUT"
+        },
+        {
+          "key": "Access-Control-Allow-Headers",
+          "value": "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization"
+        }
+      ]
+    },
+    {
+      "source": "/assets/images/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=604800, stale-while-revalidate=86400"
+        }
+      ]
+    },
+    {
+      "source": "/assets/js/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=86400, stale-while-revalidate=604800"
+        }
+      ]
+    },
+    {
+      "source": "/assets/css/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=86400, stale-while-revalidate=604800"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        }
       ]
     }
   ],
   "redirects": [
-    { "source": "/invoices", "destination": "/", "permanent": true },
-    { "source": "/index", "destination": "/", "permanent": true },
-    { "source": "/index.html", "destination": "/", "permanent": true },
-    { "source": "/index-Invoice.html", "destination": "/", "permanent": true },
-    { "source": "/invoice-use-cases", "destination": "/invoice/use-cases", "permanent": true },
-    { "source": "/invoice-use-cases-Invoice.html", "destination": "/invoice/use-cases", "permanent": true },
-    { "source": "/invoice-how-it-works", "destination": "/invoice/how-it-works", "permanent": true },
-    { "source": "/invoice-how-it-works-Invoice.html", "destination": "/invoice/how-it-works", "permanent": true },
-    { "source": "/excel-to-invoice-Invoice.html", "destination": "/excel-to-invoice", "permanent": true },
-    { "source": "/bulk-invoice-generator-Invoice.html", "destination": "/bulk-invoice-generator", "permanent": true },
-    { "source": "/why-csvlink-Invoice.html", "destination": "/why-csvlink", "permanent": true },
-    { "source": "/ai-integration-Invoice.html", "destination": "/ai-integration", "permanent": true },
-    { "source": "/tool-Invoice", "destination": "/tool", "permanent": true },
-    { "source": "/tool-Invoice.html", "destination": "/tool", "permanent": true },
-    { "source": "/index-General.html", "destination": "/index/General", "permanent": true },
-    { "source": "/privacy.html", "destination": "/privacy", "permanent": true },
-    { "source": "/refunds.html", "destination": "/refunds", "permanent": true },
-    { "source": "/terms.html", "destination": "/terms", "permanent": true },
-    { "source": "/store.html", "destination": "/store", "permanent": true }
+    {
+      "source": "/invoices",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/index",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/index.html",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/index-Invoice.html",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/invoice-use-cases",
+      "destination": "/invoice/use-cases",
+      "permanent": true
+    },
+    {
+      "source": "/invoice-use-cases-Invoice.html",
+      "destination": "/invoice/use-cases",
+      "permanent": true
+    },
+    {
+      "source": "/invoice-how-it-works",
+      "destination": "/invoice/how-it-works",
+      "permanent": true
+    },
+    {
+      "source": "/invoice-how-it-works-Invoice.html",
+      "destination": "/invoice/how-it-works",
+      "permanent": true
+    },
+    {
+      "source": "/excel-to-invoice-Invoice.html",
+      "destination": "/excel-to-invoice",
+      "permanent": true
+    },
+    {
+      "source": "/bulk-invoice-generator-Invoice.html",
+      "destination": "/bulk-invoice-generator",
+      "permanent": true
+    },
+    {
+      "source": "/why-csvlink-Invoice.html",
+      "destination": "/why-csvlink",
+      "permanent": true
+    },
+    {
+      "source": "/ai-integration-Invoice.html",
+      "destination": "/ai-integration",
+      "permanent": true
+    },
+    {
+      "source": "/tool-Invoice",
+      "destination": "/tool",
+      "permanent": true
+    },
+    {
+      "source": "/tool-Invoice.html",
+      "destination": "/tool",
+      "permanent": true
+    },
+    {
+      "source": "/index-General.html",
+      "destination": "/index/General",
+      "permanent": true
+    },
+    {
+      "source": "/privacy.html",
+      "destination": "/privacy",
+      "permanent": true
+    },
+    {
+      "source": "/refunds.html",
+      "destination": "/refunds",
+      "permanent": true
+    },
+    {
+      "source": "/terms.html",
+      "destination": "/terms",
+      "permanent": true
+    },
+    {
+      "source": "/store.html",
+      "destination": "/store",
+      "permanent": true
+    },
+    {
+      "source": "/csv-to-invoice-Invoice.html",
+      "destination": "/csv-to-invoice",
+      "permanent": true
+    },
+    {
+      "source": "/invoice-template-builder-Invoice.html",
+      "destination": "/invoice-template-builder",
+      "permanent": true
+    },
+    {
+      "source": "/itemized-invoice-generator-Invoice.html",
+      "destination": "/itemized-invoice-generator",
+      "permanent": true
+    },
+    {
+      "source": "/excel-invoice-automation-Invoice.html",
+      "destination": "/excel-invoice-automation",
+      "permanent": true
+    },
+    {
+      "source": "/blog-create-invoices-from-excel-Invoice.html",
+      "destination": "/blog/create-invoices-from-excel",
+      "permanent": true
+    },
+    {
+      "source": "/blog-bulk-invoice-csv-format-Invoice.html",
+      "destination": "/blog/bulk-invoice-csv-format",
+      "permanent": true
+    }
   ],
   "rewrites": [
-    { "source": "/privacy", "destination": "/privacy.html" },
-    { "source": "/refunds", "destination": "/refunds.html" },
-    { "source": "/terms", "destination": "/terms.html" },
-    { "source": "/dashboard", "destination": "/dashboard.html" },
-    { "source": "/store", "destination": "/store.html" },
-    { "source": "/index/General", "destination": "/index-General.html" },
-    { "source": "/invoice/use-cases", "destination": "/invoice-use-cases-Invoice.html" },
-    { "source": "/invoice/how-it-works", "destination": "/invoice-how-it-works-Invoice.html" },
-    { "source": "/excel-to-invoice", "destination": "/excel-to-invoice-Invoice.html" },
-    { "source": "/bulk-invoice-generator", "destination": "/bulk-invoice-generator-Invoice.html" },
-    { "source": "/why-csvlink", "destination": "/why-csvlink-Invoice.html" },
-    { "source": "/ai-integration", "destination": "/ai-integration-Invoice.html" },
-    { "source": "/tool/usedtobemain", "destination": "/tool.html" },
-    { "source": "/tool", "destination": "/tool-Invoice.html" },
-    { "source": "/login", "destination": "/login.html" },
-    { "source": "/api-documentation", "destination": "/api-documentation.html" },
-    { "source": "/verify", "destination": "/verify.html" },
-    { "source": "/cambiar-contrasena", "destination": "/cambiar-contrasena.html" },
-    { "source": "/reset-password", "destination": "/reset-password.html" }
+    {
+      "source": "/privacy",
+      "destination": "/privacy.html"
+    },
+    {
+      "source": "/refunds",
+      "destination": "/refunds.html"
+    },
+    {
+      "source": "/terms",
+      "destination": "/terms.html"
+    },
+    {
+      "source": "/dashboard",
+      "destination": "/dashboard.html"
+    },
+    {
+      "source": "/store",
+      "destination": "/store.html"
+    },
+    {
+      "source": "/index/General",
+      "destination": "/index-General.html"
+    },
+    {
+      "source": "/invoice/use-cases",
+      "destination": "/invoice-use-cases-Invoice.html"
+    },
+    {
+      "source": "/invoice/how-it-works",
+      "destination": "/invoice-how-it-works-Invoice.html"
+    },
+    {
+      "source": "/excel-to-invoice",
+      "destination": "/excel-to-invoice-Invoice.html"
+    },
+    {
+      "source": "/bulk-invoice-generator",
+      "destination": "/bulk-invoice-generator-Invoice.html"
+    },
+    {
+      "source": "/why-csvlink",
+      "destination": "/why-csvlink-Invoice.html"
+    },
+    {
+      "source": "/ai-integration",
+      "destination": "/ai-integration-Invoice.html"
+    },
+    {
+      "source": "/tool/usedtobemain",
+      "destination": "/tool.html"
+    },
+    {
+      "source": "/tool",
+      "destination": "/tool-Invoice.html"
+    },
+    {
+      "source": "/login",
+      "destination": "/login.html"
+    },
+    {
+      "source": "/api-documentation",
+      "destination": "/api-documentation.html"
+    },
+    {
+      "source": "/verify",
+      "destination": "/verify.html"
+    },
+    {
+      "source": "/cambiar-contrasena",
+      "destination": "/cambiar-contrasena.html"
+    },
+    {
+      "source": "/reset-password",
+      "destination": "/reset-password.html"
+    },
+    {
+      "source": "/csv-to-invoice",
+      "destination": "/csv-to-invoice-Invoice.html"
+    },
+    {
+      "source": "/invoice-template-builder",
+      "destination": "/invoice-template-builder-Invoice.html"
+    },
+    {
+      "source": "/itemized-invoice-generator",
+      "destination": "/itemized-invoice-generator-Invoice.html"
+    },
+    {
+      "source": "/excel-invoice-automation",
+      "destination": "/excel-invoice-automation-Invoice.html"
+    },
+    {
+      "source": "/blog/create-invoices-from-excel",
+      "destination": "/blog-create-invoices-from-excel-Invoice.html"
+    },
+    {
+      "source": "/blog/bulk-invoice-csv-format",
+      "destination": "/blog-bulk-invoice-csv-format-Invoice.html"
+    }
   ]
 }

@@ -2,9 +2,17 @@ User-agent: *
 Allow: /
 Disallow: /api/
 Disallow: /dashboard
+Disallow: /dashboard.html
 Disallow: /login
-Disallow: /verify
+Disallow: /login.html
 Disallow: /reset-password
-Disallow: /cambiar-contrasena
+Disallow: /reset-password.html
+Disallow: /submit-template
+Disallow: /submit-template.html
+Disallow: /test
+Disallow: /test.html
+Disallow: /referenceofanotherwebsite.html
+Disallow: /email-csvlink-reengagement.html
+Disallow: /tool/usedtobemain
 
 Sitemap: https://csvlink.app/sitemap.xml

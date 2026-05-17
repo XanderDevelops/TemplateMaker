@@ -2,54 +2,82 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://csvlink.app/</loc>
-    <lastmod>2026-04-10</lastmod>
+    <lastmod>2026-05-17</lastmod>
   </url>
   <url>
     <loc>https://csvlink.app/index/General</loc>
-    <lastmod>2026-04-10</lastmod>
+    <lastmod>2026-05-17</lastmod>
   </url>
   <url>
     <loc>https://csvlink.app/invoice/use-cases</loc>
-    <lastmod>2026-04-10</lastmod>
+    <lastmod>2026-05-17</lastmod>
   </url>
   <url>
     <loc>https://csvlink.app/invoice/how-it-works</loc>
-    <lastmod>2026-04-10</lastmod>
+    <lastmod>2026-05-17</lastmod>
   </url>
   <url>
     <loc>https://csvlink.app/excel-to-invoice</loc>
-    <lastmod>2026-04-10</lastmod>
+    <lastmod>2026-05-17</lastmod>
+  </url>
+  <url>
+    <loc>https://csvlink.app/csv-to-invoice</loc>
+    <lastmod>2026-05-17</lastmod>
   </url>
   <url>
     <loc>https://csvlink.app/bulk-invoice-generator</loc>
-    <lastmod>2026-04-10</lastmod>
+    <lastmod>2026-05-17</lastmod>
+  </url>
+  <url>
+    <loc>https://csvlink.app/invoice-template-builder</loc>
+    <lastmod>2026-05-17</lastmod>
+  </url>
+  <url>
+    <loc>https://csvlink.app/itemized-invoice-generator</loc>
+    <lastmod>2026-05-17</lastmod>
+  </url>
+  <url>
+    <loc>https://csvlink.app/excel-invoice-automation</loc>
+    <lastmod>2026-05-17</lastmod>
   </url>
   <url>
     <loc>https://csvlink.app/why-csvlink</loc>
-    <lastmod>2026-04-10</lastmod>
+    <lastmod>2026-05-17</lastmod>
   </url>
   <url>
     <loc>https://csvlink.app/ai-integration</loc>
-    <lastmod>2026-04-10</lastmod>
+    <lastmod>2026-05-17</lastmod>
   </url>
   <url>
     <loc>https://csvlink.app/tool</loc>
-    <lastmod>2026-04-10</lastmod>
+    <lastmod>2026-05-17</lastmod>
+  </url>
+  <url>
+    <loc>https://csvlink.app/blog/create-invoices-from-excel</loc>
+    <lastmod>2026-05-17</lastmod>
+  </url>
+  <url>
+    <loc>https://csvlink.app/blog/bulk-invoice-csv-format</loc>
+    <lastmod>2026-05-17</lastmod>
   </url>
   <url>
     <loc>https://csvlink.app/store</loc>
-    <lastmod>2026-04-10</lastmod>
+    <lastmod>2026-05-17</lastmod>
+  </url>
+  <url>
+    <loc>https://csvlink.app/api-documentation</loc>
+    <lastmod>2026-05-17</lastmod>
   </url>
   <url>
     <loc>https://csvlink.app/privacy</loc>
-    <lastmod>2026-04-10</lastmod>
+    <lastmod>2026-05-17</lastmod>
   </url>
   <url>
     <loc>https://csvlink.app/terms</loc>
-    <lastmod>2026-04-10</lastmod>
+    <lastmod>2026-05-17</lastmod>
   </url>
   <url>
     <loc>https://csvlink.app/refunds</loc>
-    <lastmod>2026-04-10</lastmod>
+    <lastmod>2026-05-17</lastmod>
   </url>
 </urlset>
