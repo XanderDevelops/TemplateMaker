@@ -73,8 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             } else {
                 // --- User is NOT logged in: Redirect them to the login page ---
-                alert('Please log in or sign up to upgrade your plan.');
-                window.location.href = '/login.html';
+                window.location.href = '/login?redirect=%2F%23pricing';
             }
         });
     });

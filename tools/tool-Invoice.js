@@ -7898,6 +7898,8 @@ async function initializeEditor() {
         centerAndFitPage();
     }
 
+    await loadPendingInvoicePdfTemplate();
+
     /* Other UI initialization */
     if (!localStorage.getItem('hasSeenTour')) startTour();
     initializeLeftPanelTabs();
@@ -9030,6 +9032,33 @@ function base64ToArrayBuffer(base64) {
         bytes[i] = binaryString.charCodeAt(i);
     }
     return bytes.buffer;
+}
+
+function dataUrlToFile(dataUrl, fileName, mimeType = 'application/pdf') {
+    const arrayBuffer = base64ToArrayBuffer(dataUrl);
+    return new File([arrayBuffer], fileName || 'invoice-template.pdf', { type: mimeType });
+}
+
+async function loadPendingInvoicePdfTemplate() {
+    const fileName = localStorage.getItem('pendingInvoicePdfTemplateName');
+    const fileData = localStorage.getItem('pendingInvoicePdfTemplateData');
+    if (!fileName || !fileData) return;
+
+    localStorage.removeItem('pendingInvoicePdfTemplateName');
+    localStorage.removeItem('pendingInvoicePdfTemplateData');
+
+    try {
+        const file = dataUrlToFile(fileData, fileName, 'application/pdf');
+        await importInvoicePdfTemplate(file);
+        hideInvoiceAiHelper();
+        showNotification(`Imported "${fileName}" as your invoice template.`, 'success', 2600);
+        window.setTimeout(() => {
+            if (hasInvoiceDataLoaded()) showInvoicePdfToggleHelper();
+        }, 120);
+    } catch (error) {
+        console.error('Pending invoice PDF import failed:', error);
+        showNotification(error?.message || 'Unable to import that PDF template.', 'error', 3200);
+    }
 }
 async function loadCachedData() {
     const cachedHeaders = localStorage.getItem('cachedHeaders');

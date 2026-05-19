@@ -52,7 +52,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             } catch (error) {
                 console.error('Unable to open checkout:', error);
-                alert('Could not open checkout. Please log in again and try once more.');
+                const redirect = encodeURIComponent(LOGIN_RETURN_PATH);
+                window.location.href = `/login?redirect=${redirect}`;
             } finally {
                 setButtonBusy(button, false);
             }
