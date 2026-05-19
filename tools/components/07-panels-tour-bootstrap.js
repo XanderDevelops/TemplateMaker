@@ -461,7 +461,7 @@
                         if (json.page?.title) $('#titleInput').value = json.page.title;
                         if (json.data) {
                             headers = json.data.headers || [];
-                            dataRows = json.data.rows || [];
+                            dataRows = compactCsvRows(json.data.rows || [], headers);
                         }
                         await setDocumentPagesFromTemplate(json, { fitView: true, selectedIndex: json.currentPageIndex });
                         bindings = new Map(documentPages[currentPageIndex]?.bindings || json.bindings || []);

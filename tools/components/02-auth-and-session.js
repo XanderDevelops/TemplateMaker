@@ -51,7 +51,7 @@ async function initializeEditor() {
             $('#titleInput').value = template.title || template.page?.title || 'Untitled_Template';
             if (template.data) {
                 headers = template.data.headers || [];
-                dataRows = template.data.rows || [];
+                dataRows = compactCsvRows(template.data.rows || [], headers);
             }
             await setDocumentPagesFromTemplate(template, { fitView: true });
             historyStack = [];
@@ -138,7 +138,7 @@ async function loadTemplateFromDB(templateId, options = {}) {
         const template = data.template_data;
         if (template.data) {
             headers = template.data.headers || [];
-            dataRows = template.data.rows || [];
+            dataRows = compactCsvRows(template.data.rows || [], headers);
             identifierColumn = template.data.identifierColumn || '';
             refreshIdentifierDropdown();
         }
@@ -267,7 +267,7 @@ function restoreFullState(state, callback) {
         return;
     }
     headers = [...(state.data?.headers || [])];
-    dataRows = JSON.parse(JSON.stringify(state.data?.rows || []));
+    dataRows = compactCsvRows(state.data?.rows || [], headers);
     identifierColumn = state.data?.identifierColumn || '';
     if (state.title !== undefined) $('#titleInput').value = state.title;
 
@@ -316,7 +316,7 @@ const requestSaveState = debounce(() => {
         canvas: deepClone(activePage.canvas),
         data: {
             headers: [...headers],
-            rows: JSON.parse(JSON.stringify(dataRows)),
+            rows: compactCsvRows(dataRows, headers),
             identifierColumn: identifierColumn || ''
         },
         bindings: deepClone(activePage.bindings || Array.from(bindings.entries())),
@@ -1142,7 +1142,7 @@ function cacheLocalDataState() {
     try {
         if (headers.length > 0) {
             localStorage.setItem('cachedHeaders', JSON.stringify(headers));
-            localStorage.setItem('cachedDataRows', JSON.stringify(dataRows));
+            localStorage.setItem('cachedDataRows', JSON.stringify(compactCsvRows(dataRows, headers)));
             if (identifierColumn) localStorage.setItem('cachedIdentifierColumn', identifierColumn);
             else localStorage.removeItem('cachedIdentifierColumn');
         } else {
@@ -1164,7 +1164,7 @@ function processFileData(arrayBuffer, fileName, opts = {}) {
         if (!json.length) { showNotification('No data found in the sheet.'); return; }
         // Ensure headers are extracted from the first row keys
         headers = Object.keys(json[0]);
-        dataRows = json; // Keep the full array of objects
+        dataRows = compactCsvRows(json, headers);
         console.log('Processed Data:', { headers, rowCount: dataRows.length, sample: dataRows[0] });
         $('#fileName').textContent = fileName;
         $('#unloadDataBtn').style.display = 'inline';
@@ -1222,7 +1222,7 @@ async function loadCachedData() {
     if (cachedHeaders && cachedRows) {
         try {
             headers = JSON.parse(cachedHeaders);
-            dataRows = JSON.parse(cachedRows);
+            dataRows = compactCsvRows(JSON.parse(cachedRows), headers);
             identifierColumn = cachedIdCol || '';
             $('#fileName').textContent = fileName || 'Restored Data';
             $('#unloadDataBtn').style.display = 'inline';

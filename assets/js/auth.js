@@ -14,6 +14,18 @@ const redirectTo = params.get("redirect") || "/dashboard.html";
 let isSignup = false;
 let authBusy = false;
 
+function getSafeRedirectPath() {
+    try {
+        const url = new URL(redirectTo, window.location.origin);
+        if (url.origin !== window.location.origin) {
+            return '/dashboard';
+        }
+        return `${url.pathname}${url.search}${url.hash}` || '/dashboard';
+    } catch (_error) {
+        return '/dashboard';
+    }
+}
+
 function pushDataLayerEvent(eventName, payload = {}) {
     if (typeof window === 'undefined') return;
     window.dataLayer = window.dataLayer || [];
@@ -152,7 +164,7 @@ if (loginForm) {
                 }
             }
 
-            window.location.href = '/dashboard';
+            window.location.href = getSafeRedirectPath();
         } finally {
             setAuthBusy(false);
         }
@@ -166,7 +178,7 @@ if (googleLoginBtn) {
         const { error } = await supabase.auth.signInWithOAuth({
             provider: 'google',
             options: {
-                redirectTo: window.location.origin + '/dashboard'
+                redirectTo: window.location.origin + getSafeRedirectPath()
             }
         });
         if (error) {
@@ -239,7 +251,7 @@ const checkUser = async () => {
     
     // Redirect if user is on login page but already logged in
     if (user && window.location.pathname.includes('login')) {
-        window.location.href = '/dashboard';
+        window.location.href = getSafeRedirectPath();
     }
     
     return user;

@@ -2741,6 +2741,26 @@ function pageHasRenderableObjects(pageState) {
     return objects.some(o => o && o.oid !== 'pageRect' && !o.excludeFromExport && !o.isSnapLine);
 }
 
+function isBlankCsvCellValue(value) {
+    return value === null || value === undefined || String(value).trim() === '';
+}
+
+function compactCsvRows(rows = dataRows, headerList = headers) {
+    const allowedHeaders = new Set(Array.isArray(headerList) ? headerList : []);
+    return (Array.isArray(rows) ? rows : []).map((row) => {
+        const compactRow = {};
+        if (!row || typeof row !== 'object') return compactRow;
+
+        Object.entries(row).forEach(([key, value]) => {
+            if (allowedHeaders.size && !allowedHeaders.has(key)) return;
+            if (isBlankCsvCellValue(value)) return;
+            compactRow[key] = value;
+        });
+
+        return compactRow;
+    });
+}
+
 function buildTemplatePayload() {
     syncCurrentPageStateFromCanvas();
     if (!documentPages.length) {
@@ -2763,7 +2783,7 @@ function buildTemplatePayload() {
         bindings: activePage?.bindings || [],
         pages: clonedPages,
         currentPageIndex,
-        data: { headers, rows: dataRows, identifierColumn: identifierColumn || '' }
+        data: { headers, rows: compactCsvRows(dataRows, headers), identifierColumn: identifierColumn || '' }
     };
 }
 
@@ -3134,7 +3154,9 @@ async function handleCsvCellPaste(e) {
             const targetColIndex = startColIndex + cOffset;
             if (targetColIndex >= headers.length) return;
             const colKey = headers[targetColIndex];
-            dataRows[targetRowIndex][colKey] = value.trim();
+            const trimmedValue = value.trim();
+            if (isBlankCsvCellValue(trimmedValue)) delete dataRows[targetRowIndex][colKey];
+            else dataRows[targetRowIndex][colKey] = trimmedValue;
         });
     });
 
@@ -3144,7 +3166,8 @@ async function handleCsvCellPaste(e) {
 
 window.updateCsvCell = (rowIndex, colKey, newVal) => {
     if (dataRows[rowIndex]) {
-        dataRows[rowIndex][colKey] = newVal;
+        if (isBlankCsvCellValue(newVal)) delete dataRows[rowIndex][colKey];
+        else dataRows[rowIndex][colKey] = newVal;
         requestSaveState();
     }
 };
@@ -3155,7 +3178,7 @@ window.updateHeader = (index, newVal) => {
     newVal = newVal.trim();
     headers[index] = newVal;
     dataRows.forEach(row => {
-        row[newVal] = row[oldVal];
+        if (!isBlankCsvCellValue(row[oldVal])) row[newVal] = row[oldVal];
         delete row[oldVal];
     });
     bindings.forEach((b) => { if (b.column === oldVal) b.column = newVal; });
@@ -3186,9 +3209,7 @@ window.deleteColumn = (index) => {
 
 on('#addRowBtn', 'click', () => {
     if (!headers.length) headers = ['Column 1', 'Column 2', 'Column 3'];
-    const newRow = {};
-    headers.forEach(h => newRow[h] = '');
-    dataRows.push(newRow);
+    dataRows.push({});
     renderCsvView($('#csvViewSearch')?.value);
     requestSaveState();
 });
@@ -3210,7 +3231,6 @@ function getNextAvailableColumnName(existingHeaders = headers) {
 on('#addColBtn', 'click', () => {
     const newColName = getNextAvailableColumnName();
     headers.push(newColName);
-    dataRows.forEach(r => r[newColName] = '');
     renderCsvView($('#csvViewSearch')?.value);
     requestSaveState();
 });
@@ -3250,7 +3270,10 @@ window.addEventListener('paste', (e) => {
 
     rows.forEach(r => {
         const rowObj = {};
-        headers.forEach((h, i) => { rowObj[h] = r[i] ? r[i].trim() : ''; });
+        headers.forEach((h, i) => {
+            const value = r[i] ? r[i].trim() : '';
+            if (!isBlankCsvCellValue(value)) rowObj[h] = value;
+        });
         dataRows.push(rowObj);
     });
 

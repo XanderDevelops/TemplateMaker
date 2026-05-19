@@ -3877,7 +3877,9 @@ const canvasEditorStage = $('.canvas-editor-stage');
 const pageActionToolbar = $('#pageActionToolbar');
 const canvasPagesPanel = $('#canvasPagesPanel');
 const canvasPagesStrip = $('#canvasPagesStrip');
+const toggleCanvasPagesPanelBtn = $('#toggleCanvasPagesPanelBtn');
 const hideCanvasPagesPanelBtn = $('#hideCanvasPagesPanelBtn');
+const canvasPagesHeaderRow = canvasPagesPanel?.querySelector('.canvas-pages-header-row');
 // 9. Preserve layer stacking
 const canvas = new fabric.Canvas('c', { backgroundColor: 'transparent', selection: true, preserveObjectStacking: true });
 // High-quality rendering (avoid blurry output)
@@ -5309,8 +5311,13 @@ function syncGeneralPageSizeInputs() {
 }
 
 function applyCanvasPagesPanelState() {
-    if (!canvasPagesPanel) return;
+    if (!canvasPagesPanel || !toggleCanvasPagesPanelBtn) return;
     canvasPagesPanel.classList.toggle('collapsed', isCanvasPagesPanelCollapsed);
+    const stateLabel = toggleCanvasPagesPanelBtn.querySelector('.state');
+    if (stateLabel) stateLabel.textContent = isCanvasPagesPanelCollapsed ? 'Show' : '';
+    toggleCanvasPagesPanelBtn.setAttribute('aria-expanded', String(!isCanvasPagesPanelCollapsed));
+    toggleCanvasPagesPanelBtn.setAttribute('aria-disabled', 'false');
+    toggleCanvasPagesPanelBtn.setAttribute('title', isCanvasPagesPanelCollapsed ? 'Show pages panel' : 'Hide pages panel');
     if (hideCanvasPagesPanelBtn) {
         hideCanvasPagesPanelBtn.textContent = isCanvasPagesPanelCollapsed ? 'Show' : 'Hide';
         hideCanvasPagesPanelBtn.setAttribute('title', isCanvasPagesPanelCollapsed ? 'Show pages panel' : 'Hide pages panel');
@@ -6595,6 +6602,26 @@ function pageHasRenderableObjects(pageState) {
     return objects.some(o => o && o.oid !== 'pageRect' && !o.excludeFromExport && !o.isSnapLine);
 }
 
+function isBlankCsvCellValue(value) {
+    return value === null || value === undefined || String(value).trim() === '';
+}
+
+function compactCsvRows(rows = dataRows, headerList = headers) {
+    const allowedHeaders = new Set(Array.isArray(headerList) ? headerList : []);
+    return (Array.isArray(rows) ? rows : []).map((row) => {
+        const compactRow = {};
+        if (!row || typeof row !== 'object') return compactRow;
+
+        Object.entries(row).forEach(([key, value]) => {
+            if (allowedHeaders.size && !allowedHeaders.has(key)) return;
+            if (isBlankCsvCellValue(value)) return;
+            compactRow[key] = value;
+        });
+
+        return compactRow;
+    });
+}
+
 function buildTemplatePayload() {
     syncCurrentPageStateFromCanvas();
     if (!documentPages.length) {
@@ -6617,7 +6644,7 @@ function buildTemplatePayload() {
         bindings: activePage?.bindings || [],
         pages: clonedPages,
         currentPageIndex,
-        data: { headers, rows: dataRows, identifierColumn: identifierColumn || '' }
+        data: { headers, rows: compactCsvRows(dataRows, headers), identifierColumn: identifierColumn || '' }
     };
 }
 
@@ -6988,7 +7015,9 @@ async function handleCsvCellPaste(e) {
             const targetColIndex = startColIndex + cOffset;
             if (targetColIndex >= headers.length) return;
             const colKey = headers[targetColIndex];
-            dataRows[targetRowIndex][colKey] = value.trim();
+            const trimmedValue = value.trim();
+            if (isBlankCsvCellValue(trimmedValue)) delete dataRows[targetRowIndex][colKey];
+            else dataRows[targetRowIndex][colKey] = trimmedValue;
         });
     });
 
@@ -6998,7 +7027,8 @@ async function handleCsvCellPaste(e) {
 
 window.updateCsvCell = (rowIndex, colKey, newVal) => {
     if (dataRows[rowIndex]) {
-        dataRows[rowIndex][colKey] = newVal;
+        if (isBlankCsvCellValue(newVal)) delete dataRows[rowIndex][colKey];
+        else dataRows[rowIndex][colKey] = newVal;
         requestSaveState();
     }
 };
@@ -7009,7 +7039,7 @@ window.updateHeader = (index, newVal) => {
     newVal = newVal.trim();
     headers[index] = newVal;
     dataRows.forEach(row => {
-        row[newVal] = row[oldVal];
+        if (!isBlankCsvCellValue(row[oldVal])) row[newVal] = row[oldVal];
         delete row[oldVal];
     });
     bindings.forEach((b) => { if (b.column === oldVal) b.column = newVal; });
@@ -7040,19 +7070,28 @@ window.deleteColumn = (index) => {
 
 on('#addRowBtn', 'click', () => {
     if (!headers.length) headers = ['Column 1', 'Column 2', 'Column 3'];
-    const newRow = {};
-    headers.forEach(h => newRow[h] = '');
-    dataRows.push(newRow);
+    dataRows.push({});
     renderCsvView($('#csvViewSearch')?.value);
     requestSaveState();
 });
 
+function getNextAvailableColumnName(existingHeaders = headers) {
+    const usedNumbers = new Set(
+        (Array.isArray(existingHeaders) ? existingHeaders : [])
+            .map((header) => {
+                const match = /^column\s+(\d+)$/i.exec(String(header || '').trim());
+                return match ? Number(match[1]) : null;
+            })
+            .filter((value) => Number.isInteger(value) && value > 0)
+    );
+    let nextNumber = 1;
+    while (usedNumbers.has(nextNumber)) nextNumber += 1;
+    return `Column ${nextNumber}`;
+}
+
 on('#addColBtn', 'click', () => {
-    const newColName = prompt('Enter new column name:', `Column ${headers.length + 1}`);
-    if (!newColName) return;
-    if (headers.includes(newColName)) { alert('Column already exists.'); return; }
+    const newColName = getNextAvailableColumnName();
     headers.push(newColName);
-    dataRows.forEach(r => r[newColName] = '');
     renderCsvView($('#csvViewSearch')?.value);
     requestSaveState();
 });
@@ -7092,7 +7131,10 @@ window.addEventListener('paste', (e) => {
 
     rows.forEach(r => {
         const rowObj = {};
-        headers.forEach((h, i) => { rowObj[h] = r[i] ? r[i].trim() : ''; });
+        headers.forEach((h, i) => {
+            const value = r[i] ? r[i].trim() : '';
+            if (!isBlankCsvCellValue(value)) rowObj[h] = value;
+        });
         dataRows.push(rowObj);
     });
 
@@ -7190,7 +7232,7 @@ async function initializeEditor() {
             $('#titleInput').value = template.title || template.page?.title || 'Untitled_Template';
             if (template.data) {
                 headers = template.data.headers || [];
-                dataRows = template.data.rows || [];
+                dataRows = compactCsvRows(template.data.rows || [], headers);
             }
             await setDocumentPagesFromTemplate(template, { fitView: true });
             historyStack = [];
@@ -7277,7 +7319,7 @@ async function loadTemplateFromDB(templateId, options = {}) {
         const template = data.template_data;
         if (template.data) {
             headers = template.data.headers || [];
-            dataRows = template.data.rows || [];
+            dataRows = compactCsvRows(template.data.rows || [], headers);
             identifierColumn = template.data.identifierColumn || '';
             refreshIdentifierDropdown();
         }
@@ -7406,7 +7448,7 @@ function restoreFullState(state, callback) {
         return;
     }
     headers = [...(state.data?.headers || [])];
-    dataRows = JSON.parse(JSON.stringify(state.data?.rows || []));
+    dataRows = compactCsvRows(state.data?.rows || [], headers);
     identifierColumn = state.data?.identifierColumn || '';
     if (state.title !== undefined) $('#titleInput').value = state.title;
 
@@ -7455,7 +7497,7 @@ const requestSaveState = debounce(() => {
         canvas: deepClone(activePage.canvas),
         data: {
             headers: [...headers],
-            rows: JSON.parse(JSON.stringify(dataRows)),
+            rows: compactCsvRows(dataRows, headers),
             identifierColumn: identifierColumn || ''
         },
         bindings: deepClone(activePage.bindings || Array.from(bindings.entries())),
@@ -7705,8 +7747,17 @@ function initializeCanvas() {
         isCanvasPagesPanelCollapsed = !isCanvasPagesPanelCollapsed;
         applyCanvasPagesPanelState();
     };
+    if (toggleCanvasPagesPanelBtn) {
+        toggleCanvasPagesPanelBtn.addEventListener('click', toggleCanvasPagesPanel);
+    }
     if (hideCanvasPagesPanelBtn) {
         hideCanvasPagesPanelBtn.addEventListener('click', toggleCanvasPagesPanel);
+    }
+    if (canvasPagesHeaderRow) {
+        canvasPagesHeaderRow.addEventListener('click', (event) => {
+            if (event.target instanceof Element && event.target.closest('button')) return;
+            toggleCanvasPagesPanel(event);
+        });
     }
 
     const OBJECT_CLICK_DRAG_DEADZONE_PX = 4;
@@ -8272,7 +8323,7 @@ function cacheLocalDataState() {
     try {
         if (headers.length > 0) {
             localStorage.setItem('cachedHeaders', JSON.stringify(headers));
-            localStorage.setItem('cachedDataRows', JSON.stringify(dataRows));
+            localStorage.setItem('cachedDataRows', JSON.stringify(compactCsvRows(dataRows, headers)));
             if (identifierColumn) localStorage.setItem('cachedIdentifierColumn', identifierColumn);
             else localStorage.removeItem('cachedIdentifierColumn');
         } else {
@@ -8294,7 +8345,7 @@ function processFileData(arrayBuffer, fileName, opts = {}) {
         if (!json.length) { showNotification('No data found in the sheet.'); return; }
         // Ensure headers are extracted from the first row keys
         headers = Object.keys(json[0]);
-        dataRows = json; // Keep the full array of objects
+        dataRows = compactCsvRows(json, headers);
         console.log('Processed Data:', { headers, rowCount: dataRows.length, sample: dataRows[0] });
         $('#fileName').textContent = fileName;
         $('#unloadDataBtn').style.display = 'inline';
@@ -8352,7 +8403,7 @@ async function loadCachedData() {
     if (cachedHeaders && cachedRows) {
         try {
             headers = JSON.parse(cachedHeaders);
-            dataRows = JSON.parse(cachedRows);
+            dataRows = compactCsvRows(JSON.parse(cachedRows), headers);
             identifierColumn = cachedIdCol || '';
             $('#fileName').textContent = fileName || 'Restored Data';
             $('#unloadDataBtn').style.display = 'inline';
@@ -13079,6 +13130,7 @@ window.addEventListener('keyup', e => {
             ]);
             const AI_STRICT_ALLOWED_TEXT_ALIGNS = new Set(['left', 'center', 'right', 'justify']);
             const AI_MODEL_NAME = 'gemini-2.5-flash';
+            const STATIC_GOOGLE_AI_API_KEY = 'AIzaSyDhC0C59ViLC6bnzLZoMqAmXo_ozIYkTVI';
             const AI_MODEL_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${AI_MODEL_NAME}:generateContent`;
             const AI_MODEL_STREAM_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${AI_MODEL_NAME}:streamGenerateContent?alt=sse`;
             const AI_CREATIVE_REQUEST_TIMEOUT_MS = 90000;
@@ -13100,8 +13152,7 @@ window.addEventListener('keyup', e => {
             let aiConversation = [];
             let aiAttachment = null;
 
-            const savedApiKey = localStorage.getItem('googleAiApiKey');
-            if (savedApiKey) aiApiKeyInput.value = savedApiKey;
+            aiApiKeyInput.value = STATIC_GOOGLE_AI_API_KEY;
 
             function setAiBusy(isBusy) {
                 aiSendBtn.disabled = isBusy;
@@ -14724,6 +14775,24 @@ ${rawResponse}
                 };
             }
 
+            function buildAiImportedDataContext() {
+                const rawHeaders = Array.isArray(headers)
+                    ? headers.map((header) => clampStringForAi(header, 90)).filter(Boolean)
+                    : [];
+                if (!rawHeaders.length) return 'Imported data columns: none.';
+                const visibleHeaders = rawHeaders.slice(0, 36);
+                const sampleRows = compactDataRowsForAi(dataRows, visibleHeaders, {
+                    maxRows: 2,
+                    maxCols: Math.max(1, Math.min(12, visibleHeaders.length)),
+                    maxCellChars: 48
+                });
+                return [
+                    `Imported data columns (${rawHeaders.length}): ${visibleHeaders.join(', ')}${rawHeaders.length > visibleHeaders.length ? ', ...' : ''}`,
+                    `Sample data rows: ${sampleRows.length ? JSON.stringify(sampleRows) : '[]'}`,
+                    'If the user asks for a template that uses table fields, use these columns to shape the invoice layout and use the real field names in visible placeholder text where helpful.'
+                ].join('\n');
+            }
+
             function buildCreativeFabricPrompt(userPrompt, { pageWidth, pageHeight } = {}) {
                 const width = parsePositiveInt(pageWidth, DEFAULT_PAGE_WIDTH);
                 const height = parsePositiveInt(pageHeight, DEFAULT_PAGE_HEIGHT);
@@ -14759,6 +14828,9 @@ Rules:
 - Do not use clipPath, transformMatrix, filters, scripts, or custom executable fields.
 - Use professional spacing, hierarchy, alignment, and contrast.
 ${buildGoogleFontsHint()}
+
+Imported data context:
+${buildAiImportedDataContext()}
 
 User request:
 ${userPrompt || '(Attachment-only request)'}
@@ -16892,18 +16964,12 @@ ${rawResponse}
             }
 
             async function handleAiSend() {
-                const apiKey = aiApiKeyInput.value.trim();
+                const apiKey = STATIC_GOOGLE_AI_API_KEY;
                 const prompt = aiPromptInput.value.trim();
-                if (!apiKey) {
-                    alert('Please enter your Google AI Studio API key.');
-                    return;
-                }
                 if (!prompt && !aiAttachment) {
                     alert('Please enter a message or attach a file.');
                     return;
                 }
-
-                localStorage.setItem('googleAiApiKey', apiKey);
 
                 const userLine = prompt || '(Attachment only)';
                 appendAiChatMessage('user', userLine);
@@ -17306,9 +17372,9 @@ ${rawResponse}
                 element: '#aiAssistantPanel'
             },
             {
-                title: "AI Setup",
-                content: `You will need a <a href="https://aistudio.google.com/apikey" target="_blank">Google AI Studio API key</a>.</p><ul><li>Login to your Google Account.</li><li>Create an API key.</li><li>Paste it in the AI panel.</li></ul>`,
-                element: '#aiApiKeyPanel'
+                title: "AI Access",
+                content: `<p>Built-in AI access is already enabled for this tool.</p><p>Open the copilot and start prompting right away. No API key is required.</p>`,
+                element: '#aiAccessNote'
             },
             {
                 title: "AI Prompting",
@@ -17534,7 +17600,7 @@ ${rawResponse}
                         if (json.page?.title) $('#titleInput').value = json.page.title;
                         if (json.data) {
                             headers = json.data.headers || [];
-                            dataRows = json.data.rows || [];
+                            dataRows = compactCsvRows(json.data.rows || [], headers);
                         }
                         await setDocumentPagesFromTemplate(json, { fitView: true, selectedIndex: json.currentPageIndex });
                         bindings = new Map(documentPages[currentPageIndex]?.bindings || json.bindings || []);
