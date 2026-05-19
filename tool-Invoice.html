@@ -60,7 +60,7 @@
     <!-- jsPDF -->
     <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
-    <link rel="stylesheet" href="tools/tool-Invoice.css?v=20260409f" />
+    <link rel="stylesheet" href="tools/tool-Invoice.css?v=20260519a" />
     <!-- Vercel Web Analytics -->
     <script defer src="/_vercel/insights/script.js"></script>
 </head>
@@ -284,29 +284,24 @@
                         <div class="left-panel-bottom">
                             <div id="aiAssistantPanel" class="ai-chat-panel">
                                 <div class="ai-chat-header">
-                                    <h4>AI Copilot</h4>
-                                    <button id="aiResetChatBtn" class="btn ghost" type="button">Reset Chat</button>
+                                    <h4>Copilot</h4>
+                                    <button id="aiResetChatBtn" class="btn ghost" type="button" title="Reset chat">Reset</button>
                                 </div>
 
-                                <div id="aiAccessNote" class="ai-access-note" aria-live="polite">
-                                    <strong>AI access is built in.</strong>
-                                    <p class="muted">No API key is required for the invoice copilot.</p>
-                                    <input type="hidden" id="aiApiKeyPanel" value="" />
-                                </div>
+                                <input type="hidden" id="aiApiKeyPanel" value="" />
 
                                 <div id="aiChatLog" class="ai-chat-log">
                                     <div class="ai-chat-empty muted">
-                                        Ask for layout ideas, canvas changes, dimensions, icons, and iterative edits.
+                                        Ask for layout changes, invoice sections, styling, or data-linked fields.
                                     </div>
                                 </div>
 
                                 <div id="aiAttachmentMeta" class="ai-attachment-meta muted"></div>
 
-                                <div class="stack" style="gap:8px;">
-                                    <label for="aiChatPrompt">Message</label>
+                                <div class="ai-chat-composer">
                                     <div class="ai-prompt-wrap">
-                                        <textarea id="aiChatPrompt" rows="4"
-                                            placeholder="Example: create 3 canvases, set each to 1080x1350, and design a clean inbox UI."></textarea>
+                                        <textarea id="aiChatPrompt" rows="3"
+                                            placeholder="Ask the copilot to edit this invoice..."></textarea>
                                         <div class="ai-prompt-tools">
                                             <label for="aiChatFile" class="btn ghost icon-only ai-attach-btn"
                                                 title="Attach file" aria-label="Attach file">
@@ -317,14 +312,14 @@
                                                 </svg>
                                             </label>
                                             <button id="aiClearFileBtn" class="btn ghost ai-clear-inline"
-                                                type="button">Clear</button>
+                                                type="button">Remove</button>
                                         </div>
                                     </div>
                                     <input id="aiChatFile" type="file" accept="image/*,.txt,.md,.csv,.json,.svg,.pdf"
                                         style="display:none;" />
                                 </div>
 
-                                <div class="row" style="justify-content:flex-end;">
+                                <div class="ai-chat-actions">
                                     <button id="aiChatSendBtn" class="btn primary" type="button">
                                         <span id="aiChatSendText">Send</span>
                                         <span id="aiChatSpinner"
@@ -747,7 +742,7 @@
 
     <script type="module" src="assets/js/supabase-client.js"></script>
     <script type="module" src="assets/js/auth.js"></script>
-    <script type="module" src="tools/tool-Invoice.js?v=20260409g"></script>
+    <script type="module" src="tools/tool-Invoice.js?v=20260519a"></script>
 
     <!-- Grouped Data By Modal -->
     <div id="identifierColumnModal" class="modal-backdrop" style="z-index: 10001;">

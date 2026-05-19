@@ -229,17 +229,12 @@
             },
             {
                 title: "AI Copilot",
-                content: `<p>The assistant now lives in the lower half of the left panel.</p><p>Use it for iterative edits instead of one-shot generation.</p>`,
+                content: `<p>The assistant lives in the lower half of the left panel.</p><p>Use it for small, iterative invoice edits.</p>`,
                 element: '#aiAssistantPanel'
             },
             {
-                title: "AI Access",
-                content: `<p>Built-in AI access is already enabled for this tool.</p><p>Open the copilot and start prompting right away. No API key is required.</p>`,
-                element: '#aiAccessNote'
-            },
-            {
                 title: "AI Prompting",
-                content: `Now enter your request in the chat box and press <b>Send</b>.</p><p><b>Tips:</b></p><ul><li>Ask in small iterative steps.</li><li>You can attach files and keep refining.</li></ul>`,
+                content: `<p>Enter your request in the chat box and press <b>Send</b>.</p><p><b>Tips:</b></p><ul><li>Ask in small iterative steps.</li><li>You can attach files and keep refining.</li></ul>`,
                 element: '#aiChatPrompt'
             },
             {

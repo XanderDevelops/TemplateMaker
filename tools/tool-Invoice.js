@@ -14313,9 +14313,7 @@ window.addEventListener('keyup', e => {
             ]);
             const AI_STRICT_ALLOWED_TEXT_ALIGNS = new Set(['left', 'center', 'right', 'justify']);
             const AI_MODEL_NAME = 'gemini-2.5-flash';
-            const STATIC_GOOGLE_AI_API_KEY = 'AIzaSyDhC0C59ViLC6bnzLZoMqAmXo_ozIYkTVI';
-            const AI_MODEL_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${AI_MODEL_NAME}:generateContent`;
-            const AI_MODEL_STREAM_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${AI_MODEL_NAME}:streamGenerateContent?alt=sse`;
+            const AI_PROXY_ENDPOINT = '/api/ai';
             const AI_CREATIVE_REQUEST_TIMEOUT_MS = 90000;
             const AI_LIVE_RENDER_DELAY_MS = 28;
             const AI_JSON_RESPONSE_SCHEMA = {
@@ -14334,8 +14332,6 @@ window.addEventListener('keyup', e => {
             let aiAutoApplyEnabled = true;
             let aiConversation = [];
             let aiAttachment = null;
-
-            aiApiKeyInput.value = STATIC_GOOGLE_AI_API_KEY;
 
             function setAiBusy(isBusy) {
                 aiSendBtn.disabled = isBusy;
@@ -14406,7 +14402,7 @@ window.addEventListener('keyup', e => {
             function resetAiChat() {
                 aiConversation = [];
                 aiAutoApplyEnabled = true;
-                aiChatLog.innerHTML = '<div class="ai-chat-empty muted">Ask for layout ideas, canvas changes, dimensions, icons, and iterative edits.</div>';
+                aiChatLog.innerHTML = '<div class="ai-chat-empty muted">Ask for layout changes, styling, sections, or data-linked fields.</div>';
                 clearAiAttachment();
             }
 
@@ -15849,13 +15845,15 @@ ${userPrompt || '(Attachment-only request)'}
                         onProgress(enforceJson ? 'Sending request' : 'Retrying request');
                     }
 
-                    const response = await fetch(AI_MODEL_ENDPOINT, {
+                    const response = await fetch(AI_PROXY_ENDPOINT, {
                         method: 'POST',
                         headers: {
-                            'Content-Type': 'application/json',
-                            'X-goog-api-key': apiKey
+                            'Content-Type': 'application/json'
                         },
-                        body: JSON.stringify(payload),
+                        body: JSON.stringify({
+                            model: AI_MODEL_NAME,
+                            payload
+                        }),
                         signal: abortController.signal
                     });
 
@@ -16122,13 +16120,16 @@ Return format example:
                 let assembledText = '';
                 try {
                     if (typeof onProgress === 'function') onProgress('Opening live stream');
-                    const response = await fetch(AI_MODEL_STREAM_ENDPOINT, {
+                    const response = await fetch(AI_PROXY_ENDPOINT, {
                         method: 'POST',
                         headers: {
-                            'Content-Type': 'application/json',
-                            'X-goog-api-key': apiKey
+                            'Content-Type': 'application/json'
                         },
-                        body: JSON.stringify(payload),
+                        body: JSON.stringify({
+                            model: AI_MODEL_NAME,
+                            stream: true,
+                            payload
+                        }),
                         signal: abortController.signal
                     });
 
@@ -17937,7 +17938,7 @@ ${rawResponse}
             }
 
             async function handleAiSend() {
-                const apiKey = STATIC_GOOGLE_AI_API_KEY;
+                const apiKey = '';
                 const prompt = aiPromptInput.value.trim();
                 if (!prompt && !aiAttachment) {
                     alert('Please enter a message or attach a file.');
@@ -18346,17 +18347,12 @@ ${rawResponse}
             },
             {
                 title: "AI Copilot",
-                content: `<p>The assistant now lives in the lower half of the left panel.</p><p>Use it for iterative edits instead of one-shot generation.</p>`,
+                content: `<p>The assistant lives in the lower half of the left panel.</p><p>Use it for small, iterative invoice edits.</p>`,
                 element: '#aiAssistantPanel'
             },
             {
-                title: "AI Access",
-                content: `<p>Built-in AI access is already enabled for this tool.</p><p>Open the copilot and start prompting right away. No API key is required.</p>`,
-                element: '#aiAccessNote'
-            },
-            {
                 title: "AI Prompting",
-                content: `Now enter your request in the chat box and press <b>Send</b>.</p><p><b>Tips:</b></p><ul><li>Ask in small iterative steps.</li><li>You can attach files and keep refining.</li></ul>`,
+                content: `<p>Enter your request in the chat box and press <b>Send</b>.</p><p><b>Tips:</b></p><ul><li>Ask in small iterative steps.</li><li>You can attach files and keep refining.</li></ul>`,
                 element: '#aiChatPrompt'
             },
             {
