@@ -1155,20 +1155,39 @@ function cacheLocalDataState() {
     }
 }
 
+function getCappedWorksheetRows(sheet) {
+    const ref = sheet?.['!ref'];
+    if (!ref) return [];
+    const range = XLSX.utils.decode_range(ref);
+    range.e.c = Math.min(range.e.c, range.s.c + MAX_IMPORT_COLUMNS - 1);
+    range.e.r = Math.min(range.e.r, range.s.r + MAX_IMPORT_ROWS);
+    return XLSX.utils.sheet_to_json(sheet, {
+        header: 1,
+        defval: '',
+        raw: false,
+        blankrows: false,
+        range: XLSX.utils.encode_range(range)
+    });
+}
+
 function processFileData(arrayBuffer, fileName, opts = {}) {
     try {
         workbook = XLSX.read(arrayBuffer, { type: 'array' });
         const sheetName = workbook.SheetNames[0];
         worksheet = workbook.Sheets[sheetName];
-        const json = XLSX.utils.sheet_to_json(worksheet, { defval: '', raw: false });
-        if (!json.length) { showNotification('No data found in the sheet.'); return; }
-        // Ensure headers are extracted from the first row keys
-        headers = Object.keys(json[0]);
-        dataRows = compactCsvRows(json, headers);
+        const sheetRows = getCappedWorksheetRows(worksheet);
+        const importedData = normalizeImportedSheetRows(sheetRows);
+        if (!importedData.headers.length) { showNotification('No non-empty headers found in the sheet.'); return; }
+        headers = importedData.headers;
+        dataRows = importedData.rows;
         console.log('Processed Data:', { headers, rowCount: dataRows.length, sample: dataRows[0] });
         $('#fileName').textContent = fileName;
         $('#unloadDataBtn').style.display = 'inline';
-        showNotification(`Loaded "${sheetName}" with ${dataRows.length} rows.`);
+        const limitNotes = [];
+        if (importedData.truncatedColumns) limitNotes.push(`first ${MAX_IMPORT_COLUMNS} columns`);
+        if (importedData.truncatedRows) limitNotes.push(`first ${MAX_IMPORT_ROWS.toLocaleString()} rows`);
+        if (importedData.skippedEmptyHeaders) limitNotes.push(`${importedData.skippedEmptyHeaders} empty header column(s) skipped`);
+        showNotification(`Loaded "${sheetName}" with ${dataRows.length} rows.${limitNotes.length ? ` Using ${limitNotes.join(', ')}.` : ''}`);
         refreshInspector({ target: canvas.getActiveObject() });
         updateExportUI();
         updateFloatingLinker(canvas.getActiveObject());
