@@ -1,4 +1,4 @@
-﻿import { supabase as importedSupabase } from '../assets/js/supabase-client.js';
+import { supabase as importedSupabase } from '../assets/js/supabase-client.js';
 
 globalThis.__csvlink_supabase = importedSupabase;
 
@@ -3890,6 +3890,132 @@ const canvas = new fabric.Canvas('c', { backgroundColor: 'transparent', selectio
 // High-quality rendering (avoid blurry output)
 canvas.enableRetinaScaling = true;
 canvas.imageSmoothingEnabled = true;
+
+// Vector preview renderer
+// -----------------------
+// Fabric remains the compatibility/object-manipulation layer so existing templates,
+// bindings, exports, AI actions, undo/redo, inspector controls, and uploads keep working.
+// At zoomed-out levels, the editable bitmap canvas can become visually soft. This SVG
+// renderer mirrors the same Fabric object tree into a native vector layer beneath the
+// Fabric controls, giving sharp zoomed-out previews without changing app behavior.
+const CSVLINK_SVG_PREVIEW_ZOOM_THRESHOLD = 0.92;
+function installCsvlinkSvgPreviewRenderer(targetCanvas) {
+    if (!targetCanvas || targetCanvas.__csvlinkSvgPreviewRenderer) return targetCanvas?.__csvlinkSvgPreviewRenderer || null;
+
+    const wrapper = targetCanvas.wrapperEl || targetCanvas.getElement()?.parentElement;
+    if (!wrapper) return null;
+
+    let layer = wrapper.querySelector('.csvlink-svg-preview-layer');
+    if (!layer) {
+        layer = document.createElement('div');
+        layer.className = 'csvlink-svg-preview-layer';
+        layer.setAttribute('aria-hidden', 'true');
+        const upperCanvas = wrapper.querySelector('.upper-canvas');
+        wrapper.insertBefore(layer, upperCanvas || null);
+    }
+
+    const state = {
+        layer,
+        suspended: false,
+        raf: 0,
+        lastMarkup: '',
+        lastActive: false
+    };
+
+    const fmt = (value) => {
+        const n = Number(value);
+        if (!Number.isFinite(n)) return '0';
+        return Math.abs(n) < 0.0001 ? '0' : String(Math.round(n * 10000) / 10000);
+    };
+
+    const shouldRenderSvgPreview = () => {
+        const zoom = Number(targetCanvas.getZoom?.() || 1);
+        if (!Number.isFinite(zoom) || zoom >= CSVLINK_SVG_PREVIEW_ZOOM_THRESHOLD) return false;
+        if (state.suspended) return false;
+        if (typeof isRenderingCanvasGhosts !== 'undefined' && isRenderingCanvasGhosts) return false;
+        if (typeof isPageSwitching !== 'undefined' && isPageSwitching) return false;
+        const active = targetCanvas.getActiveObject?.();
+        if (active && active.isEditing) return false;
+        return true;
+    };
+
+    const setActive = (active) => {
+        wrapper.classList.toggle('csvlink-svg-preview-active', !!active);
+        state.lastActive = !!active;
+    };
+
+    const buildSvgMarkup = () => {
+        const width = Math.max(1, Math.round(targetCanvas.getWidth?.() || 1));
+        const height = Math.max(1, Math.round(targetCanvas.getHeight?.() || 1));
+        const vpt = targetCanvas.viewportTransform || [1, 0, 0, 1, 0, 0];
+        const matrix = `matrix(${fmt(vpt[0])} ${fmt(vpt[1])} ${fmt(vpt[2])} ${fmt(vpt[3])} ${fmt(vpt[4])} ${fmt(vpt[5])})`;
+        const objects = (targetCanvas.getObjects?.() || []).filter((obj) => obj && obj.visible !== false);
+        const body = objects.map((obj) => {
+            try {
+                if (typeof obj.toSVG === 'function') return obj.toSVG();
+            } catch (err) {
+                console.warn('CSVLink SVG preview skipped an object:', err);
+            }
+            return '';
+        }).join('');
+
+        return `<svg class="csvlink-svg-preview-root" xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none"><g transform="${matrix}">${body}</g></svg>`;
+    };
+
+    const refresh = () => {
+        state.raf = 0;
+        const active = shouldRenderSvgPreview();
+        setActive(active);
+        if (!active) return;
+
+        const markup = buildSvgMarkup();
+        if (markup !== state.lastMarkup) {
+            layer.innerHTML = markup;
+            state.lastMarkup = markup;
+        }
+    };
+
+    const schedule = () => {
+        if (state.raf) cancelAnimationFrame(state.raf);
+        state.raf = requestAnimationFrame(refresh);
+    };
+
+    const suspend = () => {
+        state.suspended = true;
+        setActive(false);
+    };
+
+    const resume = () => {
+        state.suspended = false;
+        schedule();
+    };
+
+    targetCanvas.on('after:render', schedule);
+    targetCanvas.on('mouse:down', suspend);
+    targetCanvas.on('mouse:up', resume);
+    targetCanvas.on('object:moving', suspend);
+    targetCanvas.on('object:scaling', suspend);
+    targetCanvas.on('object:rotating', suspend);
+    targetCanvas.on('object:skewing', suspend);
+    targetCanvas.on('object:modified', resume);
+    targetCanvas.on('text:editing:entered', suspend);
+    targetCanvas.on('text:editing:exited', resume);
+    window.addEventListener('resize', schedule, { passive: true });
+
+    targetCanvas.__csvlinkSvgPreviewRenderer = {
+        refresh: schedule,
+        suspend,
+        resume,
+        layer,
+        get active() { return state.lastActive; }
+    };
+
+    schedule();
+    return targetCanvas.__csvlinkSvgPreviewRenderer;
+}
+
+installCsvlinkSvgPreviewRenderer(canvas);
+
 
 function getDefaultSpawnPoint() {
     if (pageRect && typeof pageRect.getCenterPoint === 'function') {
