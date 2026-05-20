@@ -849,46 +849,6 @@
             position: relative;
         }
 
-
-        /* Crisp vector preview layer for zoomed-out editing.
-           It mirrors the Fabric object tree as native SVG beneath Fabric controls,
-           so existing interactions keep working while low-zoom rendering stays sharp. */
-        .canvas-container .csvlink-svg-preview-layer {
-            position: absolute;
-            inset: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 1;
-            pointer-events: none;
-            display: none;
-            overflow: hidden;
-            background: transparent;
-        }
-
-        .canvas-container .csvlink-svg-preview-root {
-            display: block;
-            width: 100%;
-            height: 100%;
-            shape-rendering: geometricPrecision;
-            text-rendering: geometricPrecision;
-        }
-
-        .canvas-container.csvlink-svg-preview-active .csvlink-svg-preview-layer {
-            display: block;
-        }
-
-        .canvas-container.csvlink-svg-preview-active .lower-canvas {
-            opacity: 0;
-        }
-
-        .canvas-container .lower-canvas {
-            z-index: 0;
-        }
-
-        .canvas-container .upper-canvas {
-            z-index: 2;
-        }
-
         .table-cell-editor {
             position: fixed;
             z-index: 12000;
