@@ -11,7 +11,7 @@
     </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Turn an Excel or CSV list into ready-to-send invoices in minutes. Upload your spreadsheet, map columns to your invoice template, and export personalized PDFs with CSVLink.">
+    <meta name="description" content="Turn Excel, CSV, or QuickBooks exports into ready-to-send invoices in minutes. Upload your spreadsheet, map columns to your invoice template, and export personalized PDFs with CSVLink.">
     <meta name="robots" content="index,follow,max-image-preview:large">
     <link rel="icon" href="assets/images/android-chrome-192x192.png" type="image/png" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -22,13 +22,13 @@
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="CSVLink">
     <meta property="og:title" content="CSVLink | Turn Excel Lists into Ready-to-Send Invoices">
-    <meta property="og:description" content="Upload Excel or CSV data, map your columns, and export polished personalized invoices as PDFs in one run.">
+    <meta property="og:description" content="Upload Excel, CSV, or QuickBooks export data, map your columns, and export polished personalized invoices as PDFs in one run.">
     <meta property="og:url" content="https://csvlink.app/">
     <meta property="og:image" content="https://csvlink.app/assets/images/invoice-hero-flow.png">
     <meta property="og:image:alt" content="Spreadsheet invoice data flowing into a finished invoice template.">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="CSVLink | Turn Excel Lists into Ready-to-Send Invoices">
-    <meta name="twitter:description" content="Upload Excel or CSV data, map your columns, and export polished personalized invoices as PDFs in one run.">
+    <meta name="twitter:description" content="Upload Excel, CSV, or QuickBooks export data, map your columns, and export polished personalized invoices as PDFs in one run.">
     <meta name="twitter:image" content="https://csvlink.app/assets/images/invoice-hero-flow.png">
     <script type="application/ld+json">
         {
@@ -959,6 +959,303 @@
             font-size: 14px;
         }
 
+
+        .quickbooks-section {
+            padding: 46px 0 58px;
+        }
+
+        .quickbooks-panel {
+            position: relative;
+            display: grid;
+            grid-template-columns: minmax(360px, 1.02fr) minmax(430px, 0.98fr);
+            align-items: center;
+            gap: 42px;
+            padding: 46px 48px;
+            border: 1px solid #dce9fb;
+            border-radius: 20px;
+            background:
+                radial-gradient(circle at 8% 8%, rgba(18, 102, 241, 0.10), transparent 30%),
+                radial-gradient(circle at 94% 14%, rgba(21, 199, 167, 0.13), transparent 31%),
+                linear-gradient(120deg, rgba(255,255,255,0.96) 0%, #f5fbff 100%);
+            box-shadow: 0 18px 44px rgba(36, 67, 111, 0.08);
+            overflow: hidden;
+        }
+
+        .quickbooks-panel::before {
+            content: '';
+            position: absolute;
+            inset: 18px;
+            border: 1px solid rgba(198, 220, 245, 0.45);
+            border-radius: 16px;
+            pointer-events: none;
+        }
+
+        .quickbooks-copy,
+        .quickbooks-visual {
+            position: relative;
+            z-index: 1;
+        }
+
+        .quickbooks-copy h2 {
+            margin: 22px 0 14px;
+            color: var(--navy);
+            font-size: clamp(34px, 4.4vw, 48px);
+            line-height: 1.08;
+            letter-spacing: -0.06em;
+            font-weight: 800;
+        }
+
+        .quickbooks-copy > p {
+            max-width: 570px;
+            margin: 0;
+            color: #5d6b85;
+            font-size: 16px;
+            line-height: 1.72;
+            font-weight: 600;
+        }
+
+        .qb-eyebrow {
+            background: #eef6ff;
+            border-color: #dcebff;
+        }
+
+        .qb-steps {
+            display: grid;
+            gap: 13px;
+            margin: 28px 0 30px;
+        }
+
+        .qb-step {
+            display: grid;
+            grid-template-columns: 34px 1fr;
+            gap: 13px;
+            align-items: start;
+            padding: 14px;
+            border: 1px solid #e1edf9;
+            border-radius: 13px;
+            background: rgba(255,255,255,0.78);
+            box-shadow: 0 8px 18px rgba(36, 67, 111, 0.04);
+        }
+
+        .qb-step-number {
+            width: 28px;
+            height: 28px;
+            display: grid;
+            place-items: center;
+            border-radius: 999px;
+            color: #fff;
+            background: linear-gradient(180deg, #2b7fff 0%, #1464ee 100%);
+            font-size: 13px;
+            font-weight: 900;
+            box-shadow: 0 8px 16px rgba(22, 102, 241, 0.20);
+        }
+
+        .qb-step strong {
+            display: block;
+            margin-bottom: 4px;
+            color: #111f3b;
+            font-size: 14px;
+            font-weight: 900;
+        }
+
+        .qb-step p {
+            margin: 0;
+            color: #65728a;
+            font-size: 13px;
+            line-height: 1.5;
+            font-weight: 600;
+        }
+
+        .quickbooks-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 14px;
+            align-items: center;
+        }
+
+        .quickbooks-note {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #67758d;
+            font-size: 13px;
+            font-weight: 800;
+        }
+
+        .quickbooks-visual {
+            min-height: 415px;
+        }
+
+        .qb-card {
+            position: absolute;
+            background: rgba(255,255,255,0.96);
+            border: 1px solid var(--border-strong);
+            border-radius: 15px;
+            box-shadow: var(--shadow-md);
+        }
+
+        .qb-export-card {
+            width: 340px;
+            top: 28px;
+            left: 0;
+            overflow: hidden;
+        }
+
+        .qb-card-top {
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+            border-bottom: 1px solid #e8eff8;
+            color: #17243c;
+            font-size: 13px;
+            font-weight: 900;
+        }
+
+        .qb-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            height: 27px;
+            padding: 0 10px;
+            border-radius: 999px;
+            color: #11876f;
+            background: #effffb;
+            border: 1px solid #cdf7ec;
+            font-size: 11px;
+            font-weight: 900;
+        }
+
+        .qb-list {
+            padding: 14px 16px 16px;
+            display: grid;
+            gap: 10px;
+        }
+
+        .qb-list-row {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 16px;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #edf2f8;
+            color: #31405a;
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+        .qb-list-row:last-child { border-bottom: 0; }
+        .qb-list-row span:last-child { color: #7d899d; font-size: 11px; }
+
+        .qb-arrow {
+            position: absolute;
+            left: 286px;
+            top: 184px;
+            width: 110px;
+            height: 88px;
+            border-top: 3px dashed #18acc3;
+            border-right: 3px dashed #18acc3;
+            border-radius: 0 24px 0 0;
+        }
+
+        .qb-arrow::after {
+            content: '';
+            position: absolute;
+            right: -10px;
+            bottom: -4px;
+            width: 12px;
+            height: 12px;
+            border-right: 3px solid #18acc3;
+            border-bottom: 3px solid #18acc3;
+            transform: rotate(45deg);
+        }
+
+        .qb-import-card {
+            width: 232px;
+            left: 148px;
+            top: 230px;
+            padding: 17px;
+            display: grid;
+            gap: 10px;
+        }
+
+        .qb-import-title {
+            color: #111f3b;
+            font-size: 13px;
+            font-weight: 900;
+            margin-bottom: 2px;
+        }
+
+        .qb-template-card {
+            width: 235px;
+            right: 0;
+            top: 74px;
+            padding: 17px;
+        }
+
+        .qb-template-preview {
+            height: 210px;
+            border: 1px solid #edf2f8;
+            border-radius: 9px;
+            background: #fff;
+            padding: 14px;
+            display: grid;
+            grid-template-rows: auto auto 1fr auto;
+            gap: 11px;
+        }
+
+        .qb-template-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: #0f1e3b;
+            font-size: 10px;
+            font-weight: 900;
+        }
+
+        .qb-template-badge {
+            height: 24px;
+            padding: 0 10px;
+            border-radius: 5px;
+            display: inline-flex;
+            align-items: center;
+            color: #fff;
+            background: #176eff;
+            font-size: 9px;
+            letter-spacing: 0.04em;
+        }
+
+        .qb-template-lines,
+        .qb-template-body {
+            display: grid;
+            gap: 6px;
+        }
+
+        .qb-line {
+            height: 7px;
+            border-radius: 999px;
+            background: #edf2f8;
+        }
+        .qb-line.short { width: 58%; }
+        .qb-line.medium { width: 76%; }
+        .qb-line.total { height: 11px; width: 48%; justify-self: end; background: #dfe8f5; }
+
+        .qb-print-chip {
+            right: 22px;
+            bottom: 20px;
+            height: 42px;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 0 16px;
+            color: #11876f;
+            background: #effffb;
+            border-color: #cdf7ec;
+            font-size: 12px;
+            font-weight: 900;
+        }
+
         .benefits-grid {
             display: grid;
             grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -1197,6 +1494,11 @@
             .mapping-card { left: 75px; }
             .invoice-card { right: 12px; }
             .template-grid, .benefits-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .quickbooks-panel { grid-template-columns: 1fr; padding: 38px 30px; }
+            .quickbooks-copy { text-align: center; }
+            .quickbooks-copy > p { margin-left: auto; margin-right: auto; }
+            .quickbooks-actions { justify-content: center; }
+            .quickbooks-visual { width: min(100%, 520px); margin: 0 auto; }
             .steps-grid { gap: 24px; }
             .cta-panel { grid-template-columns: 1fr; text-align: center; }
             .cta-checks { justify-content: center; }
@@ -1218,6 +1520,16 @@
             .sheet-card, .mapping-card, .invoice-card, .export-chip { position: relative; top: auto; left: auto; right: auto; width: 100%; margin: 14px 0; }
             .dash-down, .dash-to-invoice { display: none; }
             .steps-grid, .template-grid, .benefits-grid, .pricing-grid, .resources-grid { grid-template-columns: 1fr; }
+            .quickbooks-section { padding: 30px 0 42px; }
+            .quickbooks-panel { padding: 28px 18px; border-radius: 16px; }
+            .quickbooks-panel::before { display: none; }
+            .quickbooks-copy h2 { font-size: 30px; }
+            .quickbooks-copy > p { font-size: 15px; }
+            .quickbooks-actions .btn { width: 100%; }
+            .quickbooks-note { width: 100%; justify-content: center; text-align: center; }
+            .quickbooks-visual { min-height: auto; display: grid; gap: 14px; }
+            .qb-card, .qb-export-card, .qb-import-card, .qb-template-card, .qb-print-chip { position: relative; top: auto; left: auto; right: auto; bottom: auto; width: 100%; }
+            .qb-arrow { display: none; }
             .steps-grid::before { display: none; }
             .benefit { grid-template-columns: 54px 1fr; }
             .benefit-icon { width: 54px; height: 54px; font-size: 24px; }
@@ -1354,6 +1666,64 @@
             </div>
         </section>
 
+        <section class="quickbooks-section animated-section" id="quickbooks-invoices">
+            <div class="quickbooks-panel">
+                <div class="quickbooks-copy">
+                    <div class="eyebrow qb-eyebrow"><span class="bolt">↯</span> QuickBooks to custom invoice PDFs</div>
+                    <h2>Print QuickBooks invoices in your own custom template.</h2>
+                    <p>Export the invoice data you need from QuickBooks—usually as an Excel file, or CSV when that is the file you have—then import it into CSVLink. Map the columns to your branded invoice template once, and generate a clean PDF for every invoice.</p>
+                    <div class="qb-steps" aria-label="How to print QuickBooks invoices with CSVLink">
+                        <div class="qb-step">
+                            <span class="qb-step-number">1</span>
+                            <span><strong>Download your QuickBooks data</strong><p>Run an invoice list, sales, or customer report in QuickBooks and export the data to Excel. Save the file somewhere easy to find.</p></span>
+                        </div>
+                        <div class="qb-step">
+                            <span class="qb-step-number">2</span>
+                            <span><strong>Import the spreadsheet</strong><p>Open CSVLink, upload that Excel or CSV file, and match columns like client, invoice number, due date, line item, and total.</p></span>
+                        </div>
+                        <div class="qb-step">
+                            <span class="qb-step-number">3</span>
+                            <span><strong>Print your custom invoices</strong><p>Use your own layout, logo, colors, and wording. Export the finished invoices as printable PDFs in a ZIP or one merged file.</p></span>
+                        </div>
+                    </div>
+                    <div class="quickbooks-actions">
+                        <a href="/tool" class="btn btn-primary">
+                            <svg class="button-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 16V4m0 0 4 4m-4-4-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                            Import QuickBooks data
+                        </a>
+                        <span class="quickbooks-note"><span class="check-dot">✓</span> No manual copy-paste</span>
+                    </div>
+                </div>
+
+                <div class="quickbooks-visual" aria-hidden="true">
+                    <div class="qb-card qb-export-card">
+                        <div class="qb-card-top"><span>QuickBooks export</span><span class="qb-chip">Excel / CSV</span></div>
+                        <div class="qb-list">
+                            <div class="qb-list-row"><span>Invoice List</span><span>INV-2048</span></div>
+                            <div class="qb-list-row"><span>Customer</span><span>Amanda Stone</span></div>
+                            <div class="qb-list-row"><span>Balance Due</span><span>$2,450.00</span></div>
+                            <div class="qb-list-row"><span>Due Date</span><span>Jun 14, 2026</span></div>
+                        </div>
+                    </div>
+                    <div class="qb-arrow"></div>
+                    <div class="qb-card qb-import-card">
+                        <div class="qb-import-title">Map to template</div>
+                        <div class="map-row"><span class="map-pill"><span class="check-dot">✓</span> Customer</span><span class="map-arrow">→</span><span class="map-pill output">Bill to</span></div>
+                        <div class="map-row"><span class="map-pill"><span class="check-dot">✓</span> Total</span><span class="map-arrow">→</span><span class="map-pill output">Amount</span></div>
+                    </div>
+                    <div class="qb-card qb-template-card">
+                        <div class="qb-template-preview">
+                            <div class="qb-template-head"><span>YOUR LOGO</span><span class="qb-template-badge">INVOICE</span></div>
+                            <div class="qb-template-lines"><span class="qb-line medium"></span><span class="qb-line short"></span></div>
+                            <div class="qb-template-body"><span class="qb-line"></span><span class="qb-line"></span><span class="qb-line medium"></span><span class="qb-line short"></span></div>
+                            <span class="qb-line total"></span>
+                        </div>
+                    </div>
+                    <div class="qb-card qb-print-chip"><span class="check-dot">✓</span> Ready to print</div>
+                </div>
+            </div>
+        </section>
+
         <section class="section animated-section" id="templates">
             <div class="section-heading">
                 <h2>More than just invoices</h2>
@@ -1484,6 +1854,7 @@
                 <article class="resource-card"><h3><a href="/invoice-template-builder">Invoice Template Builder</a></h3><p>Build or import a reusable invoice layout before mapping spreadsheet fields.</p></article>
                 <article class="resource-card"><h3><a href="/itemized-invoice-generator">Itemized Invoice Generator</a></h3><p>Map grouped rows into repeated line items for detailed invoices.</p></article>
                 <article class="resource-card"><h3><a href="/blog/create-invoices-from-excel">Excel Invoice Guide</a></h3><p>A practical guide for cleaning data and exporting invoice PDFs.</p></article>
+                <article class="resource-card"><h3><a href="#quickbooks-invoices">QuickBooks invoice printing</a></h3><p>Export invoice data from QuickBooks, import the file, and print invoices in your custom template.</p></article>
             </div>
         </section>
     </main>
