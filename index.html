@@ -24,12 +24,12 @@
     <meta property="og:title" content="CSVLink | Turn Excel Lists into Ready-to-Send Invoices">
     <meta property="og:description" content="Upload Excel, CSV, or QuickBooks export data, map your columns, and export polished personalized invoices as PDFs in one run.">
     <meta property="og:url" content="https://csvlink.app/">
-    <meta property="og:image" content="https://csvlink.app/assets/images/invoice-hero-flow.png">
-    <meta property="og:image:alt" content="Spreadsheet invoice data flowing into a finished invoice template.">
+    <meta property="og:image" content="https://csvlink.app/assets/images/invoice-hero-flow-target.png">
+    <meta property="og:image:alt" content="Spreadsheet data mapped into a finished invoice template.">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="CSVLink | Turn Excel Lists into Ready-to-Send Invoices">
     <meta name="twitter:description" content="Upload Excel, CSV, or QuickBooks export data, map your columns, and export polished personalized invoices as PDFs in one run.">
-    <meta name="twitter:image" content="https://csvlink.app/assets/images/invoice-hero-flow.png">
+    <meta name="twitter:image" content="https://csvlink.app/assets/images/invoice-hero-flow-target.png">
     <script type="application/ld+json">
         {
             "@context": "https://schema.org",
@@ -133,9 +133,9 @@
         }
 
         .nav-inner {
-            width: min(100%, 1200px);
+            width: min(100%, 1440px);
             margin: 0 auto;
-            padding: 0 38px;
+            padding: 0 64px;
             display: grid;
             grid-template-columns: auto 1fr auto;
             align-items: center;
@@ -243,19 +243,19 @@
         .btn-secondary:hover { border-color: rgba(18, 102, 241, 0.38); box-shadow: 0 12px 22px rgba(36, 67, 111, 0.12); }
 
         .page-shell {
-            width: min(100%, 1200px);
+            width: min(100%, 1440px);
             margin: 0 auto;
-            padding: 0 38px 48px;
+            padding: 0 64px 56px;
         }
 
         .hero {
             position: relative;
             display: grid;
-            grid-template-columns: minmax(360px, 1.02fr) minmax(520px, 0.98fr);
+            grid-template-columns: minmax(500px, 0.9fr) minmax(620px, 1.1fr);
             align-items: center;
-            gap: 32px;
-            min-height: 660px;
-            padding: 64px 0 42px;
+            gap: 72px;
+            min-height: 690px;
+            padding: 68px 0 46px;
         }
 
         .hero-copy {
@@ -291,17 +291,17 @@
         }
 
         .hero h1 {
-            max-width: 608px;
+            max-width: 650px;
             margin: 30px 0 18px;
             color: var(--navy);
-            font-size: clamp(44px, 6.1vw, 68px);
+            font-size: clamp(48px, 5.25vw, 72px);
             line-height: 1.05;
             letter-spacing: -0.067em;
             font-weight: 800;
         }
 
         .hero p.lede {
-            max-width: 575px;
+            max-width: 610px;
             margin: 0;
             color: #5d6b85;
             font-size: 18px;
@@ -355,69 +355,36 @@
             box-shadow: 0 5px 10px rgba(19, 195, 134, 0.18);
         }
 
-        .hero-review {
-            display: grid;
-            grid-template-columns: auto 1fr;
-            gap: 25px;
-            align-items: center;
-            margin-top: 58px;
-        }
-
-        .avatars {
-            display: flex;
-            align-items: center;
-        }
-
-        .avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            border: 3px solid #fff;
-            margin-left: -8px;
-            display: inline-grid;
-            place-items: center;
-            color: #fff;
-            font-weight: 900;
-            font-size: 13px;
-            box-shadow: 0 8px 16px rgba(20, 48, 88, 0.14);
-        }
-        .avatar:first-child { margin-left: 0; background: linear-gradient(135deg,#264e74,#5da6aa); }
-        .avatar:nth-child(2) { background: linear-gradient(135deg,#1c7c53,#bd9b6f); }
-        .avatar:nth-child(3) { background: linear-gradient(135deg,#2f7a91,#efb2a8); }
-        .avatar:nth-child(4) { background: linear-gradient(135deg,#39364e,#cf8b73); }
-
-        .review-stars {
-            color: #ffc400;
-            letter-spacing: 2px;
-            font-size: 19px;
-            line-height: 1;
-            margin-bottom: 6px;
-        }
-
-        .review-text {
-            color: #4c5a72;
-            font-size: 14px;
-            line-height: 1.48;
-            font-weight: 700;
-        }
-
         .hero-visual {
             position: relative;
-            min-height: 515px;
+            min-height: 610px;
             z-index: 1;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 6px;
         }
 
         .hero-visual::before {
             content: '';
             position: absolute;
-            width: 540px;
-            height: 410px;
-            top: 72px;
-            right: 14px;
+            width: 690px;
+            height: 500px;
+            top: 58px;
+            right: -54px;
             background: radial-gradient(circle, rgba(61, 154, 255, 0.18), rgba(31, 122, 255, 0.04) 55%, transparent 72%);
-            filter: blur(12px);
+            filter: blur(14px);
             border-radius: 50%;
             z-index: -1;
+        }
+
+        .hero-flow-img {
+            width: min(720px, 104%);
+            max-width: none;
+            height: auto;
+            display: block;
+            transform: translateX(12px);
+            filter: drop-shadow(0 28px 52px rgba(38, 74, 127, 0.10));
         }
 
         .ui-card {
@@ -705,9 +672,9 @@
         .steps-grid {
             display: grid;
             grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 84px;
+            gap: 92px;
             position: relative;
-            width: min(100%, 990px);
+            width: min(100%, 1160px);
             margin: 0 auto;
         }
         .steps-grid::before {
@@ -884,7 +851,7 @@
             display: grid;
             grid-template-columns: repeat(4, minmax(0, 1fr));
             gap: 20px;
-            width: min(100%, 1000px);
+            width: min(100%, 1180px);
             margin: 0 auto;
         }
 
@@ -967,10 +934,10 @@
         .quickbooks-panel {
             position: relative;
             display: grid;
-            grid-template-columns: minmax(360px, 1.02fr) minmax(430px, 0.98fr);
+            grid-template-columns: minmax(460px, 1fr) minmax(520px, 1fr);
             align-items: center;
-            gap: 42px;
-            padding: 46px 48px;
+            gap: 64px;
+            padding: 52px 64px;
             border: 1px solid #dce9fb;
             border-radius: 20px;
             background:
@@ -1259,8 +1226,8 @@
         .benefits-grid {
             display: grid;
             grid-template-columns: repeat(4, minmax(0, 1fr));
-            gap: 38px;
-            width: min(100%, 1040px);
+            gap: 46px;
+            width: min(100%, 1220px);
             margin: 0 auto;
         }
         .benefit {
@@ -1285,13 +1252,13 @@
         .benefit-icon.orange { color: #ee8b33; background: #fff2e7; }
 
         .cta-panel {
-            margin: 36px auto 24px;
+            margin: 42px auto 28px;
             min-height: 246px;
             display: grid;
             grid-template-columns: minmax(280px, 1fr) auto minmax(280px, 0.9fr);
             align-items: center;
             gap: 36px;
-            padding: 36px 44px;
+            padding: 38px 54px;
             border: 1px solid #dce9fb;
             border-radius: 14px;
             background:
@@ -1484,12 +1451,12 @@
         @media (max-width: 1100px) {
             .nav-inner, .page-shell { padding-left: 24px; padding-right: 24px; }
             .primary-nav { gap: 18px; }
-            .hero { grid-template-columns: 1fr; min-height: auto; padding-top: 44px; }
+            .hero { grid-template-columns: 1fr; min-height: auto; padding-top: 44px; gap: 38px; }
             .hero-copy { text-align: center; margin: 0 auto; }
             .hero h1, .hero p.lede { margin-left: auto; margin-right: auto; }
             .hero-actions, .hero-points { justify-content: center; }
-            .hero-review { justify-content: center; text-align: left; }
-            .hero-visual { width: 620px; max-width: 100%; margin: 0 auto; min-height: 570px; }
+            .hero-visual { width: min(100%, 700px); max-width: 100%; margin: 0 auto; min-height: auto; justify-content: center; padding-right: 0; }
+            .hero-flow-img { width: min(100%, 680px); transform: none; }
             .sheet-card { left: 50px; }
             .mapping-card { left: 75px; }
             .invoice-card { right: 12px; }
@@ -1515,10 +1482,8 @@
             .page-shell { padding-left: 18px; padding-right: 18px; }
             .hero h1 { font-size: clamp(38px, 12vw, 54px); }
             .hero p.lede { font-size: 16px; }
-            .hero-review { grid-template-columns: 1fr; gap: 14px; justify-items: center; text-align: center; }
-            .hero-visual { min-height: 760px; width: min(100%, 380px); }
-            .sheet-card, .mapping-card, .invoice-card, .export-chip { position: relative; top: auto; left: auto; right: auto; width: 100%; margin: 14px 0; }
-            .dash-down, .dash-to-invoice { display: none; }
+            .hero-visual { min-height: auto; width: min(100%, 420px); }
+            .hero-flow-img { width: 100%; }
             .steps-grid, .template-grid, .benefits-grid, .pricing-grid, .resources-grid { grid-template-columns: 1fr; }
             .quickbooks-section { padding: 30px 0 42px; }
             .quickbooks-panel { padding: 28px 18px; border-radius: 16px; }
@@ -1584,51 +1549,13 @@
                     <li><span class="check-dot">✓</span> No signup required</li>
                     <li><span class="check-dot">✓</span> Export ZIP or merged PDF</li>
                 </ul>
-                <div class="hero-review" aria-label="Customer trust">
-                    <div class="avatars" aria-hidden="true"><span class="avatar">J</span><span class="avatar">M</span><span class="avatar">A</span><span class="avatar">S</span></div>
-                    <div>
-                        <div class="review-stars">★★★★★</div>
-                        <div class="review-text">Trusted by bookkeepers, admins<br>and small businesses</div>
-                    </div>
-                </div>
             </div>
 
             <div class="hero-visual" aria-hidden="true">
-                <div class="ui-card sheet-card">
-                    <div class="sheet-title"><span class="excel-icon">×</span> clients_invoices.xlsx</div>
-                    <table class="mini-table">
-                        <thead><tr><th>Client</th><th>Invoice #</th><th>Due date</th><th>Total</th></tr></thead>
-                        <tbody>
-                            <tr><td>Amanda Stone</td><td>INV-2048</td><td>Jun 14, 2026</td><td>$2,450.00</td></tr>
-                            <tr><td>Bright Labs</td><td>INV-2049</td><td>Jun 21, 2026</td><td>$1,120.00</td></tr>
-                            <tr><td>Core Systems</td><td>INV-2050</td><td>Jun 21, 2026</td><td>$3,300.00</td></tr>
-                        </tbody>
-                    </table>
-                    <div class="table-skeleton"><span class="skeleton-line"></span><span class="skeleton-line"></span></div>
-                </div>
-
-                <div class="hero-dash dash-down"></div>
-                <div class="ui-card mapping-card">
-                    <div class="map-row"><span class="map-pill"><span class="check-dot">✓</span> Client</span><span class="map-arrow">→</span><span class="map-pill output">Bill to</span></div>
-                    <div class="map-row"><span class="map-pill"><span class="check-dot">✓</span> Invoice #</span><span class="map-arrow">→</span><span class="map-pill output">Invoice number</span></div>
-                    <div class="map-row"><span class="map-pill"><span class="check-dot">✓</span> Due date</span><span class="map-arrow">→</span><span class="map-pill output">Due date</span></div>
-                    <div class="map-row"><span class="map-pill"><span class="check-dot">✓</span> Total</span><span class="map-arrow">→</span><span class="map-pill output">Total amount</span></div>
-                </div>
-                <div class="hero-dash dash-to-invoice"></div>
-
-                <div class="ui-card invoice-card">
-                    <div class="invoice-head"><span class="logo-circle">YOUR<br>LOGO</span><span class="invoice-badge">INVOICE</span></div>
-                    <div class="invoice-meta">Invoice #: INV-2048<br>Date: May 14, 2026</div>
-                    <div class="invoice-address"><strong>Bill to</strong>Amanda Stone<br>123 Market Street<br>San Francisco, CA 94103</div>
-                    <div class="invoice-lines">
-                        <div class="invoice-row header"><span>Description</span><span>Amount</span></div>
-                        <div class="invoice-row"><span>Design retainer</span><span>$1,800.00</span></div>
-                        <div class="invoice-row"><span>Implementation</span><span>$650.00</span></div>
-                    </div>
-                    <div class="invoice-total"><span>Total</span><span>$2,450.00</span></div>
-                    <div class="thanks">Thank you!</div>
-                </div>
-                <div class="ui-card export-chip"><span class="check-dot">✓</span> Export personalized PDFs</div>
+                <picture>
+                    <source srcset="assets/images/invoice-hero-flow-target.webp" type="image/webp">
+                    <img class="hero-flow-img" src="assets/images/invoice-hero-flow-target.png" alt="" loading="eager" decoding="async">
+                </picture>
             </div>
         </section>
 
