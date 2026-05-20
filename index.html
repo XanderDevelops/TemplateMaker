@@ -11,7 +11,7 @@
     </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Free Excel and CSV invoice generator for testing. No signups required to import data, link invoice fields, and bulk generate invoices using your own template.">
+    <meta name="description" content="Bulk generate invoices from Excel or CSV using your own invoice template. Link customer details, totals, due dates, and line items, then export every invoice in one run with CSVLink.">
     <meta name="robots" content="index,follow,max-image-preview:large">
     <link rel="icon" href="assets/images/android-chrome-192x192.png" type="image/png" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -21,13 +21,13 @@
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="CSVLink">
     <meta property="og:title" content="CSVLink Invoices | Bulk Generate Invoices from Excel or CSV">
-    <meta property="og:description" content="Free Excel and CSV invoice generator for testing. No signups required to import data, link invoice fields, and bulk generate invoices using your own template.">
+    <meta property="og:description" content="Bulk generate invoices from Excel or CSV using your own invoice template. Link customer details, totals, due dates, and line items, then export every invoice in one run with CSVLink.">
     <meta property="og:url" content="https://csvlink.app/">
     <meta property="og:image" content="https://csvlink.app/assets/images/invoice-hero-flow.png">
     <meta property="og:image:alt" content="Spreadsheet invoice data flowing into a finished invoice template.">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="CSVLink Invoices | Bulk Generate Invoices from Excel or CSV">
-    <meta name="twitter:description" content="Free Excel and CSV invoice generator for testing. No signups required to import data, link invoice fields, and bulk generate invoices using your own template.">
+    <meta name="twitter:description" content="Bulk generate invoices from Excel or CSV using your own invoice template. Link customer details, totals, due dates, and line items, then export every invoice in one run with CSVLink.">
     <meta name="twitter:image" content="https://csvlink.app/assets/images/invoice-hero-flow.png">
     <script type="application/ld+json">
         {
@@ -48,7 +48,7 @@
                     "@type": "WebPage",
                     "name": "CSVLink Invoices | Bulk Generate Invoices from Excel or CSV",
                     "url": "https://csvlink.app/",
-                    "description": "Free Excel and CSV invoice generator for testing. No signups required to import data, link invoice fields, and bulk generate invoices using your own template."
+                    "description": "Bulk generate invoices from Excel or CSV using your own invoice template. Link customer details, totals, due dates, and line items, then export every invoice in one run with CSVLink."
                 },
                 {
                     "@type": "SoftwareApplication",
@@ -56,7 +56,7 @@
                     "applicationCategory": "BusinessApplication",
                     "operatingSystem": "Web",
                     "url": "https://csvlink.app/",
-                    "description": "Create reusable invoice templates and generate invoice PDFs in bulk from spreadsheet data. Free to use for testing with no signup required."
+                    "description": "Create reusable invoice templates and generate invoice PDFs in bulk from spreadsheet data."
                 }
             ]
         }
@@ -211,11 +211,6 @@
             z-index: 1;
         }
 
-        .hero.is-dragging-file {
-            border-color: rgba(37, 99, 235, 0.7);
-            box-shadow: 0 22px 58px rgba(37, 99, 235, 0.22);
-        }
-
         /* Ensure hero content stays on top */
         .hero > * {
             position: relative;
@@ -237,6 +232,7 @@
             font-size: 1.05rem;
             color: #3b4b66;
             max-width: 66ch;
+            margin: 0 0 1rem;
             line-height: 1.75;
         }
 
@@ -258,223 +254,21 @@
             justify-content: flex-end;
         }
 
-        .mapping-showcase {
-            --arrow-y: 0px;
-            position: relative;
-            width: min(100%, 590px);
-            min-height: 440px;
-            filter: drop-shadow(0 28px 44px rgba(15, 23, 42, 0.14));
+        .hero-visual-frame {
+            margin-top: -70px;
+            margin-right: 20px;
+            padding: 0px;
+            max-width: 420px;
+            border-radius: 26px;
+     
+
         }
 
-        .sample-table,
-        .sample-document {
-            background: rgba(255, 255, 255, 0.92);
-            border: 1px solid rgba(148, 163, 184, 0.36);
-            box-shadow: 0 18px 44px rgba(15, 23, 42, 0.12);
-        }
-
-        .sample-table {
-            position: absolute;
-            top: -90px;
-            left: -45px;
-            z-index: 3;
-            width: min(320px, 56%);
-            border-radius: 18px;
-            overflow: hidden;
-        }
-
-        .sample-table-header {
-            display: grid;
-            grid-template-columns: 0.92fr 1fr;
-            gap: 0;
-            background: #0f172a;
-            color: #fff;
-            font-size: 0.72rem;
-            font-weight: 800;
-            letter-spacing: 0.02em;
-            text-transform: uppercase;
-        }
-
-        .sample-table-header span,
-        .sample-table-row button,
-        .sample-table-row input {
-            padding: 12px 14px;
-        }
-
-        .sample-table-row {
-            display: grid;
-            grid-template-columns: 0.92fr 1fr;
-            border-top: 1px solid #e2e8f0;
-            background: #fff;
-        }
-
-        .sample-table-row button {
-            border: 0;
-            border-right: 1px solid #e2e8f0;
-            background: #f8fafc;
-            color: #334155;
-            cursor: pointer;
-            font: inherit;
-            font-size: 0.84rem;
-            font-weight: 800;
-            text-align: left;
-            transition: background 0.18s ease, color 0.18s ease;
-        }
-
-        .sample-table-row input {
-            width: 100%;
-            min-width: 0;
-            border: 0;
-            color: #0f172a;
-            font: inherit;
-            font-size: 0.84rem;
-            font-weight: 700;
-            outline: none;
-            background: #fff;
-        }
-
-        .sample-table-row:hover button,
-        .sample-table-row.is-active button {
-            background: #dbeafe;
-            color: #1d4ed8;
-        }
-
-        .dynamic-arrow {
-            position: absolute;
-            top: 74px;
-            left: 160px;
-            z-index: 2;
-            width: 260px;
-            height: 175px;
-            transform: translateY(var(--arrow-y));
-            transition: transform 0.24s ease;
-            pointer-events: none;
-        }
-
-        .dynamic-arrow svg {
-            width: 100%;
-            height: 100%;
-            overflow: visible;
-        }
-
-        .dynamic-arrow .arrow-line {
-            fill: none;
-            stroke: url(#mappingArrowGradient);
-            stroke-width: 4;
-            stroke-linecap: round;
-            stroke-linejoin: round;
-            filter: drop-shadow(0 5px 10px rgba(37, 99, 235, 0.22));
-            stroke-dasharray: 12 10;
-            animation: arrow-flow 1.6s linear infinite;
-        }
-
-        .dynamic-arrow .arrow-head {
-            fill: #14b8a6;
-            filter: drop-shadow(0 5px 10px rgba(37, 99, 235, 0.22));
-        }
-
-        .sample-document {
-            position: relative;
-            z-index: 1;
-            width: min(360px, 68%);
-            min-height: 430px;
-            margin-left: auto;
-            padding: 34px 30px;
-            border-radius: 8px;
-            color: #0f172a;
-            background:
-                linear-gradient(#ffffff, #ffffff) padding-box,
-                linear-gradient(145deg, rgba(37, 99, 235, 0.22), rgba(20, 184, 166, 0.2)) border-box;
-        }
-
-        .sample-document::before {
-            content: '';
-            position: absolute;
-            inset: 14px;
-            border: 1px solid #e5e7eb;
-            border-radius: 6px;
-            pointer-events: none;
-        }
-
-        .doc-label {
+        .hero-visual img {
             display: block;
-            text-align: right;
-            color: #2563eb;
-            font-size: 0.72rem;
-            font-weight: 900;
-            letter-spacing: 0.12em;
-            text-transform: uppercase;
-        }
-
-        .doc-title {
-            margin: 8px 0 22px;
-            font-family: 'Space Grotesk', sans-serif;
-            font-size: 2rem;
-            letter-spacing: 0;
-            text-align: right;
-            text-transform: uppercase;
-        }
-
-        .doc-line {
-            display: flex;
-            justify-content: space-between;
-            gap: 16px;
-            margin: 9px 0;
-            color: #64748b;
-            font-size: 0.8rem;
-        }
-
-        .doc-line strong,
-        .doc-total strong {
-            color: #111827;
-            text-align: right;
-        }
-
-        .doc-items {
-            margin: 20px 0;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            overflow: hidden;
-        }
-
-        .doc-item {
-            display: grid;
-            grid-template-columns: 1fr auto;
-            gap: 10px;
-            padding: 10px 12px;
-            border-top: 1px solid #e2e8f0;
-            font-size: 0.78rem;
-        }
-
-        .doc-item:first-child {
-            border-top: 0;
-            background: #f8fafc;
-            color: #475569;
-            font-weight: 800;
-        }
-
-        .doc-total {
-            display: flex;
-            justify-content: space-between;
-            gap: 18px;
-            margin-left: auto;
-            max-width: 210px;
-            padding: 12px 0 0;
-            border-top: 2px solid #0f172a;
-            font-size: 1rem;
-            font-weight: 900;
-        }
-
-        .doc-target {
-            position: relative;
-            border-radius: 6px;
-            transition: background 0.18s ease, box-shadow 0.18s ease, color 0.18s ease;
-        }
-
-        .doc-target.is-active {
-            background: rgba(20, 184, 166, 0.14);
-            box-shadow: 0 0 0 5px rgba(20, 184, 166, 0.12);
-            color: #0f766e;
+            width: 100%;
+            height: auto;
+            border-radius: 18px;
         }
 
         .hero-actions {
@@ -521,25 +315,6 @@
             line-height: 1.45;
         }
 
-        .hero-import-note {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            margin-top: 2.25rem;
-            color: #51617d;
-            font-size: 0.95rem;
-            font-weight: 700;
-        }
-
-        .hero-import-note::before {
-            content: '';
-            width: 9px;
-            height: 9px;
-            border-radius: 999px;
-            background: #10b981;
-            box-shadow: 0 0 0 5px rgba(16, 185, 129, 0.12);
-        }
-
         .animated-section {
             opacity: 0;
             transform: translateY(30px);
@@ -554,11 +329,6 @@
         @keyframes rotate-background {
             from { transform: translate(-50%, -50%) rotate(0deg); }
             to { transform: translate(-50%, -50%) rotate(360deg); }
-        }
-
-        @keyframes arrow-flow {
-            from { stroke-dashoffset: 22; }
-            to { stroke-dashoffset: 0; }
         }
 
         .btn {
@@ -620,10 +390,6 @@
         }
         
         .feature-image img {
-            display: block;
-            width: 100%;
-            height: auto;
-            object-fit: contain;
             max-width: 560px;
             border-radius: 16px;
             border: 1px solid var(--border);
@@ -631,9 +397,8 @@
         }
 
         #first-feature {
-            flex-direction: column;
+            flex-wrap: wrap;
             align-items: flex-start;
-            gap: 1.4rem;
         }
 
         #first-feature .first-feature-heading {
@@ -645,21 +410,19 @@
         }
 
         #first-feature .feature-content {
-            width: 100%;
-            flex: none;
+            flex: 1 1 460px;
             min-width: 0;
         }
 
         #first-feature .feature-image {
-            width: 100%;
-            flex: none;
+            flex: 0 1 560px;
             display: flex;
             justify-content: center;
         }
 
         #first-feature .feature-image img {
             width: 100%;
-            max-width: 100%;
+            max-width: 560px;
         }
 
         /* Bulk Generation Specifics */
@@ -1120,35 +883,6 @@
                 justify-content: center;
             }
 
-            .mapping-showcase {
-                --arrow-y: 0px;
-                min-height: auto;
-                display: grid;
-                gap: 18px;
-            }
-
-            .sample-table,
-            .sample-document,
-            .dynamic-arrow {
-                position: relative;
-                inset: auto;
-                width: 100%;
-                margin: 0;
-                transform: none;
-            }
-
-            .sample-document {
-                min-height: 390px;
-            }
-
-            .dynamic-arrow {
-                height: 58px;
-            }
-
-            .dynamic-arrow svg {
-                transform: rotate(88deg) scale(0.75);
-            }
-
             .hero-flow,
             .use-cases-grid {
                 grid-template-columns: 1fr;
@@ -1283,63 +1017,6 @@
             background: var(--border);
         }
 
-        .global-drop-overlay {
-            position: fixed;
-            inset: 0;
-            z-index: 5000;
-            display: grid;
-            place-items: center;
-            padding: 32px;
-            background: rgba(255, 255, 255, 0.76);
-            backdrop-filter: blur(14px);
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.18s ease;
-        }
-
-        .global-drop-overlay::before {
-            content: '';
-            position: absolute;
-            inset: 34px;
-            border: 3px dashed rgba(37, 99, 235, 0.45);
-            border-radius: 28px;
-            background: rgba(255, 255, 255, 0.46);
-        }
-
-        .global-drop-message {
-            position: relative;
-            z-index: 1;
-            display: grid;
-            gap: 10px;
-            justify-items: center;
-            color: #0f172a;
-            text-align: center;
-        }
-
-        .global-drop-message strong {
-            font-family: 'Space Grotesk', sans-serif;
-            font-size: clamp(2rem, 5vw, 4.2rem);
-            line-height: 1;
-            letter-spacing: 0;
-        }
-
-        .global-drop-message span {
-            color: #475569;
-            font-size: 1rem;
-            font-weight: 800;
-        }
-
-        body.is-file-dragging nav,
-        body.is-file-dragging main,
-        body.is-file-dragging footer {
-            filter: blur(4px);
-        }
-
-        body.is-file-dragging .global-drop-overlay {
-            opacity: 1;
-            pointer-events: auto;
-        }
-
         footer {
             background-color: var(--panel);
             border-top: 1px solid var(--border);
@@ -1370,76 +1047,22 @@
         </div>
     </nav>
 
-    <div class="global-drop-overlay" aria-hidden="true">
-        <div class="global-drop-message">
-            <strong>Drop your file here</strong>
-            <span>Excel, CSV, or one-page PDF invoice template</span>
-        </div>
-    </div>
-
     <main class="container">
         <!-- (Your Hero, Features, and Template sections go here...) -->
         <section class="hero">
             <div class="hero-layout">
                 <div class="hero-copy">
                     <h1>Bulk generate invoices from your Excel or CSV using your own template.</h1>
-                    <!-- <p>Bring your branded invoice design, connect customer names, invoice numbers, dates, taxes, totals, and line items, then export a full invoice batch in minutes instead of editing each file by hand.</p> -->
+                    <p>Bring your branded invoice design, connect customer names, invoice numbers, dates, taxes, totals, and line items, then export a full invoice batch in minutes instead of editing each file by hand.</p>
                     <div class="hero-actions">
-                        <a href="/tool" class="btn" id="heroImportCta">Import your data</a>
+                        <a href="/tool" class="btn">Start Building</a>
                         <a href="#templates" class="btn ghost">See Invoice Templates</a>
                     </div>
-                    <p class="hero-import-note">Drag and drop Excel, CSV, or PDF anywhere to open the tool with it imported.</p>
-                    <p style="font-size: 0.95rem; color: #51617d; margin-top: 0.65rem; margin-bottom: 0;">Free to use. No signups required for testing.</p>
+                    <p style="font-size: 0.95rem; color: #51617d; margin-top: 1rem; margin-bottom: 0;">Free to use. No login required to start.</p>
                 </div>
                 <figure class="hero-visual">
-                    <div class="mapping-showcase" aria-label="Editable invoice data mapped into a document preview">
-                        <div class="sample-table">
-                            <div class="sample-table-header">
-                                <span>Header</span>
-                                <span>Value</span>
-                            </div>
-                            <div class="sample-table-row is-active" data-target="client">
-                                <button type="button">Client</button>
-                                <input value="Amanda Stone" aria-label="Client value">
-                            </div>
-                            <div class="sample-table-row" data-target="invoice">
-                                <button type="button">Invoice #</button>
-                                <input value="INV-2048" aria-label="Invoice number value">
-                            </div>
-                            <div class="sample-table-row" data-target="due">
-                                <button type="button">Due date</button>
-                                <input value="Jun 14, 2026" aria-label="Due date value">
-                            </div>
-                            <div class="sample-table-row" data-target="total">
-                                <button type="button">Total</button>
-                                <input value="$2,450.00" aria-label="Total value">
-                            </div>
-                        </div>
-                        <div class="dynamic-arrow" aria-hidden="true">
-                            <svg viewBox="0 0 260 175" focusable="false">
-                                <defs>
-                                    <linearGradient id="mappingArrowGradient" x1="0" y1="0" x2="1" y2="1">
-                                        <stop offset="0%" stop-color="#2563eb"></stop>
-                                        <stop offset="100%" stop-color="#14b8a6"></stop>
-                                    </linearGradient>
-                                </defs>
-                                <path class="arrow-line" d="M8 20 C88 20 72 78 142 78 C174 78 184 48 214 48"></path>
-                                <path class="arrow-head" d="M218 48 L200 38 L200 58 Z"></path>
-                            </svg>
-                        </div>
-                        <div class="sample-document">
-                            <div class="doc-label">Sample</div>
-                            <h2 class="doc-title">Invoice</h2>
-                            <div class="doc-line"><span>Bill to</span><strong class="doc-target is-active" data-doc-field="client">Amanda Stone</strong></div>
-                            <div class="doc-line"><span>Invoice #</span><strong class="doc-target" data-doc-field="invoice">INV-2048</strong></div>
-                            <div class="doc-line"><span>Due date</span><strong class="doc-target" data-doc-field="due">Jun 14, 2026</strong></div>
-                            <div class="doc-items">
-                                <div class="doc-item"><span>Description</span><span>Amount</span></div>
-                                <div class="doc-item"><span>Design retainer</span><span>$1,800.00</span></div>
-                                <div class="doc-item"><span>Implementation</span><span>$650.00</span></div>
-                            </div>
-                            <div class="doc-total"><span>Total</span><strong class="doc-target" data-doc-field="total">$2,450.00</strong></div>
-                        </div>
+                    <div class="hero-visual-frame">
+                        <img src="assets/images/invoice-hero-flow.webp" alt="An Excel invoice table at the top flowing down into a finished invoice below." width="848" height="1264" fetchpriority="high" decoding="async">
                     </div>
                 </figure>
             </div>
@@ -1465,7 +1088,7 @@
                 <h2>Built for invoice exports with totals, due dates, and line items</h2>
             </div>
             <div class="feature-content">
-                <!-- <p>CSVLink is made for the invoice spreadsheets teams already have: exports with invoice numbers, bill-to details, due dates, taxes, totals, and sometimes repeated rows for line items. Instead of squeezing that data into a generic mail-merge document, you map it into a real invoice layout you can reuse every billing cycle.</p> -->
+                <p>CSVLink is made for the invoice spreadsheets teams already have: exports with invoice numbers, bill-to details, due dates, taxes, totals, and sometimes repeated rows for line items. Instead of squeezing that data into a generic mail-merge document, you map it into a real invoice layout you can reuse every billing cycle.</p>
                 <ul class="bulk-steps">
                     <li><strong>Prepare your invoice data:</strong> Keep clear fields such as invoice number, client name, due date, subtotal, tax, and balance due.</li>
                     <li><strong>Choose the right data mode:</strong> Use one row per invoice or grouped rows when each invoice spans multiple line items.</li>
@@ -1619,7 +1242,7 @@
                         </ul>
                     </div>
                     <div class="card-footer">
-                        <a href="https://csvlink.lemonsqueezy.com/buy/3b3f16ca-17a6-4cc5-9a99-cf5abcbf6a1c" class="btn lemonsqueezy-button" data-plan="monthly-pro">Upgrade to Pro</a>
+                        <a href="https://csvlink.lemonsqueezy.com/buy/3b3f16ca-17a6-4cc5-9a99-cf5abcbf6a1c" class="btn lemonsqueezy-button">Upgrade to Pro</a>
                     </div>
                 </div>
                 <div class="pricing-card">
@@ -1636,7 +1259,7 @@
                         </ul>
                     </div>
                     <div class="card-footer">
-                         <a href="https://csvlink.lemonsqueezy.com/buy/3b3f16ca-17a6-4cc5-9a99-cf5abcbf6a1c" class="btn lemonsqueezy-button" data-plan="annual-pro">Upgrade to Pro (Annual)</a>
+                         <a href="https://csvlink.lemonsqueezy.com/buy/3b3f16ca-17a6-4cc5-9a99-cf5abcbf6a1c" class="btn lemonsqueezy-button">Upgrade to Pro (Annual)</a>
                     </div>
                 </div>
             </div>
@@ -1665,131 +1288,12 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script type="module" src="assets/js/supabase-client.js"></script>
     <script type="module" src="assets/js/auth.js"></script>
-    <script type="module" src="assets/js/subscription-checkout.js"></script>
 
     <script type="module">
         // 1. Import your configured Supabase client
         import { supabase } from './assets/js/supabase-client.js';
 
         document.addEventListener('DOMContentLoaded', async function() {
-            const hero = document.querySelector('.hero');
-            const mappingRows = document.querySelectorAll('.sample-table-row');
-            const docTargets = document.querySelectorAll('.doc-target');
-            const mappingShowcase = document.querySelector('.mapping-showcase');
-            const arrowLine = document.querySelector('.dynamic-arrow .arrow-line');
-            const arrowHead = document.querySelector('.dynamic-arrow .arrow-head');
-            const arrowOffsets = {
-                client: '20px',
-                invoice: '22px',
-                due: '28px',
-                total: '180px'
-            };
-            const arrowShapes = {
-                client: {
-                    line: 'M8 20 C88 20 72 78 142 78 C174 78 184 48 214 48',
-                    head: 'M218 48 L200 38 L200 58 Z'
-                },
-                invoice: {
-                    line: 'M8 20 C96 18 68 84 142 84 C178 84 194 68 250 68',
-                    head: 'M254 68 L236 58 L236 78 Z'
-                },
-                due: {
-                    line: 'M8 18 C92 18 70 92 142 92 C178 92 194 96 230 96',
-                    head: 'M234 96 L216 86 L216 106 Z'
-                },
-                total: {
-                    line: 'M4 -112 C10 -18 40 74 88 112 C126 142 164 148 224 136',
-                    head: 'M228 136 L210 126 L210 146 Z'
-                }
-            };
-            let fileDragDepth = 0;
-
-            const setActiveMapping = (field) => {
-                mappingRows.forEach((row) => row.classList.toggle('is-active', row.dataset.target === field));
-                docTargets.forEach((target) => target.classList.toggle('is-active', target.dataset.docField === field));
-                mappingShowcase?.style.setProperty('--arrow-y', arrowOffsets[field] || '0px');
-                if (arrowShapes[field]) {
-                    arrowLine?.setAttribute('d', arrowShapes[field].line);
-                    arrowHead?.setAttribute('d', arrowShapes[field].head);
-                }
-            };
-
-            mappingRows.forEach((row) => {
-                const field = row.dataset.target;
-                const input = row.querySelector('input');
-                const target = document.querySelector(`[data-doc-field="${field}"]`);
-                row.addEventListener('mouseenter', () => setActiveMapping(field));
-                row.addEventListener('focusin', () => setActiveMapping(field));
-                row.querySelector('button')?.addEventListener('click', () => {
-                    setActiveMapping(field);
-                    input?.focus();
-                });
-                input?.addEventListener('input', () => {
-                    if (target) target.textContent = input.value || ' ';
-                });
-            });
-            setActiveMapping('client');
-
-            const isImportableFile = (file) => file && /\.(csv|xlsx|xls|pdf)$/i.test(file.name);
-            const hasImportableDragItem = (dataTransfer) => {
-                const items = Array.from(dataTransfer?.items || []);
-                if (!items.length) return false;
-                return items.some((item) => item.kind === 'file');
-            };
-            const setGlobalDragging = (isDragging) => {
-                document.body.classList.toggle('is-file-dragging', Boolean(isDragging));
-            };
-            const clearGlobalDragging = () => {
-                fileDragDepth = 0;
-                setGlobalDragging(false);
-                hero?.classList.remove('is-dragging-file');
-            };
-
-            const importDroppedFile = async (file) => {
-                if (!isImportableFile(file)) return;
-                const reader = new FileReader();
-                reader.onload = () => {
-                    if (/\.pdf$/i.test(file.name)) {
-                        localStorage.setItem('pendingInvoicePdfTemplateName', file.name);
-                        localStorage.setItem('pendingInvoicePdfTemplateData', reader.result);
-                        window.location.href = '/tool?import=pdf';
-                    } else {
-                        localStorage.setItem('cachedFileName', file.name);
-                        localStorage.setItem('cachedFileData', reader.result);
-                        localStorage.removeItem('cachedHeaders');
-                        localStorage.removeItem('cachedDataRows');
-                        localStorage.removeItem('cachedIdentifierColumn');
-                        window.location.href = '/tool?import=data';
-                    }
-                };
-                reader.readAsDataURL(file);
-            };
-
-            document.addEventListener('dragenter', (event) => {
-                if (!hasImportableDragItem(event.dataTransfer)) return;
-                event.preventDefault();
-                fileDragDepth += 1;
-                setGlobalDragging(true);
-                hero?.classList.add('is-dragging-file');
-            });
-            document.addEventListener('dragover', (event) => {
-                if (!hasImportableDragItem(event.dataTransfer)) return;
-                event.preventDefault();
-                event.dataTransfer.dropEffect = 'copy';
-            });
-            document.addEventListener('dragleave', (event) => {
-                if (!hasImportableDragItem(event.dataTransfer)) return;
-                fileDragDepth = Math.max(0, fileDragDepth - 1);
-                if (fileDragDepth === 0) clearGlobalDragging();
-            });
-            document.addEventListener('drop', async (event) => {
-                const file = event.dataTransfer?.files?.[0];
-                if (!isImportableFile(file)) return;
-                event.preventDefault();
-                clearGlobalDragging();
-                await importDroppedFile(file);
-            });
-
             const invoiceNavLinks = document.getElementById('nav-links');
             const syncInvoiceAuthLinks = () => {
                 if (!invoiceNavLinks) return;
@@ -1922,7 +1426,7 @@
 
             await fetchPublicTemplates();
             
-            // Checkout links are guarded in assets/js/subscription-checkout.js.
+            // Lemon.js will automatically handle links with the 'lemonsqueezy-button' class.
 
         });
     </script>
