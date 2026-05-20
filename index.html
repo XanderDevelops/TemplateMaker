@@ -24,12 +24,12 @@
     <meta property="og:title" content="CSVLink | Turn Excel Lists into Ready-to-Send Invoices">
     <meta property="og:description" content="Upload Excel, CSV, or QuickBooks export data, map your columns, and export polished personalized invoices as PDFs in one run.">
     <meta property="og:url" content="https://csvlink.app/">
-    <meta property="og:image" content="https://csvlink.app/assets/images/invoice-hero-flow-target.png">
-    <meta property="og:image:alt" content="Spreadsheet data mapped into a finished invoice template.">
+    <meta property="og:image" content="https://csvlink.app/assets/images/invoice-hero-flow.png">
+    <meta property="og:image:alt" content="CSVLink workflow showing spreadsheet data mapped into a finished invoice template.">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="CSVLink | Turn Excel Lists into Ready-to-Send Invoices">
     <meta name="twitter:description" content="Upload Excel, CSV, or QuickBooks export data, map your columns, and export polished personalized invoices as PDFs in one run.">
-    <meta name="twitter:image" content="https://csvlink.app/assets/images/invoice-hero-flow-target.png">
+    <meta name="twitter:image" content="https://csvlink.app/assets/images/invoice-hero-flow.png">
     <script type="application/ld+json">
         {
             "@context": "https://schema.org",
@@ -231,7 +231,19 @@
 
         .nav-links .btn { height: 44px; padding: 0 24px; font-size: 14px; }
         .btn:hover { transform: translateY(-2px); }
-        .btn-primary:hover, .nav-links .btn:hover { box-shadow: 0 18px 30px rgba(22, 102, 241, 0.29), inset 0 1px 0 rgba(255,255,255,0.22); }
+        .btn-primary,
+        .nav-links .btn {
+            border: 1px solid rgba(12, 84, 216, 0.18);
+        }
+        .btn-primary:hover,
+        .btn-primary:focus-visible,
+        .nav-links .btn:hover,
+        .nav-links .btn:focus-visible {
+            color: #fff !important;
+            background: linear-gradient(180deg, #1f72ff 0%, #0d58dc 100%) !important;
+            border-color: rgba(8, 76, 197, 0.54) !important;
+            box-shadow: 0 18px 30px rgba(22, 102, 241, 0.29), inset 0 1px 0 rgba(255,255,255,0.24);
+        }
 
         .btn-secondary {
             color: var(--blue);
@@ -240,7 +252,13 @@
             box-shadow: 0 8px 18px rgba(36, 67, 111, 0.08);
         }
 
-        .btn-secondary:hover { border-color: rgba(18, 102, 241, 0.38); box-shadow: 0 12px 22px rgba(36, 67, 111, 0.12); }
+        .btn-secondary:hover,
+        .btn-secondary:focus-visible {
+            color: var(--blue) !important;
+            background: #fff !important;
+            border-color: rgba(18, 102, 241, 0.38);
+            box-shadow: 0 12px 22px rgba(36, 67, 111, 0.12);
+        }
 
         .page-shell {
             width: min(100%, 1440px);
@@ -357,34 +375,44 @@
 
         .hero-visual {
             position: relative;
-            min-height: 610px;
+            min-height: 620px;
             z-index: 1;
             display: flex;
             align-items: center;
             justify-content: flex-end;
-            padding-right: 6px;
+            overflow: visible;
+            padding-right: 0;
         }
 
         .hero-visual::before {
             content: '';
             position: absolute;
-            width: 690px;
-            height: 500px;
-            top: 58px;
-            right: -54px;
+            width: 760px;
+            height: 540px;
+            top: 48px;
+            right: -70px;
             background: radial-gradient(circle, rgba(61, 154, 255, 0.18), rgba(31, 122, 255, 0.04) 55%, transparent 72%);
             filter: blur(14px);
             border-radius: 50%;
             z-index: -1;
         }
 
-        .hero-flow-img {
-            width: min(720px, 104%);
-            max-width: none;
-            height: auto;
-            display: block;
-            transform: translateX(12px);
-            filter: drop-shadow(0 28px 52px rgba(38, 74, 127, 0.10));
+        .hero-flow-canvas {
+            position: relative;
+            width: 720px;
+            height: 590px;
+            flex: 0 0 auto;
+            filter: drop-shadow(0 28px 52px rgba(38, 74, 127, 0.08));
+        }
+
+        .hero-flow-canvas::before {
+            content: '';
+            position: absolute;
+            inset: 34px -18px 10px -30px;
+            border-radius: 36px;
+            background: radial-gradient(circle at 44% 50%, rgba(212, 231, 255, 0.76), rgba(236, 247, 255, 0.36) 44%, transparent 70%);
+            filter: blur(18px);
+            z-index: -1;
         }
 
         .ui-card {
@@ -397,9 +425,10 @@
         }
 
         .sheet-card {
-            width: 365px;
-            top: 40px;
-            left: 54px;
+            width: 392px;
+            top: 26px;
+            left: 12px;
+            border-radius: 14px;
         }
 
         .sheet-title {
@@ -459,10 +488,11 @@
         .skeleton-line:nth-child(2) { width: 62%; }
 
         .mapping-card {
-            width: 257px;
-            left: 78px;
-            top: 296px;
+            width: 282px;
+            left: 42px;
+            top: 316px;
             padding: 17px 17px 16px;
+            border-radius: 15px;
         }
 
         .map-row {
@@ -493,10 +523,10 @@
         .map-arrow { color: #a3adbe; font-weight: 900; font-size: 14px; }
 
         .invoice-card {
-            width: 268px;
-            right: 0;
-            top: 198px;
-            padding: 19px 18px 21px;
+            width: 286px;
+            right: 4px;
+            top: 156px;
+            padding: 22px 20px 23px;
             border-radius: 15px;
         }
 
@@ -579,8 +609,8 @@
         .thanks { color: #1776ff; font-family: cursive; font-size: 18px; margin-top: 10px; }
 
         .export-chip {
-            right: 94px;
-            top: 505px;
+            right: 92px;
+            top: 528px;
             height: 42px;
             border-radius: 10px;
             display: inline-flex;
@@ -595,6 +625,29 @@
             box-shadow: 0 13px 26px rgba(12, 161, 130, 0.11);
         }
 
+        .export-check {
+            width: 22px;
+            height: 22px;
+            border-radius: 7px;
+            display: inline-grid;
+            place-items: center;
+            color: #fff;
+            background: var(--green);
+            font-size: 13px;
+            font-weight: 900;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.24);
+        }
+
+        .your-logo-wrap {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            color: #263a61;
+            font-size: 8px;
+            font-weight: 900;
+            line-height: 1.05;
+        }
+
         .hero-dash {
             position: absolute;
             pointer-events: none;
@@ -603,10 +656,10 @@
         }
 
         .dash-down {
-            left: 88px;
-            top: 236px;
+            left: 56px;
+            top: 258px;
             width: 44px;
-            height: 78px;
+            height: 66px;
             border-left: 3px dashed #18acc3;
         }
         .dash-down::after {
@@ -622,10 +675,10 @@
         }
 
         .dash-to-invoice {
-            left: 332px;
-            top: 300px;
-            width: 88px;
-            height: 110px;
+            left: 324px;
+            top: 350px;
+            width: 104px;
+            height: 84px;
             border-top: 3px dashed #18acc3;
             border-right: 3px dashed #18acc3;
             border-bottom: 3px dashed #18acc3;
@@ -1455,8 +1508,8 @@
             .hero-copy { text-align: center; margin: 0 auto; }
             .hero h1, .hero p.lede { margin-left: auto; margin-right: auto; }
             .hero-actions, .hero-points { justify-content: center; }
-            .hero-visual { width: min(100%, 700px); max-width: 100%; margin: 0 auto; min-height: auto; justify-content: center; padding-right: 0; }
-            .hero-flow-img { width: min(100%, 680px); transform: none; }
+            .hero-visual { width: min(100%, 740px); max-width: 100%; margin: 0 auto; min-height: 570px; justify-content: center; padding-right: 0; }
+            .hero-flow-canvas { transform: scale(0.92); transform-origin: top center; }
             .sheet-card { left: 50px; }
             .mapping-card { left: 75px; }
             .invoice-card { right: 12px; }
@@ -1482,8 +1535,8 @@
             .page-shell { padding-left: 18px; padding-right: 18px; }
             .hero h1 { font-size: clamp(38px, 12vw, 54px); }
             .hero p.lede { font-size: 16px; }
-            .hero-visual { min-height: auto; width: min(100%, 420px); }
-            .hero-flow-img { width: 100%; }
+            .hero-visual { min-height: 360px; width: min(100%, 420px); }
+            .hero-flow-canvas { transform: scale(0.58); transform-origin: top center; }
             .steps-grid, .template-grid, .benefits-grid, .pricing-grid, .resources-grid { grid-template-columns: 1fr; }
             .quickbooks-section { padding: 30px 0 42px; }
             .quickbooks-panel { padding: 28px 18px; border-radius: 16px; }
@@ -1552,10 +1605,51 @@
             </div>
 
             <div class="hero-visual" aria-hidden="true">
-                <picture>
-                    <source srcset="assets/images/invoice-hero-flow-target.webp" type="image/webp">
-                    <img class="hero-flow-img" src="assets/images/invoice-hero-flow-target.png" alt="" loading="eager" decoding="async">
-                </picture>
+                <div class="hero-flow-canvas">
+                    <div class="ui-card sheet-card">
+                        <div class="sheet-title"><span class="excel-icon">X</span> clients_invoices.xlsx</div>
+                        <table class="mini-table" aria-hidden="true">
+                            <thead>
+                                <tr><th>Client</th><th>Invoice #</th><th>Due date</th><th>Total</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>Amanda Stone</td><td>INV-2048</td><td>Jun 14, 2026</td><td>$2,450.00</td></tr>
+                                <tr><td>Bright Labs</td><td>INV-2049</td><td>Jun 21, 2026</td><td>$1,120.00</td></tr>
+                                <tr><td>Core Systems</td><td>INV-2050</td><td>Jun 21, 2026</td><td>$3,300.00</td></tr>
+                            </tbody>
+                        </table>
+                        <div class="table-skeleton"><span class="skeleton-line"></span><span class="skeleton-line"></span></div>
+                    </div>
+
+                    <div class="hero-dash dash-down"></div>
+
+                    <div class="ui-card mapping-card">
+                        <div class="map-row"><span class="map-pill"><span class="check-dot">✓</span> Client</span><span class="map-arrow">→</span><span class="map-pill output">Bill to</span></div>
+                        <div class="map-row"><span class="map-pill"><span class="check-dot">✓</span> Invoice #</span><span class="map-arrow">→</span><span class="map-pill output">Invoice number</span></div>
+                        <div class="map-row"><span class="map-pill"><span class="check-dot">✓</span> Due date</span><span class="map-arrow">→</span><span class="map-pill output">Due date</span></div>
+                        <div class="map-row"><span class="map-pill"><span class="check-dot">✓</span> Total</span><span class="map-arrow">→</span><span class="map-pill output">Total amount</span></div>
+                    </div>
+
+                    <div class="hero-dash dash-to-invoice"></div>
+
+                    <div class="ui-card invoice-card">
+                        <div class="invoice-head">
+                            <div class="your-logo-wrap"><span class="logo-circle">YOUR<br>LOGO</span><span>YOUR<br>LOGO</span></div>
+                            <span class="invoice-badge">INVOICE</span>
+                        </div>
+                        <div class="invoice-meta">Invoice #: INV-2048<br>Date: May 14, 2026</div>
+                        <div class="invoice-address"><strong>Bill to</strong>Amanda Stone<br>123 Market Street<br>San Francisco, CA 94103</div>
+                        <div class="invoice-lines">
+                            <div class="invoice-row header"><span>Description</span><span>Amount</span></div>
+                            <div class="invoice-row"><span>Design retainer</span><span>$1,800.00</span></div>
+                            <div class="invoice-row"><span>Implementation</span><span>$650.00</span></div>
+                        </div>
+                        <div class="invoice-total"><span>Total</span><span>$2,450.00</span></div>
+                        <div class="thanks">Thank you!</div>
+                    </div>
+
+                    <div class="ui-card export-chip"><span class="export-check">✓</span> Export personalized PDFs</div>
+                </div>
             </div>
         </section>
 
