@@ -88,15 +88,13 @@ const renderNav = (user) => {
     let linksHtml = '';
 
     if (navMode === 'landing') {
-        linksHtml = user
-            ? `
-                <a href="/dashboard">Dashboard</a>
-                <a href="#" id="logout-btn">Logout</a>
-            `
-            : `
-                <a href="/login">Login</a>
-                <a href="/tool" class="nav-try btn">Try it for free</a>
-            `;
+        // Keep the public landing header stable. The static header already shows
+        // Login + Try it for free; re-render the same actions after the auth
+        // session check so the CTA does not flash and disappear.
+        linksHtml = `
+            <a href="/login">Login</a>
+            <a href="/tool" class="nav-try btn">Try it for free</a>
+        `;
     } else {
         linksHtml = `
             <a href="/#pricing">Pricing</a>
