@@ -19,6 +19,51 @@ const canvasPagesStrip = $('#canvasPagesStrip');
 const toggleCanvasPagesPanelBtn = $('#toggleCanvasPagesPanelBtn');
 const hideCanvasPagesPanelBtn = $('#hideCanvasPagesPanelBtn');
 const canvasPagesHeaderRow = canvasPagesPanel?.querySelector('.canvas-pages-header-row');
+
+// Browser/Fabric compatibility patch
+// ----------------------------------
+// Some Fabric text rendering paths can still send the non-standard value
+// "alphabetical" to CanvasRenderingContext2D.textBaseline. Chromium rejects it
+// because the valid enum is "alphabetic". Normalize that value at the canvas
+// context boundary so adding text, shapes, and other objects never breaks render.
+function installCsvlinkCanvasTextBaselinePatch() {
+    const Ctx = window.CanvasRenderingContext2D;
+    const proto = Ctx && Ctx.prototype;
+    if (!proto || proto.__csvlinkTextBaselinePatch) return;
+    const descriptor = Object.getOwnPropertyDescriptor(proto, 'textBaseline');
+    if (!descriptor || typeof descriptor.set !== 'function' || typeof descriptor.get !== 'function') return;
+    Object.defineProperty(proto, 'textBaseline', {
+        configurable: descriptor.configurable,
+        enumerable: descriptor.enumerable,
+        get() {
+            return descriptor.get.call(this);
+        },
+        set(value) {
+            descriptor.set.call(this, value === 'alphabetical' ? 'alphabetic' : value);
+        }
+    });
+    Object.defineProperty(proto, '__csvlinkTextBaselinePatch', {
+        value: true,
+        configurable: true
+    });
+}
+
+function normalizeCsvlinkFabricTextDefaults() {
+    const validBaselines = new Set(['top', 'hanging', 'middle', 'alphabetic', 'ideographic', 'bottom']);
+    const normalizeBaseline = (value) => {
+        const baseline = String(value || '').toLowerCase();
+        if (baseline === 'alphabetical') return 'alphabetic';
+        return validBaselines.has(baseline) ? baseline : 'alphabetic';
+    };
+    ['Text', 'IText', 'Textbox'].forEach((typeName) => {
+        const proto = window.fabric?.[typeName]?.prototype;
+        if (proto) proto.textBaseline = normalizeBaseline(proto.textBaseline);
+    });
+}
+
+installCsvlinkCanvasTextBaselinePatch();
+normalizeCsvlinkFabricTextDefaults();
+
 // 9. Preserve layer stacking
 const canvas = new fabric.Canvas('c', { backgroundColor: 'transparent', selection: true, preserveObjectStacking: true });
 // High-quality rendering (avoid blurry output)
@@ -66,10 +111,15 @@ function installCsvlinkSvgPreviewRenderer(targetCanvas) {
         const zoom = Number(targetCanvas.getZoom?.() || 1);
         if (!Number.isFinite(zoom) || zoom >= CSVLINK_SVG_PREVIEW_ZOOM_THRESHOLD) return false;
         if (state.suspended) return false;
+        if (targetCanvas._currentTransform) return false;
         if (typeof isRenderingCanvasGhosts !== 'undefined' && isRenderingCanvasGhosts) return false;
         if (typeof isPageSwitching !== 'undefined' && isPageSwitching) return false;
+
+        // Keep Fabric fully visible while an object is selected/being edited.
+        // The SVG layer is preview-only; enabling it over an active object can make
+        // selection look like it was cleared because the bitmap object is hidden.
         const active = targetCanvas.getActiveObject?.();
-        if (active && active.isEditing) return false;
+        if (active) return false;
         return true;
     };
 
@@ -125,6 +175,9 @@ function installCsvlinkSvgPreviewRenderer(targetCanvas) {
     };
 
     targetCanvas.on('after:render', schedule);
+    targetCanvas.on('selection:created', schedule);
+    targetCanvas.on('selection:updated', schedule);
+    targetCanvas.on('selection:cleared', schedule);
     targetCanvas.on('mouse:down', suspend);
     targetCanvas.on('mouse:up', resume);
     targetCanvas.on('object:moving', suspend);
