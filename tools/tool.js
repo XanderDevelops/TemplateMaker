@@ -9297,7 +9297,7 @@ const DEFAULT_SHAPE_FILL = '#dbe7f3';
 
 const adders = {
     text: (x, y, content = 'Sample Text') => {
-        const t = new fabric.Textbox(content, { left: x, top: y, fontSize: 28, fill: '#000000', fontFamily: 'Arial', originX: 'center', originY: 'center', styles: [], padding: 0, curveAmount: 0, name: getUniqueName('text'), lockUniScaling: false, pageId: currentCanvasPageId() });
+        const t = new fabric.Textbox(content, { left: x, top: y, width: 180, fontSize: 28, fill: '#000000', fontFamily: 'Arial', originX: 'center', originY: 'center', styles: [], padding: 0, curveAmount: 0, name: getUniqueName('text'), lockUniScaling: false, pageId: currentCanvasPageId() });
         t.setControlsVisibility({ mt: false, mb: false });
         canvas.add(t).setActiveObject(t);
     },
