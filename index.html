@@ -11,23 +11,24 @@
     </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Bulk generate invoices from Excel or CSV using your own invoice template. Link customer details, totals, due dates, and line items, then export every invoice in one run with CSVLink.">
+    <meta name="description" content="Turn an Excel or CSV list into ready-to-send invoices in minutes. Upload your spreadsheet, map columns to your invoice template, and export personalized PDFs with CSVLink.">
     <meta name="robots" content="index,follow,max-image-preview:large">
     <link rel="icon" href="assets/images/android-chrome-192x192.png" type="image/png" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="canonical" href="https://csvlink.app/">
-    <title>CSVLink Invoices | Bulk Generate Invoices from Excel or CSV</title>
+    <title>CSVLink | Turn Excel Lists into Ready-to-Send Invoices</title>
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="CSVLink">
-    <meta property="og:title" content="CSVLink Invoices | Bulk Generate Invoices from Excel or CSV">
-    <meta property="og:description" content="Bulk generate invoices from Excel or CSV using your own invoice template. Link customer details, totals, due dates, and line items, then export every invoice in one run with CSVLink.">
+    <meta property="og:title" content="CSVLink | Turn Excel Lists into Ready-to-Send Invoices">
+    <meta property="og:description" content="Upload Excel or CSV data, map your columns, and export polished personalized invoices as PDFs in one run.">
     <meta property="og:url" content="https://csvlink.app/">
     <meta property="og:image" content="https://csvlink.app/assets/images/invoice-hero-flow.png">
     <meta property="og:image:alt" content="Spreadsheet invoice data flowing into a finished invoice template.">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="CSVLink Invoices | Bulk Generate Invoices from Excel or CSV">
-    <meta name="twitter:description" content="Bulk generate invoices from Excel or CSV using your own invoice template. Link customer details, totals, due dates, and line items, then export every invoice in one run with CSVLink.">
+    <meta name="twitter:title" content="CSVLink | Turn Excel Lists into Ready-to-Send Invoices">
+    <meta name="twitter:description" content="Upload Excel or CSV data, map your columns, and export polished personalized invoices as PDFs in one run.">
     <meta name="twitter:image" content="https://csvlink.app/assets/images/invoice-hero-flow.png">
     <script type="application/ld+json">
         {
@@ -46,9 +47,9 @@
                 },
                 {
                     "@type": "WebPage",
-                    "name": "CSVLink Invoices | Bulk Generate Invoices from Excel or CSV",
+                    "name": "CSVLink | Turn Excel Lists into Ready-to-Send Invoices",
                     "url": "https://csvlink.app/",
-                    "description": "Bulk generate invoices from Excel or CSV using your own invoice template. Link customer details, totals, due dates, and line items, then export every invoice in one run with CSVLink."
+                    "description": "Turn an Excel or CSV list into ready-to-send invoices in minutes."
                 },
                 {
                     "@type": "SoftwareApplication",
@@ -63,1210 +64,1431 @@
     </script>
     <link rel="stylesheet" href="assets/css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/fabric@5.3.0/dist/fabric.min.js"></script>
-    
-    <!-- Lemon Squeezy.js Script -->
     <script src="https://app.lemonsqueezy.com/js/lemon.js" defer></script>
 
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap');
+        :root {
+            --page-bg: #f7fbff;
+            --navy: #071532;
+            --text: #12213f;
+            --muted: #61708a;
+            --soft-muted: #8390a5;
+            --blue: #1266f1;
+            --blue-2: #1f7aff;
+            --blue-soft: #eaf3ff;
+            --teal: #15c7a7;
+            --green: #13c386;
+            --purple: #8b5cf6;
+            --orange: #f59e46;
+            --border: #dce8f7;
+            --border-strong: #c6dcf5;
+            --panel: rgba(255, 255, 255, 0.92);
+            --shadow-sm: 0 8px 22px rgba(36, 67, 111, 0.08);
+            --shadow-md: 0 18px 44px rgba(42, 75, 128, 0.13);
+            --shadow-lg: 0 28px 70px rgba(38, 74, 127, 0.17);
+            --radius: 18px;
+        }
 
-        /* General Body Styles */
+        * { box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
         body {
-            font-family: 'Manrope', system-ui, -apple-system, sans-serif;
             margin: 0;
-            background-color: var(--bg);
-            color: var(--fg);
+            font-family: 'Manrope', Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            color: var(--text);
+            background:
+                radial-gradient(circle at 14% 12%, rgba(22, 118, 255, 0.10), transparent 28%),
+                radial-gradient(circle at 88% 9%, rgba(28, 201, 193, 0.12), transparent 28%),
+                linear-gradient(180deg, #ffffff 0%, #f7fbff 42%, #ffffff 100%);
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
             overflow-x: hidden;
-            scroll-behavior: smooth;
         }
 
-        /* Navigation */
-        nav {
-            display: grid;
-            grid-template-columns: auto minmax(0, 1fr) auto;
-            align-items: center;
-            gap: 24px;
-            padding: 0 24px;
-            height: 60px;
-            background-color: rgba(255, 255, 255, 0.86);
-            backdrop-filter: blur(12px);
+        body::before {
+            content: '';
             position: fixed;
-            width: 100%;
+            inset: 0;
+            pointer-events: none;
+            background-image:
+                linear-gradient(rgba(18, 102, 241, 0.025) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(18, 102, 241, 0.025) 1px, transparent 1px);
+            background-size: 32px 32px;
+            mask-image: linear-gradient(180deg, #000 0%, transparent 65%);
+            z-index: -1;
+        }
+
+        a { color: inherit; text-decoration: none; }
+        button { font: inherit; }
+
+        .site-header {
+            position: sticky;
             top: 0;
-            z-index: 1000;
-            box-sizing: border-box;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .logo {
-            font-family: 'Space Grotesk', sans-serif;
-            font-size: 1.25rem;
-            font-weight: 700;
-            text-decoration: none;
-            color: var(--fg);
+            z-index: 100;
+            height: 78px;
             display: flex;
             align-items: center;
-            gap: 10px;
+            border-bottom: 1px solid rgba(212, 225, 244, 0.84);
+            background: rgba(255, 255, 255, 0.82);
+            backdrop-filter: blur(18px);
         }
 
-        .logo-icon {
-            width: 32px;
-            height: 32px;
-            border-radius: 10px;
-        }
-
-        .invoice-page-nav {
-            display: flex;
+        .nav-inner {
+            width: min(100%, 1200px);
+            margin: 0 auto;
+            padding: 0 38px;
+            display: grid;
+            grid-template-columns: auto 1fr auto;
             align-items: center;
-            justify-content: center;
-            justify-self: center;
-            gap: 0;
-            row-gap: 8px;
-            min-width: 0;
-            flex-wrap: wrap;
+            gap: 28px;
         }
 
-        .invoice-page-link {
+        .brand {
             display: inline-flex;
             align-items: center;
-            text-decoration: none;
-            color: #41516f;
-            font-size: 0.9rem;
+            gap: 12px;
+            min-width: 170px;
+            font-weight: 800;
+            font-size: 22px;
+            letter-spacing: -0.03em;
+            color: #0d1b38;
+        }
+
+        .brand img {
+            width: 34px;
+            height: 34px;
+            border-radius: 10px;
+            object-fit: contain;
+        }
+
+        .primary-nav {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 34px;
+        }
+
+        .primary-nav a,
+        .nav-links a {
+            color: #33415d;
+            font-size: 14px;
+            line-height: 1;
             font-weight: 700;
-            padding: 0;
-            border: none;
-            background: transparent;
-            transition: all 0.18s ease;
+            transition: color 0.18s ease, transform 0.18s ease;
             white-space: nowrap;
         }
 
-        .invoice-page-link + .invoice-page-link::before {
-            content: '|';
-            color: #94a3b8;
-            margin: 0 10px;
+        .primary-nav a:hover,
+        .nav-links a:hover {
+            color: var(--blue);
+            transform: translateY(-1px);
         }
 
-        .invoice-page-link:hover {
-            color: var(--fg);
-            background: transparent;
-        }
-
-        .invoice-page-link.is-active {
-            color: var(--accent);
-            background: transparent;
-            box-shadow: none;
+        .nav-chevron::after {
+            content: '';
+            width: 6px;
+            height: 6px;
+            display: inline-block;
+            border-right: 1.8px solid currentColor;
+            border-bottom: 1.8px solid currentColor;
+            transform: rotate(45deg) translateY(-2px);
+            margin-left: 8px;
         }
 
         .nav-links {
             display: flex;
             align-items: center;
             justify-content: flex-end;
-            justify-self: end;
-            gap: 14px;
-            flex-wrap: wrap;
+            gap: 20px;
+            min-width: 172px;
         }
 
-        /* Hero Section */
-        .hero {
-            text-align: left;
-            padding: 136px 36px 56px;
-            background:
-                radial-gradient(circle at 8% 15%, rgba(37, 99, 235, 0.2), transparent 34%),
-                radial-gradient(circle at 88% 10%, rgba(14, 165, 233, 0.18), transparent 28%),
-                linear-gradient(140deg, #ffffff 0%, #f6f9ff 60%, #eef4ff 100%);
-            position: relative;
-            overflow: hidden;
-            border: 1px solid var(--border);
-            border-radius: 24px;
-            box-shadow: var(--shadow-lg);
-            margin-top: 90px;
-        }
-
-        .hero::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 150%;
-            height: 150%;
-            background: conic-gradient(
-                from 180deg at 50% 50%,
-                transparent,
-                rgba(59, 130, 246, 0.03) 45%,
-                rgba(59, 130, 246, 0.08) 50%,
-                rgba(59, 130, 246, 0.03) 55%,
-                transparent
-            );
-            z-index: 0;
-            transform: translate(-50%, -50%);
-            animation: rotate-background 60s linear infinite;
-            filter: blur(60px);
-        }
-
-        .hero::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: radial-gradient(circle at center, transparent 8%, rgba(248, 250, 252, 0.9) 84%);
-            z-index: 1;
-        }
-
-        /* Ensure hero content stays on top */
-        .hero > * {
-            position: relative;
-            z-index: 2;
-        }
-
-        .hero h1 {
-            font-family: 'Space Grotesk', sans-serif;
-            font-size: clamp(2.1rem, 4.4vw, 4rem);
-            margin: 0 0 1rem;
-            color: #0b1328;
-            letter-spacing: -0.03em;
-            font-weight: 800;
-            max-width: 16ch;
-            line-height: 1.08;
-        }
-
-        .hero p {
-            font-size: 1.05rem;
-            color: #3b4b66;
-            max-width: 66ch;
-            margin: 0 0 1rem;
-            line-height: 1.75;
-        }
-
-        .hero-layout {
-            display: grid;
-            grid-template-columns: minmax(0, 1.02fr) minmax(340px, 0.98fr);
-            gap: 32px;
+        .nav-links .btn,
+        .nav-try,
+        .btn {
+            appearance: none;
+            border: 0;
+            cursor: pointer;
+            display: inline-flex;
             align-items: center;
+            justify-content: center;
+            gap: 9px;
+            height: 52px;
+            padding: 0 27px;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 800;
+            letter-spacing: -0.01em;
+            transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+        }
+
+        .nav-links .btn,
+        .nav-try,
+        .btn-primary {
+            color: #fff !important;
+            background: linear-gradient(180deg, #287aff 0%, #115eea 100%);
+            box-shadow: 0 14px 24px rgba(22, 102, 241, 0.23), inset 0 1px 0 rgba(255,255,255,0.22);
+        }
+
+        .nav-links .btn { height: 44px; padding: 0 24px; font-size: 14px; }
+        .btn:hover { transform: translateY(-2px); }
+        .btn-primary:hover, .nav-links .btn:hover { box-shadow: 0 18px 30px rgba(22, 102, 241, 0.29), inset 0 1px 0 rgba(255,255,255,0.22); }
+
+        .btn-secondary {
+            color: var(--blue);
+            background: #fff;
+            border: 1px solid var(--border-strong);
+            box-shadow: 0 8px 18px rgba(36, 67, 111, 0.08);
+        }
+
+        .btn-secondary:hover { border-color: rgba(18, 102, 241, 0.38); box-shadow: 0 12px 22px rgba(36, 67, 111, 0.12); }
+
+        .page-shell {
+            width: min(100%, 1200px);
+            margin: 0 auto;
+            padding: 0 38px 48px;
+        }
+
+        .hero {
+            position: relative;
+            display: grid;
+            grid-template-columns: minmax(360px, 1.02fr) minmax(520px, 0.98fr);
+            align-items: center;
+            gap: 32px;
+            min-height: 660px;
+            padding: 64px 0 42px;
         }
 
         .hero-copy {
-            min-width: 0;
+            position: relative;
+            z-index: 2;
+            padding-top: 20px;
         }
 
-        .hero-visual {
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 9px;
+            height: 33px;
+            padding: 0 14px;
+            border-radius: 999px;
+            color: #2b69de;
+            background: #eef6ff;
+            border: 1px solid #dcebff;
+            font-size: 13px;
+            font-weight: 800;
+            box-shadow: 0 8px 16px rgba(30, 111, 243, 0.05);
+        }
+
+        .eyebrow .bolt {
+            display: inline-grid;
+            place-items: center;
+            width: 19px;
+            height: 19px;
+            border-radius: 50%;
+            background: #dff1ff;
+            color: #0ba2ff;
+            font-size: 12px;
+        }
+
+        .hero h1 {
+            max-width: 608px;
+            margin: 30px 0 18px;
+            color: var(--navy);
+            font-size: clamp(44px, 6.1vw, 68px);
+            line-height: 1.05;
+            letter-spacing: -0.067em;
+            font-weight: 800;
+        }
+
+        .hero p.lede {
+            max-width: 575px;
             margin: 0;
-            min-width: 0;
-            display: flex;
-            justify-content: flex-end;
-        }
-
-        .hero-visual-frame {
-            margin-top: -70px;
-            margin-right: 20px;
-            padding: 0px;
-            max-width: 420px;
-            border-radius: 26px;
-     
-
-        }
-
-        .hero-visual img {
-            display: block;
-            width: 100%;
-            height: auto;
-            border-radius: 18px;
+            color: #5d6b85;
+            font-size: 18px;
+            line-height: 1.68;
+            letter-spacing: -0.014em;
         }
 
         .hero-actions {
-            margin-top: 1.2rem;
             display: flex;
-            gap: 12px;
-            align-items: center;
             flex-wrap: wrap;
-        }
-
-        .hero .btn {
-            border-radius: 12px;
-            height: 48px;
-            font-weight: 700;
-        }
-
-        .hero-flow {
-            margin-top: 1.8rem;
-            display: grid;
-            gap: 12px;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-        }
-
-        .hero-flow-card {
-            border: 1px solid rgba(148, 163, 184, 0.35);
-            border-radius: 14px;
-            background: rgba(255, 255, 255, 0.76);
-            padding: 14px 16px;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .hero-flow-card h3 {
-            margin: 0;
-            font-size: 0.98rem;
-            color: #0f172a;
-            font-family: 'Space Grotesk', sans-serif;
-        }
-
-        .hero-flow-card p {
-            margin: 4px 0 0;
-            font-size: 0.88rem;
-            color: #52627e;
-            line-height: 1.45;
-        }
-
-        .animated-section {
-            opacity: 0;
-            transform: translateY(30px);
-            transition: all 0.8s cubic-bezier(0.2, 1, 0.3, 1);
-        }
-
-        .animated-section.is-visible {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        @keyframes rotate-background {
-            from { transform: translate(-50%, -50%) rotate(0deg); }
-            to { transform: translate(-50%, -50%) rotate(360deg); }
-        }
-
-        .btn {
-            background-color: var(--accent);
-            color: var(--accent-fg);
-            padding: 0 32px;
-            height: 48px;
-            border-radius: var(--radius);
-            text-decoration: none;
-            font-weight: 600;
-            display: inline-flex;
             align-items: center;
-            justify-content: center;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            border: none;
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-        }
-        .btn:hover {
-            background-color: var(--accent-hover);
-            transform: translateY(-2px);
-            box-shadow: 0 8px 16px rgba(59, 130, 246, 0.4);
+            gap: 14px;
+            margin-top: 34px;
         }
 
-        /* Feature Sections General Style */
-        .feature-section {
+        .button-icon {
+            width: 19px;
+            height: 19px;
+            display: inline-block;
+        }
+
+        .hero-points {
             display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 4rem;
-            padding: 2.4rem;
-            opacity: 0;
-            transform: translateY(30px);
-            transition: all 0.8s cubic-bezier(0.2, 1, 0.3, 1);
-            margin-top: 2rem;
-            border: 1px solid var(--border);
-            border-radius: 24px;
-            background: var(--panel);
-            box-shadow: var(--shadow);
-        }
-
-        .feature-section.is-visible {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        .feature-content h2 {
-            font-family: 'Space Grotesk', sans-serif;
-            font-size: clamp(1.7rem, 3.2vw, 3rem);
-            margin-bottom: 1rem;
-            color: var(--fg);
-            font-weight: 700;
-            letter-spacing: -0.02em;
-        }
-        
-        .feature-content p, .feature-content li {
-            font-size: 1rem;
-            color: var(--muted);
-            line-height: 1.7;
-        }
-        
-        .feature-image img {
-            max-width: 560px;
-            border-radius: 16px;
-            border: 1px solid var(--border);
-            box-shadow: var(--shadow-lg);
-        }
-
-        #first-feature {
             flex-wrap: wrap;
-            align-items: flex-start;
-        }
-
-        #first-feature .first-feature-heading {
-            width: 100%;
-        }
-
-        #first-feature .first-feature-heading h2 {
-            margin: 0;
-        }
-
-        #first-feature .feature-content {
-            flex: 1 1 460px;
-            min-width: 0;
-        }
-
-        #first-feature .feature-image {
-            flex: 0 1 560px;
-            display: flex;
-            justify-content: center;
-        }
-
-        #first-feature .feature-image img {
-            width: 100%;
-            max-width: 560px;
-        }
-
-        /* Bulk Generation Specifics */
-        .bulk-steps {
-            list-style: none;
+            gap: 26px;
+            margin: 34px 0 0;
             padding: 0;
-            margin-top: 1.5rem;
+            list-style: none;
+            color: #5f6d84;
+            font-size: 13px;
+            font-weight: 800;
         }
-        .bulk-steps li {
-            padding: 0.8rem 0;
-            border-bottom: 1px solid var(--border);
+
+        .hero-points li,
+        .mini-check {
+            display: inline-flex;
+            align-items: center;
+            gap: 9px;
+        }
+
+        .check-dot {
+            width: 17px;
+            height: 17px;
+            border-radius: 999px;
+            background: var(--green);
+            display: inline-grid;
+            place-items: center;
+            color: #fff;
+            font-size: 11px;
+            font-weight: 900;
+            box-shadow: 0 5px 10px rgba(19, 195, 134, 0.18);
+        }
+
+        .hero-review {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 25px;
+            align-items: center;
+            margin-top: 58px;
+        }
+
+        .avatars {
             display: flex;
             align-items: center;
         }
-        .bulk-steps li:first-child {
-            border-top: 1px solid var(--border);
-        }
-        .bulk-steps li::before {
-            content: '✓';
-            color: var(--accent);
-            font-size: 1.5rem;
-            margin-right: 1rem;
-        }
-        .bulk-steps strong {
-            color: var(--fg);
-        }
-        .that-simple {
-            font-weight: bold;
-            font-size: 1.2rem;
-            margin-top: 1rem;
-            text-align: center;
-        }
 
-        .bulk-steps li::before {
-            content: '01';
-            color: var(--accent);
-            font-size: 0.72rem;
-            font-weight: 800;
-            letter-spacing: 0.04em;
-            text-transform: uppercase;
-            margin-right: 1rem;
-            border: 1px solid rgba(37, 99, 235, 0.3);
-            background: rgba(37, 99, 235, 0.08);
-            border-radius: 999px;
-            padding: 4px 8px;
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 3px solid #fff;
+            margin-left: -8px;
+            display: inline-grid;
+            place-items: center;
+            color: #fff;
+            font-weight: 900;
+            font-size: 13px;
+            box-shadow: 0 8px 16px rgba(20, 48, 88, 0.14);
+        }
+        .avatar:first-child { margin-left: 0; background: linear-gradient(135deg,#264e74,#5da6aa); }
+        .avatar:nth-child(2) { background: linear-gradient(135deg,#1c7c53,#bd9b6f); }
+        .avatar:nth-child(3) { background: linear-gradient(135deg,#2f7a91,#efb2a8); }
+        .avatar:nth-child(4) { background: linear-gradient(135deg,#39364e,#cf8b73); }
+
+        .review-stars {
+            color: #ffc400;
+            letter-spacing: 2px;
+            font-size: 19px;
             line-height: 1;
+            margin-bottom: 6px;
         }
 
-        .bulk-steps li:nth-child(2)::before { content: '02'; }
-        .bulk-steps li:nth-child(3)::before { content: '03'; }
+        .review-text {
+            color: #4c5a72;
+            font-size: 14px;
+            line-height: 1.48;
+            font-weight: 700;
+        }
 
-        .mapping-demo {
-            margin-top: 1.3rem;
-            border: 1px dashed #c7d4ea;
-            border-radius: 16px;
-            background: #f8fbff;
-            padding: 0.9rem;
-            display: grid;
-            grid-template-columns: 1fr auto 1fr;
-            gap: 10px;
+        .hero-visual {
+            position: relative;
+            min-height: 515px;
+            z-index: 1;
+        }
+
+        .hero-visual::before {
+            content: '';
+            position: absolute;
+            width: 540px;
+            height: 410px;
+            top: 72px;
+            right: 14px;
+            background: radial-gradient(circle, rgba(61, 154, 255, 0.18), rgba(31, 122, 255, 0.04) 55%, transparent 72%);
+            filter: blur(12px);
+            border-radius: 50%;
+            z-index: -1;
+        }
+
+        .ui-card {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.96);
+            border: 1px solid var(--border-strong);
+            border-radius: 14px;
+            box-shadow: var(--shadow-md);
+            overflow: hidden;
+        }
+
+        .sheet-card {
+            width: 365px;
+            top: 40px;
+            left: 54px;
+        }
+
+        .sheet-title {
+            height: 44px;
+            display: flex;
             align-items: center;
-        }
-
-        .mapping-column {
-            border: 1px solid #dbe3ee;
-            border-radius: 10px;
-            background: #fff;
-            padding: 0.75rem;
-        }
-
-        .mapping-column h4 {
-            margin: 0 0 0.5rem;
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            color: #5f718f;
-        }
-
-        .field-pill {
-            display: inline-flex;
-            margin: 0.2rem 0.2rem 0.2rem 0;
-            padding: 5px 9px;
-            border-radius: 999px;
-            font-size: 0.76rem;
-            font-weight: 600;
-            border: 1px solid #d8e4f7;
-            background: #f7faff;
-            color: #26416d;
-        }
-
-        .mapping-arrow {
+            gap: 10px;
+            padding: 0 17px;
+            border-bottom: 1px solid #e8eff8;
+            color: #17243c;
+            font-size: 13px;
             font-weight: 800;
-            font-size: 0.8rem;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-            color: var(--accent);
-            padding: 0.35rem 0.75rem;
-            border: 1px solid rgba(37, 99, 235, 0.3);
-            border-radius: 999px;
-            background: rgba(37, 99, 235, 0.08);
+        }
+
+        .excel-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 5px;
+            background: #20a765;
+            color: #fff;
+            display: inline-grid;
+            place-items: center;
+            font-weight: 900;
+            font-size: 15px;
+            box-shadow: inset 7px 0 0 rgba(0,0,0,0.08);
+        }
+
+        .mini-table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+
+        .mini-table th,
+        .mini-table td {
+            height: 34px;
+            padding: 0 16px;
+            text-align: left;
+            border-bottom: 1px solid #edf2f8;
+            font-size: 12px;
+            color: #34435c;
+            font-weight: 700;
+        }
+
+        .mini-table th {
+            color: #26334a;
+            font-size: 11px;
+            font-weight: 800;
+            background: #fbfdff;
+        }
+
+        .mini-table td:last-child,
+        .mini-table th:last-child { text-align: right; }
+        .table-skeleton { padding: 12px 17px 14px; display: grid; gap: 11px; }
+        .skeleton-line { height: 5px; border-radius: 999px; background: #edf2f8; }
+        .skeleton-line:nth-child(1) { width: 80%; }
+        .skeleton-line:nth-child(2) { width: 62%; }
+
+        .mapping-card {
+            width: 257px;
+            left: 78px;
+            top: 296px;
+            padding: 17px 17px 16px;
+        }
+
+        .map-row {
+            display: grid;
+            grid-template-columns: 1fr 20px 1fr;
+            align-items: center;
+            gap: 9px;
+            margin: 11px 0;
+        }
+
+        .map-pill {
+            height: 29px;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            border: 1px solid #e0e8f3;
+            background: #fff;
+            color: #30405a;
+            border-radius: 8px;
+            padding: 0 9px;
+            font-size: 12px;
+            font-weight: 800;
+            box-shadow: 0 3px 8px rgba(36, 67, 111, 0.04);
             white-space: nowrap;
         }
 
-        .use-cases-section {
-            padding: 2.4rem;
-            margin-top: 2rem;
-            border: 1px solid var(--border);
-            border-radius: 24px;
-            background: var(--panel);
-            box-shadow: var(--shadow);
+        .map-pill.output { color: #8a96a9; font-weight: 700; background: #fcfdff; }
+        .map-arrow { color: #a3adbe; font-weight: 900; font-size: 14px; }
+
+        .invoice-card {
+            width: 268px;
+            right: 0;
+            top: 198px;
+            padding: 19px 18px 21px;
+            border-radius: 15px;
         }
 
-        .use-cases-grid {
-            display: grid;
-            grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 14px;
-            margin-top: 1rem;
+        .invoice-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 18px;
         }
 
-        .use-case-card {
-            border: 1px solid var(--border);
-            border-radius: 14px;
-            padding: 1rem;
-            background: #fff;
-            min-height: 134px;
-        }
-
-        .use-case-card h3 {
-            margin: 0;
-            font-family: 'Space Grotesk', sans-serif;
-            font-size: 1rem;
-            color: #112446;
-        }
-
-        .use-case-card p {
-            margin: 0.5rem 0 0;
-            color: #5b6c88;
-            font-size: 0.91rem;
-            line-height: 1.6;
-        }
-        
-        /* 2. AI Icon and Animation */
-        .ai-spark-icon {
-            margin-left: 0.75rem;
+        .logo-circle {
+            display: inline-grid;
+            place-items: center;
             width: 32px;
             height: 32px;
-            animation: spark-pulse 3s infinite ease-in-out;
-        }
-        
-        @keyframes spark-pulse {
-            0%, 100% {
-                transform: scale(1);
-                filter: drop-shadow(0 0 2px #00f2fe);
-            }
-            50% {
-                transform: scale(1.15);
-                filter: drop-shadow(0 0 10px #00f2fe);
-            }
-        }
-
-        /* 6. Template Gallery Section - MODIFIED */
-        .templates-section {
+            border-radius: 50%;
+            background: #eaf3ff;
+            color: var(--blue);
+            font-size: 8px;
+            font-weight: 900;
+            line-height: 1.05;
             text-align: center;
-            padding: 2.4rem;
-            margin-top: 2rem;
-            background-color: var(--panel);
-            border: 1px solid var(--border);
-            border-radius: 24px;
-            box-shadow: var(--shadow);
-            opacity: 0;
-            transform: translateY(30px);
-            transition: all 0.8s cubic-bezier(0.2, 1, 0.3, 1);
         }
 
-        .templates-section.is-visible {
-            opacity: 1;
-            transform: translateY(0);
+        .invoice-badge {
+            height: 32px;
+            display: inline-flex;
+            align-items: center;
+            padding: 0 14px;
+            border-radius: 5px;
+            background: #176eff;
+            color: #fff;
+            font-size: 12px;
+            font-weight: 900;
+            letter-spacing: 0.03em;
+            box-shadow: 0 8px 15px rgba(23, 110, 255, 0.22);
         }
 
-        .templates-section h2 {
-            font-family: 'Space Grotesk', sans-serif;
-            font-size: clamp(1.7rem, 3vw, 2.5rem);
-            margin-bottom: 1rem;
+        .invoice-meta,
+        .invoice-address {
+            color: #66748d;
+            font-size: 8.8px;
+            line-height: 1.45;
             font-weight: 700;
         }
-        
-        .template-categories {
-            display: flex;
-            justify-content: center;
-            gap: 0.75rem;
-            margin-bottom: 4rem;
-            flex-wrap: wrap;
-        }
 
-        .template-category-btn {
-            background-color: var(--panel-2);
-            border: 1px solid var(--border);
-            color: var(--muted);
-            padding: 8px 18px;
-            border-radius: 100px;
-            cursor: pointer;
-            font-size: 0.875rem;
-            font-weight: 600;
-            transition: all 0.2s;
-        }
+        .invoice-meta { text-align: right; margin-bottom: 14px; }
+        .invoice-address strong { display: block; color: #33415d; margin-bottom: 4px; }
 
-        .template-category-btn:hover {
-            border-color: var(--muted);
-            color: var(--fg);
-        }
-
-        .template-category-btn.active {
-            background-color: var(--accent);
-            color: var(--accent-fg);
-            border-color: var(--accent);
-        }
-
-        /* 6. Template Carousel */
-        .template-carousel-container {
-            width: 100%;
+        .invoice-lines {
+            margin-top: 17px;
+            border-radius: 6px;
             overflow: hidden;
-        }
-        
-        .template-carousel-track {
-            display: flex;
-            transition: transform 0.5s ease-in-out;
+            border: 1px solid #edf1f7;
         }
 
-        .template-carousel-slide {
-            flex: 0 0 100%;
+        .invoice-row {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 2rem;
+            grid-template-columns: 1fr auto;
+            align-items: center;
+            gap: 10px;
+            min-height: 29px;
+            padding: 0 9px;
+            border-bottom: 1px solid #edf1f7;
+            color: #39475f;
+            font-size: 9px;
+            font-weight: 750;
+        }
+        .invoice-row.header { background: #f1f4f8; color: #39475f; font-size: 8.6px; font-weight: 900; }
+        .invoice-row:last-child { border-bottom: 0; }
+        .invoice-total {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 8px 4px;
+            color: var(--navy);
+            font-size: 13px;
+            font-weight: 900;
+        }
+        .thanks { color: #1776ff; font-family: cursive; font-size: 18px; margin-top: 10px; }
+
+        .export-chip {
+            right: 94px;
+            top: 505px;
+            height: 42px;
+            border-radius: 10px;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 0 16px;
+            color: #11876f;
+            background: #effffb;
+            border: 1px solid #cdf7ec;
+            font-size: 12px;
+            font-weight: 900;
+            box-shadow: 0 13px 26px rgba(12, 161, 130, 0.11);
         }
 
-        .template-card {
-            background: var(--panel);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: var(--shadow);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            text-decoration: none; /* For the link */
-            display: block; /* For the link */
-        }
-        
-        .template-card:hover {
-            transform: translateY(-6px);
-            box-shadow: var(--shadow-lg);
-        }
-        
-        .template-card img {
-            width: 100%;
-            height: auto;
-            display: block;
-            background-color: var(--panel-2);
-        }
-
-        /* --- Scroll Down Arrow Animation --- */
-        .scroll-down-arrow {
+        .hero-dash {
             position: absolute;
-            bottom: 50px;
-            left: 50%;
-            transform: translateX(-50%);
-            cursor: pointer;
-            z-index: 3;
-            width: 36px;
-            height: 36px;
+            pointer-events: none;
+            border-color: #19aeca;
+            z-index: 0;
         }
 
-        /* Primary visible SVG arrow */
-        .scroll-down-arrow svg {
-            width: 100%;
-            height: 100%;
-            transition: transform 0.3s ease;
-            animation: pulse-down 2s infinite ease-in-out;
+        .dash-down {
+            left: 88px;
+            top: 236px;
+            width: 44px;
+            height: 78px;
+            border-left: 3px dashed #18acc3;
         }
-
-        .scroll-down-arrow:hover svg {
-            transform: scale(1.1);
-        }
-
-        /* Ghost arrows (pseudo-elements) */
-        .scroll-down-arrow::before,
-        .scroll-down-arrow::after {
+        .dash-down::after {
             content: '';
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 16.5l-6-6 1.41-1.41L12 13.67l4.59-4.58L18 10.5l-6 6z' fill='rgba(37,99,235,0.6)'/%3E%3C/svg%3E");
-            background-size: cover;
-            opacity: 0; /* Hidden by default */
+            left: -8px;
+            bottom: -3px;
+            width: 12px;
+            height: 12px;
+            border-right: 3px solid #18acc3;
+            border-bottom: 3px solid #18acc3;
+            transform: rotate(45deg);
         }
 
-        /* Keyframes for main arrow pulse down */
-        @keyframes pulse-down {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(15px); }
+        .dash-to-invoice {
+            left: 332px;
+            top: 300px;
+            width: 88px;
+            height: 110px;
+            border-top: 3px dashed #18acc3;
+            border-right: 3px dashed #18acc3;
+            border-bottom: 3px dashed #18acc3;
+            border-radius: 0 24px 24px 0;
+        }
+        .dash-to-invoice::after {
+            content: '';
+            position: absolute;
+            right: -11px;
+            bottom: -8px;
+            width: 12px;
+            height: 12px;
+            border-right: 3px solid #18acc3;
+            border-bottom: 3px solid #18acc3;
+            transform: rotate(-45deg);
         }
 
-        /* --- 3D Editor Showcase Section --- */
-        /* The main container that sets the 3D perspective */
-        .feature-image-3d-container {
-            width: 920px;
-            height: 360px;
+        .section {
+            padding: 54px 0;
+        }
+
+        .section-heading {
+            text-align: center;
+            margin: 0 auto 40px;
+            max-width: 620px;
+        }
+
+        .section-heading h2 {
+            margin: 0 0 8px;
+            color: var(--navy);
+            font-size: 28px;
+            line-height: 1.15;
+            letter-spacing: -0.04em;
+            font-weight: 800;
+        }
+
+        .section-heading p {
+            margin: 0;
+            color: #65728a;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .steps-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 84px;
+            position: relative;
+            width: min(100%, 990px);
+            margin: 0 auto;
+        }
+        .steps-grid::before {
+            content: '';
+            position: absolute;
+            top: 55px;
+            left: 18%;
+            right: 18%;
+            border-top: 3px dashed #d9e4f4;
+            z-index: 0;
+        }
+
+        .step-card {
+            min-height: 270px;
+            position: relative;
+            z-index: 1;
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 34px 22px 20px;
+            box-shadow: 0 12px 28px rgba(36, 67, 111, 0.055);
+        }
+
+        .step-number {
+            position: absolute;
+            top: -19px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            color: #fff;
+            background: linear-gradient(180deg, #2b7fff 0%, #1464ee 100%);
+            font-weight: 900;
+            font-size: 15px;
+            box-shadow: 0 8px 16px rgba(22, 102, 241, 0.25);
+        }
+
+        .step-art {
+            height: 88px;
             display: flex;
             align-items: center;
-            justify-content: center;
-            perspective: 1500px; 
-            cursor: pointer; 
+            gap: 16px;
+            margin-bottom: 14px;
         }
 
-        /* The wrapper that will be animated (rotated) */
-        .feature-image-3d-wrapper {
+        .doc-icon {
+            width: 62px;
+            height: 70px;
+            border-radius: 7px;
             position: relative;
-            /* Make the wrapper smaller than the container to prevent its corners from being clipped during rotation */
-            width: 100%;
-            height: 100%;
-            transform-style: preserve-3d;
-            animation: full-spin 10s linear infinite; 
-            /* This pushes the entire rotating element "into the screen", making it look further away */
-            transform: translateZ(-150px);
+            background: #fff;
+            border: 2px solid #cfe0f2;
+            box-shadow: 0 8px 15px rgba(36, 67, 111, 0.05);
         }
-
-        /* This is the hover effect: it simply pauses the animation */
-        .feature-image-3d-container:hover .feature-image-3d-wrapper {
-            animation-play-state: paused;
-            scale: 1.05;
-        }
-
-        /* This styles the image holder */
-        .image-in-3d {
+        .doc-icon::after {
+            content: '';
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: var(--shadow-lg);
-            background-color: var(--panel);
+            top: -2px;
+            right: -2px;
+            width: 17px;
+            height: 17px;
+            background: linear-gradient(135deg, transparent 49%, #eef5fc 51%);
+            border-left: 2px solid #cfe0f2;
+            border-bottom: 2px solid #cfe0f2;
         }
-
-        .image-in-3d img {
-            width: 100%;
-            height: 100%;
-            /* 
-            'contain' ensures the entire image fits inside the container without being cropped.
-            This is better than 'cover' if you need to see the whole image.
-            */
-            object-fit: contain; 
-        }
-
-        /* The keyframe animation for a full, centered 360-degree spin (Corrected) */
-        @keyframes full-spin {
-            0% {
-                transform: rotateY(-27deg);
-            }
-            50% {
-                transform: rotateY(27deg);
-            }
-            100% {
-                transform: rotateY(-27deg);
-            }
-        }
-
-        /* Footer */
-        footer {
-            text-align: center;
-            padding: 2rem;
-            margin-top: 4rem;
-            background-color: var(--panel);
-            color: var(--muted);
-        }
-        .footer-links a {
-            color: var(--muted);
-            text-decoration: none;
-            margin: 0 1rem;
-            transition: color 0.3s ease;
-        }
-        .footer-links a:hover {
-            color: var(--accent);
-        }
-        .copyright {
-            margin-top: 1rem;
-            font-size: 0.9rem;
-        }
-
-        /* Pricing Section */
-        .pricing-section {
-            padding: 2.4rem;
-            text-align: center;
-            margin-top: 2rem;
-            border: 1px solid var(--border);
-            border-radius: 24px;
-            background: var(--panel);
-            box-shadow: var(--shadow);
-            opacity: 0;
-            transform: translateY(30px);
-            transition: all 0.8s cubic-bezier(0.2, 1, 0.3, 1);
-        }
-
-        .pricing-section.is-visible {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        .pricing-header h2 {
-            font-family: 'Space Grotesk', sans-serif;
-            font-size: clamp(1.7rem, 3vw, 2.8rem);
-            margin-bottom: 1rem;
-            font-weight: 700;
-        }
-
-        .pricing-header p {
-            font-size: 1rem;
-            color: var(--muted);
-            max-width: 600px;
-            margin: 0 auto 2rem;
-        }
-
-        .pricing-container {
+        .doc-label {
+            position: absolute;
+            left: -8px;
+            top: 22px;
+            height: 34px;
+            padding: 0 10px;
+            border-radius: 4px;
             display: grid;
-            gap: 24px;
-            grid-template-columns: repeat(3, 1fr);
-            max-width: 1000px;
+            place-items: center;
+            color: #fff;
+            font-weight: 900;
+            font-size: 17px;
+            box-shadow: 0 8px 16px rgba(20, 110, 55, 0.16);
+        }
+        .doc-label.xls { background: #21a765; }
+        .doc-label.pdf { background: #ef3045; font-size: 13px; }
+        .doc-label.csv { background: #0caf70; font-size: 13px; }
+        .big-arrow {
+            width: 48px;
+            height: 2px;
+            background: #bceadf;
+            position: relative;
+        }
+        .big-arrow::after {
+            content: '';
+            position: absolute;
+            right: -1px;
+            top: -6px;
+            width: 12px;
+            height: 12px;
+            border-top: 2px solid #73d6bd;
+            border-right: 2px solid #73d6bd;
+            transform: rotate(45deg);
+        }
+        .mini-sheet-icon,
+        .mini-page-icon {
+            width: 86px;
+            height: 44px;
+            border: 1px solid #e4ebf5;
+            border-radius: 5px;
+            background: repeating-linear-gradient(90deg, #fff, #fff 18px, #eef3f9 19px), repeating-linear-gradient(180deg, transparent, transparent 13px, #eef3f9 14px);
+        }
+        .mini-page-icon {
+            height: 58px;
+            background: #fff;
+            position: relative;
+        }
+        .mini-page-icon::before,
+        .mini-page-icon::after {
+            content: '';
+            position: absolute;
+            left: 13px;
+            right: 13px;
+            height: 6px;
+            border-radius: 999px;
+            background: #edf2f8;
+        }
+        .mini-page-icon::before { top: 17px; }
+        .mini-page-icon::after { top: 32px; }
+
+        .field-map-art {
+            display: grid;
+            grid-template-columns: 1fr 20px 1fr;
+            align-items: center;
+            gap: 8px;
+            width: 220px;
+        }
+        .field-map-art .map-pill { width: 92px; height: 25px; font-size: 10px; padding: 0 8px; margin: 4px 0; }
+        .connector-lines { color: #15a9bd; font-size: 34px; font-weight: 500; line-height: 0.8; transform: rotate(8deg); }
+
+        .step-card h3,
+        .template-card-static h3,
+        .benefit h3,
+        .pricing-card h3 {
+            margin: 0 0 9px;
+            color: #101e3b;
+            font-size: 18px;
+            letter-spacing: -0.025em;
+            font-weight: 800;
+        }
+        .step-card p,
+        .template-card-static p,
+        .benefit p,
+        .pricing-card p,
+        .resource-card p {
+            margin: 0;
+            color: #65728a;
+            font-size: 13px;
+            line-height: 1.55;
+            font-weight: 600;
+        }
+        .mini-tag {
+            display: inline-flex;
+            align-items: center;
+            height: 28px;
+            margin-top: 18px;
+            padding: 0 13px;
+            border-radius: 999px;
+            background: #f2f6fb;
+            color: #7c889b;
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+        .template-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 20px;
+            width: min(100%, 1000px);
             margin: 0 auto;
         }
 
-        @media (max-width: 900px) {
-            nav {
-                grid-template-columns: 1fr;
-                height: auto;
-                padding: 12px 18px;
-                gap: 10px;
-            }
-
-            .logo,
-            .invoice-page-nav,
-            .nav-links {
-                justify-self: center;
-            }
-
-            .hero {
-                margin-top: 132px;
-                padding: 122px 22px 44px;
-                border-radius: 20px;
-            }
-
-            .hero-layout {
-                grid-template-columns: 1fr;
-                gap: 22px;
-            }
-
-            .hero-visual {
-                justify-content: center;
-            }
-
-            .hero-flow,
-            .use-cases-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .mapping-demo {
-                grid-template-columns: 1fr;
-            }
-
-            .mapping-arrow {
-                justify-self: center;
-            }
-
-            .feature-section {
-                flex-direction: column;
-                gap: 1.8rem;
-                padding: 1.5rem;
-            }
-
-            .pricing-container {
-                grid-template-columns: 1fr;
-                max-width: 400px;
-            }
-        }
-
-        .pricing-card {
-            background-color: var(--panel);
-            border-radius: 16px;
-            padding: 2.5rem;
-            display: flex;
-            flex-direction: column;
+        .template-card-static {
+            position: relative;
+            min-height: 120px;
+            display: grid;
+            grid-template-columns: 46px 1fr;
+            align-items: center;
+            gap: 17px;
+            padding: 22px 22px;
+            background: #fff;
             border: 1px solid var(--border);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            text-align: left;
+            border-radius: 14px;
+            box-shadow: 0 10px 24px rgba(36, 67, 111, 0.045);
+            transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
         }
-
-        .pricing-card:hover {
-            transform: translateY(-8px);
-            border-color: var(--muted);
-            box-shadow: var(--shadow-lg);
+        .template-card-static.active {
+            border-color: #287aff;
+            box-shadow: 0 12px 28px rgba(22, 102, 241, 0.09);
         }
-
-        .pricing-card.recommended {
-            border-color: var(--accent);
-            background: linear-gradient(to bottom, #ffffff, #eff6ff);
-            box-shadow: 0 10px 30px rgba(59, 130, 246, 0.15);
+        .template-card-static:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-sm);
+            border-color: #bcd7f8;
+        }
+        .popular-badge {
+            position: absolute;
+            right: 18px;
+            top: 15px;
+            padding: 4px 8px;
+            border-radius: 999px;
+            background: #edf4ff;
+            color: #3f77ef;
+            font-size: 10px;
+            font-weight: 900;
+        }
+        .template-icon {
+            width: 43px;
+            height: 52px;
+            border-radius: 8px;
+            display: grid;
+            place-items: center;
+            color: #fff;
+            font-weight: 900;
+            box-shadow: inset 0 -10px 0 rgba(0,0,0,0.05);
             position: relative;
         }
-        .pricing-card.recommended::before {
-            content: 'Most Popular';
+        .template-icon::before,
+        .template-icon::after {
+            content: '';
             position: absolute;
-            top: -12px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: var(--accent);
-            color: #fff;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
+            left: 13px;
+            right: 10px;
+            height: 3px;
+            border-radius: 999px;
+            background: rgba(255,255,255,0.74);
+        }
+        .template-icon::before { top: 19px; }
+        .template-icon::after { top: 29px; }
+        .template-icon.blue { background: #166cf5; }
+        .template-icon.green { background: #36bf87; }
+        .template-icon.purple { background: #984ff2; }
+        .template-icon.orange { background: #ffa45d; }
+        .templates-link {
+            margin: 28px auto 0;
+            color: #0869ff;
+            font-weight: 900;
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 14px;
         }
 
-        .card-header h3 {
-            font-size: 1.5rem;
-            margin: 0 0 0.5rem;
-            font-weight: 700;
+        .benefits-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 38px;
+            width: min(100%, 1040px);
+            margin: 0 auto;
         }
-
-        .card-header p {
-            color: var(--muted);
-            margin-bottom: 2rem;
-            font-size: 0.875rem;
-            min-height: auto;
+        .benefit {
+            display: grid;
+            grid-template-columns: 66px 1fr;
+            gap: 17px;
+            align-items: start;
         }
+        .benefit-icon {
+            width: 66px;
+            height: 66px;
+            display: grid;
+            place-items: center;
+            border-radius: 50%;
+            font-size: 31px;
+        }
+        .benefit h3 { font-size: 14px; margin-bottom: 5px; }
+        .benefit p { font-size: 12px; }
+        .benefit-icon.blue { color: #1266f1; background: #eaf3ff; }
+        .benefit-icon.green { color: #10a56b; background: #e9fbf4; }
+        .benefit-icon.purple { color: #7b3ff1; background: #f3ebff; }
+        .benefit-icon.orange { color: #ee8b33; background: #fff2e7; }
 
-        .price {
-            font-size: 2.5rem;
+        .cta-panel {
+            margin: 36px auto 24px;
+            min-height: 246px;
+            display: grid;
+            grid-template-columns: minmax(280px, 1fr) auto minmax(280px, 0.9fr);
+            align-items: center;
+            gap: 36px;
+            padding: 36px 44px;
+            border: 1px solid #dce9fb;
+            border-radius: 14px;
+            background:
+                radial-gradient(circle at 11% 20%, rgba(14, 127, 255, 0.10), transparent 32%),
+                linear-gradient(110deg, #eef7ff 0%, #fbfdff 62%, #eef6ff 100%);
+            box-shadow: 0 16px 38px rgba(36, 67, 111, 0.08);
+            overflow: hidden;
+            position: relative;
+        }
+        .cta-panel h2 {
+            margin: 14px 0 23px;
+            color: var(--navy);
+            font-size: 32px;
+            line-height: 1.17;
+            letter-spacing: -0.055em;
             font-weight: 800;
-            margin-bottom: 2.5rem;
-            color: var(--fg);
         }
-
-        .price sup {
-            font-size: 1.25rem;
-            top: -0.5em;
+        .cta-eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            height: 25px;
+            padding: 0 10px;
+            border-radius: 999px;
+            background: #f2f8ff;
+            color: #2271f8;
+            font-size: 11px;
+            font-weight: 900;
         }
-
-        .price span {
-            font-size: 0.875rem;
-            font-weight: 500;
-            color: var(--muted);
+        .cta-checks { display: flex; gap: 28px; flex-wrap: wrap; color: #6b798f; font-size: 13px; font-weight: 800; }
+        .cta-actions { display: grid; gap: 16px; min-width: 236px; }
+        .cta-actions .btn { width: 100%; height: 58px; }
+        .file-flow {
+            position: relative;
+            height: 160px;
+            min-width: 300px;
         }
-
-        .card-body ul {
-            list-style: none;
-            padding: 0;
-            margin: 0 0 2.5rem;
-            flex-grow: 1;
-        }
-
-        .card-body li {
-            margin-bottom: 0.875rem;
-            color: var(--fg);
-            opacity: 0.8;
-            font-size: 0.9375rem;
+        .file-stack {
+            position: absolute;
+            left: 0;
+            top: 28px;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 4px;
+        }
+        .file-doc {
+            width: 72px;
+            height: 70px;
+            border: 1px solid #dbe8f8;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.9);
+            box-shadow: 0 13px 26px rgba(36, 67, 111, 0.09);
+            position: relative;
+        }
+        .file-doc .doc-label { top: 25px; left: 14px; height: 26px; font-size: 11px; }
+        .file-doc:nth-child(1) { transform: translateX(12px) rotate(-1deg); }
+        .file-doc:nth-child(2) { transform: translateY(18px); z-index: 2; }
+        .file-doc:nth-child(3) { transform: translateY(4px) rotate(1deg); }
+        .zip-pdf {
+            position: absolute;
+            right: 0;
+            top: 40px;
+            width: 116px;
+            height: 100px;
+        }
+        .zip-pdf .file-doc { position: absolute; width: 70px; height: 68px; }
+        .zip-pdf .file-doc:first-child { right: 34px; top: 0; }
+        .zip-pdf .file-doc:last-child { right: 0; top: 32px; }
+        .flow-dash {
+            position: absolute;
+            left: 122px;
+            top: 83px;
+            width: 92px;
+            height: 40px;
+            border-top: 3px dashed #1bafc5;
+            border-right: 3px dashed #1bafc5;
+            border-radius: 0 24px 0 0;
+        }
+        .sparkles {
+            position: absolute;
+            right: 17px;
+            top: 4px;
+            color: #c277ff;
+            font-size: 20px;
+            letter-spacing: 10px;
         }
 
-        .card-body li::before {
-            content: '+';
-            color: var(--success);
-            font-weight: 700;
+        .trusted {
+            text-align: center;
+            color: #7f8ca3;
+            font-size: 13px;
+            font-weight: 800;
+            margin: 30px 0 0;
         }
+        .logo-row {
+            display: flex;
+            justify-content: center;
+            gap: 54px;
+            flex-wrap: wrap;
+            margin-top: 26px;
+            color: #8b97aa;
+            font-size: 15px;
+            font-weight: 800;
+        }
+        .logo-row span { display: inline-flex; align-items: center; gap: 8px; opacity: 0.74; }
 
-        .card-footer .btn {
-            width: 100%;
-        }
-        .pricing-card.recommended .btn {
-            background: var(--accent);
-            color: #fff;
-        }
-        .pricing-card:not(.recommended) .btn {
-            background: var(--panel-2);
-            color: var(--fg);
+        .template-gallery-block,
+        .pricing-section,
+        .resources-section {
+            margin-top: 52px;
+            padding: 46px 38px;
             border: 1px solid var(--border);
+            border-radius: 20px;
+            background: rgba(255,255,255,0.88);
+            box-shadow: 0 14px 32px rgba(36, 67, 111, 0.06);
         }
-        .pricing-card:not(.recommended) .btn:hover {
-            background: var(--border);
+        .template-categories { display: flex; justify-content: center; gap: 10px; margin-bottom: 24px; }
+        .template-category-btn {
+            height: 40px;
+            padding: 0 16px;
+            border-radius: 999px;
+            border: 1px solid #d9e6f6;
+            background: #f6faff;
+            color: #3f516f;
+            font-weight: 800;
+            cursor: pointer;
+        }
+        .template-category-btn.active { color: #fff; background: var(--blue); border-color: var(--blue); }
+        .template-carousel-container { overflow: auto; padding: 8px 4px 14px; }
+        .template-carousel-track { min-width: 100%; }
+        .template-card {
+            display: block;
+            min-width: 220px;
+            background: #fff;
+            border: 1px solid #dbe8f8;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 12px 25px rgba(36, 67, 111, 0.07);
+            transition: transform 0.18s ease, box-shadow 0.18s ease;
+        }
+        .template-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-sm); }
+        .preview { height: 320px !important; }
+        .preview span { color: #8b97aa; font-weight: 800; }
+        .info h4 { font-size: 14px; font-weight: 900; color: var(--navy) !important; }
+
+        .pricing-grid,
+        .resources-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 18px;
+        }
+        .pricing-card,
+        .resource-card {
+            background: #fff;
+            border: 1px solid #dbe8f8;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 10px 25px rgba(36, 67, 111, 0.055);
+        }
+        .pricing-card.recommended { border-color: #287aff; box-shadow: 0 16px 32px rgba(22, 102, 241, 0.09); }
+        .price { color: var(--navy); font-size: 34px; font-weight: 900; letter-spacing: -0.05em; margin: 18px 0; }
+        .price span { color: #778398; font-size: 13px; font-weight: 800; letter-spacing: 0; }
+        .pricing-card ul { padding: 0; margin: 18px 0 24px; list-style: none; display: grid; gap: 10px; }
+        .pricing-card li { color: #53617a; font-size: 13px; font-weight: 700; display: flex; gap: 8px; }
+        .pricing-card li::before { content: '✓'; color: var(--green); font-weight: 900; }
+        .pricing-card .btn { height: 46px; width: 100%; }
+        .resource-card h3 { margin: 0 0 8px; font-size: 16px; color: var(--navy); }
+        .resource-card a { color: var(--blue); font-weight: 900; }
+
+        .site-footer {
+            margin-top: 54px;
+            padding: 34px 0 46px;
+            border-top: 1px solid #e3edf9;
+        }
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 18px 28px;
+            color: #68758d;
+            font-size: 13px;
+            font-weight: 800;
+        }
+        .footer-links a:hover { color: var(--blue); }
+        .copyright { text-align: center; color: #9aa5b6; font-size: 12px; font-weight: 700; margin-top: 22px; }
+
+        .animated-section { opacity: 1; transform: none; transition: opacity 0.55s ease, transform 0.55s ease; }
+        .animated-section.is-visible { opacity: 1; transform: none; }
+
+        @media (max-width: 1100px) {
+            .nav-inner, .page-shell { padding-left: 24px; padding-right: 24px; }
+            .primary-nav { gap: 18px; }
+            .hero { grid-template-columns: 1fr; min-height: auto; padding-top: 44px; }
+            .hero-copy { text-align: center; margin: 0 auto; }
+            .hero h1, .hero p.lede { margin-left: auto; margin-right: auto; }
+            .hero-actions, .hero-points { justify-content: center; }
+            .hero-review { justify-content: center; text-align: left; }
+            .hero-visual { width: 620px; max-width: 100%; margin: 0 auto; min-height: 570px; }
+            .sheet-card { left: 50px; }
+            .mapping-card { left: 75px; }
+            .invoice-card { right: 12px; }
+            .template-grid, .benefits-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .steps-grid { gap: 24px; }
+            .cta-panel { grid-template-columns: 1fr; text-align: center; }
+            .cta-checks { justify-content: center; }
+            .cta-actions { width: min(100%, 320px); margin: 0 auto; }
+            .file-flow { margin: 0 auto; }
         }
 
-        footer {
-            background-color: var(--panel);
-            border-top: 1px solid var(--border);
-            padding: 4rem 2rem;
-            margin-top: 8rem;
+        @media (max-width: 820px) {
+            .site-header { height: auto; position: relative; }
+            .nav-inner { grid-template-columns: 1fr; justify-items: center; padding-top: 16px; padding-bottom: 16px; gap: 15px; }
+            .brand { min-width: 0; }
+            .primary-nav { flex-wrap: wrap; gap: 14px 22px; }
+            .nav-links { justify-content: center; }
+            .page-shell { padding-left: 18px; padding-right: 18px; }
+            .hero h1 { font-size: clamp(38px, 12vw, 54px); }
+            .hero p.lede { font-size: 16px; }
+            .hero-review { grid-template-columns: 1fr; gap: 14px; justify-items: center; text-align: center; }
+            .hero-visual { min-height: 760px; width: min(100%, 380px); }
+            .sheet-card, .mapping-card, .invoice-card, .export-chip { position: relative; top: auto; left: auto; right: auto; width: 100%; margin: 14px 0; }
+            .dash-down, .dash-to-invoice { display: none; }
+            .steps-grid, .template-grid, .benefits-grid, .pricing-grid, .resources-grid { grid-template-columns: 1fr; }
+            .steps-grid::before { display: none; }
+            .benefit { grid-template-columns: 54px 1fr; }
+            .benefit-icon { width: 54px; height: 54px; font-size: 24px; }
+            .cta-panel { padding: 30px 20px; }
+            .cta-panel h2 { font-size: 28px; }
+            .file-flow { transform: scale(0.9); transform-origin: center; min-width: 285px; }
+            .template-gallery-block, .pricing-section, .resources-section { padding: 34px 18px; }
         }
     </style>
     <!-- Vercel Web Analytics -->
     <script defer src="/_vercel/insights/script.js"></script>
 </head>
 <body>
-    <nav>
-        <a href="/" class="logo">
-            <img src="assets/images/android-chrome-512x512.png" alt="CSVLink Logo" class="logo-icon">
-            <span>CSVLink</span>
-        </a>
-        <div class="invoice-page-nav" aria-label="Invoice pages">
-            <a href="/" class="invoice-page-link is-active">Overview</a>
-            <a href="/invoice/use-cases" class="invoice-page-link">Use Cases</a>
-            <a href="/invoice/how-it-works" class="invoice-page-link">How It Works</a>
-            <a href="/excel-to-invoice" class="invoice-page-link">Excel to Invoice</a>
-            <a href="/bulk-invoice-generator" class="invoice-page-link">Bulk Invoice Generator</a>
-            <a href="/why-csvlink" class="invoice-page-link">Why CSVLink</a>
-            <a href="/ai-integration" class="invoice-page-link">AI Integration</a>
+    <header class="site-header">
+        <div class="nav-inner">
+            <a href="/" class="brand" aria-label="CSVLink home">
+                <img src="assets/images/android-chrome-512x512.png" alt="CSVLink Logo">
+                <span>CSVLink</span>
+            </a>
+            <div class="primary-nav" role="navigation" aria-label="Main navigation">
+                <a href="#how-it-works">How it works</a>
+                <a href="#templates">Templates</a>
+                <a href="#pricing">Pricing</a>
+                <a href="#use-cases" class="nav-chevron">Use cases</a>
+                <a href="#resources" class="nav-chevron">Resources</a>
+            </div>
+            <div class="nav-links" id="nav-links" data-nav-mode="landing">
+                <a href="/login">Login</a>
+                <a href="/tool" class="btn">Try it free</a>
+            </div>
         </div>
-        <div class="nav-links" id="nav-links">
-            <!-- Auth links will be injected here by JS -->
-        </div>
-    </nav>
+    </header>
 
-    <main class="container">
-        <!-- (Your Hero, Features, and Template sections go here...) -->
-        <section class="hero">
-            <div class="hero-layout">
-                <div class="hero-copy">
-                    <h1>Bulk generate invoices from your Excel or CSV using your own template.</h1>
-                    <p>Bring your branded invoice design, connect customer names, invoice numbers, dates, taxes, totals, and line items, then export a full invoice batch in minutes instead of editing each file by hand.</p>
-                    <div class="hero-actions">
-                        <a href="/tool" class="btn">Start Building</a>
-                        <a href="#templates" class="btn ghost">See Invoice Templates</a>
-                    </div>
-                    <p style="font-size: 0.95rem; color: #51617d; margin-top: 1rem; margin-bottom: 0;">Free to use. No login required to start.</p>
+    <main class="page-shell">
+        <section class="hero" aria-labelledby="hero-title">
+            <div class="hero-copy">
+                <div class="eyebrow"><span class="bolt">↯</span> From spreadsheet to professional invoices</div>
+                <h1 id="hero-title">Turn an Excel list into ready-to-send invoices in minutes.</h1>
+                <p class="lede">Upload your Excel or CSV, map the columns to your invoice template, and export personalized invoices as polished PDFs in one run. Save hours of repetitive work.</p>
+                <div class="hero-actions">
+                    <a href="/tool" class="btn btn-primary">
+                        <svg class="button-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 16V4m0 0 4 4m-4-4-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                        Import your data
+                    </a>
+                    <a href="#how-it-works" class="btn btn-secondary">
+                        <svg class="button-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="m10 8 6 4-6 4V8Z" fill="currentColor"/></svg>
+                        Watch demo
+                    </a>
                 </div>
-                <figure class="hero-visual">
-                    <div class="hero-visual-frame">
-                        <img src="assets/images/invoice-hero-flow.webp" alt="An Excel invoice table at the top flowing down into a finished invoice below." width="848" height="1264" fetchpriority="high" decoding="async">
-                    </div>
-                </figure>
-            </div>
-
-            <div class="hero-flow">
-                <article class="hero-flow-card">
-                    <h3>1. Upload your invoice table</h3>
-                    <p>Import Excel or CSV data with one row per invoice or grouped rows for line items.</p>
-                </article>
-                <article class="hero-flow-card">
-                    <h3>2. Link invoice fields</h3>
-                    <p>Map customer details, due dates, totals, and item rows into your invoice layout.</p>
-                </article>
-                <article class="hero-flow-card">
-                    <h3>3. Export every invoice</h3>
-                    <p>Generate polished invoices in one run, ready to send, store, or print.</p>
-                </article>
-            </div>
-        </section>
-        
-        <section id="first-feature" class="feature-section animated-section">
-            <div class="first-feature-heading">
-                <h2>Built for invoice exports with totals, due dates, and line items</h2>
-            </div>
-            <div class="feature-content">
-                <p>CSVLink is made for the invoice spreadsheets teams already have: exports with invoice numbers, bill-to details, due dates, taxes, totals, and sometimes repeated rows for line items. Instead of squeezing that data into a generic mail-merge document, you map it into a real invoice layout you can reuse every billing cycle.</p>
-                <ul class="bulk-steps">
-                    <li><strong>Prepare your invoice data:</strong> Keep clear fields such as invoice number, client name, due date, subtotal, tax, and balance due.</li>
-                    <li><strong>Choose the right data mode:</strong> Use one row per invoice or grouped rows when each invoice spans multiple line items.</li>
-                    <li><strong>Link once and regenerate anytime:</strong> Reuse your invoice template whenever new billing data arrives.</li>
+                <ul class="hero-points" aria-label="Key benefits">
+                    <li><span class="check-dot">✓</span> Free to test</li>
+                    <li><span class="check-dot">✓</span> No signup required</li>
+                    <li><span class="check-dot">✓</span> Export ZIP or merged PDF</li>
                 </ul>
-
-                <div class="mapping-demo">
-                    <div class="mapping-column">
-                        <h4>Your invoice columns</h4>
-                        <span class="field-pill">invoice_no</span>
-                        <span class="field-pill">bill_to_name</span>
-                        <span class="field-pill">due_date</span>
-                        <span class="field-pill">amount_due</span>
-                    </div>
-                    <span class="mapping-arrow">Link data</span>
-                    <div class="mapping-column">
-                        <h4>Template placeholders</h4>
-                        <span class="field-pill">{{invoice_number}}</span>
-                        <span class="field-pill">{{customer_name}}</span>
-                        <span class="field-pill">{{payment_due}}</span>
-                        <span class="field-pill">{{total_due}}</span>
+                <div class="hero-review" aria-label="Customer trust">
+                    <div class="avatars" aria-hidden="true"><span class="avatar">J</span><span class="avatar">M</span><span class="avatar">A</span><span class="avatar">S</span></div>
+                    <div>
+                        <div class="review-stars">★★★★★</div>
+                        <div class="review-text">Trusted by bookkeepers, admins<br>and small businesses</div>
                     </div>
                 </div>
             </div>
 
-            <div class="feature-image">
-                <img src="assets/images/editor-img-1.webp" alt="Invoice template editor used to link spreadsheet data to billing placeholders" width="2559" height="1301" loading="lazy" decoding="async">
+            <div class="hero-visual" aria-hidden="true">
+                <div class="ui-card sheet-card">
+                    <div class="sheet-title"><span class="excel-icon">×</span> clients_invoices.xlsx</div>
+                    <table class="mini-table">
+                        <thead><tr><th>Client</th><th>Invoice #</th><th>Due date</th><th>Total</th></tr></thead>
+                        <tbody>
+                            <tr><td>Amanda Stone</td><td>INV-2048</td><td>Jun 14, 2026</td><td>$2,450.00</td></tr>
+                            <tr><td>Bright Labs</td><td>INV-2049</td><td>Jun 21, 2026</td><td>$1,120.00</td></tr>
+                            <tr><td>Core Systems</td><td>INV-2050</td><td>Jun 21, 2026</td><td>$3,300.00</td></tr>
+                        </tbody>
+                    </table>
+                    <div class="table-skeleton"><span class="skeleton-line"></span><span class="skeleton-line"></span></div>
+                </div>
+
+                <div class="hero-dash dash-down"></div>
+                <div class="ui-card mapping-card">
+                    <div class="map-row"><span class="map-pill"><span class="check-dot">✓</span> Client</span><span class="map-arrow">→</span><span class="map-pill output">Bill to</span></div>
+                    <div class="map-row"><span class="map-pill"><span class="check-dot">✓</span> Invoice #</span><span class="map-arrow">→</span><span class="map-pill output">Invoice number</span></div>
+                    <div class="map-row"><span class="map-pill"><span class="check-dot">✓</span> Due date</span><span class="map-arrow">→</span><span class="map-pill output">Due date</span></div>
+                    <div class="map-row"><span class="map-pill"><span class="check-dot">✓</span> Total</span><span class="map-arrow">→</span><span class="map-pill output">Total amount</span></div>
+                </div>
+                <div class="hero-dash dash-to-invoice"></div>
+
+                <div class="ui-card invoice-card">
+                    <div class="invoice-head"><span class="logo-circle">YOUR<br>LOGO</span><span class="invoice-badge">INVOICE</span></div>
+                    <div class="invoice-meta">Invoice #: INV-2048<br>Date: May 14, 2026</div>
+                    <div class="invoice-address"><strong>Bill to</strong>Amanda Stone<br>123 Market Street<br>San Francisco, CA 94103</div>
+                    <div class="invoice-lines">
+                        <div class="invoice-row header"><span>Description</span><span>Amount</span></div>
+                        <div class="invoice-row"><span>Design retainer</span><span>$1,800.00</span></div>
+                        <div class="invoice-row"><span>Implementation</span><span>$650.00</span></div>
+                    </div>
+                    <div class="invoice-total"><span>Total</span><span>$2,450.00</span></div>
+                    <div class="thanks">Thank you!</div>
+                </div>
+                <div class="ui-card export-chip"><span class="check-dot">✓</span> Export personalized PDFs</div>
             </div>
         </section>
 
-        <section class="use-cases-section animated-section">
-            <div class="feature-content">
-                <h2>Invoice workflows this page is built for</h2>
-                <p>From solo operators to finance teams, the same invoice engine adapts to different billing models and spreadsheet structures.</p>
+        <section class="section animated-section" id="how-it-works">
+            <div class="section-heading">
+                <h2>How it works</h2>
+                <p>Three simple steps. Done in minutes.</p>
             </div>
-            <div class="use-cases-grid">
-                <article class="use-case-card">
-                    <h3>Freelancers and consultants</h3>
-                    <p>Send polished invoices with project descriptions, due dates, and taxes without rebuilding the same file every month.</p>
+            <div class="steps-grid">
+                <article class="step-card">
+                    <div class="step-number">1</div>
+                    <div class="step-art"><div class="doc-icon"><span class="doc-label xls">X</span></div><div class="big-arrow"></div><div class="mini-sheet-icon"></div></div>
+                    <h3>Upload your data</h3>
+                    <p>Drag and drop your Excel or CSV file. We securely read your data in seconds.</p>
+                    <span class="mini-tag">.xlsx, .xls, .csv supported</span>
                 </article>
-                <article class="use-case-card">
-                    <h3>Creative agencies and studios</h3>
-                    <p>Generate branded client invoices in batches while keeping custom layouts for different service packages.</p>
+                <article class="step-card">
+                    <div class="step-number">2</div>
+                    <div class="step-art field-map-art">
+                        <div><span class="map-pill"><span class="check-dot">✓</span> Client</span><span class="map-pill"><span class="check-dot">✓</span> Total</span></div>
+                        <div class="connector-lines">⌁</div>
+                        <div><span class="map-pill output">Bill to</span><span class="map-pill output">Due date</span></div>
+                    </div>
+                    <h3>Map your fields</h3>
+                    <p>Connect your columns to the fields in your invoice template.</p>
+                    <span class="mini-tag">Use your own template</span>
                 </article>
-                <article class="use-case-card">
-                    <h3>Wholesale and distribution teams</h3>
-                    <p>Turn exported order spreadsheets into invoice PDFs that include item tables, quantities, and totals.</p>
-                </article>
-                <article class="use-case-card">
-                    <h3>Subscription and retainer billing</h3>
-                    <p>Reuse the same invoice template for recurring customers while swapping dates, line items, and balances automatically.</p>
-                </article>
-                <article class="use-case-card">
-                    <h3>Operations and finance teams</h3>
-                    <p>Standardize invoice output across departments while keeping spreadsheet-driven approval and accounting workflows.</p>
-                </article>
-                <article class="use-case-card">
-                    <h3>Service businesses with itemized work</h3>
-                    <p>Map grouped rows into repeated invoice items so each customer gets the right breakdown of labor, parts, or deliverables.</p>
+                <article class="step-card">
+                    <div class="step-number">3</div>
+                    <div class="step-art"><div class="doc-icon"><span class="doc-label pdf">PDF</span></div><div class="big-arrow"></div><div class="mini-page-icon"></div></div>
+                    <h3>Export invoices</h3>
+                    <p>Generate polished PDFs for every row. Download as ZIP or merged PDF.</p>
+                    <span class="mini-tag">Ready to send or print</span>
                 </article>
             </div>
         </section>
-        
-        
-        <!-- 6. Section 3: Template Gallery - REWORKED -->
-        <section id="templates" class="templates-section animated-section">
-            <h2>Start from invoice templates or build your own invoice layout</h2>
-            <p style="color: var(--muted); max-width: 680px; margin: 0 auto 2rem;">Open an invoice template, replace the sample branding, link your spreadsheet, and export a full billing run without starting from scratch.</p>
-            
-            <!-- Using the correct class name: "template-category-btn" -->
+
+        <section class="section animated-section" id="templates">
+            <div class="section-heading">
+                <h2>More than just invoices</h2>
+                <p>Create any document you need from your spreadsheet.</p>
+            </div>
+            <div class="template-grid">
+                <a class="template-card-static active" href="/tool">
+                    <span class="popular-badge">Most popular</span>
+                    <span class="template-icon blue">▤</span>
+                    <span><h3>Invoices</h3><p>Professional invoices ready to send.</p></span>
+                </a>
+                <a class="template-card-static" href="/tool">
+                    <span class="template-icon green">▤</span>
+                    <span><h3>Statements</h3><p>Account statements and summaries.</p></span>
+                </a>
+                <a class="template-card-static" href="/tool">
+                    <span class="template-icon purple">▤</span>
+                    <span><h3>Receipts</h3><p>Receipts for payments and refunds.</p></span>
+                </a>
+                <a class="template-card-static" href="/tool">
+                    <span class="template-icon orange">▤</span>
+                    <span><h3>Certificates</h3><p>Certificates for clients, staff or events.</p></span>
+                </a>
+            </div>
+            <div style="text-align:center"><a href="#template-gallery" class="templates-link">Explore all templates <span>→</span></a></div>
+        </section>
+
+        <section class="section animated-section" id="use-cases">
+            <div class="section-heading">
+                <h2>Why teams choose CSVLink</h2>
+            </div>
+            <div class="benefits-grid">
+                <article class="benefit"><span class="benefit-icon blue">ϟ</span><span><h3>Save hours every week</h3><p>Automate repetitive invoice creation and focus on important work.</p></span></article>
+                <article class="benefit"><span class="benefit-icon green">⬟</span><span><h3>Use your own template</h3><p>Keep your brand and layout. Map once and reuse whenever you need.</p></span></article>
+                <article class="benefit"><span class="benefit-icon purple">✓</span><span><h3>Accurate & reliable</h3><p>No copy-paste errors. Every invoice is generated from your real data.</p></span></article>
+                <article class="benefit"><span class="benefit-icon orange">▣</span><span><h3>Secure & private</h3><p>Your files are processed securely and never shared. You're in control.</p></span></article>
+            </div>
+        </section>
+
+        <section class="cta-panel animated-section" aria-labelledby="cta-title">
+            <div>
+                <span class="cta-eyebrow"><span class="check-dot">✓</span> Start for free</span>
+                <h2 id="cta-title">Generate your first batch<br>of invoices—free.</h2>
+                <div class="cta-checks">
+                    <span class="mini-check"><span class="check-dot">✓</span> No credit card</span>
+                    <span class="mini-check"><span class="check-dot">✓</span> No signup</span>
+                    <span class="mini-check"><span class="check-dot">✓</span> Free to test</span>
+                </div>
+            </div>
+            <div class="cta-actions">
+                <a href="/tool" class="btn btn-primary">
+                    <svg class="button-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 16V4m0 0 4 4m-4-4-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                    Import your data
+                </a>
+                <a href="#how-it-works" class="btn btn-secondary">
+                    <svg class="button-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="m10 8 6 4-6 4V8Z" fill="currentColor"/></svg>
+                    Watch demo
+                </a>
+                <div style="color:#7a879b;font-size:12px;font-weight:800;text-align:center;">Works with Excel (.xlsx, .xls) and CSV files</div>
+            </div>
+            <div class="file-flow" aria-hidden="true">
+                <div class="sparkles">✦✧</div>
+                <div class="file-stack"><div class="file-doc"><span class="doc-label xls">XLSX</span></div><div class="file-doc"><span class="doc-label csv">CSV</span></div></div>
+                <div class="flow-dash"></div>
+                <div class="zip-pdf"><div class="file-doc"><span class="doc-label" style="background:#ff9e46;">ZIP</span></div><div class="file-doc"><span class="doc-label pdf">PDF</span></div></div>
+            </div>
+        </section>
+
+        <section class="trusted" aria-label="Trusted by teams">
+            Trusted by teams around the world
+            <div class="logo-row">
+                <span>◇ Bright Labs</span><span>◒ Core Systems</span><span>PAPER &amp; CO.</span><span>✥ Vertex Solutions</span><span>⬡ Northfield Group</span><span>◩ BluePeak</span>
+            </div>
+        </section>
+
+        <section class="template-gallery-block animated-section" id="template-gallery">
+            <div class="section-heading">
+                <h2>Start from invoice templates or build your own invoice layout</h2>
+                <p>Open an invoice template, replace the sample branding, link your spreadsheet, and export a full billing run without starting from scratch.</p>
+            </div>
             <div class="template-categories">
                 <button class="template-category-btn active" data-category="invoice">Invoice Templates</button>
             </div>
-
             <div class="template-carousel-container">
-                <div class="template-carousel-track">
-                    <!-- Templates from Supabase will be rendered here -->
-                </div>
+                <div class="template-carousel-track"></div>
             </div>
         </section>
 
-        <!-- Section 2: AI Design -->
-        <section class="feature-section animated-section">
-            <div class="feature-content">
-                <h2>Use AI to draft the invoice layout, then connect your billing data</h2>
-                <p>Describe the invoice style you need, let AI generate the starting structure, and refine sections, branding, and totals before linking live spreadsheet columns.</p>
-                <ul class="bulk-steps" style="margin-top: 1rem;">
-                    <li><strong>Generate:</strong> Start from a prompt describing the invoice layout you want.</li>
-                    <li><strong>Adjust:</strong> Refine sections for billing addresses, payment terms, tables, and brand details.</li>
-                    <li><strong>Export:</strong> Link your invoice fields and produce a full batch from Excel or CSV.</li>
-                </ul>
-            </div>
-            <div class="feature-image">
-                <img src="assets/images/editor-img-1.webp" alt="CSVLink editor showing an AI-generated invoice template draft ready for field mapping." width="2559" height="1301" loading="lazy" decoding="async">
-            </div>
-        </section>
-
-
-        <section class="use-cases-section animated-section" id="invoice-resources">
-            <div class="feature-content">
-                <h2>More invoice automation guides and landing pages</h2>
-                <p>These pages target the long-tail searches behind the same core workflow: turning spreadsheet billing data into finished invoice PDFs.</p>
-            </div>
-            <div class="use-cases-grid">
-                <article class="use-case-card"><h3><a href="/csv-to-invoice">CSV to Invoice Generator</a></h3><p>For teams that export billing data as CSV and need branded PDF invoices from that file.</p></article>
-                <article class="use-case-card"><h3><a href="/invoice-template-builder">Invoice Template Builder</a></h3><p>For users who want to build or import a reusable invoice layout before mapping spreadsheet fields.</p></article>
-                <article class="use-case-card"><h3><a href="/itemized-invoice-generator">Itemized Invoice Generator</a></h3><p>For grouped row workflows where several spreadsheet rows become one detailed invoice.</p></article>
-                <article class="use-case-card"><h3><a href="/excel-invoice-automation">Excel Invoice Automation</a></h3><p>For finance teams replacing manual copy-paste or fragile invoice macros.</p></article>
-                <article class="use-case-card"><h3><a href="/blog/create-invoices-from-excel">How to Create Invoices from Excel</a></h3><p>A practical guide for cleaning data, choosing one-row or grouped mode, and exporting PDFs.</p></article>
-                <article class="use-case-card"><h3><a href="/blog/bulk-invoice-csv-format">Best CSV Format for Bulk Invoices</a></h3><p>A CSV preparation guide with recommended invoice, customer, total, and line item columns.</p></article>
-            </div>
-        </section>
-
-        <section id="pricing" class="pricing-section animated-section">
-            <div class="pricing-header">
+        <section class="pricing-section animated-section" id="pricing">
+            <div class="section-heading">
                 <h2>Pricing for invoice teams that need clean batch exports</h2>
                 <p>Start free while you validate your invoice workflow, then upgrade when you need unlimited templates and higher-volume export runs.</p>
             </div>
-            <div class="pricing-container">
-                <div class="pricing-card">
-                    <div class="card-header">
-                        <h3>Starter</h3>
-                        <p>Perfect for early projects and testing your workflow.</p>
-                        <div class="price"><sup>$</sup>0<span>/month</span></div>
-                    </div>
-                    <div class="card-body">
-                        <ul>
-                           <li>Access to the template editor</li>
-                           <li>Access to AI layout generation</li>
-                           <li>Up to 5 saved templates</li>
-                           <li>Export up to 15 files per run</li>
-                        </ul>
-                    </div>
-                    <div class="card-footer">
-                        <a href="/tool" class="btn">Get Started</a>
-                    </div>
-                </div>
-                <div class="pricing-card recommended">
-                    <div class="card-header">
-                        <h3>Monthly Pro</h3>
-                        <p>For teams generating high-volume documents.</p>
-                        <div class="price"><sup>$</sup>12<span>/month</span></div>
-                    </div>
-                    <div class="card-body">
-                        <ul>
-                           <li>All Starter features included</li>
-                           <li>Unlimited templates</li>
-                           <li>API access</li>
-                           <li>PNG and JPG export options</li>
-                           <li>Unlimited files per export run</li>
-                        </ul>
-                    </div>
-                    <div class="card-footer">
-                        <a href="https://csvlink.lemonsqueezy.com/buy/3b3f16ca-17a6-4cc5-9a99-cf5abcbf6a1c" class="btn lemonsqueezy-button">Upgrade to Pro</a>
-                    </div>
-                </div>
-                <div class="pricing-card">
-                    <div class="card-header">
-                        <h3>Annual Pro</h3>
-                        <p>Best value for production usage all year.</p>
-                        <div class="price"><sup>$</sup>130<span>/year</span></div>
-                    </div>
-                    <div class="card-body">
-                        <ul>
-                           <li>All Pro features included</li>
-                           <li>Yearly billing</li>
-                           <li>Lower effective monthly cost</li>
-                        </ul>
-                    </div>
-                    <div class="card-footer">
-                         <a href="https://csvlink.lemonsqueezy.com/buy/3b3f16ca-17a6-4cc5-9a99-cf5abcbf6a1c" class="btn lemonsqueezy-button">Upgrade to Pro (Annual)</a>
-                    </div>
-                </div>
+            <div class="pricing-grid">
+                <article class="pricing-card">
+                    <h3>Starter</h3>
+                    <p>Perfect for early projects and testing your workflow.</p>
+                    <div class="price"><sup>$</sup>0<span>/month</span></div>
+                    <ul><li>Access to the template editor</li><li>Access to AI layout generation</li><li>Up to 5 saved templates</li><li>Export up to 15 files per run</li></ul>
+                    <a href="/tool" class="btn btn-secondary">Get Started</a>
+                </article>
+                <article class="pricing-card recommended">
+                    <h3>Monthly Pro</h3>
+                    <p>For teams generating high-volume documents.</p>
+                    <div class="price"><sup>$</sup>12<span>/month</span></div>
+                    <ul><li>All Starter features included</li><li>Unlimited templates</li><li>API access</li><li>PNG and JPG export options</li><li>Unlimited files per export run</li></ul>
+                    <a href="https://csvlink.lemonsqueezy.com/buy/3b3f16ca-17a6-4cc5-9a99-cf5abcbf6a1c" class="btn btn-primary lemonsqueezy-button">Upgrade to Pro</a>
+                </article>
+                <article class="pricing-card">
+                    <h3>Annual Pro</h3>
+                    <p>Best value for production usage all year.</p>
+                    <div class="price"><sup>$</sup>130<span>/year</span></div>
+                    <ul><li>All Pro features included</li><li>Yearly billing</li><li>Lower effective monthly cost</li></ul>
+                    <a href="https://csvlink.lemonsqueezy.com/buy/3b3f16ca-17a6-4cc5-9a99-cf5abcbf6a1c" class="btn btn-primary lemonsqueezy-button">Upgrade to Pro (Annual)</a>
+                </article>
+            </div>
+        </section>
+
+        <section class="resources-section animated-section" id="resources">
+            <div class="section-heading">
+                <h2>Resources for invoice automation</h2>
+                <p>Keep the existing SEO pages and guides available from the new landing page.</p>
+            </div>
+            <div class="resources-grid">
+                <article class="resource-card"><h3><a href="/csv-to-invoice">CSV to Invoice Generator</a></h3><p>For teams that export billing data as CSV and need branded PDF invoices from that file.</p></article>
+                <article class="resource-card"><h3><a href="/excel-to-invoice">Excel to Invoice</a></h3><p>Turn spreadsheet rows into polished invoices without repetitive copy-paste.</p></article>
+                <article class="resource-card"><h3><a href="/bulk-invoice-generator">Bulk Invoice Generator</a></h3><p>Generate high-volume invoice batches from structured rows.</p></article>
+                <article class="resource-card"><h3><a href="/invoice-template-builder">Invoice Template Builder</a></h3><p>Build or import a reusable invoice layout before mapping spreadsheet fields.</p></article>
+                <article class="resource-card"><h3><a href="/itemized-invoice-generator">Itemized Invoice Generator</a></h3><p>Map grouped rows into repeated line items for detailed invoices.</p></article>
+                <article class="resource-card"><h3><a href="/blog/create-invoices-from-excel">Excel Invoice Guide</a></h3><p>A practical guide for cleaning data and exporting invoice PDFs.</p></article>
             </div>
         </section>
     </main>
-    
-        <footer>
+
+    <footer class="site-footer">
         <div class="footer-links">
             <a href="/">Overview</a>
             <a href="/excel-to-invoice">Excel to Invoice</a>
@@ -1290,41 +1512,19 @@
     <script type="module" src="assets/js/auth.js"></script>
 
     <script type="module">
-        // 1. Import your configured Supabase client
         import { supabase } from './assets/js/supabase-client.js';
 
         document.addEventListener('DOMContentLoaded', async function() {
-            const invoiceNavLinks = document.getElementById('nav-links');
-            const syncInvoiceAuthLinks = () => {
-                if (!invoiceNavLinks) return;
-                invoiceNavLinks.querySelectorAll('a').forEach((link) => {
-                    if (link.getAttribute('href') === '/#pricing') {
-                        link.setAttribute('href', '/#pricing');
-                    }
-                });
-            };
-            if (invoiceNavLinks) {
-                const navObserver = new MutationObserver(syncInvoiceAuthLinks);
-                navObserver.observe(invoiceNavLinks, { childList: true, subtree: true });
-                syncInvoiceAuthLinks();
-            }
-
-            // --- ALL YOUR EXISTING PAGE LOGIC IS HERE ---
             const carouselTrack = document.querySelector('.template-carousel-track');
             const categoryButtons = document.querySelectorAll('.template-category-btn');
-            
-            const templatesByCategory = {
-                invoice: [],
-                report: [],
-                resume: [] 
-            };
+            const templatesByCategory = { invoice: [], report: [], resume: [] };
             let currentCarouselInterval;
 
             const renderTemplates = (templates) => {
-                if (!carouselTrack) { console.error("Carousel track not found!"); return; }
+                if (!carouselTrack) return;
                 carouselTrack.innerHTML = '';
                 if (!templates || templates.length === 0) {
-                    carouselTrack.innerHTML = `<p style="width: 100%; text-align: center;">No invoice templates found.</p>`;
+                    carouselTrack.innerHTML = `<p style="width:100%; text-align:center; color:#7a879b; font-weight:800;">No invoice templates found.</p>`;
                     if (currentCarouselInterval) clearInterval(currentCarouselInterval);
                     return;
                 }
@@ -1335,22 +1535,22 @@
                     card.title = `Use ${template.title}`;
                     const canvasId = `preview-canvas-${template.id}`;
                     card.innerHTML = `
-                        <div class="preview" style="height: 350px; background-color: #fff; display:flex; align-items:center; justify-content:center; overflow: hidden;">
+                        <div class="preview" style="height:320px; background-color:#fff; display:flex; align-items:center; justify-content:center; overflow:hidden;">
                             <canvas id="${canvasId}"></canvas>
                         </div>
-                        <div class="info" style="text-align: center; padding: 1rem;">
-                            <h4 style="margin: 0; color: var(--fg);">${template.title || 'Untitled Template'}</h4>
+                        <div class="info" style="text-align:center; padding:1rem;">
+                            <h4 style="margin:0; color:var(--navy);">${template.title || 'Untitled Template'}</h4>
                         </div>
                     `;
                     carouselTrack.appendChild(card);
-                    if (template.preview_url && typeof template.preview_url === 'object') {
-                        const previewCanvasEl = document.getElementById(canvasId);
-                        const previewContainer = previewCanvasEl.parentElement;
+                    const previewCanvasEl = document.getElementById(canvasId);
+                    const previewContainer = previewCanvasEl?.parentElement;
+                    if (template.preview_url && typeof template.preview_url === 'object' && window.fabric && previewCanvasEl && previewContainer) {
                         const PAGE_WIDTH = 768;
                         const PAGE_HEIGHT = 1024;
                         const staticCanvas = new fabric.StaticCanvas(canvasId, {
-                            width: previewContainer.clientWidth,
-                            height: previewContainer.clientHeight,
+                            width: previewContainer.clientWidth || 220,
+                            height: previewContainer.clientHeight || 320,
                         });
                         staticCanvas.loadFromJSON(template.preview_url, () => {
                             const clipRect = new fabric.Rect({ left: 0, top: 0, width: PAGE_WIDTH, height: PAGE_HEIGHT, absolutePositioned: true });
@@ -1363,53 +1563,51 @@
                             staticCanvas.setViewportTransform([scale, 0, 0, scale, offsetX, offsetY]);
                             staticCanvas.renderAll();
                         });
-                    } else {
-                        const previewContainer = document.getElementById(canvasId).parentElement;
+                    } else if (previewContainer) {
                         previewContainer.innerHTML = '<span>No preview available</span>';
                     }
                 });
                 carouselTrack.style.display = 'grid';
-                carouselTrack.style.gridTemplateColumns = `repeat(${templates.length}, 1fr)`;
-                carouselTrack.style.gap = '2rem';
+                carouselTrack.style.gridTemplateColumns = `repeat(${templates.length}, minmax(220px, 1fr))`;
+                carouselTrack.style.gap = '1.4rem';
                 setupCarousel(templates.length);
             };
 
             function setupCarousel(itemCount) {
                 if (currentCarouselInterval) clearInterval(currentCarouselInterval);
-                if(carouselTrack.parentElement) carouselTrack.parentElement.scrollTo({ left: 0, behavior: 'smooth' });
+                if (carouselTrack?.parentElement) carouselTrack.parentElement.scrollTo({ left: 0, behavior: 'smooth' });
                 const itemsToShow = 4;
                 if (itemCount <= itemsToShow) return;
                 let currentIndex = 0;
                 const maxIndex = itemCount - itemsToShow;
                 function nextSlide() {
                     currentIndex = currentIndex >= maxIndex ? 0 : currentIndex + 1;
-                    const scrollAmount = carouselTrack.children[0].offsetWidth * currentIndex;
-                    if(carouselTrack.parentElement) carouselTrack.parentElement.scrollTo({ left: scrollAmount, behavior: 'smooth' });
+                    const firstChild = carouselTrack.children[0];
+                    const scrollAmount = firstChild ? firstChild.offsetWidth * currentIndex : 0;
+                    if (carouselTrack.parentElement) carouselTrack.parentElement.scrollTo({ left: scrollAmount, behavior: 'smooth' });
                 }
                 currentCarouselInterval = setInterval(nextSlide, 5000);
             }
 
             async function fetchPublicTemplates() {
-                let { data: public_templates, error } = await supabase.from('public_templates').select('id, title, preview_url, category');
+                if (!carouselTrack) return;
+                const { data: public_templates, error } = await supabase.from('public_templates').select('id, title, preview_url, category');
                 if (error) {
                     console.error('Error fetching public templates:', error);
-                    if (carouselTrack) carouselTrack.innerHTML = `<p>Could not load templates.</p>`;
+                    carouselTrack.innerHTML = `<p style="width:100%; text-align:center; color:#7a879b; font-weight:800;">Could not load templates.</p>`;
                     return;
                 }
                 public_templates.forEach(template => {
-                    if (templatesByCategory[template.category]) {
-                        templatesByCategory[template.category].push(template);
-                    }
+                    if (templatesByCategory[template.category]) templatesByCategory[template.category].push(template);
                 });
-                renderTemplates(templatesByCategory['invoice']);
+                renderTemplates(templatesByCategory.invoice);
             }
 
             categoryButtons.forEach(button => {
                 button.addEventListener('click', () => {
                     categoryButtons.forEach(btn => btn.classList.remove('active'));
                     button.classList.add('active');
-                    const category = button.dataset.category;
-                    renderTemplates(templatesByCategory[category]);
+                    renderTemplates(templatesByCategory[button.dataset.category]);
                 });
             });
 
@@ -1425,9 +1623,6 @@
             animatedSections.forEach(section => observer.observe(section));
 
             await fetchPublicTemplates();
-            
-            // Lemon.js will automatically handle links with the 'lemonsqueezy-button' class.
-
         });
     </script>
 </body>

@@ -14,18 +14,6 @@ const redirectTo = params.get("redirect") || "/dashboard.html";
 let isSignup = false;
 let authBusy = false;
 
-function getSafeRedirectPath() {
-    try {
-        const url = new URL(redirectTo, window.location.origin);
-        if (url.origin !== window.location.origin) {
-            return '/dashboard';
-        }
-        return `${url.pathname}${url.search}${url.hash}` || '/dashboard';
-    } catch (_error) {
-        return '/dashboard';
-    }
-}
-
 function pushDataLayerEvent(eventName, payload = {}) {
     if (typeof window === 'undefined') return;
     window.dataLayer = window.dataLayer || [];
@@ -95,23 +83,38 @@ function setAuthBusy(isBusy) {
 const renderNav = (user) => {
     if (!navLinksContainer) return;
     navLinksContainer.innerHTML = '';
-    
-    // MODIFICATION: Added the pricing link here
-    let linksHtml = `
-        <a href="/#pricing">Pricing</a>
-        <a href="/store">Store</a>
-    `;
 
-    if (user) {
-        linksHtml += `
-            <a href="/dashboard">Dashboard</a>
-            <a href="#" id="logout-btn">Logout</a>
-        `;
+    const navMode = navLinksContainer.dataset.navMode || 'default';
+    let linksHtml = '';
+
+    if (navMode === 'landing') {
+        linksHtml = user
+            ? `
+                <a href="/dashboard">Dashboard</a>
+                <a href="#" id="logout-btn">Logout</a>
+            `
+            : `
+                <a href="/login">Login</a>
+                <a href="/tool" class="btn">Try it free</a>
+            `;
     } else {
-        linksHtml += `
-            <a href="/login" class="btn">Login</a>
+        linksHtml = `
+            <a href="/#pricing">Pricing</a>
+            <a href="/store">Store</a>
         `;
+
+        if (user) {
+            linksHtml += `
+                <a href="/dashboard">Dashboard</a>
+                <a href="#" id="logout-btn">Logout</a>
+            `;
+        } else {
+            linksHtml += `
+                <a href="/login" class="btn">Login</a>
+            `;
+        }
     }
+
     navLinksContainer.innerHTML = linksHtml;
 
     const logoutBtn = document.getElementById('logout-btn');
@@ -164,7 +167,7 @@ if (loginForm) {
                 }
             }
 
-            window.location.href = getSafeRedirectPath();
+            window.location.href = '/dashboard';
         } finally {
             setAuthBusy(false);
         }
@@ -178,7 +181,7 @@ if (googleLoginBtn) {
         const { error } = await supabase.auth.signInWithOAuth({
             provider: 'google',
             options: {
-                redirectTo: window.location.origin + getSafeRedirectPath()
+                redirectTo: window.location.origin + '/dashboard'
             }
         });
         if (error) {
@@ -251,7 +254,7 @@ const checkUser = async () => {
     
     // Redirect if user is on login page but already logged in
     if (user && window.location.pathname.includes('login')) {
-        window.location.href = getSafeRedirectPath();
+        window.location.href = '/dashboard';
     }
     
     return user;

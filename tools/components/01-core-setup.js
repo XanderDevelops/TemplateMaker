@@ -36,8 +36,6 @@ function getDefaultSpawnPoint() {
 const DEFAULT_PAGE_WIDTH = 768;
 const DEFAULT_PAGE_HEIGHT = 1024;
 const CAMERA_BOUND_PADDING = 600;
-const MAX_IMPORT_COLUMNS = 100;
-const MAX_IMPORT_ROWS = 100000;
 const SERIALIZE_PROPS = ['oid', 'name', 'isTable', 'isSvgGroup', 'rows', 'cols', 'colWidths', 'rowHeights', 'locked', 'pageId', 'headerRows', 'headerFill', 'bodyFill', 'borderColor', 'borderWidth', 'cellData', 'isArtboard', 'curveAmount'];
 let pageRect;
 let documentPages = [];
@@ -2743,69 +2741,6 @@ function pageHasRenderableObjects(pageState) {
     return objects.some(o => o && o.oid !== 'pageRect' && !o.excludeFromExport && !o.isSnapLine);
 }
 
-function isBlankCsvCellValue(value) {
-    return value === null || value === undefined || String(value).trim() === '';
-}
-
-function compactCsvRows(rows = dataRows, headerList = headers) {
-    const allowedHeaders = new Set(Array.isArray(headerList) ? headerList : []);
-    return (Array.isArray(rows) ? rows : []).map((row) => {
-        const compactRow = {};
-        if (!row || typeof row !== 'object') return compactRow;
-
-        Object.entries(row).forEach(([key, value]) => {
-            if (allowedHeaders.size && !allowedHeaders.has(key)) return;
-            if (isBlankCsvCellValue(value)) return;
-            compactRow[key] = value;
-        });
-
-        return compactRow;
-    });
-}
-
-function getUniqueCsvHeaderName(header, seen) {
-    const base = String(header || '').trim();
-    if (!base) return '';
-    const count = (seen.get(base) || 0) + 1;
-    seen.set(base, count);
-    return count === 1 ? base : `${base}_${count}`;
-}
-
-function normalizeImportedSheetRows(sheetRows) {
-    const rows = Array.isArray(sheetRows) ? sheetRows : [];
-    const rawHeaderRow = Array.isArray(rows[0]) ? rows[0] : [];
-    const rawHeaders = rawHeaderRow.slice(0, MAX_IMPORT_COLUMNS);
-    const seen = new Map();
-    const columnMap = [];
-    const nextHeaders = [];
-
-    rawHeaders.forEach((header, colIndex) => {
-        const headerName = getUniqueCsvHeaderName(header, seen);
-        if (!headerName) return;
-        columnMap.push({ colIndex, headerName });
-        nextHeaders.push(headerName);
-    });
-
-    const limitedRows = rows.slice(1, MAX_IMPORT_ROWS + 1);
-    const nextRows = limitedRows.map((row) => {
-        const rowArray = Array.isArray(row) ? row : [];
-        const rowObj = {};
-        columnMap.forEach(({ colIndex, headerName }) => {
-            const value = rowArray[colIndex];
-            if (!isBlankCsvCellValue(value)) rowObj[headerName] = String(value).trim();
-        });
-        return rowObj;
-    });
-
-    return {
-        headers: nextHeaders,
-        rows: nextRows,
-        skippedEmptyHeaders: rawHeaders.length - nextHeaders.length,
-        truncatedColumns: Math.max(0, rawHeaderRow.length - MAX_IMPORT_COLUMNS),
-        truncatedRows: Math.max(0, rows.length - 1 - limitedRows.length)
-    };
-}
-
 function buildTemplatePayload() {
     syncCurrentPageStateFromCanvas();
     if (!documentPages.length) {
@@ -2828,7 +2763,7 @@ function buildTemplatePayload() {
         bindings: activePage?.bindings || [],
         pages: clonedPages,
         currentPageIndex,
-        data: { headers, rows: compactCsvRows(dataRows, headers), identifierColumn: identifierColumn || '' }
+        data: { headers, rows: dataRows, identifierColumn: identifierColumn || '' }
     };
 }
 
@@ -3199,9 +3134,7 @@ async function handleCsvCellPaste(e) {
             const targetColIndex = startColIndex + cOffset;
             if (targetColIndex >= headers.length) return;
             const colKey = headers[targetColIndex];
-            const trimmedValue = value.trim();
-            if (isBlankCsvCellValue(trimmedValue)) delete dataRows[targetRowIndex][colKey];
-            else dataRows[targetRowIndex][colKey] = trimmedValue;
+            dataRows[targetRowIndex][colKey] = value.trim();
         });
     });
 
@@ -3211,8 +3144,7 @@ async function handleCsvCellPaste(e) {
 
 window.updateCsvCell = (rowIndex, colKey, newVal) => {
     if (dataRows[rowIndex]) {
-        if (isBlankCsvCellValue(newVal)) delete dataRows[rowIndex][colKey];
-        else dataRows[rowIndex][colKey] = newVal;
+        dataRows[rowIndex][colKey] = newVal;
         requestSaveState();
     }
 };
@@ -3223,7 +3155,7 @@ window.updateHeader = (index, newVal) => {
     newVal = newVal.trim();
     headers[index] = newVal;
     dataRows.forEach(row => {
-        if (!isBlankCsvCellValue(row[oldVal])) row[newVal] = row[oldVal];
+        row[newVal] = row[oldVal];
         delete row[oldVal];
     });
     bindings.forEach((b) => { if (b.column === oldVal) b.column = newVal; });
@@ -3254,7 +3186,9 @@ window.deleteColumn = (index) => {
 
 on('#addRowBtn', 'click', () => {
     if (!headers.length) headers = ['Column 1', 'Column 2', 'Column 3'];
-    dataRows.push({});
+    const newRow = {};
+    headers.forEach(h => newRow[h] = '');
+    dataRows.push(newRow);
     renderCsvView($('#csvViewSearch')?.value);
     requestSaveState();
 });
@@ -3276,6 +3210,7 @@ function getNextAvailableColumnName(existingHeaders = headers) {
 on('#addColBtn', 'click', () => {
     const newColName = getNextAvailableColumnName();
     headers.push(newColName);
+    dataRows.forEach(r => r[newColName] = '');
     renderCsvView($('#csvViewSearch')?.value);
     requestSaveState();
 });
@@ -3307,23 +3242,17 @@ window.addEventListener('paste', (e) => {
     if (rows.length === 0) return;
 
     if (headers.length === 0) {
-        const normalized = normalizeImportedSheetRows(rows);
-        if (!normalized.headers.length) {
-            showNotification('No non-empty headers found in the pasted data.', 'error');
-            return;
-        }
-        headers = normalized.headers;
-        dataRows.push(...normalized.rows);
-    } else {
-        rows.slice(0, MAX_IMPORT_ROWS).forEach(r => {
-            const rowObj = {};
-            headers.slice(0, MAX_IMPORT_COLUMNS).forEach((h, i) => {
-                const value = r[i] ? r[i].trim() : '';
-                if (!isBlankCsvCellValue(value)) rowObj[h] = value;
-            });
-            dataRows.push(rowObj);
-        });
+        headers = rows[0].map((h, i) => h.trim() || `Col ${i + 1}`);
+        const count = {};
+        headers = headers.map(h => { count[h] = (count[h] || 0) + 1; return count[h] > 1 ? `${h}_${count[h]}` : h; });
+        rows.shift();
     }
+
+    rows.forEach(r => {
+        const rowObj = {};
+        headers.forEach((h, i) => { rowObj[h] = r[i] ? r[i].trim() : ''; });
+        dataRows.push(rowObj);
+    });
 
     renderCsvView($('#csvViewSearch')?.value);
     requestSaveState();

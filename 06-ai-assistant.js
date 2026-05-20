@@ -72,7 +72,8 @@
             ]);
             const AI_STRICT_ALLOWED_TEXT_ALIGNS = new Set(['left', 'center', 'right', 'justify']);
             const AI_MODEL_NAME = 'gemini-2.5-flash';
-            const AI_PROXY_ENDPOINT = '/api/ai';
+            const AI_MODEL_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${AI_MODEL_NAME}:generateContent`;
+            const AI_MODEL_STREAM_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${AI_MODEL_NAME}:streamGenerateContent?alt=sse`;
             const AI_CREATIVE_REQUEST_TIMEOUT_MS = 90000;
             const AI_LIVE_RENDER_DELAY_MS = 28;
             const AI_JSON_RESPONSE_SCHEMA = {
@@ -91,6 +92,9 @@
             let aiAutoApplyEnabled = true;
             let aiConversation = [];
             let aiAttachment = null;
+
+            const savedApiKey = localStorage.getItem('googleAiApiKey');
+            if (savedApiKey) aiApiKeyInput.value = savedApiKey;
 
             function setAiBusy(isBusy) {
                 aiSendBtn.disabled = isBusy;
@@ -161,7 +165,7 @@
             function resetAiChat() {
                 aiConversation = [];
                 aiAutoApplyEnabled = true;
-                aiChatLog.innerHTML = '<div class="ai-chat-empty muted">Ask for layout changes, styling, sections, or data-linked fields.</div>';
+                aiChatLog.innerHTML = '<div class="ai-chat-empty muted">Ask for layout ideas, canvas changes, dimensions, icons, and iterative edits.</div>';
                 clearAiAttachment();
             }
 
@@ -1604,15 +1608,13 @@ ${userPrompt || '(Attachment-only request)'}
                         onProgress(enforceJson ? 'Sending request' : 'Retrying request');
                     }
 
-                    const response = await fetch(AI_PROXY_ENDPOINT, {
+                    const response = await fetch(AI_MODEL_ENDPOINT, {
                         method: 'POST',
                         headers: {
-                            'Content-Type': 'application/json'
+                            'Content-Type': 'application/json',
+                            'X-goog-api-key': apiKey
                         },
-                        body: JSON.stringify({
-                            model: AI_MODEL_NAME,
-                            payload
-                        }),
+                        body: JSON.stringify(payload),
                         signal: abortController.signal
                     });
 
@@ -1849,16 +1851,13 @@ Return format example:
                 let assembledText = '';
                 try {
                     if (typeof onProgress === 'function') onProgress('Opening live stream');
-                    const response = await fetch(AI_PROXY_ENDPOINT, {
+                    const response = await fetch(AI_MODEL_STREAM_ENDPOINT, {
                         method: 'POST',
                         headers: {
-                            'Content-Type': 'application/json'
+                            'Content-Type': 'application/json',
+                            'X-goog-api-key': apiKey
                         },
-                        body: JSON.stringify({
-                            model: AI_MODEL_NAME,
-                            stream: true,
-                            payload
-                        }),
+                        body: JSON.stringify(payload),
                         signal: abortController.signal
                     });
 
@@ -3877,12 +3876,18 @@ ${rawResponse}
             }
 
             async function handleAiSend() {
-                const apiKey = '';
+                const apiKey = aiApiKeyInput.value.trim();
                 const prompt = aiPromptInput.value.trim();
+                if (!apiKey) {
+                    alert('Please enter your Google AI Studio API key.');
+                    return;
+                }
                 if (!prompt && !aiAttachment) {
                     alert('Please enter a message or attach a file.');
                     return;
                 }
+
+                localStorage.setItem('googleAiApiKey', apiKey);
 
                 const userLine = prompt || '(Attachment only)';
                 appendAiChatMessage('user', userLine);

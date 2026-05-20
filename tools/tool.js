@@ -3877,9 +3877,7 @@ const canvasEditorStage = $('.canvas-editor-stage');
 const pageActionToolbar = $('#pageActionToolbar');
 const canvasPagesPanel = $('#canvasPagesPanel');
 const canvasPagesStrip = $('#canvasPagesStrip');
-const toggleCanvasPagesPanelBtn = $('#toggleCanvasPagesPanelBtn');
 const hideCanvasPagesPanelBtn = $('#hideCanvasPagesPanelBtn');
-const canvasPagesHeaderRow = canvasPagesPanel?.querySelector('.canvas-pages-header-row');
 // 9. Preserve layer stacking
 const canvas = new fabric.Canvas('c', { backgroundColor: 'transparent', selection: true, preserveObjectStacking: true });
 // High-quality rendering (avoid blurry output)
@@ -3897,8 +3895,6 @@ function getDefaultSpawnPoint() {
 const DEFAULT_PAGE_WIDTH = 768;
 const DEFAULT_PAGE_HEIGHT = 1024;
 const CAMERA_BOUND_PADDING = 600;
-const MAX_IMPORT_COLUMNS = 100;
-const MAX_IMPORT_ROWS = 100000;
 const SERIALIZE_PROPS = ['oid', 'name', 'isTable', 'isSvgGroup', 'rows', 'cols', 'colWidths', 'rowHeights', 'locked', 'pageId', 'headerRows', 'headerFill', 'bodyFill', 'borderColor', 'borderWidth', 'cellData', 'isArtboard', 'curveAmount'];
 let pageRect;
 let documentPages = [];
@@ -5313,13 +5309,8 @@ function syncGeneralPageSizeInputs() {
 }
 
 function applyCanvasPagesPanelState() {
-    if (!canvasPagesPanel || !toggleCanvasPagesPanelBtn) return;
+    if (!canvasPagesPanel) return;
     canvasPagesPanel.classList.toggle('collapsed', isCanvasPagesPanelCollapsed);
-    const stateLabel = toggleCanvasPagesPanelBtn.querySelector('.state');
-    if (stateLabel) stateLabel.textContent = isCanvasPagesPanelCollapsed ? 'Show' : '';
-    toggleCanvasPagesPanelBtn.setAttribute('aria-expanded', String(!isCanvasPagesPanelCollapsed));
-    toggleCanvasPagesPanelBtn.setAttribute('aria-disabled', 'false');
-    toggleCanvasPagesPanelBtn.setAttribute('title', isCanvasPagesPanelCollapsed ? 'Show pages panel' : 'Hide pages panel');
     if (hideCanvasPagesPanelBtn) {
         hideCanvasPagesPanelBtn.textContent = isCanvasPagesPanelCollapsed ? 'Show' : 'Hide';
         hideCanvasPagesPanelBtn.setAttribute('title', isCanvasPagesPanelCollapsed ? 'Show pages panel' : 'Hide pages panel');
@@ -6604,69 +6595,6 @@ function pageHasRenderableObjects(pageState) {
     return objects.some(o => o && o.oid !== 'pageRect' && !o.excludeFromExport && !o.isSnapLine);
 }
 
-function isBlankCsvCellValue(value) {
-    return value === null || value === undefined || String(value).trim() === '';
-}
-
-function compactCsvRows(rows = dataRows, headerList = headers) {
-    const allowedHeaders = new Set(Array.isArray(headerList) ? headerList : []);
-    return (Array.isArray(rows) ? rows : []).map((row) => {
-        const compactRow = {};
-        if (!row || typeof row !== 'object') return compactRow;
-
-        Object.entries(row).forEach(([key, value]) => {
-            if (allowedHeaders.size && !allowedHeaders.has(key)) return;
-            if (isBlankCsvCellValue(value)) return;
-            compactRow[key] = value;
-        });
-
-        return compactRow;
-    });
-}
-
-function getUniqueCsvHeaderName(header, seen) {
-    const base = String(header || '').trim();
-    if (!base) return '';
-    const count = (seen.get(base) || 0) + 1;
-    seen.set(base, count);
-    return count === 1 ? base : `${base}_${count}`;
-}
-
-function normalizeImportedSheetRows(sheetRows) {
-    const rows = Array.isArray(sheetRows) ? sheetRows : [];
-    const rawHeaderRow = Array.isArray(rows[0]) ? rows[0] : [];
-    const rawHeaders = rawHeaderRow.slice(0, MAX_IMPORT_COLUMNS);
-    const seen = new Map();
-    const columnMap = [];
-    const nextHeaders = [];
-
-    rawHeaders.forEach((header, colIndex) => {
-        const headerName = getUniqueCsvHeaderName(header, seen);
-        if (!headerName) return;
-        columnMap.push({ colIndex, headerName });
-        nextHeaders.push(headerName);
-    });
-
-    const limitedRows = rows.slice(1, MAX_IMPORT_ROWS + 1);
-    const nextRows = limitedRows.map((row) => {
-        const rowArray = Array.isArray(row) ? row : [];
-        const rowObj = {};
-        columnMap.forEach(({ colIndex, headerName }) => {
-            const value = rowArray[colIndex];
-            if (!isBlankCsvCellValue(value)) rowObj[headerName] = String(value).trim();
-        });
-        return rowObj;
-    });
-
-    return {
-        headers: nextHeaders,
-        rows: nextRows,
-        skippedEmptyHeaders: rawHeaders.length - nextHeaders.length,
-        truncatedColumns: Math.max(0, rawHeaderRow.length - MAX_IMPORT_COLUMNS),
-        truncatedRows: Math.max(0, rows.length - 1 - limitedRows.length)
-    };
-}
-
 function buildTemplatePayload() {
     syncCurrentPageStateFromCanvas();
     if (!documentPages.length) {
@@ -6689,7 +6617,7 @@ function buildTemplatePayload() {
         bindings: activePage?.bindings || [],
         pages: clonedPages,
         currentPageIndex,
-        data: { headers, rows: compactCsvRows(dataRows, headers), identifierColumn: identifierColumn || '' }
+        data: { headers, rows: dataRows, identifierColumn: identifierColumn || '' }
     };
 }
 
@@ -7060,9 +6988,7 @@ async function handleCsvCellPaste(e) {
             const targetColIndex = startColIndex + cOffset;
             if (targetColIndex >= headers.length) return;
             const colKey = headers[targetColIndex];
-            const trimmedValue = value.trim();
-            if (isBlankCsvCellValue(trimmedValue)) delete dataRows[targetRowIndex][colKey];
-            else dataRows[targetRowIndex][colKey] = trimmedValue;
+            dataRows[targetRowIndex][colKey] = value.trim();
         });
     });
 
@@ -7072,8 +6998,7 @@ async function handleCsvCellPaste(e) {
 
 window.updateCsvCell = (rowIndex, colKey, newVal) => {
     if (dataRows[rowIndex]) {
-        if (isBlankCsvCellValue(newVal)) delete dataRows[rowIndex][colKey];
-        else dataRows[rowIndex][colKey] = newVal;
+        dataRows[rowIndex][colKey] = newVal;
         requestSaveState();
     }
 };
@@ -7084,7 +7009,7 @@ window.updateHeader = (index, newVal) => {
     newVal = newVal.trim();
     headers[index] = newVal;
     dataRows.forEach(row => {
-        if (!isBlankCsvCellValue(row[oldVal])) row[newVal] = row[oldVal];
+        row[newVal] = row[oldVal];
         delete row[oldVal];
     });
     bindings.forEach((b) => { if (b.column === oldVal) b.column = newVal; });
@@ -7115,28 +7040,19 @@ window.deleteColumn = (index) => {
 
 on('#addRowBtn', 'click', () => {
     if (!headers.length) headers = ['Column 1', 'Column 2', 'Column 3'];
-    dataRows.push({});
+    const newRow = {};
+    headers.forEach(h => newRow[h] = '');
+    dataRows.push(newRow);
     renderCsvView($('#csvViewSearch')?.value);
     requestSaveState();
 });
 
-function getNextAvailableColumnName(existingHeaders = headers) {
-    const usedNumbers = new Set(
-        (Array.isArray(existingHeaders) ? existingHeaders : [])
-            .map((header) => {
-                const match = /^column\s+(\d+)$/i.exec(String(header || '').trim());
-                return match ? Number(match[1]) : null;
-            })
-            .filter((value) => Number.isInteger(value) && value > 0)
-    );
-    let nextNumber = 1;
-    while (usedNumbers.has(nextNumber)) nextNumber += 1;
-    return `Column ${nextNumber}`;
-}
-
 on('#addColBtn', 'click', () => {
-    const newColName = getNextAvailableColumnName();
+    const newColName = prompt('Enter new column name:', `Column ${headers.length + 1}`);
+    if (!newColName) return;
+    if (headers.includes(newColName)) { alert('Column already exists.'); return; }
     headers.push(newColName);
+    dataRows.forEach(r => r[newColName] = '');
     renderCsvView($('#csvViewSearch')?.value);
     requestSaveState();
 });
@@ -7168,23 +7084,17 @@ window.addEventListener('paste', (e) => {
     if (rows.length === 0) return;
 
     if (headers.length === 0) {
-        const normalized = normalizeImportedSheetRows(rows);
-        if (!normalized.headers.length) {
-            showNotification('No non-empty headers found in the pasted data.', 'error');
-            return;
-        }
-        headers = normalized.headers;
-        dataRows.push(...normalized.rows);
-    } else {
-        rows.slice(0, MAX_IMPORT_ROWS).forEach(r => {
-            const rowObj = {};
-            headers.slice(0, MAX_IMPORT_COLUMNS).forEach((h, i) => {
-                const value = r[i] ? r[i].trim() : '';
-                if (!isBlankCsvCellValue(value)) rowObj[h] = value;
-            });
-            dataRows.push(rowObj);
-        });
+        headers = rows[0].map((h, i) => h.trim() || `Col ${i + 1}`);
+        const count = {};
+        headers = headers.map(h => { count[h] = (count[h] || 0) + 1; return count[h] > 1 ? `${h}_${count[h]}` : h; });
+        rows.shift();
     }
+
+    rows.forEach(r => {
+        const rowObj = {};
+        headers.forEach((h, i) => { rowObj[h] = r[i] ? r[i].trim() : ''; });
+        dataRows.push(rowObj);
+    });
 
     renderCsvView($('#csvViewSearch')?.value);
     requestSaveState();
@@ -7280,7 +7190,7 @@ async function initializeEditor() {
             $('#titleInput').value = template.title || template.page?.title || 'Untitled_Template';
             if (template.data) {
                 headers = template.data.headers || [];
-                dataRows = compactCsvRows(template.data.rows || [], headers);
+                dataRows = template.data.rows || [];
             }
             await setDocumentPagesFromTemplate(template, { fitView: true });
             historyStack = [];
@@ -7367,7 +7277,7 @@ async function loadTemplateFromDB(templateId, options = {}) {
         const template = data.template_data;
         if (template.data) {
             headers = template.data.headers || [];
-            dataRows = compactCsvRows(template.data.rows || [], headers);
+            dataRows = template.data.rows || [];
             identifierColumn = template.data.identifierColumn || '';
             refreshIdentifierDropdown();
         }
@@ -7496,7 +7406,7 @@ function restoreFullState(state, callback) {
         return;
     }
     headers = [...(state.data?.headers || [])];
-    dataRows = compactCsvRows(state.data?.rows || [], headers);
+    dataRows = JSON.parse(JSON.stringify(state.data?.rows || []));
     identifierColumn = state.data?.identifierColumn || '';
     if (state.title !== undefined) $('#titleInput').value = state.title;
 
@@ -7545,7 +7455,7 @@ const requestSaveState = debounce(() => {
         canvas: deepClone(activePage.canvas),
         data: {
             headers: [...headers],
-            rows: compactCsvRows(dataRows, headers),
+            rows: JSON.parse(JSON.stringify(dataRows)),
             identifierColumn: identifierColumn || ''
         },
         bindings: deepClone(activePage.bindings || Array.from(bindings.entries())),
@@ -7795,17 +7705,8 @@ function initializeCanvas() {
         isCanvasPagesPanelCollapsed = !isCanvasPagesPanelCollapsed;
         applyCanvasPagesPanelState();
     };
-    if (toggleCanvasPagesPanelBtn) {
-        toggleCanvasPagesPanelBtn.addEventListener('click', toggleCanvasPagesPanel);
-    }
     if (hideCanvasPagesPanelBtn) {
         hideCanvasPagesPanelBtn.addEventListener('click', toggleCanvasPagesPanel);
-    }
-    if (canvasPagesHeaderRow) {
-        canvasPagesHeaderRow.addEventListener('click', (event) => {
-            if (event.target instanceof Element && event.target.closest('button')) return;
-            toggleCanvasPagesPanel(event);
-        });
     }
 
     const OBJECT_CLICK_DRAG_DEADZONE_PX = 4;
@@ -8371,7 +8272,7 @@ function cacheLocalDataState() {
     try {
         if (headers.length > 0) {
             localStorage.setItem('cachedHeaders', JSON.stringify(headers));
-            localStorage.setItem('cachedDataRows', JSON.stringify(compactCsvRows(dataRows, headers)));
+            localStorage.setItem('cachedDataRows', JSON.stringify(dataRows));
             if (identifierColumn) localStorage.setItem('cachedIdentifierColumn', identifierColumn);
             else localStorage.removeItem('cachedIdentifierColumn');
         } else {
@@ -8384,39 +8285,20 @@ function cacheLocalDataState() {
     }
 }
 
-function getCappedWorksheetRows(sheet) {
-    const ref = sheet?.['!ref'];
-    if (!ref) return [];
-    const range = XLSX.utils.decode_range(ref);
-    range.e.c = Math.min(range.e.c, range.s.c + MAX_IMPORT_COLUMNS - 1);
-    range.e.r = Math.min(range.e.r, range.s.r + MAX_IMPORT_ROWS);
-    return XLSX.utils.sheet_to_json(sheet, {
-        header: 1,
-        defval: '',
-        raw: false,
-        blankrows: false,
-        range: XLSX.utils.encode_range(range)
-    });
-}
-
 function processFileData(arrayBuffer, fileName, opts = {}) {
     try {
         workbook = XLSX.read(arrayBuffer, { type: 'array' });
         const sheetName = workbook.SheetNames[0];
         worksheet = workbook.Sheets[sheetName];
-        const sheetRows = getCappedWorksheetRows(worksheet);
-        const importedData = normalizeImportedSheetRows(sheetRows);
-        if (!importedData.headers.length) { showNotification('No non-empty headers found in the sheet.'); return; }
-        headers = importedData.headers;
-        dataRows = importedData.rows;
+        const json = XLSX.utils.sheet_to_json(worksheet, { defval: '', raw: false });
+        if (!json.length) { showNotification('No data found in the sheet.'); return; }
+        // Ensure headers are extracted from the first row keys
+        headers = Object.keys(json[0]);
+        dataRows = json; // Keep the full array of objects
         console.log('Processed Data:', { headers, rowCount: dataRows.length, sample: dataRows[0] });
         $('#fileName').textContent = fileName;
         $('#unloadDataBtn').style.display = 'inline';
-        const limitNotes = [];
-        if (importedData.truncatedColumns) limitNotes.push(`first ${MAX_IMPORT_COLUMNS} columns`);
-        if (importedData.truncatedRows) limitNotes.push(`first ${MAX_IMPORT_ROWS.toLocaleString()} rows`);
-        if (importedData.skippedEmptyHeaders) limitNotes.push(`${importedData.skippedEmptyHeaders} empty header column(s) skipped`);
-        showNotification(`Loaded "${sheetName}" with ${dataRows.length} rows.${limitNotes.length ? ` Using ${limitNotes.join(', ')}.` : ''}`);
+        showNotification(`Loaded "${sheetName}" with ${dataRows.length} rows.`);
         refreshInspector({ target: canvas.getActiveObject() });
         updateExportUI();
         updateFloatingLinker(canvas.getActiveObject());
@@ -8470,7 +8352,7 @@ async function loadCachedData() {
     if (cachedHeaders && cachedRows) {
         try {
             headers = JSON.parse(cachedHeaders);
-            dataRows = compactCsvRows(JSON.parse(cachedRows), headers);
+            dataRows = JSON.parse(cachedRows);
             identifierColumn = cachedIdCol || '';
             $('#fileName').textContent = fileName || 'Restored Data';
             $('#unloadDataBtn').style.display = 'inline';
@@ -13197,7 +13079,8 @@ window.addEventListener('keyup', e => {
             ]);
             const AI_STRICT_ALLOWED_TEXT_ALIGNS = new Set(['left', 'center', 'right', 'justify']);
             const AI_MODEL_NAME = 'gemini-2.5-flash';
-            const AI_PROXY_ENDPOINT = '/api/ai';
+            const AI_MODEL_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${AI_MODEL_NAME}:generateContent`;
+            const AI_MODEL_STREAM_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${AI_MODEL_NAME}:streamGenerateContent?alt=sse`;
             const AI_CREATIVE_REQUEST_TIMEOUT_MS = 90000;
             const AI_LIVE_RENDER_DELAY_MS = 28;
             const AI_JSON_RESPONSE_SCHEMA = {
@@ -13216,6 +13099,9 @@ window.addEventListener('keyup', e => {
             let aiAutoApplyEnabled = true;
             let aiConversation = [];
             let aiAttachment = null;
+
+            const savedApiKey = localStorage.getItem('googleAiApiKey');
+            if (savedApiKey) aiApiKeyInput.value = savedApiKey;
 
             function setAiBusy(isBusy) {
                 aiSendBtn.disabled = isBusy;
@@ -13286,7 +13172,7 @@ window.addEventListener('keyup', e => {
             function resetAiChat() {
                 aiConversation = [];
                 aiAutoApplyEnabled = true;
-                aiChatLog.innerHTML = '<div class="ai-chat-empty muted">Ask for layout changes, styling, sections, or data-linked fields.</div>';
+                aiChatLog.innerHTML = '<div class="ai-chat-empty muted">Ask for layout ideas, canvas changes, dimensions, icons, and iterative edits.</div>';
                 clearAiAttachment();
             }
 
@@ -14732,15 +14618,13 @@ ${userPrompt || '(Attachment-only request)'}
                         onProgress(enforceJson ? 'Sending request' : 'Retrying request');
                     }
 
-                    const response = await fetch(AI_PROXY_ENDPOINT, {
+                    const response = await fetch(AI_MODEL_ENDPOINT, {
                         method: 'POST',
                         headers: {
-                            'Content-Type': 'application/json'
+                            'Content-Type': 'application/json',
+                            'X-goog-api-key': apiKey
                         },
-                        body: JSON.stringify({
-                            model: AI_MODEL_NAME,
-                            payload
-                        }),
+                        body: JSON.stringify(payload),
                         signal: abortController.signal
                     });
 
@@ -14840,24 +14724,6 @@ ${rawResponse}
                 };
             }
 
-            function buildAiImportedDataContext() {
-                const rawHeaders = Array.isArray(headers)
-                    ? headers.map((header) => clampStringForAi(header, 90)).filter(Boolean)
-                    : [];
-                if (!rawHeaders.length) return 'Imported data columns: none.';
-                const visibleHeaders = rawHeaders.slice(0, 36);
-                const sampleRows = compactDataRowsForAi(dataRows, visibleHeaders, {
-                    maxRows: 2,
-                    maxCols: Math.max(1, Math.min(12, visibleHeaders.length)),
-                    maxCellChars: 48
-                });
-                return [
-                    `Imported data columns (${rawHeaders.length}): ${visibleHeaders.join(', ')}${rawHeaders.length > visibleHeaders.length ? ', ...' : ''}`,
-                    `Sample data rows: ${sampleRows.length ? JSON.stringify(sampleRows) : '[]'}`,
-                    'If the user asks for a template that uses table fields, use these columns to shape the invoice layout and use the real field names in visible placeholder text where helpful.'
-                ].join('\n');
-            }
-
             function buildCreativeFabricPrompt(userPrompt, { pageWidth, pageHeight } = {}) {
                 const width = parsePositiveInt(pageWidth, DEFAULT_PAGE_WIDTH);
                 const height = parsePositiveInt(pageHeight, DEFAULT_PAGE_HEIGHT);
@@ -14893,9 +14759,6 @@ Rules:
 - Do not use clipPath, transformMatrix, filters, scripts, or custom executable fields.
 - Use professional spacing, hierarchy, alignment, and contrast.
 ${buildGoogleFontsHint()}
-
-Imported data context:
-${buildAiImportedDataContext()}
 
 User request:
 ${userPrompt || '(Attachment-only request)'}
@@ -15002,16 +14865,13 @@ Return format example:
                 let assembledText = '';
                 try {
                     if (typeof onProgress === 'function') onProgress('Opening live stream');
-                    const response = await fetch(AI_PROXY_ENDPOINT, {
+                    const response = await fetch(AI_MODEL_STREAM_ENDPOINT, {
                         method: 'POST',
                         headers: {
-                            'Content-Type': 'application/json'
+                            'Content-Type': 'application/json',
+                            'X-goog-api-key': apiKey
                         },
-                        body: JSON.stringify({
-                            model: AI_MODEL_NAME,
-                            stream: true,
-                            payload
-                        }),
+                        body: JSON.stringify(payload),
                         signal: abortController.signal
                     });
 
@@ -17032,12 +16892,18 @@ ${rawResponse}
             }
 
             async function handleAiSend() {
-                const apiKey = '';
+                const apiKey = aiApiKeyInput.value.trim();
                 const prompt = aiPromptInput.value.trim();
+                if (!apiKey) {
+                    alert('Please enter your Google AI Studio API key.');
+                    return;
+                }
                 if (!prompt && !aiAttachment) {
                     alert('Please enter a message or attach a file.');
                     return;
                 }
+
+                localStorage.setItem('googleAiApiKey', apiKey);
 
                 const userLine = prompt || '(Attachment only)';
                 appendAiChatMessage('user', userLine);
@@ -17436,12 +17302,17 @@ ${rawResponse}
             },
             {
                 title: "AI Copilot",
-                content: `<p>The assistant lives in the lower half of the left panel.</p><p>Use it for small, iterative edits.</p>`,
+                content: `<p>The assistant now lives in the lower half of the left panel.</p><p>Use it for iterative edits instead of one-shot generation.</p>`,
                 element: '#aiAssistantPanel'
             },
             {
+                title: "AI Setup",
+                content: `You will need a <a href="https://aistudio.google.com/apikey" target="_blank">Google AI Studio API key</a>.</p><ul><li>Login to your Google Account.</li><li>Create an API key.</li><li>Paste it in the AI panel.</li></ul>`,
+                element: '#aiApiKeyPanel'
+            },
+            {
                 title: "AI Prompting",
-                content: `<p>Enter your request in the chat box and press <b>Send</b>.</p><p><b>Tips:</b></p><ul><li>Ask in small iterative steps.</li><li>You can attach files and keep refining.</li></ul>`,
+                content: `Now enter your request in the chat box and press <b>Send</b>.</p><p><b>Tips:</b></p><ul><li>Ask in small iterative steps.</li><li>You can attach files and keep refining.</li></ul>`,
                 element: '#aiChatPrompt'
             },
             {
@@ -17663,7 +17534,7 @@ ${rawResponse}
                         if (json.page?.title) $('#titleInput').value = json.page.title;
                         if (json.data) {
                             headers = json.data.headers || [];
-                            dataRows = compactCsvRows(json.data.rows || [], headers);
+                            dataRows = json.data.rows || [];
                         }
                         await setDocumentPagesFromTemplate(json, { fitView: true, selectedIndex: json.currentPageIndex });
                         bindings = new Map(documentPages[currentPageIndex]?.bindings || json.bindings || []);

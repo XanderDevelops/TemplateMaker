@@ -1062,7 +1062,7 @@
                         </ul>
                     </div>
                     <div class="card-footer">
-                        <a href="https://csvlink.lemonsqueezy.com/buy/3b3f16ca-17a6-4cc5-9a99-cf5abcbf6a1c" class="btn lemonsqueezy-button" data-plan="monthly-pro">Upgrade to Pro</a>
+                        <a href="https://csvlink.lemonsqueezy.com/buy/3b3f16ca-17a6-4cc5-9a99-cf5abcbf6a1c" class="btn lemonsqueezy-button">Upgrade to Pro</a>
                     </div>
                 </div>
                 <div class="pricing-card">
@@ -1079,7 +1079,7 @@
                         </ul>
                     </div>
                     <div class="card-footer">
-                         <a href="https://csvlink.lemonsqueezy.com/buy/3b3f16ca-17a6-4cc5-9a99-cf5abcbf6a1c" class="btn lemonsqueezy-button" data-plan="annual-pro">Upgrade to Pro (Annual)</a>
+                         <a href="https://csvlink.lemonsqueezy.com/buy/3b3f16ca-17a6-4cc5-9a99-cf5abcbf6a1c" class="btn lemonsqueezy-button">Upgrade to Pro (Annual)</a>
                     </div>
                 </div>
             </div>
@@ -1108,7 +1108,6 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script type="module" src="assets/js/supabase-client.js"></script>
     <script type="module" src="assets/js/auth.js"></script>
-    <script type="module" src="assets/js/subscription-checkout.js"></script>
 
     <script type="module">
         // 1. Import your configured Supabase client
@@ -1233,7 +1232,7 @@
 
             await fetchPublicTemplates();
             
-            // Checkout links are guarded in assets/js/subscription-checkout.js.
+            // Lemon.js will automatically handle links with the 'lemonsqueezy-button' class.
 
         });
     </script>

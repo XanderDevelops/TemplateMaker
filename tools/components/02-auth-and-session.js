@@ -51,7 +51,7 @@ async function initializeEditor() {
             $('#titleInput').value = template.title || template.page?.title || 'Untitled_Template';
             if (template.data) {
                 headers = template.data.headers || [];
-                dataRows = compactCsvRows(template.data.rows || [], headers);
+                dataRows = template.data.rows || [];
             }
             await setDocumentPagesFromTemplate(template, { fitView: true });
             historyStack = [];
@@ -138,7 +138,7 @@ async function loadTemplateFromDB(templateId, options = {}) {
         const template = data.template_data;
         if (template.data) {
             headers = template.data.headers || [];
-            dataRows = compactCsvRows(template.data.rows || [], headers);
+            dataRows = template.data.rows || [];
             identifierColumn = template.data.identifierColumn || '';
             refreshIdentifierDropdown();
         }
@@ -267,7 +267,7 @@ function restoreFullState(state, callback) {
         return;
     }
     headers = [...(state.data?.headers || [])];
-    dataRows = compactCsvRows(state.data?.rows || [], headers);
+    dataRows = JSON.parse(JSON.stringify(state.data?.rows || []));
     identifierColumn = state.data?.identifierColumn || '';
     if (state.title !== undefined) $('#titleInput').value = state.title;
 
@@ -316,7 +316,7 @@ const requestSaveState = debounce(() => {
         canvas: deepClone(activePage.canvas),
         data: {
             headers: [...headers],
-            rows: compactCsvRows(dataRows, headers),
+            rows: JSON.parse(JSON.stringify(dataRows)),
             identifierColumn: identifierColumn || ''
         },
         bindings: deepClone(activePage.bindings || Array.from(bindings.entries())),
@@ -1142,7 +1142,7 @@ function cacheLocalDataState() {
     try {
         if (headers.length > 0) {
             localStorage.setItem('cachedHeaders', JSON.stringify(headers));
-            localStorage.setItem('cachedDataRows', JSON.stringify(compactCsvRows(dataRows, headers)));
+            localStorage.setItem('cachedDataRows', JSON.stringify(dataRows));
             if (identifierColumn) localStorage.setItem('cachedIdentifierColumn', identifierColumn);
             else localStorage.removeItem('cachedIdentifierColumn');
         } else {
@@ -1155,39 +1155,20 @@ function cacheLocalDataState() {
     }
 }
 
-function getCappedWorksheetRows(sheet) {
-    const ref = sheet?.['!ref'];
-    if (!ref) return [];
-    const range = XLSX.utils.decode_range(ref);
-    range.e.c = Math.min(range.e.c, range.s.c + MAX_IMPORT_COLUMNS - 1);
-    range.e.r = Math.min(range.e.r, range.s.r + MAX_IMPORT_ROWS);
-    return XLSX.utils.sheet_to_json(sheet, {
-        header: 1,
-        defval: '',
-        raw: false,
-        blankrows: false,
-        range: XLSX.utils.encode_range(range)
-    });
-}
-
 function processFileData(arrayBuffer, fileName, opts = {}) {
     try {
         workbook = XLSX.read(arrayBuffer, { type: 'array' });
         const sheetName = workbook.SheetNames[0];
         worksheet = workbook.Sheets[sheetName];
-        const sheetRows = getCappedWorksheetRows(worksheet);
-        const importedData = normalizeImportedSheetRows(sheetRows);
-        if (!importedData.headers.length) { showNotification('No non-empty headers found in the sheet.'); return; }
-        headers = importedData.headers;
-        dataRows = importedData.rows;
+        const json = XLSX.utils.sheet_to_json(worksheet, { defval: '', raw: false });
+        if (!json.length) { showNotification('No data found in the sheet.'); return; }
+        // Ensure headers are extracted from the first row keys
+        headers = Object.keys(json[0]);
+        dataRows = json; // Keep the full array of objects
         console.log('Processed Data:', { headers, rowCount: dataRows.length, sample: dataRows[0] });
         $('#fileName').textContent = fileName;
         $('#unloadDataBtn').style.display = 'inline';
-        const limitNotes = [];
-        if (importedData.truncatedColumns) limitNotes.push(`first ${MAX_IMPORT_COLUMNS} columns`);
-        if (importedData.truncatedRows) limitNotes.push(`first ${MAX_IMPORT_ROWS.toLocaleString()} rows`);
-        if (importedData.skippedEmptyHeaders) limitNotes.push(`${importedData.skippedEmptyHeaders} empty header column(s) skipped`);
-        showNotification(`Loaded "${sheetName}" with ${dataRows.length} rows.${limitNotes.length ? ` Using ${limitNotes.join(', ')}.` : ''}`);
+        showNotification(`Loaded "${sheetName}" with ${dataRows.length} rows.`);
         refreshInspector({ target: canvas.getActiveObject() });
         updateExportUI();
         updateFloatingLinker(canvas.getActiveObject());
@@ -1241,7 +1222,7 @@ async function loadCachedData() {
     if (cachedHeaders && cachedRows) {
         try {
             headers = JSON.parse(cachedHeaders);
-            dataRows = compactCsvRows(JSON.parse(cachedRows), headers);
+            dataRows = JSON.parse(cachedRows);
             identifierColumn = cachedIdCol || '';
             $('#fileName').textContent = fileName || 'Restored Data';
             $('#unloadDataBtn').style.display = 'inline';
