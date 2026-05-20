@@ -95,7 +95,7 @@ const renderNav = (user) => {
             `
             : `
                 <a href="/login">Login</a>
-                <a href="/tool" class="nav-try">Try it free</a>
+                <a href="/tool" class="nav-try btn">Try it for free</a>
             `;
     } else {
         linksHtml = `
