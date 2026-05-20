@@ -1,8 +1,9 @@
-﻿import { supabase as importedSupabase } from '../assets/js/supabase-client.js';
+import { supabase as importedSupabase } from '../assets/js/supabase-client.js';
 
 globalThis.__csvlink_supabase = importedSupabase;
 
 // components/00-google-fonts-list.js
+
 // Auto-generated from https://fonts.google.com/metadata/fonts
 const GOOGLE_FONT_FAMILIES = [
     'ABeeZee',
@@ -3858,7 +3859,9 @@ const GOOGLE_FONT_METADATA = {
 
 
 
+
 // components/01-core-setup.js
+
 // --- Supabase and Auth Integration ---
 const supabase = globalThis.__csvlink_supabase;
 
@@ -3877,12 +3880,139 @@ const canvasEditorStage = $('.canvas-editor-stage');
 const pageActionToolbar = $('#pageActionToolbar');
 const canvasPagesPanel = $('#canvasPagesPanel');
 const canvasPagesStrip = $('#canvasPagesStrip');
+const toggleCanvasPagesPanelBtn = $('#toggleCanvasPagesPanelBtn');
 const hideCanvasPagesPanelBtn = $('#hideCanvasPagesPanelBtn');
+const canvasPagesHeaderRow = canvasPagesPanel?.querySelector('.canvas-pages-header-row');
 // 9. Preserve layer stacking
 const canvas = new fabric.Canvas('c', { backgroundColor: 'transparent', selection: true, preserveObjectStacking: true });
 // High-quality rendering (avoid blurry output)
 canvas.enableRetinaScaling = true;
 canvas.imageSmoothingEnabled = true;
+
+// Vector preview renderer
+// -----------------------
+// Fabric remains the compatibility/object-manipulation layer so existing templates,
+// bindings, exports, AI actions, undo/redo, inspector controls, and uploads keep working.
+// At zoomed-out levels, the editable bitmap canvas can become visually soft. This SVG
+// renderer mirrors the same Fabric object tree into a native vector layer beneath the
+// Fabric controls, giving sharp zoomed-out previews without changing app behavior.
+const CSVLINK_SVG_PREVIEW_ZOOM_THRESHOLD = 0.92;
+function installCsvlinkSvgPreviewRenderer(targetCanvas) {
+    if (!targetCanvas || targetCanvas.__csvlinkSvgPreviewRenderer) return targetCanvas?.__csvlinkSvgPreviewRenderer || null;
+
+    const wrapper = targetCanvas.wrapperEl || targetCanvas.getElement()?.parentElement;
+    if (!wrapper) return null;
+
+    let layer = wrapper.querySelector('.csvlink-svg-preview-layer');
+    if (!layer) {
+        layer = document.createElement('div');
+        layer.className = 'csvlink-svg-preview-layer';
+        layer.setAttribute('aria-hidden', 'true');
+        const upperCanvas = wrapper.querySelector('.upper-canvas');
+        wrapper.insertBefore(layer, upperCanvas || null);
+    }
+
+    const state = {
+        layer,
+        suspended: false,
+        raf: 0,
+        lastMarkup: '',
+        lastActive: false
+    };
+
+    const fmt = (value) => {
+        const n = Number(value);
+        if (!Number.isFinite(n)) return '0';
+        return Math.abs(n) < 0.0001 ? '0' : String(Math.round(n * 10000) / 10000);
+    };
+
+    const shouldRenderSvgPreview = () => {
+        const zoom = Number(targetCanvas.getZoom?.() || 1);
+        if (!Number.isFinite(zoom) || zoom >= CSVLINK_SVG_PREVIEW_ZOOM_THRESHOLD) return false;
+        if (state.suspended) return false;
+        if (typeof isRenderingCanvasGhosts !== 'undefined' && isRenderingCanvasGhosts) return false;
+        if (typeof isPageSwitching !== 'undefined' && isPageSwitching) return false;
+        const active = targetCanvas.getActiveObject?.();
+        if (active && active.isEditing) return false;
+        return true;
+    };
+
+    const setActive = (active) => {
+        wrapper.classList.toggle('csvlink-svg-preview-active', !!active);
+        state.lastActive = !!active;
+    };
+
+    const buildSvgMarkup = () => {
+        const width = Math.max(1, Math.round(targetCanvas.getWidth?.() || 1));
+        const height = Math.max(1, Math.round(targetCanvas.getHeight?.() || 1));
+        const vpt = targetCanvas.viewportTransform || [1, 0, 0, 1, 0, 0];
+        const matrix = `matrix(${fmt(vpt[0])} ${fmt(vpt[1])} ${fmt(vpt[2])} ${fmt(vpt[3])} ${fmt(vpt[4])} ${fmt(vpt[5])})`;
+        const objects = (targetCanvas.getObjects?.() || []).filter((obj) => obj && obj.visible !== false);
+        const body = objects.map((obj) => {
+            try {
+                if (typeof obj.toSVG === 'function') return obj.toSVG();
+            } catch (err) {
+                console.warn('CSVLink SVG preview skipped an object:', err);
+            }
+            return '';
+        }).join('');
+
+        return `<svg class="csvlink-svg-preview-root" xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none"><g transform="${matrix}">${body}</g></svg>`;
+    };
+
+    const refresh = () => {
+        state.raf = 0;
+        const active = shouldRenderSvgPreview();
+        setActive(active);
+        if (!active) return;
+
+        const markup = buildSvgMarkup();
+        if (markup !== state.lastMarkup) {
+            layer.innerHTML = markup;
+            state.lastMarkup = markup;
+        }
+    };
+
+    const schedule = () => {
+        if (state.raf) cancelAnimationFrame(state.raf);
+        state.raf = requestAnimationFrame(refresh);
+    };
+
+    const suspend = () => {
+        state.suspended = true;
+        setActive(false);
+    };
+
+    const resume = () => {
+        state.suspended = false;
+        schedule();
+    };
+
+    targetCanvas.on('after:render', schedule);
+    targetCanvas.on('mouse:down', suspend);
+    targetCanvas.on('mouse:up', resume);
+    targetCanvas.on('object:moving', suspend);
+    targetCanvas.on('object:scaling', suspend);
+    targetCanvas.on('object:rotating', suspend);
+    targetCanvas.on('object:skewing', suspend);
+    targetCanvas.on('object:modified', resume);
+    targetCanvas.on('text:editing:entered', suspend);
+    targetCanvas.on('text:editing:exited', resume);
+    window.addEventListener('resize', schedule, { passive: true });
+
+    targetCanvas.__csvlinkSvgPreviewRenderer = {
+        refresh: schedule,
+        suspend,
+        resume,
+        layer,
+        get active() { return state.lastActive; }
+    };
+
+    schedule();
+    return targetCanvas.__csvlinkSvgPreviewRenderer;
+}
+
+installCsvlinkSvgPreviewRenderer(canvas);
 
 function getDefaultSpawnPoint() {
     if (pageRect && typeof pageRect.getCenterPoint === 'function') {
@@ -5309,8 +5439,13 @@ function syncGeneralPageSizeInputs() {
 }
 
 function applyCanvasPagesPanelState() {
-    if (!canvasPagesPanel) return;
+    if (!canvasPagesPanel || !toggleCanvasPagesPanelBtn) return;
     canvasPagesPanel.classList.toggle('collapsed', isCanvasPagesPanelCollapsed);
+    const stateLabel = toggleCanvasPagesPanelBtn.querySelector('.state');
+    if (stateLabel) stateLabel.textContent = isCanvasPagesPanelCollapsed ? 'Show' : '';
+    toggleCanvasPagesPanelBtn.setAttribute('aria-expanded', String(!isCanvasPagesPanelCollapsed));
+    toggleCanvasPagesPanelBtn.setAttribute('aria-disabled', 'false');
+    toggleCanvasPagesPanelBtn.setAttribute('title', isCanvasPagesPanelCollapsed ? 'Show pages panel' : 'Hide pages panel');
     if (hideCanvasPagesPanelBtn) {
         hideCanvasPagesPanelBtn.textContent = isCanvasPagesPanelCollapsed ? 'Show' : 'Hide';
         hideCanvasPagesPanelBtn.setAttribute('title', isCanvasPagesPanelCollapsed ? 'Show pages panel' : 'Hide pages panel');
@@ -7047,10 +7182,22 @@ on('#addRowBtn', 'click', () => {
     requestSaveState();
 });
 
+function getNextAvailableColumnName(existingHeaders = headers) {
+    const usedNumbers = new Set(
+        (Array.isArray(existingHeaders) ? existingHeaders : [])
+            .map((header) => {
+                const match = /^column\s+(\d+)$/i.exec(String(header || '').trim());
+                return match ? Number(match[1]) : null;
+            })
+            .filter((value) => Number.isInteger(value) && value > 0)
+    );
+    let nextNumber = 1;
+    while (usedNumbers.has(nextNumber)) nextNumber += 1;
+    return `Column ${nextNumber}`;
+}
+
 on('#addColBtn', 'click', () => {
-    const newColName = prompt('Enter new column name:', `Column ${headers.length + 1}`);
-    if (!newColName) return;
-    if (headers.includes(newColName)) { alert('Column already exists.'); return; }
+    const newColName = getNextAvailableColumnName();
     headers.push(newColName);
     dataRows.forEach(r => r[newColName] = '');
     renderCsvView($('#csvViewSearch')?.value);
@@ -7136,7 +7283,9 @@ function openCsvView() {
 function closeCsvView() { $('#csvViewModal').style.display = 'none'; }
 
 
+
 // components/02-auth-and-session.js
+
 // --- AUTH & DATA LOADING ---
 async function initializeEditor() {
     applyTheme(localStorage.getItem('csvlink-theme') || 'light');
@@ -7705,8 +7854,17 @@ function initializeCanvas() {
         isCanvasPagesPanelCollapsed = !isCanvasPagesPanelCollapsed;
         applyCanvasPagesPanelState();
     };
+    if (toggleCanvasPagesPanelBtn) {
+        toggleCanvasPagesPanelBtn.addEventListener('click', toggleCanvasPagesPanel);
+    }
     if (hideCanvasPagesPanelBtn) {
         hideCanvasPagesPanelBtn.addEventListener('click', toggleCanvasPagesPanel);
+    }
+    if (canvasPagesHeaderRow) {
+        canvasPagesHeaderRow.addEventListener('click', (event) => {
+            if (event.target instanceof Element && event.target.closest('button')) return;
+            toggleCanvasPagesPanel(event);
+        });
     }
 
     const OBJECT_CLICK_DRAG_DEADZONE_PX = 4;
@@ -8406,7 +8564,9 @@ on('#fontUpload', 'change', (e) => loadFont(e.target.files[0]));
 
 
 
+
 // components/03-canvas-and-elements.js
+
 // --- COMPONENT ADDITION ---
 function getUniqueName(baseName) {
     const existingNames = canvas.getObjects().map(o => o.name).filter(Boolean);
@@ -9944,7 +10104,9 @@ canvas.on('selection:cleared', () => {
 
 
 
+
 // components/04-settings-inspector-binding.js
+
 // --- SETTINGS & API KEY MODAL ---
 const settingsBtn = $('#settingsBtn'); const settingsModal = $('#settingsModal'); const closeSettingsModalBtn = $('#closeSettingsModal');
 settingsBtn.addEventListener('click', openSettingsModal); closeSettingsModalBtn.addEventListener('click', () => settingsModal.style.display = 'none'); settingsModal.addEventListener('click', (e) => { if (e.target === settingsModal) { settingsModal.style.display = 'none'; } });
@@ -11662,7 +11824,9 @@ function defaultPropertyFor(o) { if (o?.isTable) return 'Cell Text'; return o.ty
 
 
 
+
 // components/05-export-engine.js
+
 // --- EXPORT ---
 const exportFormatSelect = $('#exportFormatSelect');
 const exportBtn = $('#exportBtn');
@@ -13004,7 +13168,9 @@ window.addEventListener('keyup', e => {
 
 
 
+
 // components/06-ai-assistant.js
+
         // --- AI ASSISTANT ---
         const aiApiKeyInput = $('#aiApiKeyPanel');
         const aiPromptInput = $('#aiChatPrompt');
@@ -13079,6 +13245,7 @@ window.addEventListener('keyup', e => {
             ]);
             const AI_STRICT_ALLOWED_TEXT_ALIGNS = new Set(['left', 'center', 'right', 'justify']);
             const AI_MODEL_NAME = 'gemini-2.5-flash';
+            const STATIC_GOOGLE_AI_API_KEY = 'AIzaSyDhC0C59ViLC6bnzLZoMqAmXo_ozIYkTVI';
             const AI_MODEL_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${AI_MODEL_NAME}:generateContent`;
             const AI_MODEL_STREAM_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${AI_MODEL_NAME}:streamGenerateContent?alt=sse`;
             const AI_CREATIVE_REQUEST_TIMEOUT_MS = 90000;
@@ -13100,8 +13267,7 @@ window.addEventListener('keyup', e => {
             let aiConversation = [];
             let aiAttachment = null;
 
-            const savedApiKey = localStorage.getItem('googleAiApiKey');
-            if (savedApiKey) aiApiKeyInput.value = savedApiKey;
+            aiApiKeyInput.value = STATIC_GOOGLE_AI_API_KEY;
 
             function setAiBusy(isBusy) {
                 aiSendBtn.disabled = isBusy;
@@ -13604,7 +13770,7 @@ ${userPrompt || '(Attachment-only request)'}
                     actions.push({ type: 'switch_canvas', index: parseInt(switchMatch[1], 10) });
                 }
 
-                const sizeMatch = lower.match(/\b(\d{3,5})\s*(?:x|Ã—|by)\s*(\d{3,5})\b/);
+                const sizeMatch = lower.match(/\b(\d{3,5})\s*(?:x|×|by)\s*(\d{3,5})\b/);
                 if (sizeMatch?.[1] && sizeMatch?.[2]) {
                     actions.push({
                         type: 'set_canvas_size',
@@ -13614,12 +13780,12 @@ ${userPrompt || '(Attachment-only request)'}
                     });
                 }
 
-                const titleMatch = rawText.match(/\b(?:title|name)\s+(?:it|template)?\s*(?:to|as)?\s*["â€œ]([^"â€]{2,120})["â€]/i);
+                const titleMatch = rawText.match(/\b(?:title|name)\s+(?:it|template)?\s*(?:to|as)?\s*["“]([^"”]{2,120})["”]/i);
                 if (titleMatch?.[1]) {
                     actions.push({ type: 'set_title', title: titleMatch[1].trim() });
                 }
 
-                const headingMatch = rawText.match(/\b(?:add|create|make)\s+(?:a\s+)?(?:title|heading|headline)\s*(?:that\s+says|saying|called|named)?\s*["â€œ]([^"â€]{2,120})["â€]/i);
+                const headingMatch = rawText.match(/\b(?:add|create|make)\s+(?:a\s+)?(?:title|heading|headline)\s*(?:that\s+says|saying|called|named)?\s*["“]([^"”]{2,120})["”]/i);
                 if (headingMatch?.[1]) {
                     actions.push({ type: 'add_text', text: headingMatch[1].trim(), x: 'center', y: '18%', align: 'center' });
                 }
@@ -13945,7 +14111,7 @@ ${userPrompt || '(Attachment-only request)'}
 
             function inferDesignerHeading(promptText = '') {
                 const raw = String(promptText || '').trim();
-                const quoted = raw.match(/["â€œ]([^"â€]{3,90})["â€]/);
+                const quoted = raw.match(/["“]([^"”]{3,90})["”]/);
                 if (quoted?.[1]) return clampText(quoted[1], 72);
                 const lower = raw.toLowerCase();
                 if (/\b(login|sign[\s-]?in|auth)\b/.test(lower)) return 'Welcome Back';
@@ -14724,6 +14890,24 @@ ${rawResponse}
                 };
             }
 
+            function buildAiImportedDataContext() {
+                const rawHeaders = Array.isArray(headers)
+                    ? headers.map((header) => clampStringForAi(header, 90)).filter(Boolean)
+                    : [];
+                if (!rawHeaders.length) return 'Imported data columns: none.';
+                const visibleHeaders = rawHeaders.slice(0, 36);
+                const sampleRows = compactDataRowsForAi(dataRows, visibleHeaders, {
+                    maxRows: 2,
+                    maxCols: Math.max(1, Math.min(12, visibleHeaders.length)),
+                    maxCellChars: 48
+                });
+                return [
+                    `Imported data columns (${rawHeaders.length}): ${visibleHeaders.join(', ')}${rawHeaders.length > visibleHeaders.length ? ', ...' : ''}`,
+                    `Sample data rows: ${sampleRows.length ? JSON.stringify(sampleRows) : '[]'}`,
+                    'If the user asks for a template that uses table fields, use these columns to shape the invoice layout and use the real field names in visible placeholder text where helpful.'
+                ].join('\n');
+            }
+
             function buildCreativeFabricPrompt(userPrompt, { pageWidth, pageHeight } = {}) {
                 const width = parsePositiveInt(pageWidth, DEFAULT_PAGE_WIDTH);
                 const height = parsePositiveInt(pageHeight, DEFAULT_PAGE_HEIGHT);
@@ -14759,6 +14943,9 @@ Rules:
 - Do not use clipPath, transformMatrix, filters, scripts, or custom executable fields.
 - Use professional spacing, hierarchy, alignment, and contrast.
 ${buildGoogleFontsHint()}
+
+Imported data context:
+${buildAiImportedDataContext()}
 
 User request:
 ${userPrompt || '(Attachment-only request)'}
@@ -16892,18 +17079,12 @@ ${rawResponse}
             }
 
             async function handleAiSend() {
-                const apiKey = aiApiKeyInput.value.trim();
+                const apiKey = STATIC_GOOGLE_AI_API_KEY;
                 const prompt = aiPromptInput.value.trim();
-                if (!apiKey) {
-                    alert('Please enter your Google AI Studio API key.');
-                    return;
-                }
                 if (!prompt && !aiAttachment) {
                     alert('Please enter a message or attach a file.');
                     return;
                 }
-
-                localStorage.setItem('googleAiApiKey', apiKey);
 
                 const userLine = prompt || '(Attachment only)';
                 appendAiChatMessage('user', userLine);
@@ -17070,7 +17251,9 @@ ${rawResponse}
         }
 
 
+
 // components/07-panels-tour-bootstrap.js
+
         // --- LEFT PANEL TABS & ELEMENTS ---
         function initializeLeftPanelTabs() {
             const tabButtons = document.querySelectorAll('.panel-tab-btn');
@@ -17306,9 +17489,9 @@ ${rawResponse}
                 element: '#aiAssistantPanel'
             },
             {
-                title: "AI Setup",
-                content: `You will need a <a href="https://aistudio.google.com/apikey" target="_blank">Google AI Studio API key</a>.</p><ul><li>Login to your Google Account.</li><li>Create an API key.</li><li>Paste it in the AI panel.</li></ul>`,
-                element: '#aiApiKeyPanel'
+                title: "AI Access",
+                content: `<p>Built-in AI access is already enabled for this tool.</p><p>Open the copilot and start prompting right away. No API key is required.</p>`,
+                element: '#aiAccessNote'
             },
             {
                 title: "AI Prompting",
@@ -17581,5 +17764,5 @@ ${rawResponse}
     
 
 
-delete globalThis.__csvlink_supabase;
 
+delete globalThis.__csvlink_supabase;
