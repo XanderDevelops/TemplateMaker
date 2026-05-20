@@ -23,31 +23,104 @@
     <style>
         .store-header {
             margin-top: 60px;
-            margin-bottom: 3rem;
+            margin-bottom: 1.5rem;
+        }
+        main.container {
+            max-width: none;
+            width: 100%;
+            padding: 2rem 40px 120px;
+        }
+        .store-toolbar {
+            display: none;
+        }
+        .store-search {
+            position: relative;
+            width: 100%;
+            margin-bottom: 14px;
+        }
+        .store-search input {
+            width: 100%;
+            height: 44px;
+            padding: 0 16px 0 42px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.92);
+            color: var(--fg);
+            font: inherit;
+            box-shadow: none;
+        }
+        .store-search input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.14), 0 8px 24px rgba(15, 23, 42, 0.06);
+        }
+        .store-search::before {
+            content: "";
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            width: 14px;
+            height: 14px;
+            border: 2px solid var(--muted);
+            border-radius: 50%;
+            transform: translateY(-50%);
+            opacity: 0.75;
+        }
+        .store-search::after {
+            content: "";
+            position: absolute;
+            left: 27px;
+            top: 27px;
+            width: 8px;
+            height: 2px;
+            background: var(--muted);
+            transform: rotate(45deg);
+            opacity: 0.75;
         }
         .store-layout {
             display: grid;
-            grid-template-columns: 240px 1fr;
+            grid-template-columns: 260px minmax(0, 1fr);
             gap: 2.5rem;
             align-items: flex-start;
         }
 
         .categories {
             background: var(--panel);
-            padding: 1.5rem;
-            border-radius: 16px;
+            padding: 16px;
+            border-radius: 6px;
             border: 1px solid var(--border);
             position: sticky;
             top: 84px;
+            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
         }
 
         .categories h3 {
             margin-top: 0;
-            margin-bottom: 1.5rem;
-            font-size: 1rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
+            margin-bottom: 10px;
+            font-size: 0.95rem;
+            text-transform: none;
+            letter-spacing: 0;
+            color: var(--fg);
+        }
+
+        .filter-divider {
+            height: 1px;
+            background: var(--border);
+            margin: 14px 0;
+        }
+
+        .filter-label {
+            margin: 0 0 10px;
+            color: var(--fg);
+            font-size: 0.85rem;
+            font-weight: 700;
+        }
+
+        .filter-help {
+            margin: -4px 0 12px;
             color: var(--muted);
+            font-size: 0.78rem;
+            line-height: 1.35;
         }
 
         .categories ul {
@@ -57,64 +130,188 @@
         }
 
         .categories li {
-            padding: 0.75rem 1rem;
-            border-radius: 8px;
+            padding: 7px 8px;
+            border-radius: 4px;
             cursor: pointer;
+            font-size: 0.93rem;
             font-weight: 500;
-            color: var(--muted);
+            color: #334155;
             transition: all 0.2s;
-            margin-bottom: 4px;
+            margin-bottom: 3px;
+            border-left: 3px solid transparent;
         }
 
         .categories li:hover {
-            background-color: var(--panel-2);
+            background-color: #f3f4f6;
             color: var(--fg);
         }
 
         .categories li.active {
-            background-color: var(--accent);
-            color: var(--accent-fg);
+            background-color: #eff6ff;
+            color: #1d4ed8;
+            border-left-color: var(--accent);
+            font-weight: 700;
+        }
+
+        .style-filter-list {
+            display: grid;
+            gap: 7px;
+        }
+
+        .style-filter {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            width: 100%;
+            padding: 7px 8px;
+            border: 1px solid transparent;
+            border-radius: 4px;
+            background: transparent;
+            color: #334155;
+            cursor: pointer;
+            font: inherit;
+            font-size: 0.92rem;
+            text-align: left;
+            transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+        }
+
+        .style-filter:hover {
+            background: #f3f4f6;
+            color: var(--fg);
+        }
+
+        .style-filter::after {
+            content: "";
+            width: 34px;
+            height: 18px;
+            border-radius: 999px;
+            background: #dbe3ee;
+            box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.08);
+            transition: background-color 0.2s;
+        }
+
+        .style-filter span::after {
+            content: "";
+            position: absolute;
+        }
+
+        .style-filter {
+            position: relative;
+        }
+
+        .style-filter::before {
+            content: "";
+            position: absolute;
+            right: 24px;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #fff;
+            box-shadow: 0 1px 3px rgba(15, 23, 42, 0.24);
+            transition: transform 0.2s;
+            z-index: 1;
+        }
+
+        .style-filter.active {
+            border-color: #bfdbfe;
+            background: #eff6ff;
+            color: #1d4ed8;
+            font-weight: 700;
+        }
+
+        .style-filter.active::after {
+            background: var(--accent);
+        }
+
+        .style-filter.active::before {
+            transform: translateX(16px);
         }
 
         .template-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 1.5rem;
+            grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+            gap: 44px 38px;
+            align-items: start;
         }
 
         .template-card {
-            background: var(--panel);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
+            background: transparent;
+            border: 0;
+            border-radius: 8px;
             position: relative;
             cursor: pointer;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: transform 0.18s ease, filter 0.18s ease;
+            min-height: 0;
+            box-shadow: none;
         }
         .template-card:hover {
-            transform: translateY(-4px);
-            border-color: var(--muted);
-            box-shadow: var(--shadow-lg);
+            transform: translateY(-2px);
+            filter: drop-shadow(0 14px 22px rgba(15, 23, 42, 0.14));
         }
         .template-card .preview {
-            height: 180px;
-            background-color: var(--bg);
+            height: 455px;
+            background: transparent;
             display: flex;
             align-items: center;
             justify-content: center;
-            position: relative;
+            border: 0;
+        }
+        .template-card .preview-canvas-wrap {
+            width: 100%;
+            height: 100%;
             overflow: hidden;
-            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
         }
-        .template-card .info {
-            padding: 1rem;
+        .template-card canvas {
+            max-width: 100%;
+            flex: 0 0 auto;
         }
-        .template-card .info h3 {
-            margin: 0;
-            font-size: 16px;
+        .template-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 0.65rem;
+        }
+        .template-tag {
+            display: inline-flex;
+            align-items: center;
+            min-height: 24px;
+            padding: 3px 8px;
+            border: 1px solid #dbeafe;
+            border-radius: 999px;
+            background: #eff6ff;
+            color: #1d4ed8;
+            font-size: 0.72rem;
             font-weight: 600;
+            line-height: 1;
+        }
+        .modal-detail .buy-template-btn,
+        .modal-detail .use-template-btn {
+            width: 100%;
+            height: 42px;
+            border-radius: 8px;
+            background: var(--accent);
+            color: var(--accent-fg);
+            border-color: transparent;
+            box-shadow: 0 8px 18px rgba(37, 99, 235, 0.22);
+        }
+        .modal-detail .buy-template-btn:hover,
+        .modal-detail .use-template-btn:hover {
+            background: var(--accent-hover);
+            color: var(--accent-fg);
+        }
+        .empty-state {
+            grid-column: 1 / -1;
+            padding: 36px;
+            border: 1px dashed var(--border);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.7);
+            color: var(--muted);
+            text-align: center;
         }
 
         /* Modal Styles */
@@ -135,11 +332,11 @@
         .modal-content {
             background: var(--panel);
             padding: 24px;
-            border-radius: 20px;
+            border-radius: 14px;
             border: 1px solid var(--border);
-            width: 95vw;
-            height: 90vh;
-            max-width: 1100px;
+            width: min(94vw, 1180px);
+            height: auto;
+            max-height: 92vh;
             display: flex;
             flex-direction: column;
             box-shadow: var(--shadow-lg);
@@ -153,11 +350,127 @@
         }
 
         .modal-body {
-            flex-grow: 1;
-            background-color: var(--bg);
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 320px;
+            gap: 24px;
+            height: min(760px, calc(92vh - 96px));
+            min-height: 0;
+            background-color: transparent;
             border-radius: 12px;
             overflow: hidden;
+            border: 0;
+        }
+        .modal-preview-panel {
+            height: 100%;
+            min-height: 0;
+            background: #f8fafc;
             border: 1px solid var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+        }
+        .modal-detail {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            padding: 4px 0;
+        }
+        .modal-detail h3 {
+            margin: 0;
+            font-size: 1.35rem;
+            line-height: 1.25;
+        }
+        .modal-detail p {
+            margin: 0;
+            color: var(--muted);
+            line-height: 1.55;
+        }
+        .modal-price {
+            margin-top: auto;
+            padding-top: 12px;
+            border-top: 1px solid var(--border);
+            color: var(--fg);
+            font-size: 1.15rem;
+            font-weight: 700;
+        }
+        body {
+            min-height: 100vh;
+            padding-bottom: 96px;
+        }
+        footer {
+            position: fixed;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 900;
+            margin-top: 0;
+            padding: 20px 24px;
+            box-shadow: 0 -8px 24px rgba(15, 23, 42, 0.06);
+        }
+        @media (max-width: 1400px) {
+            .template-grid {
+                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            }
+        }
+        @media (max-width: 980px) {
+            main.container {
+                padding: 1.5rem 18px 120px;
+            }
+            .store-layout {
+                grid-template-columns: 1fr;
+            }
+            .categories {
+                position: static;
+            }
+            .categories ul {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 6px;
+            }
+            .categories li {
+                margin-bottom: 0;
+            }
+            .style-filter-list {
+                grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            }
+            .template-grid {
+                grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+                gap: 30px;
+            }
+            .modal-body {
+                grid-template-columns: 1fr;
+                height: auto;
+                max-height: none;
+                overflow: auto;
+            }
+            .modal-preview-panel {
+                height: min(620px, 62vh);
+                min-height: 360px;
+            }
+        }
+        @media (max-width: 640px) {
+            .store-header h1 {
+                font-size: 2.2rem !important;
+            }
+            .store-toolbar {
+                display: none;
+            }
+            .template-grid {
+                grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+                gap: 24px;
+            }
+            .template-card .preview {
+                height: 290px;
+            }
+            footer {
+                position: static;
+            }
+            body {
+                padding-bottom: 0;
+            }
         }
     </style>
     <!-- Vercel Web Analytics -->
@@ -182,6 +495,10 @@
 
         <div class="store-layout animated" style="animation-delay: 0.1s;">
             <aside class="categories">
+                <label class="store-search" for="template-search">
+                    <input id="template-search" type="search" placeholder="Search templates or tags">
+                </label>
+                <div class="filter-divider"></div>
                 <h3>Categories</h3>
                 <ul id="category-list">
                     <li class="active" data-category="all">All</li>
@@ -190,6 +507,27 @@
                     <li data-category="report">Reports</li>
                     <li data-category="resume">Resumes</li>
                 </ul>
+                <div class="filter-divider"></div>
+                <p class="filter-label">Style Filters</p>
+                <p class="filter-help">Refine by common template tags.</p>
+                <div id="style-filter-list" class="style-filter-list">
+                    <button class="style-filter" type="button" data-filter="modern" aria-pressed="false"><span>Modern</span></button>
+                    <button class="style-filter" type="button" data-filter="premium" aria-pressed="false"><span>Premium</span></button>
+                    <button class="style-filter" type="button" data-filter="basic" aria-pressed="false"><span>Basic</span></button>
+                    <button class="style-filter" type="button" data-filter="minimal" aria-pressed="false"><span>Minimal</span></button>
+                    <button class="style-filter" type="button" data-filter="minimalistic" aria-pressed="false"><span>Minimalistic</span></button>
+                    <button class="style-filter" type="button" data-filter="stylish" aria-pressed="false"><span>Stylish</span></button>
+                    <button class="style-filter" type="button" data-filter="classic" aria-pressed="false"><span>Classic</span></button>
+                    <button class="style-filter" type="button" data-filter="vintage" aria-pressed="false"><span>Vintage</span></button>
+                    <button class="style-filter" type="button" data-filter="corporate" aria-pressed="false"><span>Corporate</span></button>
+                    <button class="style-filter" type="button" data-filter="creative" aria-pressed="false"><span>Creative</span></button>
+                    <button class="style-filter" type="button" data-filter="clean" aria-pressed="false"><span>Clean</span></button>
+                    <button class="style-filter" type="button" data-filter="professional" aria-pressed="false"><span>Professional</span></button>
+                    <button class="style-filter" type="button" data-filter="editorial" aria-pressed="false"><span>Editorial</span></button>
+                    <button class="style-filter" type="button" data-filter="freelance" aria-pressed="false"><span>Freelance</span></button>
+                    <button class="style-filter" type="button" data-filter="agency" aria-pressed="false"><span>Agency</span></button>
+                    <button class="style-filter" type="button" data-filter="startup" aria-pressed="false"><span>Startup</span></button>
+                </div>
             </aside>
             <div id="template-grid" class="template-grid">
                 <p class="muted">Loading templates...</p>
@@ -205,7 +543,16 @@
                 <button id="close-modal-btn" class="btn ghost icon-only" style="width: 32px; height: 32px; border-radius: 50%; font-size: 20px;">&times;</button>
             </div>
             <div class="modal-body">
-                <canvas id="modal-canvas"></canvas>
+                <div class="modal-preview-panel">
+                    <canvas id="modal-canvas"></canvas>
+                </div>
+                <aside class="modal-detail">
+                    <h3 id="modal-template-title"></h3>
+                    <div id="modal-template-tags" class="template-tags"></div>
+                    <p id="modal-template-description"></p>
+                    <div class="modal-price" id="modal-template-price"></div>
+                    <div id="modal-template-action"></div>
+                </aside>
             </div>
         </div>
     </div>
