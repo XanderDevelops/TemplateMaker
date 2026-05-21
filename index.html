@@ -90,7 +90,10 @@
         }
 
         * { box-sizing: border-box; }
-        html { scroll-behavior: smooth; }
+        html {
+            scroll-behavior: smooth;
+            scroll-padding-top: 76px;
+        }
         body {
             margin: 0;
             font-family: 'Manrope', Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -275,6 +278,51 @@
             width: min(100%, 1280px);
             margin: 0 auto;
             padding: 0 40px 56px;
+        }
+
+        .page-shell > section {
+            scroll-margin-top: 76px;
+            padding-top: clamp(58px, 5.8vw, 86px);
+            padding-bottom: clamp(58px, 5.8vw, 86px);
+        }
+
+        .page-shell > section.section-focus-pulse {
+            position: relative;
+            z-index: 2;
+        }
+
+        .page-shell > section.section-focus-pulse::after {
+            content: '';
+            position: absolute;
+            inset: clamp(10px, 1.4vw, 18px) -14px;
+            border: 2px solid rgba(37, 99, 235, 0.72);
+            border-radius: 26px;
+            pointer-events: none;
+            animation: section-focus-ring 1.35s ease forwards;
+            box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.22);
+        }
+
+        @keyframes section-focus-ring {
+            0% {
+                opacity: 0;
+                clip-path: inset(0 100% 0 0 round 26px);
+                box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.18);
+            }
+            38% {
+                opacity: 1;
+                clip-path: inset(0 0 0 0 round 26px);
+                box-shadow: 0 0 0 8px rgba(37, 99, 235, 0.08);
+            }
+            74% {
+                opacity: 1;
+                clip-path: inset(0 0 0 0 round 26px);
+                box-shadow: 0 0 0 14px rgba(37, 99, 235, 0);
+            }
+            100% {
+                opacity: 0;
+                clip-path: inset(0 0 0 0 round 26px);
+                box-shadow: 0 0 0 18px rgba(37, 99, 235, 0);
+            }
         }
 
         .hero {
@@ -724,7 +772,7 @@
         }
 
         .section {
-            padding: 54px 0;
+            padding: clamp(58px, 5.8vw, 86px) 0;
         }
 
         .section-heading {
@@ -1008,7 +1056,7 @@
 
 
         .quickbooks-section {
-            padding: 46px 0 58px;
+            padding: clamp(58px, 5.8vw, 86px) 0;
         }
 
         .quickbooks-panel {
@@ -1448,8 +1496,8 @@
         .template-gallery-block,
         .pricing-section,
         .resources-section {
-            margin-top: 52px;
-            padding: 46px 38px;
+            margin-top: 42px;
+            padding: clamp(46px, 5.2vw, 68px) 38px;
             border: 1px solid var(--border);
             border-radius: 20px;
             background: rgba(255,255,255,0.88);
@@ -1525,21 +1573,37 @@
         .footer-links a:hover { color: var(--blue); }
         .copyright { text-align: center; color: #9aa5b6; font-size: 12px; font-weight: 700; margin-top: 22px; }
 
-        .animated-section { opacity: 1; transform: none; transition: opacity 0.55s ease, transform 0.55s ease; }
-        .animated-section.is-visible { opacity: 1; transform: none; }
+        .animated-section {
+            opacity: 0;
+            transform: translateY(28px);
+            transition: opacity 0.65s ease, transform 0.65s cubic-bezier(0.2, 1, 0.3, 1);
+            will-change: opacity, transform;
+        }
+        .animated-section.is-visible {
+            opacity: 1;
+            transform: none;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .animated-section {
+                opacity: 1;
+                transform: none;
+                transition: none;
+            }
+
+            .page-shell > section.section-focus-pulse::after {
+                animation: none;
+                opacity: 0;
+            }
+        }
 
         @media (max-width: 1100px) {
             .nav-inner, .page-shell { padding-left: 24px; padding-right: 24px; }
             .primary-nav { gap: 18px; }
-            .hero { grid-template-columns: 1fr; min-height: auto; padding-top: 44px; gap: 38px; }
-            .hero-copy { text-align: center; margin: 0 auto; }
-            .hero h1, .hero p.lede { margin-left: auto; margin-right: auto; }
-            .hero-actions, .hero-points { justify-content: center; }
-            .hero-visual { width: min(100%, 740px); max-width: 100%; margin: 0 auto; min-height: 570px; justify-content: center; padding-right: 0; }
-            .hero-flow-canvas { transform: none; transform-origin: top center; }
-            .sheet-card { left: 50px; }
-            .mapping-card { left: 75px; }
-            .invoice-card { right: 12px; }
+            .page-shell > section {
+                padding-top: 56px;
+                padding-bottom: 56px;
+            }
             .template-grid, .benefits-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
             .quickbooks-panel { grid-template-columns: 1fr; padding: 38px 30px; }
             .quickbooks-copy { text-align: center; }
@@ -1560,12 +1624,19 @@
             .primary-nav { flex-wrap: wrap; gap: 14px 22px; }
             .nav-links { justify-content: center; }
             .page-shell { padding-left: 18px; padding-right: 18px; }
+            .hero { grid-template-columns: 1fr; min-height: auto; padding-top: 44px; gap: 38px; }
+            .hero-copy { text-align: center; margin: 0 auto; }
+            .hero h1, .hero p.lede { margin-left: auto; margin-right: auto; }
+            .hero-actions, .hero-points { justify-content: center; }
             .hero h1 { font-size: clamp(38px, 12vw, 54px); }
             .hero p.lede { font-size: 16px; }
             .hero-visual { min-height: 360px; width: min(100%, 420px); }
             .hero-flow-canvas { transform: scale(0.58); transform-origin: top center; }
+            .sheet-card { left: 50px; }
+            .mapping-card { left: 75px; }
+            .invoice-card { right: 12px; }
             .steps-grid, .template-grid, .benefits-grid, .pricing-grid, .resources-grid { grid-template-columns: 1fr; }
-            .quickbooks-section { padding: 30px 0 42px; }
+            .quickbooks-section { padding: 48px 0; }
             .quickbooks-panel { padding: 28px 18px; border-radius: 16px; }
             .quickbooks-panel::before { display: none; }
             .quickbooks-copy h2 { font-size: 30px; }
@@ -1581,7 +1652,7 @@
             .cta-panel { padding: 30px 20px; }
             .cta-panel h2 { font-size: 28px; }
             .file-flow { transform: scale(0.9); transform-origin: center; min-width: 285px; }
-            .template-gallery-block, .pricing-section, .resources-section { padding: 34px 18px; }
+            .template-gallery-block, .pricing-section, .resources-section { padding: 40px 18px; }
         }
     </style>
     <!-- Vercel Web Analytics -->
@@ -1667,7 +1738,7 @@
 
                     <div class="ui-card invoice-card">
                         <div class="invoice-head">
-                            <div class="your-logo-wrap"><span class="logo-circle">YOUR<br>LOGO</span><span>YOUR<br>LOGO</span></div>
+                            <div class="your-logo-wrap"><span class="logo-circle">YOUR<br>LOGO</span></div>
                             <span class="invoice-badge">INVOICE</span>
                         </div>
                         <div class="invoice-meta">Invoice #: INV-2048<br>Date: May 14, 2026</div>
@@ -1846,7 +1917,7 @@
             </div>
         </section>
 
-        <section class="trusted" aria-label="Trusted by teams">
+        <section class="trusted animated-section" aria-label="Trusted by teams">
             Trusted by teams around the world
             <div class="logo-row">
                 <span>◇ Bright Labs</span><span>◒ Core Systems</span><span>PAPER &amp; CO.</span><span>✥ Vertex Solutions</span><span>⬡ Northfield Group</span><span>◩ BluePeak</span>
@@ -1945,6 +2016,31 @@
             const templatesByCategory = { invoice: [], report: [], resume: [] };
             let currentCarouselInterval;
 
+            const highlightSection = (section) => {
+                if (!section) return;
+                section.classList.remove('section-focus-pulse');
+                void section.offsetWidth;
+                section.classList.add('section-focus-pulse');
+                window.setTimeout(() => {
+                    section.classList.remove('section-focus-pulse');
+                }, 1450);
+            };
+
+            document.querySelectorAll('a[href^="#"]').forEach((link) => {
+                link.addEventListener('click', (event) => {
+                    const hash = link.getAttribute('href');
+                    if (!hash || hash === '#') return;
+
+                    const target = document.querySelector(hash);
+                    if (!target) return;
+
+                    event.preventDefault();
+                    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    window.history.pushState(null, '', hash);
+                    window.setTimeout(() => highlightSection(target), 360);
+                });
+            });
+
             const renderTemplates = (templates) => {
                 if (!carouselTrack) return;
                 carouselTrack.innerHTML = '';
@@ -2041,10 +2137,14 @@
                 entries.forEach(entry => {
                     if (entry.isIntersecting) {
                         entry.target.classList.add('is-visible');
-                        observer.unobserve(entry.target);
+                    } else {
+                        entry.target.classList.remove('is-visible');
                     }
                 });
-            }, { threshold: 0.1 });
+            }, {
+                threshold: 0.18,
+                rootMargin: '-8% 0px -12% 0px'
+            });
             animatedSections.forEach(section => observer.observe(section));
 
             await fetchPublicTemplates();
