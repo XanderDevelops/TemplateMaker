@@ -261,7 +261,29 @@
                 action: () => { $('#dataLinksManagerModal').style.display = 'none'; }
             }
         ];
-        function startTour() { currentTourStep = 0; tourModal.style.display = 'flex'; goToStep(currentTourStep); } function endTour() { tourModal.style.display = 'none'; tourHighlight.style.display = 'none'; localStorage.setItem('hasSeenTour', 'true'); }
+        function startTour() {
+            currentTourStep = 0;
+            if ($('#invoiceCsvPromptModal')?.style.display === 'flex') {
+                if (typeof invoiceCsvPromptQueuedUntilTourEnds !== 'undefined') {
+                    invoiceCsvPromptQueuedUntilTourEnds = true;
+                }
+                $('#invoiceCsvPromptModal').style.display = 'none';
+            }
+            tourModal.style.display = 'flex';
+            goToStep(currentTourStep);
+        }
+        function endTour() {
+            tourModal.style.display = 'none';
+            tourHighlight.style.display = 'none';
+            localStorage.setItem('hasSeenTour', 'true');
+            if (typeof syncInvoiceCsvPromptState === 'function') {
+                syncInvoiceCsvPromptState({
+                    forceOpen: typeof invoiceCsvPromptQueuedUntilTourEnds !== 'undefined'
+                        ? invoiceCsvPromptQueuedUntilTourEnds
+                        : false
+                });
+            }
+        }
         function goToStep(stepIndex) {
             const step = tourSteps[stepIndex];
             if (!step) {
