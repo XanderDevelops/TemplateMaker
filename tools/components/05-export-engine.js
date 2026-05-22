@@ -556,7 +556,7 @@ function updateDownloadFeedbackStars() {
     const hint = $('#downloadFeedbackRatingHint');
     if (hint) {
         hint.textContent = selectedDownloadFeedbackRating
-            ? `${DOWNLOAD_FEEDBACK_RATING_LABELS[selectedDownloadFeedbackRating]} — thanks. Add a note if you want.`
+            ? DOWNLOAD_FEEDBACK_RATING_LABELS[selectedDownloadFeedbackRating]
             : 'Choose a rating from 1 to 5 stars.';
     }
 
