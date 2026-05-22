@@ -1,4 +1,4 @@
-import { supabase } from './supabase-client.js';
+import { supabase, logActivity } from './supabase-client.js';
 
 const templateGrid = document.getElementById('template-grid');
 const tabs = document.querySelectorAll('.tab');
@@ -96,6 +96,10 @@ const tryRestoreGuestTemplateToDashboard = async () => {
         return false;
     }
 
+    logActivity('created_template', {
+        title,
+        source: 'guest_restore_dashboard'
+    });
     localStorage.removeItem(GUEST_TEMPLATE_KEY);
     return true;
 };
@@ -257,6 +261,10 @@ const attachActionListeners = () => {
                     alert('Could not delete template.');
                     console.error(error);
                 } else {
+                    logActivity('deleted_template', {
+                        template_id: id,
+                        delete_count: 1
+                    });
                     selectedTemplates.delete(id);
                     loadTemplates(currentTab);
                 }
@@ -304,19 +312,27 @@ const attachActionListeners = () => {
             const newTemplateData = originalTemplate.template_data;
             newTemplateData.page.title = newTitle;
 
-            const { error: insertError } = await supabase
+            const { data: duplicatedTemplate, error: insertError } = await supabase
                 .from('templates')
                 .insert({
                     user_id: user.id,
                     title: newTitle,
                     template_data: newTemplateData,
                     preview_url: originalTemplate.preview_url,
-                });
+                })
+                .select('id')
+                .single();
 
             if (insertError) {
                 alert('Failed to duplicate template.');
                 console.error(insertError);
             } else {
+                logActivity('created_template', {
+                    template_id: duplicatedTemplate?.id || null,
+                    source_template_id: id,
+                    title: newTitle,
+                    source: 'duplicate'
+                });
                 loadTemplates(currentTab);
             }
             buttonEl.disabled = false;
@@ -342,6 +358,10 @@ deleteSelectedBtn.addEventListener('click', async () => {
             alert(`Could not delete selected templates.`);
             console.error(error);
         } else {
+            logActivity('deleted_template', {
+                template_ids: idsToDelete,
+                delete_count: idsToDelete.length
+            });
             exitSelectionMode();
             loadTemplates(currentTab);
         }

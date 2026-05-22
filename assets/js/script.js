@@ -1,4 +1,4 @@
-import { supabase } from './supabase-client.js';
+import { supabase, logActivity, setPendingLoginMethod, clearPendingLoginMethod } from './supabase-client.js';
 
 const navLinksContainer = document.getElementById('nav-links');
 const loginForm = document.getElementById('login-form');
@@ -35,6 +35,8 @@ const renderNav = (user) => {
     if (logoutBtn) {
         logoutBtn.addEventListener('click', async (e) => {
             e.preventDefault();
+            const { data: { user } = {} } = await supabase.auth.getUser();
+            await logActivity('logged_out', { method: 'manual' }, { userId: user?.id || null });
             await supabase.auth.signOut();
             window.location.href = '/';
         });
@@ -59,23 +61,30 @@ if (loginForm) {
         if (response.error) {
             authError.textContent = response.error.message;
         } else {
+            if (response.data?.session) {
+                setPendingLoginMethod(isSignup ? 'email_signup' : 'email');
+            }
             window.location.href = redirectTo;
         }
     });
 }
 
-// --- Handle Google Auth ---if (googleLoginBtn) {
-googleLoginBtn.addEventListener('click', async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-            redirectTo: window.location.origin + '/login.html?redirect=' + encodeURIComponent(redirectTo)
+// --- Handle Google Auth ---
+if (googleLoginBtn) {
+    googleLoginBtn.addEventListener('click', async () => {
+        setPendingLoginMethod('google');
+        const { error } = await supabase.auth.signInWithOAuth({
+            provider: 'google',
+            options: {
+                redirectTo: window.location.origin + '/login.html?redirect=' + encodeURIComponent(redirectTo)
+            }
+        });
+        if (error) {
+            clearPendingLoginMethod();
+            authError.textContent = error.message;
         }
     });
-    if (error) {
-        authError.textContent = error.message;
-    }
-});
+}
 
 
 // --- Toggle between Login and Signup view ---

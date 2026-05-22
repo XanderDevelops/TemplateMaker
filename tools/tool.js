@@ -4147,6 +4147,14 @@ let editingFillObject = null;
 let cropCanvas, croppingImage = null;
 let currentUser = null, currentTemplateId = null, userRole = 'free';
 let pendingGuestTemplateRestore = false;
+
+function logCsvlinkActivity(eventName, metadata = {}, options = {}) {
+    if (typeof window === 'undefined' || typeof window.csvlinkLogActivity !== 'function') return;
+    window.csvlinkLogActivity(eventName, metadata, options).catch(error => {
+        console.warn('CSVLink activity log skipped:', error);
+    });
+}
+
 const saveStatusEl = $('#saveStatus');
 let activeTableCellEditor = null;
 const PAGE_STRIP_COLLAPSE_KEY = 'csvlink-canvas-strip-collapsed';
@@ -7522,6 +7530,11 @@ const debouncedSave = debounce(async () => {
         if (error) { saveStatusEl.textContent = 'Error creating template.'; }
         else {
             currentTemplateId = data.id;
+            logCsvlinkActivity('created_template', {
+                template_id: currentTemplateId,
+                title: ($('#titleInput')?.value || 'Untitled_Template').trim(),
+                source: pendingGuestTemplateRestore ? 'guest_restore' : 'editor_autosave'
+            });
             if (pendingGuestTemplateRestore) {
                 localStorage.removeItem('csvlink-guest-template');
                 pendingGuestTemplateRestore = false;
@@ -8517,6 +8530,16 @@ function processFileData(arrayBuffer, fileName, opts = {}) {
         refreshIdentifierDropdown();
         requestSaveState(); // Trigger save with new data
         cacheLocalDataState(); // Persist to local storage
+        if (!opts.skipActivityLog) {
+            logCsvlinkActivity('imported_csv', {
+                template_id: currentTemplateId || null,
+                file_name: fileName || null,
+                file_extension: String(fileName || '').split('.').pop()?.toLowerCase() || null,
+                sheet_name: sheetName || null,
+                row_count: dataRows.length,
+                column_count: headers.length
+            });
+        }
 
         // Show identifier column modal on fresh file load
         if (!opts.skipIdentifierModal) {
@@ -8581,7 +8604,7 @@ async function loadCachedData() {
     const fileData = localStorage.getItem('cachedFileData');
     if (fileName && fileData) {
         const arrayBuffer = base64ToArrayBuffer(fileData);
-        processFileData(arrayBuffer, fileName, { skipIdentifierModal: true });
+        processFileData(arrayBuffer, fileName, { skipIdentifierModal: true, skipActivityLog: true });
     }
 }
 on('#csvInput', 'change', async (e) => {
@@ -12665,6 +12688,15 @@ function createDownloadFeedbackShell(downloadMeta = {}) {
 }
 
 async function recordDownloadAndRequestFeedback(downloadMeta = {}) {
+    logCsvlinkActivity('downloaded', {
+        template_id: currentTemplateId || null,
+        title: ($('#titleInput')?.value || 'Untitled_Template').trim(),
+        file_name: normalizeDownloadFileName(downloadMeta.fileName),
+        export_format: normalizeDownloadExportFormat(downloadMeta.exportFormat, downloadMeta.exportType),
+        export_type: downloadMeta.exportType || null,
+        row_count: Number.isFinite(Number(downloadMeta.rowCount)) ? Number(downloadMeta.rowCount) : 0,
+        selected_page_indexes: normalizeSelectedDownloadPages(downloadMeta.selectedPageIndexes)
+    });
     const feedbackRecord = createDownloadFeedbackShell(downloadMeta);
     feedbackRecord._snapshotPromise = createDownloadSnapshot(downloadMeta);
 

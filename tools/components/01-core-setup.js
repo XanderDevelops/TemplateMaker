@@ -283,6 +283,14 @@ let editingFillObject = null;
 let cropCanvas, croppingImage = null;
 let currentUser = null, currentTemplateId = null, userRole = 'free';
 let pendingGuestTemplateRestore = false;
+
+function logCsvlinkActivity(eventName, metadata = {}, options = {}) {
+    if (typeof window === 'undefined' || typeof window.csvlinkLogActivity !== 'function') return;
+    window.csvlinkLogActivity(eventName, metadata, options).catch(error => {
+        console.warn('CSVLink activity log skipped:', error);
+    });
+}
+
 const saveStatusEl = $('#saveStatus');
 let activeTableCellEditor = null;
 const PAGE_STRIP_COLLAPSE_KEY = 'csvlink-canvas-strip-collapsed';

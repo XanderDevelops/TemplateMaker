@@ -1,4 +1,4 @@
-﻿// --- EXPORT ---
+// --- EXPORT ---
 const exportFormatSelect = $('#exportFormatSelect');
 const exportBtn = $('#exportBtn');
 const exportSinglePdfBtn = $('#exportSinglePdfBtn');
@@ -783,6 +783,15 @@ function createDownloadFeedbackShell(downloadMeta = {}) {
 }
 
 async function recordDownloadAndRequestFeedback(downloadMeta = {}) {
+    logCsvlinkActivity('downloaded', {
+        template_id: currentTemplateId || null,
+        title: ($('#titleInput')?.value || 'Untitled_Template').trim(),
+        file_name: normalizeDownloadFileName(downloadMeta.fileName),
+        export_format: normalizeDownloadExportFormat(downloadMeta.exportFormat, downloadMeta.exportType),
+        export_type: downloadMeta.exportType || null,
+        row_count: Number.isFinite(Number(downloadMeta.rowCount)) ? Number(downloadMeta.rowCount) : 0,
+        selected_page_indexes: normalizeSelectedDownloadPages(downloadMeta.selectedPageIndexes)
+    });
     const feedbackRecord = createDownloadFeedbackShell(downloadMeta);
     feedbackRecord._snapshotPromise = createDownloadSnapshot(downloadMeta);
 
