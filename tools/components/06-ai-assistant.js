@@ -72,9 +72,7 @@
             ]);
             const AI_STRICT_ALLOWED_TEXT_ALIGNS = new Set(['left', 'center', 'right', 'justify']);
             const AI_MODEL_NAME = 'gemini-2.5-flash';
-            const STATIC_GOOGLE_AI_API_KEY = 'AIzaSyDhC0C59ViLC6bnzLZoMqAmXo_ozIYkTVI';
-            const AI_MODEL_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${AI_MODEL_NAME}:generateContent`;
-            const AI_MODEL_STREAM_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${AI_MODEL_NAME}:streamGenerateContent?alt=sse`;
+            const AI_PROXY_ENDPOINT = '/api/ai';
             const AI_CREATIVE_REQUEST_TIMEOUT_MS = 90000;
             const AI_LIVE_RENDER_DELAY_MS = 28;
             const AI_JSON_RESPONSE_SCHEMA = {
@@ -93,8 +91,6 @@
             let aiAutoApplyEnabled = true;
             let aiConversation = [];
             let aiAttachment = null;
-
-            aiApiKeyInput.value = STATIC_GOOGLE_AI_API_KEY;
 
             function setAiBusy(isBusy) {
                 aiSendBtn.disabled = isBusy;
@@ -1611,13 +1607,15 @@ ${userPrompt || '(Attachment-only request)'}
                         onProgress(enforceJson ? 'Sending request' : 'Retrying request');
                     }
 
-                    const response = await fetch(AI_MODEL_ENDPOINT, {
+                    const response = await fetch(AI_PROXY_ENDPOINT, {
                         method: 'POST',
                         headers: {
-                            'Content-Type': 'application/json',
-                            'X-goog-api-key': apiKey
+                            'Content-Type': 'application/json'
                         },
-                        body: JSON.stringify(payload),
+                        body: JSON.stringify({
+                            model: AI_MODEL_NAME,
+                            payload
+                        }),
                         signal: abortController.signal
                     });
 
@@ -1879,13 +1877,16 @@ Return format example:
                 let assembledText = '';
                 try {
                     if (typeof onProgress === 'function') onProgress('Opening live stream');
-                    const response = await fetch(AI_MODEL_STREAM_ENDPOINT, {
+                    const response = await fetch(AI_PROXY_ENDPOINT, {
                         method: 'POST',
                         headers: {
-                            'Content-Type': 'application/json',
-                            'X-goog-api-key': apiKey
+                            'Content-Type': 'application/json'
                         },
-                        body: JSON.stringify(payload),
+                        body: JSON.stringify({
+                            model: AI_MODEL_NAME,
+                            payload,
+                            stream: true
+                        }),
                         signal: abortController.signal
                     });
 
@@ -3906,7 +3907,7 @@ ${rawResponse}
             }
 
             async function handleAiSend() {
-                const apiKey = STATIC_GOOGLE_AI_API_KEY;
+                const apiKey = '';
                 const prompt = aiPromptInput.value.trim();
                 if (!prompt && !aiAttachment) {
                     alert('Please enter a message or attach a file.');
