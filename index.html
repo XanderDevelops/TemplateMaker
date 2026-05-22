@@ -1023,6 +1023,91 @@
         .template-preview-mini.certificate::after { content: '★'; position: absolute; color: #ffa45d; font-size: 24px; transform: translateY(28px); }
         .template-preview-mini.slip::before { width: 90px; height: 106px; }
         .template-preview-mini.custom::before { width: 104px; height: 92px; transform: rotate(-2deg); }
+
+        /* Rich landing template previews */
+        .template-preview-card {
+            height: 154px;
+            border-radius: 16px;
+            border: 1px solid #dbe8f8;
+            background: radial-gradient(circle at 20% 18%, rgba(22,108,245,.16), transparent 26%), linear-gradient(150deg, #f8fbff 0%, #eef6ff 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+            padding: 14px;
+        }
+        .preview-paper,
+        .certificate-paper,
+        .label-sheet,
+        .custom-stack {
+            position: relative;
+            z-index: 1;
+        }
+        .preview-paper {
+            width: 112px;
+            height: 126px;
+            border-radius: 12px;
+            background: #fff;
+            border: 1px solid rgba(180, 199, 225, 0.75);
+            box-shadow: 0 18px 36px rgba(36, 67, 111, 0.14);
+            padding: 11px;
+            display: grid;
+            gap: 7px;
+            transform: rotate(-2deg);
+        }
+        .preview-paper.narrow { width: 104px; transform: rotate(1.5deg); }
+        .preview-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; color: #1f3152; font-size: 9px; font-weight: 950; letter-spacing: .04em; }
+        .preview-logo { width: 20px; height: 16px; border-radius: 5px; background: linear-gradient(135deg, #166cf5, #74a7ff); display: inline-block; }
+        .preview-logo.box { border-radius: 4px; background: linear-gradient(135deg, #ff9b54, #ffd08a); }
+        .preview-row { height: 5px; border-radius: 999px; background: #e5eef8; }
+        .preview-row.short { width: 48%; }
+        .preview-row.medium { width: 72%; }
+        .preview-table { display: grid; grid-template-columns: 1.3fr .7fr; gap: 5px; padding-top: 3px; }
+        .preview-table span { height: 5px; border-radius: 999px; background: #dbe8f5; }
+        .quote-lines { grid-template-columns: 1fr; }
+        .preview-total { margin-top: auto; display: flex; justify-content: space-between; align-items: center; font-size: 8px; color: #7a879b; }
+        .preview-total strong { color: #166cf5; font-size: 10px; }
+        .preview-chip {
+            position: absolute;
+            right: 10px;
+            bottom: 10px;
+            z-index: 2;
+            padding: 5px 8px;
+            border-radius: 999px;
+            background: rgba(255,255,255,.92);
+            color: #235ee8;
+            border: 1px solid rgba(198, 218, 244, .9);
+            box-shadow: 0 8px 18px rgba(36,67,111,.10);
+            font-size: 10px;
+            font-weight: 950;
+        }
+        .label-sheet { width: 134px; height: 98px; display: grid; grid-template-columns: 1fr 1fr; gap: 7px; transform: rotate(-1deg); }
+        .label-sheet span { background: #fff; border: 1px solid rgba(180,199,225,.82); border-radius: 11px; padding: 8px; display: grid; align-content: center; gap: 5px; box-shadow: 0 10px 22px rgba(36,67,111,.10); }
+        .label-sheet strong { font-size: 9px; color: #1f3152; }
+        .label-sheet em { font-style: normal; font-size: 8px; color: #166cf5; font-weight: 900; }
+        .preview-check-list { display: grid; gap: 7px; margin-top: 2px; }
+        .preview-check-list span { height: 6px; border-radius: 999px; background: linear-gradient(90deg, #166cf5 0 8px, #e5eef8 8px); }
+        .preview-barcode { height: 18px; margin-top: auto; border-radius: 3px; background: repeating-linear-gradient(90deg, #1f3152 0 2px, transparent 2px 5px, #1f3152 5px 7px, transparent 7px 10px); opacity: .45; }
+        .preview-barcode.small { height: 13px; }
+        .certificate-paper { width: 136px; height: 96px; background: #fffaf0; border: 3px double #f0bf5f; border-radius: 8px; box-shadow: 0 18px 32px rgba(36,67,111,.12); padding: 13px; text-align: center; transform: rotate(.8deg); display: grid; align-content: center; gap: 7px; }
+        .certificate-title { font-size: 12px; font-weight: 950; color: #263a62; }
+        .certificate-name { font-size: 9px; font-weight: 900; color: #166cf5; }
+        .certificate-rule { width: 72%; height: 1px; background: #e4c986; margin: 0 auto; }
+        .certificate-seal { width: 26px; height: 26px; border-radius: 999px; background: #ffbe58; color: #fff; display: grid; place-items: center; font-size: 12px; margin: 0 auto; }
+        .receipt-paper { width: 96px; border-radius: 10px 10px 5px 5px; transform: rotate(2deg); }
+        .receipt-total { margin: 2px 0; padding: 6px; border-radius: 7px; background: #eaf7ee; color: #1b8c4f; font-size: 9px; font-weight: 950; text-align: center; }
+        .report-paper { transform: rotate(-1deg); }
+        .preview-chart { height: 45px; display: flex; align-items: end; gap: 6px; padding: 5px 7px; border-radius: 8px; background: #f4f8fd; }
+        .preview-chart span { flex: 1; border-radius: 5px 5px 2px 2px; background: linear-gradient(180deg, #166cf5, #8cb7ff); }
+        .custom-stack { width: 134px; height: 102px; }
+        .custom-card { position: absolute; inset: 0; border-radius: 14px; background: #fff; border: 1px solid rgba(180,199,225,.82); box-shadow: 0 16px 32px rgba(36,67,111,.12); padding: 14px; display: grid; gap: 8px; align-content: start; }
+        .custom-card.one { transform: translate(-10px, 5px) rotate(-6deg); opacity: .78; }
+        .custom-card.two { transform: translate(10px, -3px) rotate(4deg); }
+        .custom-card span { height: 8px; border-radius: 999px; background: #e5eef8; }
+        .custom-card span:first-child { width: 42%; background: #166cf5; }
+        .custom-card span:nth-child(2) { width: 88%; }
+        .custom-card span:nth-child(3) { width: 66%; }
         .template-card-body { display: grid; gap: 8px; flex: 1; }
         .template-card-body h3 { margin-bottom: 0; }
         .template-card-actions { display: grid; grid-template-columns: 1fr; gap: 9px; margin-top: auto; }
@@ -1834,42 +1919,101 @@
             <div class="template-grid">
                 <article class="template-card-static active">
                     <span class="popular-badge">Most popular</span>
-                    <div class="template-preview-mini invoice" aria-hidden="true"><span></span></div>
+                    <div class="template-preview-card preview-invoice" aria-hidden="true">
+                        <div class="preview-paper">
+                            <div class="preview-head"><span class="preview-logo"></span><strong>INVOICE</strong></div>
+                            <div class="preview-row short"></div><div class="preview-row medium"></div>
+                            <div class="preview-table"><span></span><span></span><span></span><span></span><span></span><span></span></div>
+                            <div class="preview-total"><span>Total</span><strong>$1,240</strong></div>
+                        </div>
+                        <span class="preview-chip">CSV → PDF</span>
+                    </div>
                     <div class="template-card-body"><h3>Invoice from CSV</h3><p>Create invoice PDFs from customer, date, line item, tax, and total columns in your spreadsheet.</p></div>
                     <div class="template-card-actions"><a class="primary-template-action" href="/tool">Use this template</a><a class="secondary-template-action" href="/tool">Upload CSV sample</a><a href="/csv-to-invoice">Invoice template guide</a></div>
                 </article>
                 <article class="template-card-static">
-                    <div class="template-preview-mini quote" aria-hidden="true"><span></span></div>
+                    <div class="template-preview-card preview-quote" aria-hidden="true">
+                        <div class="preview-paper">
+                            <div class="preview-head"><span class="preview-logo"></span><strong>QUOTE</strong></div>
+                            <div class="preview-row medium"></div><div class="preview-row short"></div>
+                            <div class="preview-table quote-lines"><span></span><span></span><span></span><span></span></div>
+                            <div class="preview-total"><span>Valid until</span><strong>Jun 30</strong></div>
+                        </div>
+                        <span class="preview-chip">XLSX → Quote</span>
+                    </div>
                     <div class="template-card-body"><h3>Quote from spreadsheet</h3><p>Turn rows of customer, item, quantity, price, and expiration data into consistent quote PDFs.</p></div>
                     <div class="template-card-actions"><a class="primary-template-action" href="/tool">Use this template</a><a class="secondary-template-action" href="/tool">Upload CSV sample</a><a href="/quote-template">Quote template guide</a></div>
                 </article>
                 <article class="template-card-static">
-                    <div class="template-preview-mini labels" aria-hidden="true"><span></span></div>
+                    <div class="template-preview-card preview-labels" aria-hidden="true">
+                        <div class="label-sheet">
+                            <span><strong>SKU-102</strong><em>$24.00</em></span><span><strong>SKU-118</strong><em>$18.50</em></span>
+                            <span><strong>SKU-204</strong><em>$31.99</em></span><span><strong>SKU-311</strong><em>$12.00</em></span>
+                        </div>
+                        <span class="preview-chip">CSV → Labels</span>
+                    </div>
                     <div class="template-card-body"><h3>Product labels</h3><p>Use product names, SKUs, prices, categories, and descriptions from Excel or CSV to generate label files.</p></div>
                     <div class="template-card-actions"><a class="primary-template-action" href="/tool">Use this template</a><a class="secondary-template-action" href="/tool">Upload CSV sample</a><a href="/product-label-template">Label template guide</a></div>
                 </article>
                 <article class="template-card-static">
-                    <div class="template-preview-mini slip" aria-hidden="true"><span></span></div>
+                    <div class="template-preview-card preview-slip" aria-hidden="true">
+                        <div class="preview-paper narrow">
+                            <div class="preview-head"><span class="preview-logo box"></span><strong>PACKING SLIP</strong></div>
+                            <div class="preview-row medium"></div><div class="preview-row short"></div>
+                            <div class="preview-check-list"><span></span><span></span><span></span></div>
+                            <div class="preview-barcode"></div>
+                        </div>
+                        <span class="preview-chip">Orders → Slips</span>
+                    </div>
                     <div class="template-card-body"><h3>Packing slips</h3><p>Generate packing slips from order IDs, recipients, addresses, item names, quantities, and shipping notes.</p></div>
                     <div class="template-card-actions"><a class="primary-template-action" href="/tool">Use this template</a><a class="secondary-template-action" href="/tool">Upload CSV sample</a><a href="/packing-slip-template">Packing slip guide</a></div>
                 </article>
                 <article class="template-card-static">
-                    <div class="template-preview-mini certificate" aria-hidden="true"><span></span></div>
+                    <div class="template-preview-card preview-certificate" aria-hidden="true">
+                        <div class="certificate-paper">
+                            <div class="certificate-title">Certificate</div>
+                            <div class="certificate-name">Recipient Name</div>
+                            <div class="certificate-rule"></div>
+                            <div class="certificate-seal">★</div>
+                        </div>
+                        <span class="preview-chip">Rows → Awards</span>
+                    </div>
                     <div class="template-card-body"><h3>Certificates</h3><p>Create personalized certificates from names, dates, programs, awards, and signer fields in a spreadsheet.</p></div>
                     <div class="template-card-actions"><a class="primary-template-action" href="/tool">Use this template</a><a class="secondary-template-action" href="/tool">Upload CSV sample</a><a href="/certificate-template">Certificate template guide</a></div>
                 </article>
                 <article class="template-card-static">
-                    <div class="template-preview-mini receipt" aria-hidden="true"><span></span></div>
+                    <div class="template-preview-card preview-receipt" aria-hidden="true">
+                        <div class="preview-paper receipt-paper">
+                            <div class="preview-head"><span class="preview-logo"></span><strong>RECEIPT</strong></div>
+                            <div class="preview-row medium"></div><div class="preview-row medium"></div>
+                            <div class="receipt-total">PAID · $89.00</div>
+                            <div class="preview-barcode small"></div>
+                        </div>
+                        <span class="preview-chip">CSV → Receipts</span>
+                    </div>
                     <div class="template-card-body"><h3>Receipts</h3><p>Map payment IDs, customer names, dates, items, amounts, and balances into clean receipt PDFs.</p></div>
                     <div class="template-card-actions"><a class="primary-template-action" href="/tool">Use this template</a><a class="secondary-template-action" href="/tool">Upload CSV sample</a><a href="/receipt-template">Receipt template guide</a></div>
                 </article>
                 <article class="template-card-static">
-                    <div class="template-preview-mini report" aria-hidden="true"><span></span></div>
+                    <div class="template-preview-card preview-report" aria-hidden="true">
+                        <div class="preview-paper report-paper">
+                            <div class="preview-head"><span class="preview-logo"></span><strong>REPORT</strong></div>
+                            <div class="preview-chart"><span style="height:38%"></span><span style="height:64%"></span><span style="height:46%"></span><span style="height:78%"></span></div>
+                            <div class="preview-row medium"></div><div class="preview-row short"></div>
+                        </div>
+                        <span class="preview-chip">Data → Report</span>
+                    </div>
                     <div class="template-card-body"><h3>Client reports</h3><p>Build repeatable client summaries from spreadsheet fields like client name, period, metrics, notes, and totals.</p></div>
                     <div class="template-card-actions"><a class="primary-template-action" href="/tool">Use this template</a><a class="secondary-template-action" href="/tool">Upload CSV sample</a><a href="/client-report-template">Client report guide</a></div>
                 </article>
                 <article class="template-card-static">
-                    <div class="template-preview-mini custom" aria-hidden="true"><span></span></div>
+                    <div class="template-preview-card preview-custom" aria-hidden="true">
+                        <div class="custom-stack">
+                            <div class="custom-card one"><span></span><span></span><span></span></div>
+                            <div class="custom-card two"><span></span><span></span><span></span></div>
+                        </div>
+                        <span class="preview-chip">Spreadsheet → PDF</span>
+                    </div>
                     <div class="template-card-body"><h3>Custom PDF documents</h3><p>Design your own layout, connect it to spreadsheet columns, and export one personalized document per row.</p></div>
                     <div class="template-card-actions"><a class="primary-template-action" href="/tool">Use this template</a><a class="secondary-template-action" href="/tool">Upload CSV sample</a><a href="/custom-pdf-documents">Custom PDF guide</a></div>
                 </article>
