@@ -60,7 +60,7 @@
     <!-- jsPDF -->
     <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
-    <link rel="stylesheet" href="tools/tool-Invoice.css?v=20260409i" />
+    <link rel="stylesheet" href="tools/tool-Invoice.css?v=20260522a" />
     <!-- Vercel Web Analytics -->
     <script defer src="/_vercel/insights/script.js"></script>
 </head>
@@ -288,7 +288,11 @@
                                     <button id="aiResetChatBtn" class="btn ghost" type="button">Reset Chat</button>
                                 </div>
 
-                                <input type="hidden" id="aiApiKeyPanel" value="" />
+                                <div id="aiAccessNote" class="ai-access-note" aria-live="polite">
+                                    <strong>AI access is built in.</strong>
+                                    <p class="muted">No API key is required for the invoice copilot.</p>
+                                    <input type="hidden" id="aiApiKeyPanel" value="" />
+                                </div>
 
                                 <div id="aiChatLog" class="ai-chat-log">
                                     <div class="ai-chat-empty muted">
@@ -743,7 +747,7 @@
 
     <script type="module" src="assets/js/supabase-client.js"></script>
     <script type="module" src="assets/js/auth.js"></script>
-    <script type="module" src="tools/tool-Invoice.js?v=20260409k"></script>
+    <script type="module" src="tools/tool-Invoice.js?v=20260522a"></script>
 
     <!-- Grouped Data By Modal -->
     <div id="identifierColumnModal" class="modal-backdrop" style="z-index: 10001;">
