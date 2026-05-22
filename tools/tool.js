@@ -4,7 +4,7 @@ globalThis.__csvlink_supabase = importedSupabase;
 
 // components/00-google-fonts-list.js
 
-// Auto-generated from https://fonts.google.com/metadata/fonts
+﻿// Auto-generated from https://fonts.google.com/metadata/fonts
 const GOOGLE_FONT_FAMILIES = [
     'ABeeZee',
     'Abel',
@@ -7339,7 +7339,7 @@ function closeCsvView() { $('#csvViewModal').style.display = 'none'; }
 
 // components/02-auth-and-session.js
 
-// --- AUTH & DATA LOADING ---
+﻿// --- AUTH & DATA LOADING ---
 async function initializeEditor() {
     applyTheme(localStorage.getItem('csvlink-theme') || 'light');
     const { data: { session } } = await supabase.auth.getSession();
@@ -8620,7 +8620,7 @@ on('#fontUpload', 'change', (e) => loadFont(e.target.files[0]));
 
 // components/03-canvas-and-elements.js
 
-// --- COMPONENT ADDITION ---
+﻿// --- COMPONENT ADDITION ---
 function getUniqueName(baseName) {
     const existingNames = canvas.getObjects().map(o => o.name).filter(Boolean);
     if (!existingNames.includes(baseName)) { return baseName; }
@@ -10160,7 +10160,7 @@ canvas.on('selection:cleared', () => {
 
 // components/04-settings-inspector-binding.js
 
-// --- SETTINGS & API KEY MODAL ---
+﻿// --- SETTINGS & API KEY MODAL ---
 const settingsBtn = $('#settingsBtn'); const settingsModal = $('#settingsModal'); const closeSettingsModalBtn = $('#closeSettingsModal');
 settingsBtn.addEventListener('click', openSettingsModal); closeSettingsModalBtn.addEventListener('click', () => settingsModal.style.display = 'none'); settingsModal.addEventListener('click', (e) => { if (e.target === settingsModal) { settingsModal.style.display = 'none'; } });
 const openCustomerPortal = async () => { const btn = $('#manageSubscriptionBtn'); if (btn) { btn.disabled = true; btn.textContent = 'Generating link...'; } try { const { data, error } = await supabase.functions.invoke('lemonsqueezy-sub-manager', { body: { action: 'getPortalLink' } }); if (error) throw error; if (data && data.url) window.open(data.url, '_blank'); else throw new Error('Could not generate portal link.'); } catch (error) { alert(`Error: ${error.message}`); } finally { if (btn) { btn.disabled = false; btn.textContent = 'Manage Subscription'; } } };
@@ -11880,7 +11880,7 @@ function defaultPropertyFor(o) { if (o?.isTable) return 'Cell Text'; return o.ty
 
 // components/05-export-engine.js
 
-// --- EXPORT ---
+﻿// --- EXPORT ---
 const exportFormatSelect = $('#exportFormatSelect');
 const exportBtn = $('#exportBtn');
 const exportSinglePdfBtn = $('#exportSinglePdfBtn');
@@ -12278,6 +12278,432 @@ function restoreDataBindingsState(originalStates) {
     if (originalStates.size > 0) canvas.renderAll();
 }
 
+// --- DOWNLOAD SNAPSHOTS & FEEDBACK ---
+const DOWNLOAD_FEEDBACK_PENDING_KEY = 'csvlink-pending-download-feedback';
+const DOWNLOAD_FEEDBACK_SOURCE_OPTIONS = [
+    { value: 'youtube', label: 'YouTube' },
+    { value: 'google_search', label: 'Google Search' },
+    { value: 'instagram', label: 'Instagram' },
+    { value: 'friend', label: 'Friend' },
+    { value: 'linkedin', label: 'LinkedIn' },
+    { value: 'reddit', label: 'Reddit' },
+    { value: 'prefer_not_to_say', label: 'Prefer not to say' }
+];
+const DOWNLOAD_FEEDBACK_RATING_LABELS = {
+    1: 'Needs work',
+    2: 'Almost there',
+    3: 'Good',
+    4: 'Great',
+    5: 'Excellent'
+};
+let activeDownloadFeedback = null;
+let selectedDownloadFeedbackRating = 0;
+let pendingDownloadFeedbackRecord = null;
+
+function escapeDownloadFeedbackHtml(value) {
+    const div = document.createElement('div');
+    div.textContent = String(value || '');
+    return div.innerHTML;
+}
+
+function normalizeDownloadFileName(fileName) {
+    return String(fileName || '').trim().replace(/\s+/g, ' ') || null;
+}
+
+function normalizeDownloadExportFormat(format, exportType) {
+    const normalized = String(format || '').toLowerCase();
+    if (String(exportType || '').includes('zip')) return 'zip';
+    if (['pdf', 'png', 'jpg', 'json', 'zip'].includes(normalized)) return normalized;
+    return 'pdf';
+}
+
+function normalizeSelectedDownloadPages(pageIndexes) {
+    if (!Array.isArray(pageIndexes)) return [];
+    return pageIndexes
+        .map(index => parseInt(index, 10))
+        .filter(index => Number.isInteger(index) && index >= 0);
+}
+
+function getPendingDownloadFeedback() {
+    try {
+        const raw = localStorage.getItem(DOWNLOAD_FEEDBACK_PENDING_KEY);
+        return raw ? JSON.parse(raw) : pendingDownloadFeedbackRecord;
+    } catch (error) {
+        console.warn('Could not read pending download feedback:', error);
+        localStorage.removeItem(DOWNLOAD_FEEDBACK_PENDING_KEY);
+        return pendingDownloadFeedbackRecord;
+    }
+}
+
+function setDownloadFeedbackButtonVisible(isVisible) {
+    const button = $('#downloadFeedbackResumeBtn');
+    if (!button) return;
+    button.style.display = isVisible ? 'inline-flex' : 'none';
+}
+
+function savePendingDownloadFeedback(downloadRecord) {
+    if (!downloadRecord) return;
+
+    if (!downloadRecord.id) {
+        pendingDownloadFeedbackRecord = downloadRecord;
+        setDownloadFeedbackButtonVisible(true);
+
+        if (downloadRecord._snapshotPromise && !downloadRecord._pendingSaveAttached) {
+            downloadRecord._pendingSaveAttached = true;
+            downloadRecord._snapshotPromise
+                .then(savedRecord => {
+                    if (!savedRecord?.id) return;
+                    Object.assign(downloadRecord, savedRecord);
+                    pendingDownloadFeedbackRecord = null;
+                    savePendingDownloadFeedback(downloadRecord);
+                })
+                .catch(error => console.warn('Could not save pending download feedback record:', error));
+        }
+        return;
+    }
+
+    pendingDownloadFeedbackRecord = null;
+    const pendingRecord = {
+        id: downloadRecord.id,
+        title: downloadRecord.title || $('#titleInput')?.value || 'Untitled_Template',
+        export_format: downloadRecord.export_format || downloadRecord.exportFormat || exportFormatSelect?.value || 'pdf',
+        export_type: downloadRecord.export_type || downloadRecord.exportType || 'single',
+        exported_file_name: downloadRecord.exported_file_name || downloadRecord.fileName || null,
+        created_at: downloadRecord.created_at || new Date().toISOString()
+    };
+    localStorage.setItem(DOWNLOAD_FEEDBACK_PENDING_KEY, JSON.stringify(pendingRecord));
+    setDownloadFeedbackButtonVisible(true);
+}
+
+function clearPendingDownloadFeedback() {
+    pendingDownloadFeedbackRecord = null;
+    localStorage.removeItem(DOWNLOAD_FEEDBACK_PENDING_KEY);
+    setDownloadFeedbackButtonVisible(false);
+}
+
+function ensureDownloadFeedbackUI() {
+    if (!$('#downloadFeedbackModal')) {
+        const backdrop = document.createElement('div');
+        backdrop.id = 'downloadFeedbackModal';
+        backdrop.className = 'modal-backdrop download-feedback-backdrop';
+        backdrop.style.zIndex = '10006';
+        document.body.appendChild(backdrop);
+    }
+
+    if (!$('#downloadFeedbackResumeBtn')) {
+        const button = document.createElement('button');
+        button.id = 'downloadFeedbackResumeBtn';
+        button.type = 'button';
+        button.className = 'btn ghost download-feedback-resume-btn';
+        button.textContent = 'Feedback';
+        button.style.display = 'none';
+        button.addEventListener('click', () => {
+            const pending = getPendingDownloadFeedback();
+            if (!pending?.id) {
+                clearPendingDownloadFeedback();
+                return;
+            }
+            showDownloadFeedbackModal(pending);
+        });
+
+        const anchor = exportAllCanvasesBtn || exportSinglePdfBtn || exportBtn;
+        if (anchor?.parentElement) anchor.parentElement.appendChild(button);
+        else document.body.appendChild(button);
+    }
+
+    setDownloadFeedbackButtonVisible(!!getPendingDownloadFeedback()?.id);
+}
+
+function hideDownloadFeedbackModal() {
+    const modal = $('#downloadFeedbackModal');
+    if (!modal) return;
+    modal.style.display = 'none';
+    modal.innerHTML = '';
+}
+
+function renderDownloadFeedbackStars() {
+    return [1, 2, 3, 4, 5].map(rating => `
+        <button type="button" class="download-feedback-star" data-rating="${rating}" aria-label="Rate ${rating} out of 5">
+            <span aria-hidden="true">★</span>
+        </button>
+    `).join('');
+}
+
+function updateDownloadFeedbackStars() {
+    document.querySelectorAll('.download-feedback-star').forEach(button => {
+        const rating = parseInt(button.dataset.rating, 10);
+        const isActive = rating <= selectedDownloadFeedbackRating;
+        button.classList.toggle('is-active', isActive);
+        button.setAttribute('aria-checked', rating === selectedDownloadFeedbackRating ? 'true' : 'false');
+    });
+
+    const hint = $('#downloadFeedbackRatingHint');
+    if (hint) {
+        hint.textContent = selectedDownloadFeedbackRating
+            ? `${DOWNLOAD_FEEDBACK_RATING_LABELS[selectedDownloadFeedbackRating]} — thanks. Add a note if you want.`
+            : 'Choose a rating from 1 to 5 stars.';
+    }
+
+    const details = $('#downloadFeedbackDetails');
+    if (details) details.style.display = selectedDownloadFeedbackRating ? 'flex' : 'none';
+
+    const sendButton = $('#downloadFeedbackSendBtn');
+    if (sendButton) sendButton.disabled = !selectedDownloadFeedbackRating;
+}
+
+function showDownloadFeedbackModal(downloadRecord) {
+    ensureDownloadFeedbackUI();
+    activeDownloadFeedback = downloadRecord;
+    selectedDownloadFeedbackRating = 0;
+
+    const modal = $('#downloadFeedbackModal');
+    if (!modal) return;
+
+    const exportLabel = downloadRecord?.exported_file_name
+        ? `<span class="download-feedback-file">${escapeDownloadFeedbackHtml(downloadRecord.exported_file_name)}</span>`
+        : 'your export';
+
+    modal.innerHTML = `
+        <div class="modal download-feedback-modal" role="dialog" aria-modal="true" aria-labelledby="downloadFeedbackTitle">
+            <div class="row" style="justify-content:space-between;align-items:center;gap:12px;">
+                <div>
+                    <h3 id="downloadFeedbackTitle">How did this export turn out?</h3>
+                    <p class="muted download-feedback-subtitle">Your rating helps us make CSVLink templates and bulk downloads more accurate for your workflow.</p>
+                </div>
+                <button id="downloadFeedbackCloseBtn" class="btn ghost" type="button" aria-label="Not now">&times;</button>
+            </div>
+            <div class="download-feedback-export-summary">Feedback for ${exportLabel}</div>
+            <div class="download-feedback-stars" role="radiogroup" aria-label="Rate this download from 1 to 5 stars">
+                ${renderDownloadFeedbackStars()}
+            </div>
+            <p id="downloadFeedbackRatingHint" class="muted download-feedback-rating-hint">Choose a rating from 1 to 5 stars.</p>
+            <div id="downloadFeedbackDetails" class="stack download-feedback-details" style="display:none;">
+                <label for="downloadFeedbackText">What could make this output better? <span class="muted">(optional)</span></label>
+                <textarea id="downloadFeedbackText" rows="4" placeholder="Tell us what worked, what was missing, or what would make this export ready to use faster."></textarea>
+            </div>
+            <div class="row download-feedback-actions">
+                <button id="downloadFeedbackNotNowBtn" class="btn ghost" type="button">Not now</button>
+                <button id="downloadFeedbackSendBtn" class="btn primary" type="button" disabled>Send feedback</button>
+            </div>
+        </div>
+    `;
+    modal.style.display = 'flex';
+
+    modal.querySelectorAll('.download-feedback-star').forEach(button => {
+        button.addEventListener('click', () => {
+            selectedDownloadFeedbackRating = parseInt(button.dataset.rating, 10) || 0;
+            updateDownloadFeedbackStars();
+            $('#downloadFeedbackText')?.focus();
+        });
+    });
+
+    const postpone = () => {
+        savePendingDownloadFeedback(activeDownloadFeedback);
+        hideDownloadFeedbackModal();
+        showNotification('No problem. Use the Feedback button when you are ready.', 'info', 2600);
+    };
+
+    $('#downloadFeedbackCloseBtn')?.addEventListener('click', postpone);
+    $('#downloadFeedbackNotNowBtn')?.addEventListener('click', postpone);
+    $('#downloadFeedbackSendBtn')?.addEventListener('click', submitDownloadFeedback);
+    updateDownloadFeedbackStars();
+}
+
+async function ensureActiveDownloadFeedbackRecord() {
+    if (!activeDownloadFeedback) return null;
+    if (activeDownloadFeedback.id) return activeDownloadFeedback;
+
+    if (activeDownloadFeedback._snapshotPromise) {
+        try {
+            const savedRecord = await activeDownloadFeedback._snapshotPromise;
+            if (savedRecord?.id) {
+                Object.assign(activeDownloadFeedback, savedRecord);
+                return activeDownloadFeedback;
+            }
+        } catch (error) {
+            console.error('Could not create download snapshot before feedback submit:', error);
+        }
+    }
+
+    return null;
+}
+
+async function submitDownloadFeedback() {
+    if (!activeDownloadFeedback || !selectedDownloadFeedbackRating) return;
+
+    const button = $('#downloadFeedbackSendBtn');
+    const feedbackText = ($('#downloadFeedbackText')?.value || '').trim();
+    if (button) {
+        button.disabled = true;
+        button.textContent = 'Sending...';
+    }
+
+    const downloadRecord = await ensureActiveDownloadFeedbackRecord();
+    if (!downloadRecord?.id) {
+        showNotification('Could not prepare the feedback record. Check the downloads table setup and try again.', 'error', 4200);
+        if (button) {
+            button.disabled = false;
+            button.textContent = 'Send feedback';
+        }
+        return;
+    }
+
+    const { error } = await supabase
+        .from('downloads')
+        .update({
+            feedback_rating: selectedDownloadFeedbackRating,
+            feedback_text: feedbackText || null,
+            feedback_submitted_at: new Date().toISOString()
+        })
+        .eq('id', downloadRecord.id);
+
+    if (error) {
+        console.error('Error saving download feedback:', error);
+        showNotification('Could not save feedback. Please try again.', 'error', 3200);
+        if (button) {
+            button.disabled = false;
+            button.textContent = 'Send feedback';
+        }
+        return;
+    }
+
+    clearPendingDownloadFeedback();
+    showDownloadDiscoverySurvey(downloadRecord);
+}
+
+function showDownloadDiscoverySurvey(downloadRecord) {
+    const modal = $('#downloadFeedbackModal');
+    if (!modal) return;
+
+    modal.innerHTML = `
+        <div class="modal download-feedback-modal" role="dialog" aria-modal="true" aria-labelledby="downloadDiscoveryTitle">
+            <div class="stack" style="gap: 8px;">
+                <h3 id="downloadDiscoveryTitle">One quick question</h3>
+                <p class="muted download-feedback-subtitle">How did you first hear about CSVLink?</p>
+            </div>
+            <div class="download-discovery-options">
+                ${DOWNLOAD_FEEDBACK_SOURCE_OPTIONS.map(option => `
+                    <button class="btn ghost download-discovery-option" type="button" data-source="${option.value}">${option.label}</button>
+                `).join('')}
+            </div>
+        </div>
+    `;
+    modal.style.display = 'flex';
+
+    modal.querySelectorAll('.download-discovery-option').forEach(button => {
+        button.addEventListener('click', () => submitDownloadDiscoverySource(downloadRecord, button.dataset.source, button));
+    });
+}
+
+async function submitDownloadDiscoverySource(downloadRecord, source, button) {
+    if (!downloadRecord?.id || !source) return;
+    if (button) {
+        button.disabled = true;
+        button.textContent = 'Saving...';
+    }
+
+    const { error } = await supabase
+        .from('downloads')
+        .update({
+            discovery_source: source,
+            discovery_submitted_at: new Date().toISOString()
+        })
+        .eq('id', downloadRecord.id);
+
+    if (error) {
+        console.error('Error saving discovery source:', error);
+        showNotification('Could not save the answer. Please try again.', 'error', 3200);
+        if (button) {
+            const option = DOWNLOAD_FEEDBACK_SOURCE_OPTIONS.find(item => item.value === source);
+            button.disabled = false;
+            button.textContent = option?.label || 'Try again';
+        }
+        return;
+    }
+
+    hideDownloadFeedbackModal();
+    showNotification('Thank you — your feedback was sent.', 'success', 3000);
+}
+
+async function createDownloadSnapshot(downloadMeta = {}) {
+    if (!currentUser?.id) return null;
+
+    const payload = buildTemplatePayload();
+    const hasContent = Array.isArray(payload.pages)
+        ? payload.pages.some(page => pageHasRenderableObjects(page))
+        : pageHasRenderableObjects(payload);
+
+    if (!hasContent) return null;
+
+    const exportType = downloadMeta.exportType || 'single';
+    const exportFormat = normalizeDownloadExportFormat(downloadMeta.exportFormat || exportFormatSelect?.value, exportType);
+    const selectedPageIndexes = normalizeSelectedDownloadPages(downloadMeta.selectedPageIndexes);
+    const rowCount = Number.isFinite(downloadMeta.rowCount)
+        ? downloadMeta.rowCount
+        : (Array.isArray(dataRows) ? dataRows.length : 0);
+
+    const insertPayload = {
+        user_id: currentUser.id,
+        template_id: currentTemplateId || null,
+        title: ($('#titleInput')?.value || payload.page?.title || 'Untitled_Template').trim(),
+        template_data: payload,
+        preview_url: null,
+        export_format: exportFormat,
+        export_type: exportType,
+        exported_file_name: normalizeDownloadFileName(downloadMeta.fileName),
+        exported_row_count: Math.max(0, rowCount || 0),
+        selected_page_indexes: selectedPageIndexes
+    };
+
+    const { data, error } = await supabase
+        .from('downloads')
+        .insert(insertPayload)
+        .select('id, title, export_format, export_type, exported_file_name, created_at')
+        .single();
+
+    if (error) {
+        console.error('Error creating download snapshot:', error);
+        showNotification('Download saved, but the feedback tracker is not ready yet.', 'info', 3200);
+        return null;
+    }
+
+    return data;
+}
+
+function createDownloadFeedbackShell(downloadMeta = {}) {
+    const exportType = downloadMeta.exportType || 'single';
+    const exportFormat = normalizeDownloadExportFormat(downloadMeta.exportFormat || exportFormatSelect?.value, exportType);
+
+    return {
+        id: null,
+        title: ($('#titleInput')?.value || 'Untitled_Template').trim(),
+        export_format: exportFormat,
+        export_type: exportType,
+        exported_file_name: normalizeDownloadFileName(downloadMeta.fileName),
+        created_at: new Date().toISOString()
+    };
+}
+
+async function recordDownloadAndRequestFeedback(downloadMeta = {}) {
+    const feedbackRecord = createDownloadFeedbackShell(downloadMeta);
+    feedbackRecord._snapshotPromise = createDownloadSnapshot(downloadMeta);
+
+    showDownloadFeedbackModal(feedbackRecord);
+
+    try {
+        const savedRecord = await feedbackRecord._snapshotPromise;
+        if (!savedRecord?.id) return;
+        Object.assign(feedbackRecord, savedRecord);
+        if (activeDownloadFeedback === feedbackRecord) {
+            activeDownloadFeedback = feedbackRecord;
+        }
+    } catch (error) {
+        console.error('Could not record download:', error);
+    }
+}
+
+ensureDownloadFeedbackUI();
+
 // Main handler for the primary export button
 async function handleExport() {
     syncCurrentPageStateFromCanvas();
@@ -12316,6 +12742,13 @@ async function handleExport() {
         const json = JSON.stringify(exportPayload, null, 2);
         const blob = new Blob([json], { type: 'application/json' });
         saveAs(blob, `${title}.json`);
+        await recordDownloadAndRequestFeedback({
+            exportFormat: 'json',
+            exportType: 'template_json',
+            fileName: `${title}.json`,
+            rowCount: hasData ? rowsToProcess.length : 0,
+            selectedPageIndexes: [currentPageIndex]
+        });
         return;
     }
 
@@ -12353,6 +12786,14 @@ async function handleExport() {
         const content = await zip.generateAsync({ type: "blob" });
         saveAs(content, `${title}.zip`);
     }
+
+    await recordDownloadAndRequestFeedback({
+        exportFormat: hasData ? 'zip' : format,
+        exportType: hasData ? 'batch_zip' : 'single',
+        fileName: hasData ? `${title}.zip` : `${title}.${format}`,
+        rowCount: hasData ? rowsToProcess.length : 0,
+        selectedPageIndexes: [currentPageIndex]
+    });
 
     // 2. Show pro modal AFTER export if limit was hit
     if (isFreeUser && totalRows > 15) {
@@ -12398,6 +12839,13 @@ async function handleSinglePdfExport() {
     }
 
     saveAs(pdf.output('blob'), `${title}_all_pages.pdf`);
+    await recordDownloadAndRequestFeedback({
+        exportFormat: 'pdf',
+        exportType: 'single_pdf',
+        fileName: `${title}_all_pages.pdf`,
+        rowCount: rowsToProcess.length,
+        selectedPageIndexes: [currentPageIndex]
+    });
 
     if (isFreeUser && totalRows > 15) {
         proLimitModal.style.display = 'flex';
@@ -12443,6 +12891,13 @@ async function handleExportAllCanvases() {
         const json = JSON.stringify({ version: 'csvlink-template-v2', ...exportPayload }, null, 2);
         const blob = new Blob([json], { type: 'application/json' });
         saveAs(blob, `${title}_pages.json`);
+        await recordDownloadAndRequestFeedback({
+            exportFormat: 'json',
+            exportType: 'pages_json',
+            fileName: `${title}_pages.json`,
+            rowCount: 0,
+            selectedPageIndexes
+        });
         return;
     }
 
@@ -12462,6 +12917,13 @@ async function handleExportAllCanvases() {
         }
 
         saveAs(pdf.output('blob'), `${title}_pages.pdf`);
+        await recordDownloadAndRequestFeedback({
+            exportFormat: 'pdf',
+            exportType: 'pages_pdf',
+            fileName: `${title}_pages.pdf`,
+            rowCount: 0,
+            selectedPageIndexes
+        });
         return;
     }
 
@@ -12473,6 +12935,13 @@ async function handleExportAllCanvases() {
         const dataURL = await generatePageDataURLFromPageState(pageState, exportFormat);
         const blob = await (await fetch(dataURL)).blob();
         saveAs(blob, `${title}_page_${selectedIndex + 1}.${ext}`);
+        await recordDownloadAndRequestFeedback({
+            exportFormat: ext,
+            exportType: 'page_image',
+            fileName: `${title}_page_${selectedIndex + 1}.${ext}`,
+            rowCount: 0,
+            selectedPageIndexes
+        });
         return;
     }
 
@@ -12485,6 +12954,13 @@ async function handleExportAllCanvases() {
     }
     const content = await zip.generateAsync({ type: 'blob' });
     saveAs(content, `${title}_pages_${ext}.zip`);
+    await recordDownloadAndRequestFeedback({
+        exportFormat: 'zip',
+        exportType: 'pages_zip',
+        fileName: `${title}_pages_${ext}.zip`,
+        rowCount: 0,
+        selectedPageIndexes
+    });
 }
 
 // Event Listeners for Export
@@ -17307,7 +17783,7 @@ ${rawResponse}
 
 // components/07-panels-tour-bootstrap.js
 
-        // --- LEFT PANEL TABS & ELEMENTS ---
+﻿        // --- LEFT PANEL TABS & ELEMENTS ---
         function initializeLeftPanelTabs() {
             const tabButtons = document.querySelectorAll('.panel-tab-btn');
             const tabContents = document.querySelectorAll('.panel-tab-content');
