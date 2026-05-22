@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=AW-584610340"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', 'AW-584610340');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Create quote PDFs from Excel or CSV rows by mapping customer, item, price, quantity, and expiration columns into a reusable quote layout.">
+    <meta name="robots" content="index,follow,max-image-preview:large">
+    <link rel="canonical" href="https://csvlink.app/quote-template">
+    <link rel="icon" href="assets/images/android-chrome-192x192.png" type="image/png" />
+    <title>Quote Template for Excel or CSV Data | CSVLink</title>
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="CSVLink">
+    <meta property="og:title" content="Quote Template for Excel or CSV Data | CSVLink">
+    <meta property="og:description" content="Create quote PDFs from Excel or CSV rows by mapping customer, item, price, quantity, and expiration columns into a reusable quote layout.">
+    <meta property="og:url" content="https://csvlink.app/quote-template">
+    <meta property="og:image" content="https://csvlink.app/assets/images/invoice-hero-flow.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Quote Template for Excel or CSV Data | CSVLink">
+    <meta name="twitter:description" content="Create quote PDFs from Excel or CSV rows by mapping customer, item, price, quantity, and expiration columns into a reusable quote layout.">
+    <script type="application/ld+json">{
+        "@context": "https://schema.org",
+        "@graph": [
+                {
+                        "@type": "WebPage",
+                        "name": "Quote Template for Excel or CSV Data | CSVLink",
+                        "url": "https://csvlink.app/quote-template",
+                        "description": "Create quote PDFs from Excel or CSV rows by mapping customer, item, price, quantity, and expiration columns into a reusable quote layout.",
+                        "dateModified": "2026-05-22"
+                },
+                {
+                        "@type": "FAQPage",
+                        "mainEntity": [
+                                {
+                                        "@type": "Question",
+                                        "name": "Can I generate multiple quotes from one spreadsheet?",
+                                        "acceptedAnswer": {
+                                                "@type": "Answer",
+                                                "text": "Yes. Each row can become a personalized quote PDF when mapped to the quote template fields."
+                                        }
+                                },
+                                {
+                                        "@type": "Question",
+                                        "name": "Can I use my own quote layout?",
+                                        "acceptedAnswer": {
+                                                "@type": "Answer",
+                                                "text": "Yes. You can design a layout in CSVLink or import a one-page PDF and place mapped fields on top."
+                                        }
+                                },
+                                {
+                                        "@type": "Question",
+                                        "name": "Does CSVLink send the quote to customers?",
+                                        "acceptedAnswer": {
+                                                "@type": "Answer",
+                                                "text": "No. CSVLink creates downloadable files from your spreadsheet data. You decide how to send them."
+                                        }
+                                }
+                        ]
+                },
+                {
+                        "@type": "BreadcrumbList",
+                        "itemListElement": [
+                                {
+                                        "@type": "ListItem",
+                                        "position": 1,
+                                        "name": "CSVLink",
+                                        "item": "https://csvlink.app/"
+                                },
+                                {
+                                        "@type": "ListItem",
+                                        "position": 2,
+                                        "name": "Quote template",
+                                        "item": "https://csvlink.app/quote-template"
+                                }
+                        ]
+                }
+        ]
+}</script>
+    <link rel="stylesheet" href="/assets/css/style.css">
+    <style>
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap');
+body { margin: 0; font-family: 'Manrope', system-ui, sans-serif; background: var(--bg); color: var(--fg); }
+nav { position: fixed; top: 0; z-index: 1000; width: 100%; box-sizing: border-box; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 24px; height: 60px; padding: 0 24px; background: rgba(255,255,255,0.88); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); }
+.logo { display: flex; align-items: center; gap: 10px; color: var(--fg); text-decoration: none; font-family: 'Space Grotesk', sans-serif; font-size: 1.25rem; font-weight: 700; }
+.logo-icon { width: 32px; height: 32px; border-radius: 10px; }
+.invoice-page-nav, .nav-links { display: flex; align-items: center; flex-wrap: wrap; }
+.invoice-page-nav { justify-self: center; justify-content: center; gap: 0; row-gap: 8px; }
+.nav-links { justify-self: end; justify-content: flex-end; gap: 10px; }
+.invoice-page-link { display: inline-flex; align-items: center; text-decoration: none; color: #41516f; font-size: 0.9rem; font-weight: 700; padding: 0; border: none; background: transparent; }
+.invoice-page-link + .invoice-page-link::before { content: '|'; color: #94a3b8; margin: 0 10px; }
+.invoice-page-link.is-active { color: var(--accent); }
+.container { width: min(1180px, calc(100% - 32px)); margin: 0 auto; padding: 96px 0 48px; }
+.hero, .panel { border: 1px solid var(--border); border-radius: 24px; box-shadow: var(--shadow); }
+.hero { padding: 42px 36px; background: radial-gradient(circle at 10% 16%, rgba(37,99,235,0.18), transparent 30%), radial-gradient(circle at 86% 14%, rgba(14,165,233,0.16), transparent 25%), linear-gradient(140deg, #ffffff 0%, #f6f9ff 58%, #eef4ff 100%); }
+.eyebrow { display: inline-flex; margin-bottom: 14px; padding: 6px 12px; border-radius: 999px; background: rgba(37,99,235,0.08); color: var(--accent); font-size: 0.78rem; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; }
+.hero h1 { margin: 0 0 14px; max-width: 14ch; font-family: 'Space Grotesk', sans-serif; font-size: clamp(2.3rem, 4.8vw, 4.1rem); line-height: 1.04; letter-spacing: -0.03em; color: #0b1328; }
+.hero p, .panel p, .panel li, .faq-answer { color: #53637d; line-height: 1.75; }
+.hero p { max-width: 78ch; margin: 0; font-size: 1.05rem; }
+.hero-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 22px; }
+.btn { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 26px; border-radius: 12px; text-decoration: none; font-weight: 700; border: none; background: var(--accent); color: var(--accent-fg); box-shadow: 0 4px 12px rgba(59,130,246,0.3); }
+.btn.ghost { background: rgba(255,255,255,0.72); color: #173056; border: 1px solid rgba(148,163,184,0.34); box-shadow: none; }
+.tag-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
+.tag { padding: 8px 12px; border-radius: 999px; border: 1px solid rgba(148,163,184,0.35); background: rgba(255,255,255,0.72); color: #29456e; font-size: 0.82rem; font-weight: 700; }
+.panel { margin-top: 24px; padding: 30px; background: var(--panel); }
+.panel h2 { margin: 0 0 10px; font-family: 'Space Grotesk', sans-serif; font-size: clamp(1.6rem, 3vw, 2.7rem); letter-spacing: -0.02em; }
+.grid-3, .grid-2, .faq-grid { display: grid; gap: 14px; margin-top: 22px; }
+.grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.grid-2, .faq-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.card, .faq-item { padding: 20px; border: 1px solid var(--border); border-radius: 18px; background: #fff; }
+.card h3, .faq-question { margin: 0 0 10px; font-family: 'Space Grotesk', sans-serif; font-size: 1.02rem; color: #102447; }
+.step-badge { display: inline-flex; margin-bottom: 10px; padding: 6px 10px; border-radius: 999px; background: rgba(37,99,235,0.08); color: var(--accent); font-size: 0.78rem; font-weight: 800; letter-spacing: 0.04em; }
+.mini-table { width: 100%; border-collapse: collapse; margin-top: 18px; overflow: hidden; border-radius: 14px; }
+.mini-table th, .mini-table td { padding: 12px 14px; border: 1px solid var(--border); text-align: left; vertical-align: top; }
+.mini-table th { background: #f8fbff; color: #102447; font-weight: 800; }
+.mini-table td { background: #fff; color: #53637d; }
+.resource-list { display: grid; gap: 12px; margin-top: 18px; }
+.resource-link { display: block; padding: 18px; border: 1px solid var(--border); border-radius: 16px; background: #fff; color: inherit; text-decoration: none; transition: transform .2s ease, box-shadow .2s ease; }
+.resource-link:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+.resource-link strong { display: block; margin-bottom: 6px; color: #102447; font-family: 'Space Grotesk', sans-serif; }
+.cta { background: linear-gradient(140deg, #f8fbff 0%, #eef4ff 100%); }
+footer { margin-top: 44px; padding: 40px 24px; background: var(--panel); border-top: 1px solid var(--border); text-align: center; }
+.footer-links { display: flex; justify-content: center; gap: 18px; flex-wrap: wrap; }
+.footer-links a { color: var(--muted); text-decoration: none; }
+.copyright { margin-top: 14px; color: var(--muted); font-size: 0.92rem; }
+@media (max-width: 980px) { .grid-3, .grid-2, .faq-grid { grid-template-columns: 1fr; } }
+@media (max-width: 900px) { nav { grid-template-columns: 1fr; height: auto; padding: 12px 18px; gap: 10px; } .logo, .invoice-page-nav, .nav-links { justify-self: center; } .container { padding-top: 148px; } .hero, .panel { padding: 24px 20px; } }
+</style>
+    <script defer src="/_vercel/insights/script.js"></script>
+</head>
+<body>
+    <nav>
+        <a href="/" class="logo"><img src="/assets/images/android-chrome-192x192.png" alt="CSVLink logo" class="logo-icon"><span>CSVLink</span></a>
+        <div class="invoice-page-nav">
+            <a href="/csv-to-invoice" class="invoice-page-link">CSV to Invoice</a>
+            <a href="/bulk-invoice-generator" class="invoice-page-link">Bulk Invoices</a>
+            <a href="/invoice-template-builder" class="invoice-page-link">Template Builder</a>
+            <a href="/#templates" class="invoice-page-link is-active">Templates</a>
+        </div>
+        <div class="nav-links"><a href="/login">Sign in</a><a class="btn primary" href="/tool">Open Tool</a></div>
+    </nav>
+    <main class="container">
+        <section class="hero">
+            <span class="eyebrow">Quote template</span>
+            <h1>Quote template that connects to your spreadsheet.</h1>
+            <p>Create quote PDFs from Excel or CSV rows by mapping customer, item, price, quantity, and expiration columns into a reusable quote layout.</p>
+            <div class="hero-actions"><a class="btn" href="/tool">Use this template</a><a class="btn ghost" href="/#templates">See all templates</a></div>
+            <div class="tag-row"><span class="tag">Quote number</span><span class="tag">Customer name</span><span class="tag">Item description</span><span class="tag">Quantity</span><span class="tag">Unit price</span><span class="tag">Valid until</span></div>
+        </section>
+        <section class="panel">
+            <h2>What this template is for</h2>
+            <p>A quote template is useful when you send similar pricing documents to many customers but the names, items, and totals change each time. CSVLink lets you keep one quote layout and replace the details from your spreadsheet.</p>
+        </section>
+        <section class="panel">
+            <h2>Spreadsheet columns you can map</h2>
+            <p>Use these as starter columns, then rename or add fields based on your own workflow.</p>
+            <table class="mini-table"><thead><tr><th>Column</th><th>How it is used in the template</th></tr></thead><tbody><tr><td><strong>Quote Number</strong></td><td>A unique quote or estimate ID.</td></tr><tr><td><strong>Customer Name</strong></td><td>The recipient or company receiving the quote.</td></tr><tr><td><strong>Item / Service</strong></td><td>The product, package, or service being quoted.</td></tr><tr><td><strong>Quantity</strong></td><td>How many units, hours, or packages are included.</td></tr><tr><td><strong>Unit Price</strong></td><td>The price for each item or service.</td></tr><tr><td><strong>Valid Until</strong></td><td>The quote expiration date or deadline.</td></tr></tbody></table>
+        </section>
+        <section class="panel">
+            <h2>How it works in CSVLink</h2>
+            <div class="grid-3">
+                <article class="card"><span class="step-badge">Step 1</span><h3>Choose or design the layout</h3><p>Start with a template idea or build your own document layout in the editor.</p></article>
+                <article class="card"><span class="step-badge">Step 2</span><h3>Upload Excel or CSV</h3><p>Import your spreadsheet and connect columns to fields in the template.</p></article>
+                <article class="card"><span class="step-badge">Step 3</span><h3>Preview and export</h3><p>Review the mapped document, then export personalized files from your data.</p></article>
+            </div>
+        </section>
+        <section class="panel">
+            <h2>Common use cases</h2>
+            <div class="grid-3"><article class="card"><span class="step-badge">Use case</span><h3>Sales quotes for many prospects</h3><p>Use the same template structure while replacing the variable details from your Excel or CSV file.</p></article><article class="card"><span class="step-badge">Use case</span><h3>Service estimates from a pricing sheet</h3><p>Use the same template structure while replacing the variable details from your Excel or CSV file.</p></article><article class="card"><span class="step-badge">Use case</span><h3>Proposal summaries for repeatable packages</h3><p>Use the same template structure while replacing the variable details from your Excel or CSV file.</p></article></div>
+        </section>
+        <section class="panel">
+            <h2>Frequently asked questions</h2>
+            <div class="faq-grid"><div class="faq-item"><div class="faq-question">Can I generate multiple quotes from one spreadsheet?</div><div class="faq-answer">Yes. Each row can become a personalized quote PDF when mapped to the quote template fields.</div></div><div class="faq-item"><div class="faq-question">Can I use my own quote layout?</div><div class="faq-answer">Yes. You can design a layout in CSVLink or import a one-page PDF and place mapped fields on top.</div></div><div class="faq-item"><div class="faq-question">Does CSVLink send the quote to customers?</div><div class="faq-answer">No. CSVLink creates downloadable files from your spreadsheet data. You decide how to send them.</div></div></div>
+        </section>
+        <section class="panel">
+            <h2>Related CSVLink template guides</h2>
+            <div class="resource-list"><a class="resource-link" href="/csv-to-invoice"><strong>Invoice from CSV</strong><span>Open the related CSVLink template guide.</span></a><a class="resource-link" href="/receipt-template"><strong>Receipts</strong><span>Open the related CSVLink template guide.</span></a><a class="resource-link" href="/custom-pdf-documents"><strong>Custom PDF documents</strong><span>Open the related CSVLink template guide.</span></a></div>
+        </section>
+        <section class="panel cta">
+            <h2>Build documents from your spreadsheet.</h2>
+            <p>Open CSVLink, upload a sample spreadsheet, map your fields, and export a test file.</p>
+            <div class="hero-actions"><a class="btn" href="/tool">Open CSVLink</a><a class="btn ghost" href="/#templates">Browse templates</a></div>
+        </section>
+    </main>
+    <footer>
+        <div class="footer-links"><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/refunds">Refunds</a><a href="/api-documentation">API</a></div>
+        <div class="copyright">© 2026 CSVLink. All rights reserved.</div>
+    </footer>
+</body>
+</html>

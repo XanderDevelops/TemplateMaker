@@ -189,6 +189,41 @@
       "source": "/blog-bulk-invoice-csv-format-Invoice.html",
       "destination": "/blog/bulk-invoice-csv-format",
       "permanent": true
+    },
+    {
+      "source": "/quote-template.html",
+      "destination": "/quote-template",
+      "permanent": true
+    },
+    {
+      "source": "/product-label-template.html",
+      "destination": "/product-label-template",
+      "permanent": true
+    },
+    {
+      "source": "/packing-slip-template.html",
+      "destination": "/packing-slip-template",
+      "permanent": true
+    },
+    {
+      "source": "/certificate-template.html",
+      "destination": "/certificate-template",
+      "permanent": true
+    },
+    {
+      "source": "/receipt-template.html",
+      "destination": "/receipt-template",
+      "permanent": true
+    },
+    {
+      "source": "/client-report-template.html",
+      "destination": "/client-report-template",
+      "permanent": true
+    },
+    {
+      "source": "/custom-pdf-documents.html",
+      "destination": "/custom-pdf-documents",
+      "permanent": true
     }
   ],
   "rewrites": [
@@ -291,6 +326,34 @@
     {
       "source": "/blog/bulk-invoice-csv-format",
       "destination": "/blog-bulk-invoice-csv-format-Invoice.html"
+    },
+    {
+      "source": "/quote-template",
+      "destination": "/quote-template.html"
+    },
+    {
+      "source": "/product-label-template",
+      "destination": "/product-label-template.html"
+    },
+    {
+      "source": "/packing-slip-template",
+      "destination": "/packing-slip-template.html"
+    },
+    {
+      "source": "/certificate-template",
+      "destination": "/certificate-template.html"
+    },
+    {
+      "source": "/receipt-template",
+      "destination": "/receipt-template.html"
+    },
+    {
+      "source": "/client-report-template",
+      "destination": "/client-report-template.html"
+    },
+    {
+      "source": "/custom-pdf-documents",
+      "destination": "/custom-pdf-documents.html"
     }
   ]
 }

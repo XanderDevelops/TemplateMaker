@@ -937,15 +937,14 @@
 
         .template-card-static {
             position: relative;
-            min-height: 120px;
-            display: grid;
-            grid-template-columns: 46px 1fr;
-            align-items: center;
-            gap: 17px;
-            padding: 22px 22px;
+            min-height: 360px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            padding: 18px;
             background: #fff;
             border: 1px solid var(--border);
-            border-radius: 14px;
+            border-radius: 18px;
             box-shadow: 0 10px 24px rgba(36, 67, 111, 0.045);
             transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
         }
@@ -968,34 +967,83 @@
             color: #3f77ef;
             font-size: 10px;
             font-weight: 900;
+            z-index: 2;
         }
-        .template-icon {
-            width: 43px;
-            height: 52px;
-            border-radius: 8px;
+        .template-preview-mini {
+            height: 138px;
+            border-radius: 14px;
+            border: 1px solid #dbe8f8;
+            background: linear-gradient(150deg, #f8fbff 0%, #eef6ff 100%);
             display: grid;
             place-items: center;
-            color: #fff;
-            font-weight: 900;
-            box-shadow: inset 0 -10px 0 rgba(0,0,0,0.05);
+            overflow: hidden;
             position: relative;
         }
-        .template-icon::before,
-        .template-icon::after {
+        .template-preview-mini::before {
             content: '';
             position: absolute;
-            left: 13px;
-            right: 10px;
-            height: 3px;
-            border-radius: 999px;
-            background: rgba(255,255,255,0.74);
+            width: 86px;
+            height: 104px;
+            border-radius: 10px;
+            background: #fff;
+            border: 1px solid rgba(180, 199, 225, 0.75);
+            box-shadow: 0 14px 30px rgba(36, 67, 111, 0.10);
         }
-        .template-icon::before { top: 19px; }
-        .template-icon::after { top: 29px; }
-        .template-icon.blue { background: #166cf5; }
-        .template-icon.green { background: #36bf87; }
-        .template-icon.purple { background: #984ff2; }
-        .template-icon.orange { background: #ffa45d; }
+        .template-preview-mini span {
+            position: relative;
+            display: block;
+            width: 54px;
+            height: 6px;
+            border-radius: 999px;
+            background: #dce7f5;
+            box-shadow: 0 15px 0 #edf3fa, 0 30px 0 #dce7f5, 0 45px 0 #edf3fa;
+        }
+        .template-preview-mini.invoice::after,
+        .template-preview-mini.quote::after,
+        .template-preview-mini.receipt::after,
+        .template-preview-mini.report::after {
+            content: '';
+            position: absolute;
+            width: 54px;
+            height: 14px;
+            border-radius: 999px;
+            right: calc(50% - 32px);
+            bottom: 31px;
+            background: #166cf5;
+            opacity: 0.88;
+        }
+        .template-preview-mini.labels::before {
+            width: 112px;
+            height: 82px;
+            border-radius: 14px;
+            background: repeating-linear-gradient(90deg, #fff, #fff 53px, #eef3f9 54px, #eef3f9 56px), repeating-linear-gradient(180deg, transparent, transparent 38px, #eef3f9 39px, #eef3f9 41px);
+        }
+        .template-preview-mini.labels span { width: 34px; transform: translate(-27px, -20px); }
+        .template-preview-mini.certificate::before { width: 118px; height: 84px; border-radius: 8px; }
+        .template-preview-mini.certificate::after { content: '★'; position: absolute; color: #ffa45d; font-size: 24px; transform: translateY(28px); }
+        .template-preview-mini.slip::before { width: 90px; height: 106px; }
+        .template-preview-mini.custom::before { width: 104px; height: 92px; transform: rotate(-2deg); }
+        .template-card-body { display: grid; gap: 8px; flex: 1; }
+        .template-card-body h3 { margin-bottom: 0; }
+        .template-card-actions { display: grid; grid-template-columns: 1fr; gap: 9px; margin-top: auto; }
+        .template-card-actions a {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 38px;
+            padding: 9px 12px;
+            border-radius: 10px;
+            border: 1px solid #d9e6f6;
+            background: #f8fbff;
+            color: #235ee8;
+            font-size: 12px;
+            font-weight: 900;
+            text-decoration: none;
+            transition: transform 0.16s ease, background 0.16s ease;
+        }
+        .template-card-actions a:hover { transform: translateY(-1px); background: #edf5ff; }
+        .template-card-actions a.primary-template-action { background: #166cf5; color: #fff; border-color: #166cf5; }
+        .template-card-actions a.secondary-template-action { color: #40516e; }
         .templates-link {
             margin: 28px auto 0;
             color: #0869ff;
@@ -1780,29 +1828,53 @@
 
         <section class="section animated-section" id="templates">
             <div class="section-heading">
-                <h2>More than just invoices</h2>
-                <p>Create any document you need from your spreadsheet.</p>
+                <h2>Start with a ready-made template</h2>
+                <p>Templates that connect directly to your spreadsheet. Pick a layout, upload Excel or CSV data, map your columns, and export personalized documents in bulk.</p>
             </div>
             <div class="template-grid">
-                <a class="template-card-static active" href="/tool">
+                <article class="template-card-static active">
                     <span class="popular-badge">Most popular</span>
-                    <span class="template-icon blue">▤</span>
-                    <span><h3>Invoices</h3><p>Professional invoices ready to send.</p></span>
-                </a>
-                <a class="template-card-static" href="/tool">
-                    <span class="template-icon green">▤</span>
-                    <span><h3>Statements</h3><p>Account statements and summaries.</p></span>
-                </a>
-                <a class="template-card-static" href="/tool">
-                    <span class="template-icon purple">▤</span>
-                    <span><h3>Receipts</h3><p>Receipts for payments and refunds.</p></span>
-                </a>
-                <a class="template-card-static" href="/tool">
-                    <span class="template-icon orange">▤</span>
-                    <span><h3>Certificates</h3><p>Certificates for clients, staff or events.</p></span>
-                </a>
+                    <div class="template-preview-mini invoice" aria-hidden="true"><span></span></div>
+                    <div class="template-card-body"><h3>Invoice from CSV</h3><p>Create invoice PDFs from customer, date, line item, tax, and total columns in your spreadsheet.</p></div>
+                    <div class="template-card-actions"><a class="primary-template-action" href="/tool">Use this template</a><a class="secondary-template-action" href="/tool">Upload CSV sample</a><a href="/csv-to-invoice">Invoice template guide</a></div>
+                </article>
+                <article class="template-card-static">
+                    <div class="template-preview-mini quote" aria-hidden="true"><span></span></div>
+                    <div class="template-card-body"><h3>Quote from spreadsheet</h3><p>Turn rows of customer, item, quantity, price, and expiration data into consistent quote PDFs.</p></div>
+                    <div class="template-card-actions"><a class="primary-template-action" href="/tool">Use this template</a><a class="secondary-template-action" href="/tool">Upload CSV sample</a><a href="/quote-template">Quote template guide</a></div>
+                </article>
+                <article class="template-card-static">
+                    <div class="template-preview-mini labels" aria-hidden="true"><span></span></div>
+                    <div class="template-card-body"><h3>Product labels</h3><p>Use product names, SKUs, prices, categories, and descriptions from Excel or CSV to generate label files.</p></div>
+                    <div class="template-card-actions"><a class="primary-template-action" href="/tool">Use this template</a><a class="secondary-template-action" href="/tool">Upload CSV sample</a><a href="/product-label-template">Label template guide</a></div>
+                </article>
+                <article class="template-card-static">
+                    <div class="template-preview-mini slip" aria-hidden="true"><span></span></div>
+                    <div class="template-card-body"><h3>Packing slips</h3><p>Generate packing slips from order IDs, recipients, addresses, item names, quantities, and shipping notes.</p></div>
+                    <div class="template-card-actions"><a class="primary-template-action" href="/tool">Use this template</a><a class="secondary-template-action" href="/tool">Upload CSV sample</a><a href="/packing-slip-template">Packing slip guide</a></div>
+                </article>
+                <article class="template-card-static">
+                    <div class="template-preview-mini certificate" aria-hidden="true"><span></span></div>
+                    <div class="template-card-body"><h3>Certificates</h3><p>Create personalized certificates from names, dates, programs, awards, and signer fields in a spreadsheet.</p></div>
+                    <div class="template-card-actions"><a class="primary-template-action" href="/tool">Use this template</a><a class="secondary-template-action" href="/tool">Upload CSV sample</a><a href="/certificate-template">Certificate template guide</a></div>
+                </article>
+                <article class="template-card-static">
+                    <div class="template-preview-mini receipt" aria-hidden="true"><span></span></div>
+                    <div class="template-card-body"><h3>Receipts</h3><p>Map payment IDs, customer names, dates, items, amounts, and balances into clean receipt PDFs.</p></div>
+                    <div class="template-card-actions"><a class="primary-template-action" href="/tool">Use this template</a><a class="secondary-template-action" href="/tool">Upload CSV sample</a><a href="/receipt-template">Receipt template guide</a></div>
+                </article>
+                <article class="template-card-static">
+                    <div class="template-preview-mini report" aria-hidden="true"><span></span></div>
+                    <div class="template-card-body"><h3>Client reports</h3><p>Build repeatable client summaries from spreadsheet fields like client name, period, metrics, notes, and totals.</p></div>
+                    <div class="template-card-actions"><a class="primary-template-action" href="/tool">Use this template</a><a class="secondary-template-action" href="/tool">Upload CSV sample</a><a href="/client-report-template">Client report guide</a></div>
+                </article>
+                <article class="template-card-static">
+                    <div class="template-preview-mini custom" aria-hidden="true"><span></span></div>
+                    <div class="template-card-body"><h3>Custom PDF documents</h3><p>Design your own layout, connect it to spreadsheet columns, and export one personalized document per row.</p></div>
+                    <div class="template-card-actions"><a class="primary-template-action" href="/tool">Use this template</a><a class="secondary-template-action" href="/tool">Upload CSV sample</a><a href="/custom-pdf-documents">Custom PDF guide</a></div>
+                </article>
             </div>
-            <div style="text-align:center"><a href="#template-gallery" class="templates-link">Explore all templates <span>→</span></a></div>
+            <div style="text-align:center"><a href="#template-gallery" class="templates-link">Browse public templates <span>→</span></a></div>
         </section>
 
         <section class="section animated-section" id="use-cases">
