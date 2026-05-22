@@ -11,23 +11,23 @@
     </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Use CSVLink as a bulk invoice generator for Excel or CSV. Import your invoice data, use your own PDF invoice template or blank layout, map fields, group line items, and export invoices in batch.">
+    <meta name="description" content="Bulk generate invoice PDFs from Excel or CSV with CSVLink. Upload spreadsheet data, map columns to your own invoice template, group line items, preview the layout, and export a batch.">
     <meta name="robots" content="index,follow,max-image-preview:large">
     <link rel="icon" href="assets/images/android-chrome-192x192.png" type="image/png" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="canonical" href="https://csvlink.app/bulk-invoice-generator">
-    <title>Bulk Invoice Generator for Excel or CSV | CSVLink</title>
+    <title>Bulk Invoice Generator for Excel or CSV Files | CSVLink</title>
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="CSVLink">
-    <meta property="og:title" content="Bulk Invoice Generator for Excel or CSV | CSVLink">
-    <meta property="og:description" content="Use CSVLink as a bulk invoice generator for Excel or CSV. Import your invoice data, use your own PDF invoice template or blank layout, map fields, group line items, and export invoices in batch.">
+    <meta property="og:title" content="Bulk Invoice Generator for Excel or CSV Files | CSVLink">
+    <meta property="og:description" content="Bulk generate invoice PDFs from Excel or CSV with CSVLink. Upload spreadsheet data, map columns to your own invoice template, group line items, preview the layout, and export a batch.">
     <meta property="og:url" content="https://csvlink.app/bulk-invoice-generator">
     <meta property="og:image" content="https://csvlink.app/assets/images/invoice-hero-flow.png">
     <meta property="og:image:alt" content="Spreadsheet invoice data flowing into a finished invoice template.">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Bulk Invoice Generator for Excel or CSV | CSVLink">
-    <meta name="twitter:description" content="Use CSVLink as a bulk invoice generator for Excel or CSV. Import your invoice data, use your own PDF invoice template or blank layout, map fields, group line items, and export invoices in batch.">
+    <meta name="twitter:title" content="Bulk Invoice Generator for Excel or CSV Files | CSVLink">
+    <meta name="twitter:description" content="Bulk generate invoice PDFs from Excel or CSV with CSVLink. Upload spreadsheet data, map columns to your own invoice template, group line items, preview the layout, and export a batch.">
     <meta name="twitter:image" content="https://csvlink.app/assets/images/invoice-hero-flow.png">
     <script type="application/ld+json">
         {
@@ -35,9 +35,29 @@
             "@graph": [
                 {
                     "@type": "WebPage",
-                    "name": "Bulk Invoice Generator for Excel or CSV | CSVLink",
+                    "name": "Bulk Invoice Generator for Excel or CSV Files | CSVLink",
                     "url": "https://csvlink.app/bulk-invoice-generator",
-                    "description": "Use CSVLink as a bulk invoice generator for Excel or CSV. Import your invoice data, use your own PDF invoice template or blank layout, map fields, group line items, and export invoices in batch."
+                    "description": "Bulk generate invoice PDFs from Excel or CSV with CSVLink. Upload spreadsheet data, map columns to your own invoice template, group line items, preview the layout, and export a batch.",
+                    "dateModified": "2026-05-22"
+                },
+                {
+                    "@type": "Article",
+                    "headline": "Bulk Invoice Generator: Create Multiple Invoices from Excel or CSV",
+                    "description": "A practical guide to using CSVLink for spreadsheet-based invoice generation with reusable templates, mapped fields, grouped line items, previews, and batch PDF export.",
+                    "author": {
+                        "@type": "Organization",
+                        "name": "CSVLink"
+                    },
+                    "publisher": {
+                        "@type": "Organization",
+                        "name": "CSVLink",
+                        "logo": {
+                            "@type": "ImageObject",
+                            "url": "https://csvlink.app/assets/images/android-chrome-512x512.png"
+                        }
+                    },
+                    "dateModified": "2026-05-22",
+                    "mainEntityOfPage": "https://csvlink.app/bulk-invoice-generator"
                 },
                 {
                     "@type": "BreadcrumbList",
@@ -53,6 +73,43 @@
                             "position": 2,
                             "name": "Bulk Invoice Generator",
                             "item": "https://csvlink.app/bulk-invoice-generator"
+                        }
+                    ]
+                },
+                {
+                    "@type": "FAQPage",
+                    "mainEntity": [
+                        {
+                            "@type": "Question",
+                            "name": "What is a bulk invoice generator?",
+                            "acceptedAnswer": {
+                                "@type": "Answer",
+                                "text": "A bulk invoice generator lets you use spreadsheet rows from Excel or CSV to create multiple invoices from one reusable invoice template."
+                            }
+                        },
+                        {
+                            "@type": "Question",
+                            "name": "Can CSVLink generate invoices from Excel or CSV files?",
+                            "acceptedAnswer": {
+                                "@type": "Answer",
+                                "text": "Yes. CSVLink accepts Excel and CSV invoice data, maps spreadsheet columns to a visual invoice template, and exports invoice PDFs in batch."
+                            }
+                        },
+                        {
+                            "@type": "Question",
+                            "name": "Can CSVLink use my own invoice PDF template?",
+                            "acceptedAnswer": {
+                                "@type": "Answer",
+                                "text": "Yes. You can import a one-page PDF invoice template and place linked spreadsheet fields on top of that layout."
+                            }
+                        },
+                        {
+                            "@type": "Question",
+                            "name": "Can one invoice use multiple spreadsheet rows?",
+                            "acceptedAnswer": {
+                                "@type": "Answer",
+                                "text": "Yes. Grouped invoice mode can turn repeated invoice numbers or order IDs into one invoice with multiple line items."
+                            }
                         }
                     ]
                 }
@@ -97,12 +154,39 @@
         .comparison-row { padding: 16px 18px; border: 1px solid var(--border); border-radius: 16px; background: #fff; }
         .comparison-row strong { display: block; margin-bottom: 6px; color: #102447; }
         .cta { background: linear-gradient(140deg, #f8fbff 0%, #eef4ff 100%); }
+        .updated-note { margin-top: 18px; color: #64748b; font-size: 0.92rem; font-weight: 700; }
+        .article-layout { display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: 22px; align-items: start; }
+        .toc-card { position: sticky; top: 84px; padding: 18px; border: 1px solid var(--border); border-radius: 18px; background: #fff; box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06); }
+        .toc-card strong { display: block; margin-bottom: 10px; font-family: 'Space Grotesk', sans-serif; color: #102447; }
+        .toc-card a { display: block; padding: 8px 0; color: #53637d; text-decoration: none; font-size: 0.94rem; font-weight: 700; border-top: 1px solid rgba(148,163,184,0.18); }
+        .toc-card a:first-of-type { border-top: 0; }
+        .toc-card a:hover { color: var(--accent); }
+        .article-content { display: grid; gap: 22px; }
+        .article-section { padding: 24px; border: 1px solid var(--border); border-radius: 20px; background: #fff; }
+        .article-section h2 { margin-top: 0; font-size: clamp(1.45rem, 2.4vw, 2.15rem); }
+        .article-section h3 { margin: 18px 0 8px; color: #102447; font-family: 'Space Grotesk', sans-serif; }
+        .article-section p { margin: 0 0 14px; }
+        .example-table { width: 100%; margin-top: 16px; border-collapse: separate; border-spacing: 0; overflow: hidden; border: 1px solid var(--border); border-radius: 16px; }
+        .example-table th, .example-table td { padding: 12px 14px; text-align: left; border-bottom: 1px solid var(--border); border-right: 1px solid var(--border); vertical-align: top; }
+        .example-table th:last-child, .example-table td:last-child { border-right: 0; }
+        .example-table tr:last-child td { border-bottom: 0; }
+        .example-table th { background: #f8fbff; color: #102447; font-size: 0.88rem; }
+        .example-table td { color: #53637d; background: #fff; font-size: 0.94rem; }
+        .check-list { display: grid; gap: 10px; margin: 14px 0 0; padding: 0; list-style: none; }
+        .check-list li { padding-left: 28px; position: relative; }
+        .check-list li::before { content: '✓'; position: absolute; left: 0; top: 0; color: var(--accent); font-weight: 900; }
+        .resource-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: 18px; }
+        .resource-link { display: block; padding: 18px; border: 1px solid var(--border); border-radius: 16px; background: #fff; color: inherit; text-decoration: none; transition: transform .2s ease, box-shadow .2s ease; }
+        .resource-link:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+        .resource-link strong { display: block; margin-bottom: 6px; color: #102447; font-family: 'Space Grotesk', sans-serif; }
+
         footer { margin-top: 44px; padding: 40px 24px; background: var(--panel); border-top: 1px solid var(--border); text-align: center; }
         .footer-links { display: flex; justify-content: center; gap: 18px; flex-wrap: wrap; }
         .footer-links a { color: var(--muted); text-decoration: none; }
         .copyright { margin-top: 14px; color: var(--muted); font-size: 0.92rem; }
         @media (max-width: 980px) {
-            .grid-4, .grid-3, .grid-2, .faq-grid { grid-template-columns: 1fr; }
+            .grid-4, .grid-3, .grid-2, .faq-grid, .article-layout, .resource-list { grid-template-columns: 1fr; }
+            .toc-card { position: static; }
         }
         @media (max-width: 900px) {
             nav { grid-template-columns: 1fr; height: auto; padding: 12px 18px; gap: 10px; }
@@ -133,8 +217,8 @@
     <main class="container">
         <section class="hero">
             <span class="eyebrow">Bulk Invoice Generator</span>
-            <h1>Generate batches of invoices from Excel or CSV using your own template.</h1>
-            <p>CSVLink is built for teams that already have invoice data in a spreadsheet and need a faster way to turn that data into clean, branded invoice PDFs. Import your Excel or CSV, use your own invoice layout or a one-page PDF template, map the fields once, and export a full batch in one run.</p>
+            <h1>Generate multiple invoices from Excel or CSV using one reusable template.</h1>
+            <p>CSVLink helps you turn spreadsheet invoice data into branded invoice PDFs without rebuilding every document by hand. Upload an Excel or CSV file, choose a blank layout or your own one-page PDF invoice template, map columns once, preview the result, and export a full batch.</p>
             <div class="hero-actions">
                 <a href="/tool" class="btn">Open Invoice Builder</a>
                 <a href="/excel-to-invoice" class="btn ghost">Prepare Your Spreadsheet</a>
@@ -143,59 +227,124 @@
                 <span class="tag">Excel invoice generator</span>
                 <span class="tag">CSV invoice generator</span>
                 <span class="tag">Custom PDF invoice template</span>
-                <span class="tag">Grouped invoice rows</span>
-                <span class="tag">Batch PDF output</span>
+                <span class="tag">Grouped line items</span>
+                <span class="tag">Batch PDF export</span>
+            </div>
+            <p class="updated-note">Last updated: May 2026</p>
+        </section>
+
+        <section class="panel article-layout" aria-label="Bulk invoice guide">
+            <aside class="toc-card" aria-label="On this page">
+                <strong>On this page</strong>
+                <a href="#manual-invoicing">When manual invoicing breaks down</a>
+                <a href="#what-it-is">What CSVLink does</a>
+                <a href="#spreadsheet-workflow">Excel and CSV workflow</a>
+                <a href="#spreadsheet-example">Example spreadsheet</a>
+                <a href="#reduce-mistakes">Why this reduces mistakes</a>
+                <a href="#who-it-helps">Who it helps</a>
+                <a href="#bulk-vs-manual">Bulk vs manual</a>
+                <a href="#faq">FAQs</a>
+            </aside>
+
+            <div class="article-content">
+                <article class="article-section" id="manual-invoicing">
+                    <h2>When manual invoice creation starts to slow you down</h2>
+                    <p>Creating one invoice at a time is manageable when billing is occasional. It becomes harder when you need to produce the same layout again and again for different customers, invoice numbers, totals, dates, or line items.</p>
+                    <p>The problem is usually not the invoice design itself. The problem is repeating the same edits across many files, then checking every PDF to make sure the right data landed in the right place.</p>
+                </article>
+
+                <article class="article-section" id="what-it-is">
+                    <h2>What a bulk invoice generator is in CSVLink</h2>
+                    <p>A bulk invoice generator separates your invoice data from your invoice design. Your spreadsheet holds the values, and your CSVLink template controls how those values appear on the final invoice.</p>
+                    <p>In CSVLink, that means you can build a visual invoice layout, import a one-page PDF invoice template, or start from an existing template. Then you connect spreadsheet columns to the places where invoice details should appear.</p>
+                    <ul class="check-list">
+                        <li>Use Excel or CSV data as the source.</li>
+                        <li>Map customer details, invoice numbers, dates, totals, and line-item fields.</li>
+                        <li>Use grouped mode when multiple spreadsheet rows belong to the same invoice.</li>
+                        <li>Export invoice PDFs from the mapped template.</li>
+                    </ul>
+                </article>
+
+                <article class="article-section" id="spreadsheet-workflow">
+                    <h2>How bulk invoicing works with Excel or CSV files</h2>
+                    <p>The workflow starts with a spreadsheet that already contains billing data. CSVLink reads the headers, lets you place those fields on the invoice canvas, and uses the same layout for each invoice in the data set.</p>
+                    <p>If each row is one invoice, you can generate one invoice per row. If several rows share the same invoice number or order ID, grouped mode can turn those rows into one itemized invoice.</p>
+                    <div class="grid-3">
+                        <article class="card"><h3>1. Import the file</h3><p>Upload Excel or CSV data with clear column headers.</p></article>
+                        <article class="card"><h3>2. Map the fields</h3><p>Drag spreadsheet fields into the invoice design and connect line-item columns.</p></article>
+                        <article class="card"><h3>3. Export the batch</h3><p>Preview the output, adjust spacing, then generate the invoice PDFs.</p></article>
+                    </div>
+                </article>
+
+                <article class="article-section" id="spreadsheet-example">
+                    <h2>What the spreadsheet usually looks like</h2>
+                    <p>You do not need a complicated spreadsheet. The best files are structured, predictable, and easy to map. For itemized invoices, repeated invoice numbers can represent multiple rows for the same final invoice.</p>
+                    <table class="example-table">
+                        <thead>
+                            <tr><th>invoice_no</th><th>client_name</th><th>item_description</th><th>quantity</th><th>unit_price</th><th>total_due</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr><td>INV-1048</td><td>Riverside Tech</td><td>Monthly website maintenance</td><td>12</td><td>60.00</td><td>720.00</td></tr>
+                            <tr><td>INV-1049</td><td>Northline Studio</td><td>Design support retainer</td><td>1</td><td>850.00</td><td>850.00</td></tr>
+                        </tbody>
+                    </table>
+                    <p>Once the columns are mapped, the same spreadsheet structure can be reused for the next billing cycle with updated values.</p>
+                </article>
+
+                <article class="article-section" id="reduce-mistakes">
+                    <h2>Why this helps reduce invoice mistakes</h2>
+                    <p>Bulk invoice generation helps because you stop typing the same information into separate invoice files. Your invoice data stays in one place, and the template controls the repeated layout.</p>
+                    <ul class="check-list">
+                        <li>Totals, dates, and client names are easier to review in the spreadsheet before export.</li>
+                        <li>The invoice design stays consistent across the whole batch.</li>
+                        <li>Field mapping reduces the chance of copying the right value into the wrong place.</li>
+                    </ul>
+                </article>
+
+                <article class="article-section" id="who-it-helps">
+                    <h2>Who this workflow is actually for</h2>
+                    <p>CSVLink is most useful when invoices are repetitive, spreadsheet-driven, or based on a layout you want to keep. It is a strong fit for freelancers, agencies, consultants, operations teams, and service businesses that already track billing data in Excel or CSV.</p>
+                    <p>If you only send one simple invoice once in a while, a bulk workflow may be unnecessary. If you regularly turn rows of data into invoices, a reusable mapped template can make the process more repeatable.</p>
+                </article>
+
+                <article class="article-section" id="bulk-vs-manual">
+                    <h2>Creating invoices one by one vs. generating them in bulk</h2>
+                    <div class="comparison-list">
+                        <div class="comparison-row"><strong>Manual invoice creation</strong><span>You open a file, duplicate it, change customer details, update totals, check the layout, save a PDF, and repeat for the next customer.</span></div>
+                        <div class="comparison-row"><strong>CSVLink bulk invoice generation</strong><span>You update the spreadsheet, reuse the mapped template, preview the output, and export the invoice batch from the same layout.</span></div>
+                    </div>
+                </article>
+
+                <article class="article-section" id="faq">
+                    <h2>Frequently asked questions</h2>
+                    <div class="faq-grid">
+                        <article class="faq-item"><h3 class="faq-question">What is a bulk invoice generator?</h3><p class="faq-answer">It is a workflow for creating multiple invoices from spreadsheet data instead of manually editing one invoice file at a time.</p></article>
+                        <article class="faq-item"><h3 class="faq-question">Can I generate invoices from Excel or CSV files?</h3><p class="faq-answer">Yes. CSVLink supports Excel and CSV invoice data, then lets you map those columns into an invoice template.</p></article>
+                        <article class="faq-item"><h3 class="faq-question">Can I use my own invoice PDF template?</h3><p class="faq-answer">Yes. You can import a one-page PDF invoice template and place linked invoice fields directly on top of that layout.</p></article>
+                        <article class="faq-item"><h3 class="faq-question">Can one invoice include multiple spreadsheet rows?</h3><p class="faq-answer">Yes. Grouped mode is designed for itemized invoice data where several rows share the same invoice number or order ID.</p></article>
+                        <article class="faq-item"><h3 class="faq-question">Do I need formulas or code?</h3><p class="faq-answer">No. The workflow is visual: import data, choose the invoice mode, map fields, preview, and export.</p></article>
+                        <article class="faq-item"><h3 class="faq-question">Does CSVLink send invoices for me?</h3><p class="faq-answer">CSVLink focuses on generating invoice PDFs from your spreadsheet and template. It does not replace your email, accounting, or payment workflow.</p></article>
+                    </div>
+                </article>
             </div>
         </section>
 
         <section class="panel">
-            <h2>What people usually mean when they search for a bulk invoice generator</h2>
-            <p>Most teams are not looking for a generic invoice app. They usually need one or more of these practical outcomes: use spreadsheet data they already have, keep their own invoice design, handle itemized invoices, and export a lot of PDFs without rebuilding each invoice by hand.</p>
-            <div class="grid-4">
-                <article class="card"><span class="step-badge">Need 1</span><h3>Import spreadsheet data</h3><p>Use an Excel or CSV file that already contains invoice numbers, customer fields, dates, totals, taxes, and line-item columns.</p></article>
-                <article class="card"><span class="step-badge">Need 2</span><h3>Keep the invoice layout</h3><p>Start with a blank design or import a one-page PDF invoice template so the output still matches the brand and layout you already use.</p></article>
-                <article class="card"><span class="step-badge">Need 3</span><h3>Handle itemized invoices</h3><p>Choose grouped data when one invoice spans multiple rows, so repeated line items still produce one final invoice instead of separate files.</p></article>
-                <article class="card"><span class="step-badge">Need 4</span><h3>Export invoice PDFs in batch</h3><p>Once the links are in place, generate invoice PDFs from the full data set instead of editing one document at a time.</p></article>
-            </div>
-        </section>
-
-        <section class="panel">
-            <h2>Why CSVLink fits that workflow</h2>
-            <div class="comparison-list">
-                <div class="comparison-row"><strong>Use your own invoice template, not a rigid built-in form.</strong><span>That matters when your invoices already have a branded structure, a client-approved format, or a PDF layout you do not want to rebuild elsewhere.</span></div>
-                <div class="comparison-row"><strong>Map once, then reuse the layout with new exports.</strong><span>You connect invoice fields to the design once, then apply the same structure again when the next billing spreadsheet arrives.</span></div>
-                <div class="comparison-row"><strong>Handle both flat and grouped invoice data.</strong><span>Some spreadsheets are one row per invoice, while others repeat the invoice number across many rows for line items. CSVLink supports both models.</span></div>
-                <div class="comparison-row"><strong>Stay visual instead of writing formulas or code.</strong><span>Drag spreadsheet field names onto the invoice canvas, place them where they belong, and keep the process understandable for non-technical operators.</span></div>
-            </div>
-        </section>
-
-        <section class="panel">
-            <h2>How the bulk invoice generator flow works</h2>
-            <div class="grid-3">
-                <article class="card"><h3>1. Load your Excel or CSV invoice data</h3><p>Bring in the file that already contains the invoice fields. CSVLink reads the headers so you can work directly with the column names your team already understands.</p></article>
-                <article class="card"><h3>2. Choose your invoice template starting point</h3><p>Build from scratch or import a one-page PDF invoice template, then place dynamic invoice fields on top of that layout.</p></article>
-                <article class="card"><h3>3. Choose one-row or grouped invoice mode</h3><p>If every row is a full invoice, use one-row mode. If one invoice spans several rows, choose grouped mode and group by invoice number or order ID.</p></article>
-                <article class="card"><h3>4. Drag spreadsheet fields into the invoice</h3><p>Place invoice number, dates, customer details, totals, and line-item placeholders wherever they belong in the design.</p></article>
-                <article class="card"><h3>5. Preview and adjust the layout</h3><p>Make sure the template reads clearly before export. This is where spacing, typography, and section placement get finalized.</p></article>
-                <article class="card"><h3>6. Export the invoice batch</h3><p>Generate PDF invoices from the imported dataset instead of manually editing each invoice file one by one.</p></article>
-            </div>
-        </section>
-
-        <section class="panel">
-            <h2>Search-intent questions this page should answer clearly</h2>
-            <div class="faq-grid">
-                <article class="faq-item"><h3 class="faq-question">Can I generate invoices from Excel?</h3><p class="faq-answer">Yes. CSVLink is designed for Excel and CSV invoice workflows where the billing data already exists in a spreadsheet and needs to be turned into finished invoice PDFs.</p></article>
-                <article class="faq-item"><h3 class="faq-question">Can I use my own invoice PDF template?</h3><p class="faq-answer">Yes. The invoice tool can import a one-page PDF template so you can place linked invoice fields directly on top of the PDF layout.</p></article>
-                <article class="faq-item"><h3 class="faq-question">Can one invoice include multiple spreadsheet rows?</h3><p class="faq-answer">Yes. Grouped invoice mode is specifically for itemized invoice data where several rows belong to the same invoice number.</p></article>
-                <article class="faq-item"><h3 class="faq-question">Is this only for one invoice at a time?</h3><p class="faq-answer">No. The whole point of the workflow is to reuse the same invoice template across a full spreadsheet so you can export invoice PDFs in batch.</p></article>
-                <article class="faq-item"><h3 class="faq-question">Do I need formulas or coding?</h3><p class="faq-answer">No. The workflow is visual: import the spreadsheet, choose the invoice mode, drag fields into position, and export.</p></article>
-                <article class="faq-item"><h3 class="faq-question">What if my spreadsheet structure is messy?</h3><p class="faq-answer">You will get the best results when the spreadsheet has one clear header row, stable invoice identifiers, and consistent columns for totals, dates, and customer information.</p></article>
+            <h2>Where to learn more</h2>
+            <p>These CSVLink pages support the same workflow without adding features CSVLink does not provide.</p>
+            <div class="resource-list">
+                <a class="resource-link" href="/excel-to-invoice"><strong>Excel to Invoice</strong><span>Prepare spreadsheet data and turn Excel rows into invoice PDFs.</span></a>
+                <a class="resource-link" href="/csv-to-invoice"><strong>CSV to Invoice</strong><span>Use CSV billing exports with a mapped invoice template.</span></a>
+                <a class="resource-link" href="/invoice-template-builder"><strong>Invoice Template Builder</strong><span>Create or import the invoice layout that your spreadsheet fields will fill.</span></a>
+                <a class="resource-link" href="/itemized-invoice-generator"><strong>Itemized Invoice Generator</strong><span>Use grouped rows when one invoice needs multiple line items.</span></a>
+                <a class="resource-link" href="/invoice/how-it-works"><strong>How CSVLink Works</strong><span>See the full import, mapping, preview, and export process.</span></a>
+                <a class="resource-link" href="/blog/bulk-invoice-csv-format"><strong>CSV Format Guide</strong><span>Structure invoice data so it is easier to map and reuse.</span></a>
             </div>
         </section>
 
         <section class="panel cta">
-            <h2>Best fit for teams that already know what their invoice should look like</h2>
-            <p>If your real problem is not “how do I make an invoice?” but “how do I turn this spreadsheet into a lot of invoices without rebuilding the same layout every time?”, that is the workflow this page is meant to solve.</p>
+            <h2>Turn your next spreadsheet into a reusable invoice workflow</h2>
+            <p>Start with the invoice data you already have, connect it to a CSVLink template once, and use that layout again when the next billing batch is ready.</p>
             <div class="hero-actions">
                 <a href="/tool" class="btn">Start Generating Invoices</a>
                 <a href="/invoice/how-it-works" class="btn ghost">See the Full Workflow</a>
