@@ -328,7 +328,7 @@
                 return;
             }
             const rect = button.getBoundingClientRect();
-            const maxW = 420;
+            const maxW = 520;
             const vw = window.innerWidth;
             const vh = window.innerHeight;
             let left = rect.left;
@@ -341,9 +341,9 @@
             templateLoaderModal.innerHTML = '<p class="muted" style="padding: 24px; text-align: center;">Loading templates...</p>';
 
             const [publicTemplates, purchasedTemplates, myTemplates] = await Promise.all([
-                supabase.from('public_templates').select('id, title, template_data'),
+                supabase.from('public_templates').select('id, title, template_data, preview_url'),
                 currentUser ? supabase.from('purchased_templates').select('store_templates(id, title, template_data)').eq('user_id', currentUser.id) : Promise.resolve({ data: [] }),
-                currentUser ? supabase.from('templates').select('id, title, template_data').eq('user_id', currentUser.id).order('created_at', { ascending: false }) : Promise.resolve({ data: [] })
+                currentUser ? supabase.from('templates').select('id, title, template_data, preview_url').eq('user_id', currentUser.id).order('updated_at', { ascending: false }) : Promise.resolve({ data: [] })
             ]);
 
             templateLoaderModal.innerHTML = `
@@ -400,53 +400,89 @@
         function createTemplateItem(template, isPublic, isPurchased = false) {
             const item = document.createElement('div');
             item.className = 'template-item';
+            item.setAttribute('role', 'button');
+            item.tabIndex = 0;
+            item.title = `Open ${template?.title || 'Untitled Template'}`;
 
             const thumb = document.createElement('div');
             thumb.className = 'template-thumb';
-            thumb.style.backgroundColor = '#111';
-            thumb.innerHTML = '<div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; opacity:0.1;"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg></div>';
+            thumb.style.backgroundColor = '#fff';
+            thumb.innerHTML = '<div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:var(--muted); opacity:0.35;"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg></div>';
 
             const title = document.createElement('div');
             title.className = 'template-title';
-            title.textContent = template.title || 'Untitled Template';
+            title.textContent = template?.title || 'Untitled Template';
 
             item.append(thumb, title);
 
-            // Lightweight preview generation
-            setTimeout(() => {
-                try {
-                    const data = template.template_data;
-                    const previewCanvas = data?.canvas || data?.pages?.[0]?.canvas;
-                    if (previewCanvas) {
+            const getPreviewCanvasData = () => {
+                const data = template?.template_data || {};
+                if (template?.preview_url && typeof template.preview_url === 'object') return template.preview_url;
+                if (data?.preview_url && typeof data.preview_url === 'object') return data.preview_url;
+                if (data?.canvas && typeof data.canvas === 'object') return data.canvas;
+                if (Array.isArray(data?.pages) && data.pages[0]?.canvas && typeof data.pages[0].canvas === 'object') return data.pages[0].canvas;
+                if (data?.page?.canvas && typeof data.page.canvas === 'object') return data.page.canvas;
+                return null;
+            };
+
+            const previewCanvasData = getPreviewCanvasData();
+
+            if (typeof template?.preview_url === 'string' && template.preview_url.trim()) {
+                thumb.innerHTML = '';
+                thumb.style.backgroundImage = `url(${template.preview_url})`;
+            } else if (previewCanvasData) {
+                setTimeout(() => {
+                    try {
                         const off = document.createElement('canvas');
                         off.width = 320;
                         off.height = 240;
-                        const c2 = new fabric.StaticCanvas(off); // Use StaticCanvas for better performance
-                        c2.loadFromJSON(previewCanvas, () => {
-                            const pr = c2.getObjects().find(o => o.oid === 'pageRect');
-                            if (pr) {
-                                pr.set({ strokeWidth: 0, shadow: null });
-                                const zoom = Math.min(off.width / pr.width, off.height / pr.height) * 0.95;
+                        const c2 = new fabric.StaticCanvas(off);
+                        c2.loadFromJSON(previewCanvasData, () => {
+                            const pageRect = c2.getObjects().find(o => o.oid === 'pageRect');
+                            if (pageRect) {
+                                pageRect.set({ strokeWidth: 0, shadow: null });
+                                const width = pageRect.width || 768;
+                                const height = pageRect.height || 1024;
+                                const zoom = Math.min(off.width / width, off.height / height) * 0.94;
                                 c2.setZoom(zoom);
-                                c2.viewportTransform[4] = (off.width - pr.width * zoom) / 2;
-                                c2.viewportTransform[5] = (off.height - pr.height * zoom) / 2;
+                                c2.viewportTransform[4] = (off.width - width * zoom) / 2;
+                                c2.viewportTransform[5] = (off.height - height * zoom) / 2;
+                            } else {
+                                const objects = c2.getObjects();
+                                if (objects.length > 0) {
+                                    const group = new fabric.Group(objects);
+                                    const width = Math.max(group.width || 1, 1);
+                                    const height = Math.max(group.height || 1, 1);
+                                    const zoom = Math.min(off.width / width, off.height / height) * 0.88;
+                                    c2.setZoom(zoom);
+                                    c2.viewportTransform[4] = (off.width - width * zoom) / 2 - (group.left || 0) * zoom;
+                                    c2.viewportTransform[5] = (off.height - height * zoom) / 2 - (group.top || 0) * zoom;
+                                }
                             }
                             c2.renderAll();
-                            const dataUrl = off.toDataURL('image/jpeg', 0.8);
-                            thumb.innerHTML = ''; // Clear placeholder
-                            thumb.style.backgroundImage = `url(${dataUrl})`;
+                            thumb.innerHTML = '';
+                            thumb.style.backgroundImage = `url(${off.toDataURL('image/jpeg', 0.82)})`;
                             c2.dispose();
                         });
+                    } catch (e) {
+                        console.error('Preview failed:', e);
                     }
-                } catch (e) {
-                    console.error('Preview failed:', e);
-                }
-            }, 50);
+                }, 50);
+            }
 
-            item.onclick = () => {
+            const openTemplate = () => {
                 loadTemplateFromDB(template.id, { public: isPublic, purchased: isPurchased });
                 templateLoaderModal.style.display = 'none';
             };
+
+            item.addEventListener('click', openTemplate);
+            item.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    openTemplate();
+                }
+            });
+
             return item;
         }
 

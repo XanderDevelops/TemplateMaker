@@ -79,18 +79,16 @@ export async function logActivity(eventName, metadata = {}, options = {}) {
             metadata: normalizeActivityMetadata(metadata)
         };
 
-        const { data, error } = await supabase
+        const { error } = await supabase
             .from('activity_logs')
-            .insert(payload)
-            .select('id')
-            .single();
+            .insert(payload);
 
         if (error) {
             console.warn('CSVLink activity log was not saved:', error.message || error);
             return null;
         }
 
-        return data;
+        return { ok: true };
     } catch (error) {
         console.warn('CSVLink activity log failed:', error);
         return null;
