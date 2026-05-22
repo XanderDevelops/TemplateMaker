@@ -13491,9 +13491,7 @@ function savePendingDownloadFeedback(downloadRecord) {
     const pendingRecord = {
         id: downloadRecord.id,
         title: downloadRecord.title || $('#titleInput')?.value || 'Untitled_Template',
-        export_format: downloadRecord.export_format || downloadRecord.exportFormat || exportFormatSelect?.value || 'pdf',
-        export_type: downloadRecord.export_type || downloadRecord.exportType || 'single',
-        exported_file_name: downloadRecord.exported_file_name || downloadRecord.fileName || null,
+        fileName: downloadRecord.fileName || null,
         created_at: downloadRecord.created_at || new Date().toISOString()
     };
     localStorage.setItem(DOWNLOAD_FEEDBACK_PENDING_KEY, JSON.stringify(pendingRecord));
@@ -13584,8 +13582,8 @@ function showDownloadFeedbackModal(downloadRecord) {
     const modal = $('#downloadFeedbackModal');
     if (!modal) return;
 
-    const exportLabel = downloadRecord?.exported_file_name
-        ? `<span class="download-feedback-file">${escapeDownloadFeedbackHtml(downloadRecord.exported_file_name)}</span>`
+    const exportLabel = downloadRecord?.fileName
+        ? `<span class="download-feedback-file">${escapeDownloadFeedbackHtml(downloadRecord.fileName)}</span>`
         : 'your export';
 
     modal.innerHTML = `
@@ -13721,19 +13719,19 @@ function showDownloadDiscoverySurvey(downloadRecord) {
 }
 
 async function submitDownloadDiscoverySource(downloadRecord, source, button) {
-    if (!downloadRecord?.id || !source) return;
+    if (!currentUser?.id || !downloadRecord?.id || !source) return;
     if (button) {
         button.disabled = true;
         button.textContent = 'Saving...';
     }
 
     const { error } = await supabase
-        .from('downloads')
-        .update({
-            discovery_source: source,
-            discovery_submitted_at: new Date().toISOString()
-        })
-        .eq('id', downloadRecord.id);
+        .from('surveys')
+        .insert({
+            user_id: currentUser.id,
+            download_id: downloadRecord.id,
+            source
+        });
 
     if (error) {
         console.error('Error saving discovery source:', error);
@@ -13760,30 +13758,17 @@ async function createDownloadSnapshot(downloadMeta = {}) {
 
     if (!hasContent) return null;
 
-    const exportType = downloadMeta.exportType || 'single';
-    const exportFormat = normalizeDownloadExportFormat(downloadMeta.exportFormat || exportFormatSelect?.value, exportType);
-    const selectedPageIndexes = normalizeSelectedDownloadPages(downloadMeta.selectedPageIndexes);
-    const rowCount = Number.isFinite(downloadMeta.rowCount)
-        ? downloadMeta.rowCount
-        : (Array.isArray(dataRows) ? dataRows.length : 0);
-
     const insertPayload = {
         user_id: currentUser.id,
-        template_id: currentTemplateId || null,
         title: ($('#titleInput')?.value || payload.page?.title || 'Untitled_Template').trim(),
         template_data: payload,
-        preview_url: null,
-        export_format: exportFormat,
-        export_type: exportType,
-        exported_file_name: normalizeDownloadFileName(downloadMeta.fileName),
-        exported_row_count: Math.max(0, rowCount || 0),
-        selected_page_indexes: selectedPageIndexes
+        preview_url: null
     };
 
     const { data, error } = await supabase
         .from('downloads')
         .insert(insertPayload)
-        .select('id, title, export_format, export_type, exported_file_name, created_at')
+        .select('id, title, created_at')
         .single();
 
     if (error) {
@@ -13796,15 +13781,10 @@ async function createDownloadSnapshot(downloadMeta = {}) {
 }
 
 function createDownloadFeedbackShell(downloadMeta = {}) {
-    const exportType = downloadMeta.exportType || 'single';
-    const exportFormat = normalizeDownloadExportFormat(downloadMeta.exportFormat || exportFormatSelect?.value, exportType);
-
     return {
         id: null,
         title: ($('#titleInput')?.value || 'Untitled_Template').trim(),
-        export_format: exportFormat,
-        export_type: exportType,
-        exported_file_name: normalizeDownloadFileName(downloadMeta.fileName),
+        fileName: normalizeDownloadFileName(downloadMeta.fileName),
         created_at: new Date().toISOString()
     };
 }
