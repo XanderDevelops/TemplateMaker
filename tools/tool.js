@@ -1,4 +1,4 @@
-import { supabase as importedSupabase } from '../assets/js/supabase-client.js';
+import { supabase as importedSupabase } from '../assets/js/supabase-client.js?v=20260525a';
 
 globalThis.__csvlink_supabase = importedSupabase;
 

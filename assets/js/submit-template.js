@@ -1,4 +1,4 @@
-import { supabase } from './supabase-client.js';
+import { supabase } from './supabase-client.js?v=20260525a';
 
 const form = document.getElementById('submit-form');
 const messageEl = document.getElementById('form-message');

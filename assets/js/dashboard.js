@@ -1,4 +1,4 @@
-import { supabase, logActivity } from './supabase-client.js';
+import { supabase, logActivity } from './supabase-client.js?v=20260525a';
 
 const templateGrid = document.getElementById('template-grid');
 const tabs = document.querySelectorAll('.tab');

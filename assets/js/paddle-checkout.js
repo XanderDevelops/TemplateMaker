@@ -1,4 +1,4 @@
-import { supabase } from './supabase-client.js';
+import { supabase } from './supabase-client.js?v=20260525a';
 
 document.addEventListener('DOMContentLoaded', () => {
     // --- Step 1: Initialize Lemon Squeezy ---
