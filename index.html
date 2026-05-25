@@ -424,24 +424,24 @@
         .hero-visual {
             position: relative;
             min-width: 0;
-            min-height: 575px;
-            max-width: 640px;
+            min-height: 520px;
+            max-width: 680px;
             z-index: 1;
             display: flex;
             align-items: center;
             justify-content: flex-start;
             overflow: visible;
-            padding-left: clamp(16px, 2.7vw, 42px);
+            padding-left: clamp(10px, 2vw, 30px);
             padding-right: 0;
         }
 
         .hero-visual::before {
             content: '';
             position: absolute;
-            width: 610px;
-            height: 430px;
-            top: 70px;
-            left: clamp(8px, 2vw, 30px);
+            width: 500px;
+            height: 350px;
+            top: 74px;
+            left: clamp(8px, 2vw, 28px);
             background: radial-gradient(circle, rgba(37, 99, 235, 0.075), rgba(20, 184, 166, 0.045) 52%, transparent 72%);
             filter: blur(22px);
             border-radius: 50%;
@@ -450,12 +450,12 @@
 
         .hero-flow-canvas {
             position: relative;
-            width: min(1010px, 55vw);
-            max-width: 1010px;
-            min-width: 620px;
+            width: min(760px, 42vw);
+            max-width: 760px;
+            min-width: 0;
             height: auto;
             flex: 0 0 auto;
-            transform: translateX(-54px);
+            transform: none;
             transform-origin: left center;
             filter: none;
         }
