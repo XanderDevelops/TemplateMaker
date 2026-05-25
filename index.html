@@ -24,12 +24,12 @@
     <meta property="og:title" content="CSVLink | Turn Excel Lists into Ready-to-Send Invoices">
     <meta property="og:description" content="Upload Excel, CSV, or QuickBooks export data, map your columns, and export polished personalized invoices as PDFs in one run.">
     <meta property="og:url" content="https://csvlink.app/">
-    <meta property="og:image" content="https://csvlink.app/assets/images/invoice-hero-flow.png">
-    <meta property="og:image:alt" content="CSVLink workflow showing spreadsheet data mapped into a finished invoice template.">
+    <meta property="og:image" content="https://csvlink.app/assets/images/excel-table-to-pdf-hero.png">
+    <meta property="og:image:alt" content="CSVLink workflow showing an Excel invoice table pointing to a polished PDF invoice.">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="CSVLink | Turn Excel Lists into Ready-to-Send Invoices">
     <meta name="twitter:description" content="Upload Excel, CSV, or QuickBooks export data, map your columns, and export polished personalized invoices as PDFs in one run.">
-    <meta name="twitter:image" content="https://csvlink.app/assets/images/invoice-hero-flow.png">
+    <meta name="twitter:image" content="https://csvlink.app/assets/images/excel-table-to-pdf-hero.png">
     <script type="application/ld+json">
         {
             "@context": "https://schema.org",
@@ -450,23 +450,26 @@
 
         .hero-flow-canvas {
             position: relative;
-            width: min(100%, 640px);
-            max-width: 640px;
-            height: 560px;
+            width: min(1010px, 55vw);
+            max-width: 1010px;
+            min-width: 620px;
+            height: auto;
             flex: 0 0 auto;
-            transform: none;
+            transform: translateX(-54px);
             transform-origin: left center;
-            filter: drop-shadow(0 28px 52px rgba(38, 74, 127, 0.08));
+            filter: none;
         }
 
         .hero-flow-canvas::before {
-            content: '';
-            position: absolute;
-            inset: 44px 10px 26px 0;
-            border-radius: 36px;
-            background: radial-gradient(circle at 48% 50%, rgba(212, 231, 255, 0.48), rgba(236, 247, 255, 0.24) 42%, transparent 68%);
-            filter: blur(18px);
-            z-index: -1;
+            content: none;
+        }
+
+        .hero-flow-art {
+            display: block;
+            width: 100%;
+            height: auto;
+            user-select: none;
+            -webkit-user-drag: none;
         }
 
         .ui-card {
@@ -1668,11 +1671,8 @@
             .hero-copy { text-align: center; margin: 0 auto; }
             .hero h1, .hero p.lede { margin-left: auto; margin-right: auto; }
             .hero-actions, .hero-points { justify-content: center; }
-            .hero-visual { width: min(100%, 740px); max-width: 100%; margin: 0 auto; min-height: 570px; justify-content: center; padding-right: 0; }
-            .hero-flow-canvas { transform: none; transform-origin: top center; }
-            .sheet-card { left: 50px; }
-            .mapping-card { left: 75px; }
-            .invoice-card { right: 12px; }
+            .hero-visual { width: min(100%, 900px); max-width: 100%; margin: 0 auto; min-height: 540px; justify-content: center; padding-left: 0; padding-right: 0; }
+            .hero-flow-canvas { width: min(100%, 900px); min-width: 0; transform: none; transform-origin: top center; }
             .template-grid, .benefits-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
             .quickbooks-panel { grid-template-columns: 1fr; padding: 38px 30px; }
             .quickbooks-copy { text-align: center; }
@@ -1695,8 +1695,8 @@
             .page-shell { padding-left: 18px; padding-right: 18px; }
             .hero h1 { font-size: clamp(38px, 12vw, 54px); }
             .hero p.lede { font-size: 16px; }
-            .hero-visual { min-height: 360px; width: min(100%, 420px); }
-            .hero-flow-canvas { transform: scale(0.58); transform-origin: top center; }
+            .hero-visual { min-height: auto; width: min(100%, 520px); }
+            .hero-flow-canvas { width: min(100%, 520px); min-width: 0; transform: none; transform-origin: top center; }
             .steps-grid, .template-grid, .benefits-grid, .pricing-grid, .resources-grid { grid-template-columns: 1fr; }
             .quickbooks-section { padding: 30px 0 42px; }
             .quickbooks-panel { padding: 28px 18px; border-radius: 16px; }
@@ -1766,55 +1766,7 @@
 
             <div class="hero-visual" aria-hidden="true">
                 <div class="hero-flow-canvas">
-                    <div class="ui-card sheet-card">
-                        <div class="sheet-title"><span class="excel-icon">X</span> clients_invoices.xlsx</div>
-                        <table class="mini-table" aria-hidden="true">
-                            <thead>
-                                <tr><th>Client</th><th>Invoice #</th><th>Due date</th><th>Total</th></tr>
-                            </thead>
-                            <tbody>
-                                <tr><td>Amanda Stone</td><td>INV-2048</td><td>Jun 14, 2026</td><td>$2,450.00</td></tr>
-                                <tr><td>Bright Labs</td><td>INV-2049</td><td>Jun 21, 2026</td><td>$1,120.00</td></tr>
-                                <tr><td>Core Systems</td><td>INV-2050</td><td>Jun 21, 2026</td><td>$3,300.00</td></tr>
-                            </tbody>
-                        </table>
-                        <div class="table-skeleton"><span class="skeleton-line"></span><span class="skeleton-line"></span></div>
-                    </div>
-
-                    <svg class="hero-connectors" viewBox="0 0 640 560" aria-hidden="true" focusable="false">
-                        <defs>
-                            <marker id="hero-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-                                <path d="M 0 0 L 10 5 L 0 10 z" fill="#18acc3"></path>
-                            </marker>
-                        </defs>
-                        <path class="hero-connector-line" d="M62 236 L62 294" marker-end="url(#hero-arrow)"></path>
-                        <path class="hero-connector-line" d="M318 382 C386 382 388 286 430 286" marker-end="url(#hero-arrow)"></path>
-                    </svg>
-
-                    <div class="ui-card mapping-card">
-                        <div class="map-row"><span class="map-pill"><span class="check-dot">✓</span> Client</span><span class="map-arrow">→</span><span class="map-pill output">Bill to</span></div>
-                        <div class="map-row"><span class="map-pill"><span class="check-dot">✓</span> Invoice #</span><span class="map-arrow">→</span><span class="map-pill output">Invoice number</span></div>
-                        <div class="map-row"><span class="map-pill"><span class="check-dot">✓</span> Due date</span><span class="map-arrow">→</span><span class="map-pill output">Due date</span></div>
-                        <div class="map-row"><span class="map-pill"><span class="check-dot">✓</span> Total</span><span class="map-arrow">→</span><span class="map-pill output">Total amount</span></div>
-                    </div>
-
-                    <div class="ui-card invoice-card">
-                        <div class="invoice-head">
-                            <div class="your-logo-wrap"><span class="logo-circle">YOUR<br>LOGO</span><span>YOUR<br>LOGO</span></div>
-                            <span class="invoice-badge">INVOICE</span>
-                        </div>
-                        <div class="invoice-meta">Invoice #: INV-2048<br>Date: May 14, 2026</div>
-                        <div class="invoice-address"><strong>Bill to</strong>Amanda Stone<br>123 Market Street<br>San Francisco, CA 94103</div>
-                        <div class="invoice-lines">
-                            <div class="invoice-row header"><span>Description</span><span>Amount</span></div>
-                            <div class="invoice-row"><span>Design retainer</span><span>$1,800.00</span></div>
-                            <div class="invoice-row"><span>Implementation</span><span>$650.00</span></div>
-                        </div>
-                        <div class="invoice-total"><span>Total</span><span>$2,450.00</span></div>
-                        <div class="thanks">Thank you!</div>
-                    </div>
-
-                    <div class="ui-card export-chip"><span class="export-check">✓</span> Export personalized PDFs</div>
+                    <img class="hero-flow-art" src="assets/images/excel-table-to-pdf-hero.png" alt="" width="1010" height="600" fetchpriority="high" decoding="async">
                 </div>
             </div>
         </section>
