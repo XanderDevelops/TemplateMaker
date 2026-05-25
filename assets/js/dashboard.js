@@ -1,4 +1,4 @@
-import { supabase, logActivity } from './supabase-client.js?v=20260525b';
+import { supabase, logActivity } from './supabase-client.js?v=20260525c';
 
 const templateGrid = document.getElementById('template-grid');
 const tabs = document.querySelectorAll('.tab');
@@ -156,7 +156,7 @@ const renderTemplates = (templates) => {
 
             card.innerHTML = `
                 <div class="selection-indicator"></div>
-                <a href="/tool.html?id=${template.id}" class="card-link"></a>
+                <a href="/tool?id=${template.id}" class="card-link"></a>
                 
                 <div class="preview">
                     <canvas id="${canvasId}"></canvas>
@@ -485,14 +485,14 @@ const initializeDashboard = async () => {
 
 initializeDashboard();
 
-const createBtn = document.querySelector('a[href="/tool.html"]');
+const createBtn = document.querySelector('a[href="/tool"]');
 if (createBtn) {
     createBtn.addEventListener('click', async (e) => {
         e.preventDefault();
 
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) {
-            window.location.href = '/tool.html';
+            window.location.href = '/tool';
             return;
         }
 
@@ -507,7 +507,7 @@ if (createBtn) {
             }
         }
 
-        window.location.href = '/tool.html';
+        window.location.href = '/tool';
     });
 }
 

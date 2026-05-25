@@ -1,4 +1,4 @@
-import { supabase } from './supabase-client.js?v=20260525b';
+import { supabase } from './supabase-client.js?v=20260525c';
 
 const LOGIN_RETURN_PATH = '/#pricing';
 

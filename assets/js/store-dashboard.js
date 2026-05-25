@@ -1,4 +1,4 @@
-import { supabase } from './supabase-client.js?v=20260525b';
+import { supabase } from './supabase-client.js?v=20260525c';
 
 const templateGrid = document.getElementById('template-grid');
 const categoryList = document.getElementById('category-list');
@@ -180,7 +180,7 @@ templateGrid.addEventListener('click', async (e) => {
              console.error(insertError);
         } else {
             // 3. Redirect the user to the tool with the ID of their new copy
-            window.location.href = `/tool.html?id=${newTemplate.id}`;
+            window.location.href = `/tool?id=${newTemplate.id}`;
         }
     } else if (e.target.closest('.template-card')) {
         // Handle click on card itself to open modal

@@ -126,6 +126,11 @@
       "permanent": true
     },
     {
+      "source": "/tool.html",
+      "destination": "/tool",
+      "permanent": true
+    },
+    {
       "source": "/tool-Invoice",
       "destination": "/tool",
       "permanent": true

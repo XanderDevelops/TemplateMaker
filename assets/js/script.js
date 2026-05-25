@@ -1,4 +1,4 @@
-import { supabase, logActivity, setPendingLoginMethod, clearPendingLoginMethod } from './supabase-client.js?v=20260525b';
+import { supabase, logActivity, setPendingLoginMethod, clearPendingLoginMethod } from './supabase-client.js?v=20260525c';
 
 const navLinksContainer = document.getElementById('nav-links');
 const loginForm = document.getElementById('login-form');

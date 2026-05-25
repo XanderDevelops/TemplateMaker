@@ -1,4 +1,4 @@
-import { supabase } from './supabase-client.js?v=20260525b';
+import { supabase } from './supabase-client.js?v=20260525c';
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -235,7 +235,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 alert('Could not create your copy of the template.');
                 console.error(insertError);
             } else {
-                window.location.href = `/tool.html?id=${newTemplate.id}`;
+                window.location.href = `/tool?id=${newTemplate.id}`;
             }
             return;
         }

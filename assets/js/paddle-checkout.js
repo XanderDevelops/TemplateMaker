@@ -1,4 +1,4 @@
-import { supabase } from './supabase-client.js?v=20260525b';
+import { supabase } from './supabase-client.js?v=20260525c';
 
 document.addEventListener('DOMContentLoaded', () => {
     // --- Step 1: Initialize Lemon Squeezy ---
@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const variantId = e.currentTarget.dataset.variantId;
             if (!variantId) {
                 // This handles a free "Starter" plan button which doesn't need a checkout
-                window.location.href = '/tool.html';
+                window.location.href = '/tool';
                 return;
             }
 

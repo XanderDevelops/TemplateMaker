@@ -1,5 +1,5 @@
 // Layer Enhancements: Drag-Drop Reordering + Multi-Select
-// Add this file to tool.html: <script src="assets/js/layer-enhancements.js?v=20260525b"></script>
+// Add this file to tool.html: <script src="assets/js/layer-enhancements.js?v=20260525c"></script>
 
 // Enhanced renderLayers function with drag-drop and multi-select
 window.renderLayersEnhanced = function (e) {
