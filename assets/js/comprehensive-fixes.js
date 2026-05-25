@@ -2,7 +2,7 @@
 // This file contains all the advanced features that were implemented
 
 // Note: This file should be loaded AFTER the main tool.html to extend functionality
-// Add this line before </body>: <script src="assets/js/comprehensive-fixes.js?v=20260525a"></script>
+// Add this line before </body>: <script src="assets/js/comprehensive-fixes.js?v=20260525b"></script>
 
 console.log('🎨 Loading Template Maker enhancements...');
 

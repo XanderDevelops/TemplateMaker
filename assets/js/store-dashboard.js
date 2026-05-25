@@ -1,4 +1,4 @@
-import { supabase } from './supabase-client.js?v=20260525a';
+import { supabase } from './supabase-client.js?v=20260525b';
 
 const templateGrid = document.getElementById('template-grid');
 const categoryList = document.getElementById('category-list');

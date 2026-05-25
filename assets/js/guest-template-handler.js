@@ -3,7 +3,7 @@
  * Handles the restoration of guest work when a user logs in
  */
 
-import { supabase } from './supabase-client.js?v=20260525a';
+import { supabase } from './supabase-client.js?v=20260525b';
 
 /**
  * Restores guest template for logged-in users

@@ -46,6 +46,60 @@ function normalizeActivityMetadata(metadata = {}) {
     }
 }
 
+function normalizeActivityStatus(status, eventName = '') {
+    const raw = String(status || '').trim().toLowerCase();
+    if (['info', 'success', 'error', 'pending'].includes(raw)) return raw;
+
+    const event = String(eventName || '').toLowerCase();
+    if (/\b(failed|failure|error|denied)\b/.test(event)) return 'error';
+    if (/\b(success|logged_in|downloaded|created|imported)\b/.test(event)) return 'success';
+    return 'info';
+}
+
+function normalizeActivityText(value, maxLength = 500) {
+    if (value === null || typeof value === 'undefined') return null;
+    const text = String(value).trim();
+    if (!text) return null;
+    return text.length > maxLength ? `${text.slice(0, maxLength - 3)}...` : text;
+}
+
+function getUserFullName(user) {
+    const metadata = user?.user_metadata || {};
+    return normalizeActivityText(
+        metadata.full_name || metadata.name || metadata.display_name || metadata.user_name,
+        180
+    );
+}
+
+function getActivityErrorCode(errorLike) {
+    if (!errorLike || typeof errorLike !== 'object') return null;
+    return normalizeActivityText(errorLike.code || errorLike.error_code || errorLike.status || errorLike.name, 120);
+}
+
+function getActivityErrorMessage(errorLike) {
+    if (!errorLike) return null;
+    if (typeof errorLike === 'string') return normalizeActivityText(errorLike, 500);
+    return normalizeActivityText(errorLike.message || errorLike.msg || errorLike.error_description || String(errorLike), 500);
+}
+
+function isActivityLogSchemaError(error) {
+    const message = String(error?.message || error || '').toLowerCase();
+    return error?.code === 'PGRST204'
+        || message.includes('schema cache')
+        || message.includes('could not find')
+        || message.includes('event_status')
+        || message.includes('error_message')
+        || message.includes('full_name');
+}
+
+async function insertActivityLog(payload) {
+    const { error } = await supabase
+        .from('activity_logs')
+        .insert(payload);
+
+    return error;
+}
+
 export function setPendingLoginMethod(method = 'unknown') {
     try {
         localStorage.setItem(CSVLINK_PENDING_LOGIN_METHOD_KEY, String(method || 'unknown'));
@@ -67,10 +121,27 @@ export async function logActivity(eventName, metadata = {}, options = {}) {
 
     try {
         const { data: { session } = {} } = await supabase.auth.getSession();
-        const userId = options.userId || session?.user?.id || null;
+        const user = session?.user || null;
+        const userId = options.userId || user?.id || null;
+        const eventStatus = normalizeActivityStatus(options.status || metadata.event_status || metadata.status, eventName);
+        const errorCode = normalizeActivityText(
+            options.errorCode || metadata.error_code || getActivityErrorCode(options.error),
+            120
+        );
+        const errorMessage = normalizeActivityText(
+            options.errorMessage || metadata.error_message || getActivityErrorMessage(options.error),
+            500
+        );
+        const email = normalizeActivityText(options.email || metadata.email || user?.email, 320);
+        const fullName = normalizeActivityText(options.fullName || metadata.full_name || getUserFullName(user), 180);
         const payload = {
             user_id: userId,
             event_name: String(eventName).trim(),
+            event_status: eventStatus,
+            error_code: errorCode,
+            error_message: errorMessage,
+            email,
+            full_name: fullName,
             page_path: window.location.pathname || '/',
             page_url: window.location.href || null,
             referrer: document.referrer || null,
@@ -79,11 +150,32 @@ export async function logActivity(eventName, metadata = {}, options = {}) {
             metadata: normalizeActivityMetadata(metadata)
         };
 
-        const { error } = await supabase
-            .from('activity_logs')
-            .insert(payload);
+        const error = await insertActivityLog(payload);
 
         if (error) {
+            if (isActivityLogSchemaError(error)) {
+                const fallbackPayload = {
+                    ...payload,
+                    metadata: normalizeActivityMetadata({
+                        ...metadata,
+                        event_status: eventStatus,
+                        error_code: errorCode,
+                        error_message: errorMessage,
+                        email,
+                        full_name: fullName,
+                        activity_log_schema_fallback: true
+                    })
+                };
+                delete fallbackPayload.event_status;
+                delete fallbackPayload.error_code;
+                delete fallbackPayload.error_message;
+                delete fallbackPayload.email;
+                delete fallbackPayload.full_name;
+
+                const fallbackError = await insertActivityLog(fallbackPayload);
+                if (!fallbackError) return { ok: true, fallback: true };
+            }
+
             console.warn('CSVLink activity log was not saved:', error.message || error);
             return null;
         }
@@ -113,6 +205,7 @@ async function logInitialActivity() {
         await logActivity('logged_in', {
             method: pendingLoginMethod
         }, {
+            status: 'success',
             userId: session.user.id
         });
         clearPendingLoginMethod();

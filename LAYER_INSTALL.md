@@ -9,7 +9,7 @@
 Add this line in `tool.html` **before the closing `</body>` tag**:
 
 ```html
-<script src="assets/js/layer-enhancements.js?v=20260525a"></script>
+<script src="assets/js/layer-enhancements.js?v=20260525b"></script>
 ```
 
 **Location**: Find `</body>` at the very end of the file and add the script tag right before it.

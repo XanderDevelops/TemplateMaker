@@ -15,7 +15,7 @@ $components = @(
 )
 
 $sb = [System.Text.StringBuilder]::new()
-[void]$sb.AppendLine("import { supabase as importedSupabase } from '../assets/js/supabase-client.js?v=20260525a';")
+[void]$sb.AppendLine("import { supabase as importedSupabase } from '../assets/js/supabase-client.js?v=20260525b';")
 [void]$sb.AppendLine()
 [void]$sb.AppendLine("globalThis.__csvlink_supabase = importedSupabase;")
 [void]$sb.AppendLine()

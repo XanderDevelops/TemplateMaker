@@ -1,4 +1,4 @@
-import { supabase as importedSupabase } from '../assets/js/supabase-client.js?v=20260525a';
+import { supabase as importedSupabase } from '../assets/js/supabase-client.js?v=20260525b';
 
 globalThis.__csvlink_supabase = importedSupabase;
 
@@ -12687,8 +12687,8 @@ function createDownloadFeedbackShell(downloadMeta = {}) {
     };
 }
 
-async function recordDownloadAndRequestFeedback(downloadMeta = {}) {
-    logCsvlinkActivity('downloaded', {
+function buildDownloadActivityMetadata(downloadMeta = {}) {
+    return {
         template_id: currentTemplateId || null,
         title: ($('#titleInput')?.value || 'Untitled_Template').trim(),
         file_name: normalizeDownloadFileName(downloadMeta.fileName),
@@ -12696,6 +12696,46 @@ async function recordDownloadAndRequestFeedback(downloadMeta = {}) {
         export_type: downloadMeta.exportType || null,
         row_count: Number.isFinite(Number(downloadMeta.rowCount)) ? Number(downloadMeta.rowCount) : 0,
         selected_page_indexes: normalizeSelectedDownloadPages(downloadMeta.selectedPageIndexes)
+    };
+}
+
+function getExportFailureMeta(exportType = 'export') {
+    return {
+        exportFormat: exportFormatSelect?.value || null,
+        exportType,
+        fileName: null,
+        rowCount: Array.isArray(dataRows) ? dataRows.length : 0,
+        selectedPageIndexes: typeof getSelectedExportPageIndexes === 'function'
+            ? getSelectedExportPageIndexes()
+            : [currentPageIndex]
+    };
+}
+
+async function recordDownloadFailure(downloadMeta = {}, error = null) {
+    logCsvlinkActivity('download_failed', buildDownloadActivityMetadata(downloadMeta), {
+        status: 'error',
+        error,
+        errorCode: error?.code || error?.name || null,
+        errorMessage: error?.message || String(error || 'Export failed.')
+    });
+}
+
+function trackDownloadErrors(handler, getDownloadMeta) {
+    return async (event) => {
+        try {
+            await handler(event);
+        } catch (error) {
+            console.error('Export failed:', error);
+            const downloadMeta = typeof getDownloadMeta === 'function' ? getDownloadMeta() : {};
+            await recordDownloadFailure(downloadMeta, error);
+            showNotification('Export failed. Please try again or contact support if it keeps happening.', 'error', 5200);
+        }
+    };
+}
+
+async function recordDownloadAndRequestFeedback(downloadMeta = {}) {
+    logCsvlinkActivity('downloaded', buildDownloadActivityMetadata(downloadMeta), {
+        status: 'success'
     });
     const feedbackRecord = createDownloadFeedbackShell(downloadMeta);
     feedbackRecord._snapshotPromise = createDownloadSnapshot(downloadMeta);
@@ -12976,9 +13016,9 @@ async function handleExportAllCanvases() {
 }
 
 // Event Listeners for Export
-exportBtn.addEventListener('click', handleExport);
-exportSinglePdfBtn.addEventListener('click', handleSinglePdfExport);
-if (exportAllCanvasesBtn) exportAllCanvasesBtn.addEventListener('click', handleExportAllCanvases);
+exportBtn.addEventListener('click', trackDownloadErrors(handleExport, () => getExportFailureMeta('primary_export')));
+exportSinglePdfBtn.addEventListener('click', trackDownloadErrors(handleSinglePdfExport, () => getExportFailureMeta('single_pdf')));
+if (exportAllCanvasesBtn) exportAllCanvasesBtn.addEventListener('click', trackDownloadErrors(handleExportAllCanvases, () => getExportFailureMeta('all_pages_export')));
 exportFormatSelect.addEventListener('change', updateExportUI);
 if (exportPageSelectorBtn) {
     exportPageSelectorBtn.addEventListener('click', (event) => {

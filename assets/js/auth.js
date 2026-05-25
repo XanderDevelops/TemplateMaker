@@ -1,4 +1,4 @@
-import { supabase, logActivity, setPendingLoginMethod, clearPendingLoginMethod } from './supabase-client.js?v=20260525a';
+import { supabase, logActivity, setPendingLoginMethod, clearPendingLoginMethod } from './supabase-client.js?v=20260525b';
 
 const navLinksContainer = document.getElementById('nav-links');
 const loginForm = document.getElementById('login-form');
@@ -13,6 +13,28 @@ const redirectTo = params.get("redirect") || "/dashboard.html";
 
 let isSignup = false;
 let authBusy = false;
+
+function normalizeAuthEmail(email = '') {
+    return String(email || '').trim().toLowerCase();
+}
+
+function getAuthErrorCode(error) {
+    if (!error || typeof error !== 'object') return null;
+    return error.code || error.error_code || error.status || error.name || null;
+}
+
+async function logAuthResult(eventName, { status = 'info', method = 'email', email = '', error = null, metadata = {} } = {}) {
+    await logActivity(eventName, {
+        method,
+        ...metadata
+    }, {
+        status,
+        email: normalizeAuthEmail(email),
+        errorCode: getAuthErrorCode(error),
+        errorMessage: error?.message || null,
+        error
+    });
+}
 
 function pushDataLayerEvent(eventName, payload = {}) {
     if (typeof window === 'undefined') return;
@@ -153,6 +175,12 @@ if (loginForm) {
 
             if (response.error) {
                 const message = String(response.error.message || '').trim();
+                await logAuthResult(isSignup ? 'signup_failed' : 'login_failed', {
+                    status: 'error',
+                    method: 'email',
+                    email,
+                    error: response.error
+                });
                 if (isSignup && /rate limit/i.test(message)) {
                     authError.textContent = 'Too many signup emails were requested. Wait a bit, then try again, or log in if this account already exists.';
                 } else {
@@ -165,6 +193,11 @@ if (loginForm) {
                 await trackSuccessfulSignup('email');
 
                 if (!response.data?.session) {
+                    await logAuthResult('signup_confirmation_required', {
+                        status: 'pending',
+                        method: 'email',
+                        email
+                    });
                     authError.style.color = 'green';
                     authError.textContent = 'Account created. Check your email to confirm your account before logging in.';
                     return;
@@ -195,6 +228,11 @@ if (googleLoginBtn) {
         });
         if (error) {
             clearPendingLoginMethod();
+            await logAuthResult('login_failed', {
+                status: 'error',
+                method: 'google',
+                error
+            });
             authError.textContent = error.message;
         }
     });
