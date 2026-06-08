@@ -229,6 +229,11 @@
       "source": "/custom-pdf-documents.html",
       "destination": "/custom-pdf-documents",
       "permanent": true
+    },
+    {
+      "source": "/quickbooks-invoice-generator.html",
+      "destination": "/quickbooks-invoice-generator",
+      "permanent": true
     }
   ],
   "rewrites": [
@@ -359,6 +364,10 @@
     {
       "source": "/custom-pdf-documents",
       "destination": "/custom-pdf-documents.html"
+    },
+    {
+      "source": "/quickbooks-invoice-generator",
+      "destination": "/quickbooks-invoice-generator.html"
     }
   ]
 }

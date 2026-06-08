@@ -1,0 +1,5 @@
+invoice_no,customer_name,billing_email,billing_address,invoice_date,due_date,item_description,quantity,unit_price,tax_rate,total_due,notes
+INV-2048,Amanda Stone,amanda@example.com,"1428 Market Street, Austin TX",2026-06-08,2026-06-22,Monthly bookkeeping support,1,850.00,0.0825,920.13,Thank you for your business
+INV-2049,Northfield Group,ap@northfield.example,"88 Lake Avenue, Tampa FL",2026-06-08,2026-06-22,Website maintenance retainer,1,1200.00,0.0000,1200.00,Net 14
+INV-2050,Vertex Solutions,billing@vertex.example,"510 West 6th Street, Denver CO",2026-06-08,2026-06-22,Implementation session,3,175.00,0.0600,556.50,Includes remote setup
+INV-2050,Vertex Solutions,billing@vertex.example,"510 West 6th Street, Denver CO",2026-06-08,2026-06-22,Support documentation,1,95.00,0.0600,100.70,Grouped by invoice_no
