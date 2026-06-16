@@ -66,6 +66,11 @@
   ],
   "redirects": [
     {
+      "source": "/excel-to-pdf.html",
+      "destination": "/excel-to-pdf",
+      "permanent": true
+    },
+    {
       "source": "/invoices",
       "destination": "/",
       "permanent": true
@@ -237,6 +242,10 @@
     }
   ],
   "rewrites": [
+    {
+      "source": "/excel-to-pdf",
+      "destination": "/excel-to-pdf.html"
+    },
     {
       "source": "/privacy",
       "destination": "/privacy.html"

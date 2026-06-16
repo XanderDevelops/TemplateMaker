@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=AW-584610340"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', 'AW-584610340');
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Turn Excel rows into filled PDF documents. Upload a PDF template, import Excel or CSV data, place columns on the page, and export one PDF per row.">
+    <meta name="robots" content="index,follow,max-image-preview:large">
+    <link rel="icon" href="/assets/images/android-chrome-192x192.png" type="image/png">
+    <link rel="canonical" href="https://csvlink.app/excel-to-pdf">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <title>Excel to PDF Template Generator | CSVLink</title>
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="CSVLink">
+    <meta property="og:title" content="Excel to PDF Template Generator | CSVLink">
+    <meta property="og:description" content="Upload a PDF template and an Excel or CSV file. Place spreadsheet columns on the PDF and export one finished PDF per row.">
+    <meta property="og:url" content="https://csvlink.app/excel-to-pdf">
+    <meta property="og:image" content="https://csvlink.app/assets/images/excel-table-to-pdf-hero.png">
+    <meta property="og:image:alt" content="Spreadsheet columns placed onto a PDF template in CSVLink.">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Excel to PDF Template Generator | CSVLink">
+    <meta name="twitter:description" content="Upload a PDF template and an Excel or CSV file. Place spreadsheet columns on the PDF and export one finished PDF per row.">
+    <meta name="twitter:image" content="https://csvlink.app/assets/images/excel-table-to-pdf-hero.png">
+    <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@graph": [
+                {
+                    "@type": "WebPage",
+                    "name": "Excel to PDF Template Generator | CSVLink",
+                    "url": "https://csvlink.app/excel-to-pdf",
+                    "description": "Turn Excel rows into filled PDF documents by placing spreadsheet columns on a reusable PDF template.",
+                    "dateModified": "2026-06-16"
+                },
+                {
+                    "@type": "BreadcrumbList",
+                    "itemListElement": [
+                        { "@type": "ListItem", "position": 1, "name": "CSVLink", "item": "https://csvlink.app/" },
+                        { "@type": "ListItem", "position": 2, "name": "Excel to PDF", "item": "https://csvlink.app/excel-to-pdf" }
+                    ]
+                },
+                {
+                    "@type": "FAQPage",
+                    "mainEntity": [
+                        {
+                            "@type": "Question",
+                            "name": "Can I create one PDF for every Excel row?",
+                            "acceptedAnswer": { "@type": "Answer", "text": "Yes. Upload your Excel or CSV file, map the columns to a PDF template, and CSVLink creates one filled PDF for each row." }
+                        },
+                        {
+                            "@type": "Question",
+                            "name": "Can I use my own PDF template?",
+                            "acceptedAnswer": { "@type": "Answer", "text": "Yes. CSVLink is designed for your own PDF layouts, including invoice templates, certificates, receipts, forms, labels, and reports." }
+                        },
+                        {
+                            "@type": "Question",
+                            "name": "Is this the same as PDF mail merge?",
+                            "acceptedAnswer": { "@type": "Answer", "text": "It is similar to PDF mail merge, but visual. Instead of inserting merge fields in Word, you drag spreadsheet columns directly onto a PDF page." }
+                        }
+                    ]
+                }
+            ]
+        }
+    </script>
+    <link rel="stylesheet" href="assets/css/style.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap');
+        body { margin: 0; font-family: 'Manrope', system-ui, sans-serif; background: var(--bg); color: var(--fg); }
+        nav { position: fixed; top: 0; z-index: 1000; width: 100%; box-sizing: border-box; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 24px; min-height: 60px; padding: 10px 24px; background: rgba(255,255,255,0.9); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); }
+        .logo { display: flex; align-items: center; gap: 10px; color: var(--fg); text-decoration: none; font-family: 'Space Grotesk', sans-serif; font-size: 1.25rem; font-weight: 700; }
+        .logo-icon { width: 32px; height: 32px; border-radius: 10px; }
+        .invoice-page-nav, .nav-links { display: flex; align-items: center; flex-wrap: wrap; }
+        .invoice-page-nav { justify-self: center; justify-content: center; gap: 0; row-gap: 8px; }
+        .nav-links { justify-self: end; justify-content: flex-end; gap: 10px; }
+        .invoice-page-link { display: inline-flex; align-items: center; text-decoration: none; color: #41516f; font-size: 0.9rem; font-weight: 700; padding: 0; border: none; background: transparent; }
+        .invoice-page-link + .invoice-page-link::before { content: '|'; color: #94a3b8; margin: 0 10px; }
+        .invoice-page-link.is-active { color: var(--accent); }
+        .container { width: min(1160px, calc(100% - 32px)); margin: 0 auto; padding: 110px 0 48px; }
+        .hero, .panel { border: 1px solid var(--border); border-radius: 24px; box-shadow: var(--shadow); }
+        .hero { display: grid; grid-template-columns: minmax(0, 1fr) minmax(320px, 0.85fr); gap: 28px; align-items: center; padding: 42px 36px; background: radial-gradient(circle at 10% 16%, rgba(37,99,235,0.18), transparent 30%), radial-gradient(circle at 86% 14%, rgba(14,165,233,0.16), transparent 25%), linear-gradient(140deg, #ffffff 0%, #f6f9ff 58%, #eef4ff 100%); }
+        .eyebrow { display: inline-flex; margin-bottom: 14px; padding: 6px 12px; border-radius: 999px; background: rgba(37,99,235,0.08); color: var(--accent); font-size: 0.78rem; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; }
+        .hero h1 { margin: 0 0 14px; max-width: 13ch; font-family: 'Space Grotesk', sans-serif; font-size: clamp(2.4rem, 5vw, 4.4rem); line-height: 1.02; letter-spacing: -0.04em; color: #0b1328; }
+        .hero p, .panel p, .panel li { color: #53637d; line-height: 1.75; }
+        .hero p { max-width: 68ch; margin: 0; font-size: 1.06rem; }
+        .hero-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 22px; }
+        .btn { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 26px; border-radius: 12px; text-decoration: none; font-weight: 800; border: none; background: var(--accent); color: var(--accent-fg); box-shadow: 0 4px 12px rgba(59,130,246,0.3); }
+        .btn.ghost { background: rgba(255,255,255,0.72); color: #173056; border: 1px solid rgba(148,163,184,0.34); box-shadow: none; }
+        .visual { border: 1px solid #dbe8f8; border-radius: 20px; background: #fff; padding: 18px; box-shadow: 0 16px 34px rgba(36,67,111,.08); }
+        .visual-grid { display: grid; grid-template-columns: 0.8fr 1fr; gap: 14px; }
+        .columns, .pdf { border: 1px solid #e4edf8; border-radius: 14px; padding: 14px; }
+        .columns h3, .pdf h3 { margin: 0 0 12px; color: #102447; font-size: 0.88rem; }
+        .pill { height: 34px; display: flex; align-items: center; justify-content: space-between; border: 1px solid #dfeafa; border-radius: 10px; padding: 0 10px; color: #2f405d; font-size: 0.78rem; font-weight: 800; margin-bottom: 8px; }
+        .page { min-height: 230px; position: relative; background: #fff; border: 1px solid #edf2f8; border-radius: 12px; }
+        .field { position: absolute; padding: 7px 10px; border-radius: 8px; background: #eaf3ff; color: #1d4ed8; border: 1px solid #bdd7ff; font-size: 0.72rem; font-weight: 900; }
+        .field.a { left: 18px; top: 58px; } .field.b { left: 18px; top: 106px; } .field.c { right: 18px; bottom: 26px; }
+        .panel { margin-top: 24px; padding: 30px; background: var(--panel); }
+        .panel h2 { margin: 0 0 10px; font-family: 'Space Grotesk', sans-serif; font-size: clamp(1.6rem, 3vw, 2.7rem); letter-spacing: -0.02em; }
+        .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: 22px; }
+        .card { padding: 20px; border: 1px solid var(--border); border-radius: 18px; background: #fff; }
+        .card h3 { margin: 0 0 10px; font-family: 'Space Grotesk', sans-serif; font-size: 1.02rem; color: #102447; }
+        .cta { background: linear-gradient(140deg, #f8fbff 0%, #eef4ff 100%); }
+        footer { margin-top: 44px; padding: 40px 24px; background: var(--panel); border-top: 1px solid var(--border); text-align: center; }
+        .footer-links { display: flex; justify-content: center; gap: 18px; flex-wrap: wrap; }
+        .footer-links a { color: var(--muted); text-decoration: none; }
+        .copyright { margin-top: 14px; color: var(--muted); font-size: 0.92rem; }
+        @media (max-width: 900px) {
+            nav { grid-template-columns: 1fr; height: auto; padding: 12px 18px; gap: 10px; }
+            .logo, .invoice-page-nav, .nav-links { justify-self: center; }
+            .container { padding-top: 170px; }
+            .hero { grid-template-columns: 1fr; padding: 24px 20px; }
+            .panel { padding: 24px 20px; }
+            .grid, .visual-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="/" class="logo">
+            <img src="assets/images/android-chrome-512x512.png" alt="CSVLink Logo" class="logo-icon" width="32" height="32" decoding="async">
+            <span>CSVLink</span>
+        </a>
+        <div class="invoice-page-nav" aria-label="CSVLink pages">
+            <a href="/" class="invoice-page-link">Home</a>
+            <a href="/excel-to-pdf" class="invoice-page-link is-active">Excel to PDF</a>
+            <a href="/excel-to-invoice" class="invoice-page-link">Excel to Invoice</a>
+            <a href="/csv-to-invoice" class="invoice-page-link">CSV to Invoice</a>
+            <a href="/bulk-invoice-generator" class="invoice-page-link">Bulk Invoices</a>
+            <a href="/custom-pdf-documents" class="invoice-page-link">Custom PDFs</a>
+        </div>
+        <div class="nav-links" id="nav-links"></div>
+    </nav>
+
+    <main class="container">
+        <section class="hero">
+            <div>
+                <span class="eyebrow">Excel to PDF</span>
+                <h1>Turn Excel rows into filled PDF documents.</h1>
+                <p>CSVLink is a visual way to print spreadsheet data onto a PDF template. Upload your PDF, import Excel or CSV data, drag columns onto the page, and export a finished PDF for every row in the file.</p>
+                <div class="hero-actions">
+                    <a href="/tool" class="btn">Open PDF Builder</a>
+                    <a href="/" class="btn ghost">See overview</a>
+                </div>
+            </div>
+            <div class="visual" aria-hidden="true">
+                <div class="visual-grid">
+                    <div class="columns"><h3>Excel columns</h3><div class="pill"><span>Name</span><span>drag</span></div><div class="pill"><span>Date</span><span>drag</span></div><div class="pill"><span>Amount</span><span>drag</span></div><div class="pill"><span>Invoice #</span><span>drag</span></div></div>
+                    <div class="pdf"><h3>PDF template</h3><div class="page"><span class="field a">{Name}</span><span class="field b">{Date}</span><span class="field c">{Amount}</span></div></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="panel">
+            <h2>When Excel to PDF actually makes sense</h2>
+            <p>This is not just a file converter. A normal Excel to PDF export prints the spreadsheet itself. CSVLink is different: it uses Excel as the data source and your PDF as the design.</p>
+            <div class="grid">
+                <article class="card"><h3>One layout, many rows</h3><p>Perfect when every document should look the same, but each row has a different name, date, amount, address, or code.</p></article>
+                <article class="card"><h3>Your PDF stays in control</h3><p>Use the invoice template, certificate, label, form, letter, or report design your business already uses.</p></article>
+                <article class="card"><h3>Built for printing and sending</h3><p>Export a merged PDF for printing or individual PDFs in a ZIP when each customer or record needs its own file.</p></article>
+            </div>
+        </section>
+
+        <section class="panel">
+            <h2>Common uses</h2>
+            <div class="grid">
+                <article class="card"><h3>Invoices</h3><p>Place customer, invoice number, date, item, tax, and total fields onto your PDF invoice template.</p></article>
+                <article class="card"><h3>Certificates</h3><p>Fill names, programs, dates, award titles, and signer fields from a class or attendee spreadsheet.</p></article>
+                <article class="card"><h3>Labels and forms</h3><p>Use product data, addresses, IDs, notes, or internal fields to fill repeatable labels, slips, forms, and reports.</p></article>
+            </div>
+        </section>
+
+        <section class="panel cta">
+            <h2>Try it with your own PDF and spreadsheet</h2>
+            <p>The fastest way to know if CSVLink fits your workflow is to upload one real PDF template and one small Excel or CSV sample.</p>
+            <div class="hero-actions"><a href="/tool" class="btn">Upload PDF and Excel</a><a href="/custom-pdf-documents" class="btn ghost">See custom PDF examples</a></div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="footer-links">
+            <a href="/">Home</a>
+            <a href="/excel-to-pdf">Excel to PDF</a>
+            <a href="/excel-to-invoice">Excel to Invoice</a>
+            <a href="/csv-to-invoice">CSV to Invoice</a>
+            <a href="/bulk-invoice-generator">Bulk Invoice Generator</a>
+            <a href="/invoice-template-builder">Template Builder</a>
+            <a href="/custom-pdf-documents">Custom PDFs</a>
+            <a href="/tool">Open PDF Builder</a>
+            <a href="/privacy">Privacy</a>
+            <a href="/terms">Terms</a>
+            <a href="/refunds">Refunds</a>
+        </div>
+        <div class="copyright"><p>&copy; 2026 CSVLink. All Rights Reserved.</p></div>
+    </footer>
+
+    <script type="module" src="assets/js/supabase-client.js?v=20260525c"></script>
+    <script type="module" src="assets/js/auth.js?v=20260525c"></script>
+</body>
+</html>

@@ -11,56 +11,90 @@
     </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Generate custom invoice PDFs from QuickBooks, Excel, or CSV exports. Upload billing data, map columns to your invoice template, and export every invoice in one batch with CSVLink.">
+    <meta name="description" content="Upload a PDF template and an Excel or CSV file. Drag spreadsheet columns onto the PDF and generate one filled PDF per row—great for invoices, receipts, labels, certificates, and reports.">
     <meta name="robots" content="index,follow,max-image-preview:large">
     <link rel="icon" href="assets/images/android-chrome-192x192.png" type="image/png" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="canonical" href="https://csvlink.app/">
-    <title>QuickBooks & Excel Invoice Generator | CSVLink</title>
+    <title>Excel to PDF Template Generator | CSVLink</title>
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="CSVLink">
-    <meta property="og:title" content="QuickBooks & Excel Invoice Generator | CSVLink">
-    <meta property="og:description" content="Turn QuickBooks, Excel, or CSV billing exports into custom invoice PDFs. Map your data once and export every invoice in one batch.">
+    <meta property="og:title" content="Excel to PDF Template Generator | CSVLink">
+    <meta property="og:description" content="Upload a PDF template and an Excel or CSV file. Place spreadsheet columns on the PDF and export one finished PDF per row.">
     <meta property="og:url" content="https://csvlink.app/">
     <meta property="og:image" content="https://csvlink.app/assets/images/excel-table-to-pdf-hero.png">
-    <meta property="og:image:alt" content="CSVLink workflow showing an Excel invoice table pointing to a polished PDF invoice.">
+    <meta property="og:image:alt" content="CSVLink workflow showing spreadsheet columns placed onto a PDF template.">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="QuickBooks & Excel Invoice Generator | CSVLink">
-    <meta name="twitter:description" content="Turn QuickBooks, Excel, or CSV billing exports into custom invoice PDFs. Map your data once and export every invoice in one batch.">
+    <meta name="twitter:title" content="Excel to PDF Template Generator | CSVLink">
+    <meta name="twitter:description" content="Upload a PDF template and an Excel or CSV file. Place spreadsheet columns on the PDF and export one finished PDF per row.">
     <meta name="twitter:image" content="https://csvlink.app/assets/images/excel-table-to-pdf-hero.png">
     <script type="application/ld+json">
-        {
-            "@context": "https://schema.org",
-            "@graph": [
+{
+        "@context": "https://schema.org",
+        "@graph": [
                 {
-                    "@type": "Organization",
-                    "name": "CSVLink",
-                    "url": "https://csvlink.app/",
-                    "logo": "https://csvlink.app/assets/images/android-chrome-512x512.png"
+                        "@type": "Organization",
+                        "name": "CSVLink",
+                        "url": "https://csvlink.app/",
+                        "logo": "https://csvlink.app/assets/images/android-chrome-512x512.png"
                 },
                 {
-                    "@type": "WebSite",
-                    "name": "CSVLink",
-                    "url": "https://csvlink.app/"
+                        "@type": "WebSite",
+                        "name": "CSVLink",
+                        "url": "https://csvlink.app/"
                 },
                 {
-                    "@type": "WebPage",
-                    "name": "QuickBooks & Excel Invoice Generator | CSVLink",
-                    "url": "https://csvlink.app/",
-                    "description": "Generate custom invoice PDFs from QuickBooks, Excel, or CSV exports."
+                        "@type": "WebPage",
+                        "name": "Excel to PDF Template Generator | CSVLink",
+                        "url": "https://csvlink.app/",
+                        "description": "Upload a PDF template and an Excel or CSV file, then generate one personalized PDF per row."
                 },
                 {
-                    "@type": "SoftwareApplication",
-                    "name": "CSVLink",
-                    "applicationCategory": "BusinessApplication",
-                    "operatingSystem": "Web",
-                    "url": "https://csvlink.app/",
-                    "description": "Create reusable invoice templates and generate invoice PDFs in bulk from QuickBooks, Excel, or CSV data."
+                        "@type": "SoftwareApplication",
+                        "name": "CSVLink",
+                        "applicationCategory": "BusinessApplication",
+                        "operatingSystem": "Web",
+                        "url": "https://csvlink.app/",
+                        "description": "Create reusable PDF templates and generate personalized PDFs in bulk from Excel or CSV data.",
+                        "offers": {
+                                "@type": "Offer",
+                                "price": "0",
+                                "priceCurrency": "USD"
+                        }
+                },
+                {
+                        "@type": "FAQPage",
+                        "mainEntity": [
+                                {
+                                        "@type": "Question",
+                                        "name": "Can I turn Excel rows into separate PDF files?",
+                                        "acceptedAnswer": {
+                                                "@type": "Answer",
+                                                "text": "Yes. Upload an Excel or CSV file, place the columns on your PDF template, and CSVLink creates a filled PDF for each row."
+                                        }
+                                },
+                                {
+                                        "@type": "Question",
+                                        "name": "Can I use my own invoice template?",
+                                        "acceptedAnswer": {
+                                                "@type": "Answer",
+                                                "text": "Yes. You can upload your own PDF invoice template, place spreadsheet fields on top of it, and reuse the layout for future exports."
+                                        }
+                                },
+                                {
+                                        "@type": "Question",
+                                        "name": "Does CSVLink only work for invoices?",
+                                        "acceptedAnswer": {
+                                                "@type": "Answer",
+                                                "text": "No. Invoices are the most common use case, but the same workflow works for receipts, certificates, labels, packing slips, reports, letters, and other PDF templates."
+                                        }
+                                }
+                        ]
                 }
-            ]
-        }
+        ]
+}
     </script>
     <link rel="stylesheet" href="assets/css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/fabric@5.3.0/dist/fabric.min.js"></script>
@@ -1664,6 +1698,248 @@
         .animated-section { opacity: 1; transform: none; transition: opacity 0.55s ease, transform 0.55s ease; }
         .animated-section.is-visible { opacity: 1; transform: none; }
 
+
+
+        .human-note {
+            margin-top: 18px;
+            color: #43516a;
+            font-size: 14px;
+            font-weight: 700;
+            line-height: 1.65;
+            background: rgba(255, 255, 255, 0.74);
+            border: 1px solid #dce8f7;
+            border-radius: 14px;
+            padding: 14px 16px;
+            box-shadow: 0 10px 24px rgba(36, 67, 111, 0.055);
+        }
+
+        .reality-panel,
+        .plain-panel,
+        .faq-section {
+            margin-top: 52px;
+            padding: 42px 38px;
+            border: 1px solid var(--border);
+            border-radius: 22px;
+            background: rgba(255,255,255,0.9);
+            box-shadow: 0 14px 34px rgba(36, 67, 111, 0.06);
+        }
+
+        .reality-panel {
+            display: grid;
+            grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+            gap: 32px;
+            align-items: center;
+            background: linear-gradient(135deg, #ffffff 0%, #f7fbff 100%);
+        }
+
+        .reality-copy h2,
+        .plain-panel h2,
+        .faq-section h2 {
+            margin: 0 0 12px;
+            color: var(--navy);
+            font-size: clamp(30px, 3.6vw, 46px);
+            line-height: 1.08;
+            letter-spacing: -0.055em;
+            font-weight: 900;
+        }
+
+        .reality-copy p,
+        .plain-panel > p,
+        .faq-section > p {
+            margin: 0;
+            color: #5d6b85;
+            font-size: 16px;
+            line-height: 1.72;
+            font-weight: 600;
+        }
+
+        .plain-list {
+            display: grid;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .plain-list-item {
+            display: grid;
+            grid-template-columns: 30px 1fr;
+            gap: 12px;
+            padding: 16px;
+            border: 1px solid #e1edf9;
+            border-radius: 14px;
+            background: #fff;
+        }
+
+        .plain-list-item strong {
+            display: block;
+            color: #101f3d;
+            font-size: 14px;
+            font-weight: 900;
+            margin-bottom: 4px;
+        }
+
+        .plain-list-item span:last-child {
+            color: #65728a;
+            font-size: 13px;
+            line-height: 1.55;
+            font-weight: 600;
+        }
+
+        .mini-workspace {
+            display: grid;
+            grid-template-columns: minmax(0, 0.8fr) minmax(0, 1fr);
+            gap: 16px;
+            align-items: stretch;
+        }
+
+        .mini-source,
+        .mini-pdf {
+            border: 1px solid #dbe8f8;
+            border-radius: 18px;
+            background: #fff;
+            box-shadow: 0 16px 34px rgba(36, 67, 111, 0.07);
+            padding: 18px;
+        }
+
+        .mini-source-title,
+        .mini-pdf-title {
+            color: #14213d;
+            font-size: 13px;
+            font-weight: 900;
+            margin-bottom: 14px;
+        }
+
+        .column-pill {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            align-items: center;
+            height: 38px;
+            border: 1px solid #dfeafa;
+            border-radius: 12px;
+            padding: 0 12px;
+            margin-bottom: 9px;
+            color: #2f405d;
+            background: #fbfdff;
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+        .column-pill em {
+            color: #8996aa;
+            font-style: normal;
+            font-weight: 700;
+        }
+
+        .mini-pdf-page {
+            position: relative;
+            min-height: 260px;
+            border: 1px solid #e3ecf8;
+            border-radius: 12px;
+            background: linear-gradient(#fff, #fff), repeating-linear-gradient(0deg, transparent, transparent 28px, rgba(37,99,235,0.04) 29px);
+            overflow: hidden;
+        }
+
+        .mini-pdf-page::before {
+            content: 'INVOICE';
+            position: absolute;
+            top: 22px;
+            right: 22px;
+            color: #1d4ed8;
+            font-size: 18px;
+            font-weight: 900;
+            letter-spacing: 0.03em;
+        }
+
+        .drop-field {
+            position: absolute;
+            display: inline-flex;
+            align-items: center;
+            height: 28px;
+            padding: 0 10px;
+            border-radius: 8px;
+            background: #eaf3ff;
+            border: 1px solid #bdd7ff;
+            color: #1d4ed8;
+            font-size: 11px;
+            font-weight: 900;
+            box-shadow: 0 8px 16px rgba(37, 99, 235, 0.10);
+        }
+
+        .drop-field.one { top: 74px; left: 24px; }
+        .drop-field.two { top: 122px; left: 24px; }
+        .drop-field.three { right: 24px; bottom: 36px; }
+
+        .use-case-grid {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 18px;
+        }
+
+        .use-case-card {
+            padding: 24px;
+            border: 1px solid #dbe8f8;
+            border-radius: 18px;
+            background: #fff;
+            box-shadow: 0 10px 25px rgba(36, 67, 111, 0.055);
+        }
+
+        .use-case-card h3 {
+            margin: 0 0 8px;
+            color: var(--navy);
+            font-size: 17px;
+            font-weight: 900;
+            letter-spacing: -0.02em;
+        }
+
+        .use-case-card p {
+            margin: 0;
+            color: #64748b;
+            font-size: 14px;
+            line-height: 1.65;
+            font-weight: 600;
+        }
+
+        .faq-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 16px;
+            margin-top: 24px;
+        }
+
+        .faq-item {
+            padding: 22px;
+            border: 1px solid #dbe8f8;
+            border-radius: 16px;
+            background: #fff;
+        }
+
+        .faq-item h3 {
+            margin: 0 0 9px;
+            color: #102447;
+            font-size: 16px;
+            font-weight: 900;
+        }
+
+        .faq-item p {
+            margin: 0;
+            color: #60708a;
+            font-size: 14px;
+            line-height: 1.65;
+            font-weight: 600;
+        }
+
+        .resources-section .section-heading p { max-width: 760px; margin-left: auto; margin-right: auto; }
+
+        @media (max-width: 1100px) {
+            .reality-panel, .mini-workspace { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 820px) {
+            .reality-panel, .plain-panel, .faq-section { padding: 28px 18px; }
+            .use-case-grid, .faq-grid { grid-template-columns: 1fr; }
+            .mini-pdf-page { min-height: 240px; }
+        }
+
         @media (max-width: 1100px) {
             .nav-inner, .page-shell { padding-left: 24px; padding-right: 24px; }
             .primary-nav { gap: 18px; }
@@ -1729,14 +2005,14 @@
             </a>
             <div class="primary-nav" role="navigation" aria-label="Main navigation">
                 <a href="#how-it-works">How it works</a>
+                <a href="#use-cases">Use cases</a>
                 <a href="#templates">Templates</a>
-                <a href="#quickbooks-invoices">QuickBooks</a>
                 <a href="#pricing">Pricing</a>
-                <a href="#resources">Resources</a>
+                <a href="#resources">Guides</a>
             </div>
             <div class="nav-links" id="nav-links" data-nav-mode="landing">
                 <a href="/login">Login</a>
-                <a href="/tool" class="nav-try btn">Try it for free</a>
+                <a href="/tool" class="nav-try btn">Try it free</a>
             </div>
         </div>
     </header>
@@ -1744,23 +2020,25 @@
     <main class="page-shell">
         <section class="hero" aria-labelledby="hero-title">
             <div class="hero-copy">
-                <div class="eyebrow"><span class="bolt">↯</span> QuickBooks / Excel to professional invoices</div>
-                <h1 id="hero-title">Generate custom invoices from QuickBooks or Excel exports.</h1>
-                <p class="lede">Upload a QuickBooks, Excel, or CSV billing export, map columns like customer, invoice number, due date, line items, and total, then export personalized invoice PDFs in one batch.</p>
+                <div class="eyebrow"><span class="bolt">↯</span> Excel / CSV to PDF templates</div>
+                <h1 id="hero-title">Print Excel data onto any PDF template.</h1>
+                <p class="lede">CSVLink is for the copy-paste work that happens after your spreadsheet is ready. Upload a PDF template, import Excel or CSV, drag columns like Date, Customer, Amount, or Invoice # onto the page, and generate one filled PDF for each row.</p>
+                <p class="human-note">Most people use it for invoices, but the same workflow works for receipts, certificates, labels, packing slips, reports, letters, and any document where the layout stays the same but the data changes.</p>
                 <div class="hero-actions">
                     <a href="/tool" class="btn btn-primary">
                         <svg class="button-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 16V4m0 0 4 4m-4-4-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-                        Import your invoice data
+                        Upload PDF and Excel
                     </a>
                     <a href="#how-it-works" class="btn btn-secondary">
                         <svg class="button-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="m10 8 6 4-6 4V8Z" fill="currentColor"/></svg>
-                        See workflow
+                        See how it works
                     </a>
                 </div>
                 <ul class="hero-points" aria-label="Key benefits">
-                    <li><span class="check-dot">✓</span> Free to test</li>
-                    <li><span class="check-dot">✓</span> No signup required</li>
-                    <li><span class="check-dot">✓</span> Works with QuickBooks exports</li><li><span class="check-dot">✓</span> Export ZIP or merged PDF</li>
+                    <li><span class="check-dot">✓</span> Use your own PDF</li>
+                    <li><span class="check-dot">✓</span> Excel, XLSX, XLS and CSV</li>
+                    <li><span class="check-dot">✓</span> One PDF per row</li>
+                    <li><span class="check-dot">✓</span> ZIP or merged PDF</li>
                 </ul>
             </div>
 
@@ -1774,61 +2052,106 @@
         <section class="section animated-section" id="how-it-works">
             <div class="section-heading">
                 <h2>How it works</h2>
-                <p>Take the invoice data you already have and turn it into finished PDFs.</p>
+                <p>No code, no Word mail merge, and no copying the same values into a PDF over and over.</p>
             </div>
             <div class="steps-grid">
                 <article class="step-card">
                     <div class="step-number">1</div>
-                    <div class="step-art"><div class="doc-icon"><span class="doc-label xls">X</span></div><div class="big-arrow"></div><div class="mini-sheet-icon"></div></div>
-                    <h3>Upload your export</h3>
-                    <p>Drag and drop a QuickBooks report, Excel file, or CSV with your invoice data.</p>
-                    <span class="mini-tag">.xlsx, .xls, .csv supported</span>
+                    <div class="step-art"><div class="doc-icon"><span class="doc-label pdf">PDF</span></div><div class="big-arrow"></div><div class="mini-page-icon"></div></div>
+                    <h3>Upload the PDF you already use</h3>
+                    <p>Start with your invoice template, certificate, form, label sheet, or any PDF layout that needs repeated data.</p>
+                    <span class="mini-tag">Your own template</span>
                 </article>
                 <article class="step-card">
                     <div class="step-number">2</div>
                     <div class="step-art field-map-art">
-                        <div><span class="map-pill"><span class="check-dot">✓</span> Client</span><span class="map-pill"><span class="check-dot">✓</span> Total</span></div>
+                        <div><span class="map-pill"><span class="check-dot">✓</span> Date</span><span class="map-pill"><span class="check-dot">✓</span> Total</span></div>
                         <div class="connector-lines">⌁</div>
-                        <div><span class="map-pill output">Bill to</span><span class="map-pill output">Due date</span></div>
+                        <div><span class="map-pill output">PDF field</span><span class="map-pill output">Amount</span></div>
                     </div>
-                    <h3>Map invoice fields</h3>
-                    <p>Connect columns like customer, invoice number, line item, due date, and total to your template.</p>
-                    <span class="mini-tag">Use your own template</span>
+                    <h3>Place spreadsheet columns on the page</h3>
+                    <p>CSVLink lists the columns from your Excel or CSV file. Drag each column to the exact place it should print.</p>
+                    <span class="mini-tag">Visual mapping</span>
                 </article>
                 <article class="step-card">
                     <div class="step-number">3</div>
-                    <div class="step-art"><div class="doc-icon"><span class="doc-label pdf">PDF</span></div><div class="big-arrow"></div><div class="mini-page-icon"></div></div>
-                    <h3>Export invoice PDFs</h3>
-                    <p>Generate one PDF per invoice, or download a merged PDF for printing and review.</p>
-                    <span class="mini-tag">Ready to send or print</span>
+                    <div class="step-art"><div class="doc-icon"><span class="doc-label xls">XLSX</span></div><div class="big-arrow"></div><div class="mini-page-icon"></div></div>
+                    <h3>Generate the full batch</h3>
+                    <p>If your file has 10 rows, you get 10 finished pages. If it has 500 rows, you generate the whole set at once.</p>
+                    <span class="mini-tag">Ready to print or send</span>
                 </article>
+            </div>
+        </section>
+
+        <section class="reality-panel animated-section" id="excel-to-pdf">
+            <div class="reality-copy">
+                <div class="eyebrow"><span class="bolt">↯</span> Built around real spreadsheet work</div>
+                <h2>For the moment when Excel has the data, but the PDF needs to look professional.</h2>
+                <p>You may already have the perfect spreadsheet: customer names, invoice numbers, prices, dates, addresses, order IDs, or certificate names. The painful part is getting that data into a clean PDF layout without rebuilding every document by hand. CSVLink turns that spreadsheet into printable PDF documents while keeping your layout intact.</p>
+                <div class="plain-list">
+                    <div class="plain-list-item"><span class="check-dot">✓</span><span><strong>Keep the PDF layout you already trust</strong>Upload your existing invoice template or business form instead of forcing your data into a generic design.</span></div>
+                    <div class="plain-list-item"><span class="check-dot">✓</span><span><strong>Use readable spreadsheet columns</strong>Columns like Client, Date, Invoice Number, Service, Quantity, Price, and Total become draggable fields.</span></div>
+                    <div class="plain-list-item"><span class="check-dot">✓</span><span><strong>Repeat the job whenever you need</strong>Once the template is mapped, reuse it for the next billing run, class list, order export, or report batch.</span></div>
+                </div>
+            </div>
+            <div class="mini-workspace" aria-hidden="true">
+                <div class="mini-source">
+                    <div class="mini-source-title">Spreadsheet columns</div>
+                    <div class="column-pill"><span>Customer</span><em>drag</em></div>
+                    <div class="column-pill"><span>Invoice #</span><em>drag</em></div>
+                    <div class="column-pill"><span>Date</span><em>drag</em></div>
+                    <div class="column-pill"><span>Total Due</span><em>drag</em></div>
+                </div>
+                <div class="mini-pdf">
+                    <div class="mini-pdf-title">PDF template</div>
+                    <div class="mini-pdf-page">
+                        <span class="drop-field one">{Customer}</span>
+                        <span class="drop-field two">{Invoice #}</span>
+                        <span class="drop-field three">{Total Due}</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="plain-panel animated-section" id="use-cases">
+            <div class="section-heading">
+                <h2>Useful for more than invoices</h2>
+                <p>The best use cases are documents where the format stays the same and the values change from row to row.</p>
+            </div>
+            <div class="use-case-grid">
+                <article class="use-case-card"><h3>Invoices from Excel</h3><p>Turn customer, date, item, tax, and total columns into clean PDF invoices without entering the same data twice.</p></article>
+                <article class="use-case-card"><h3>Invoice templates</h3><p>Bring your own branded invoice PDF, place fields once, and use it every time you need to print a billing run.</p></article>
+                <article class="use-case-card"><h3>Receipts and payment records</h3><p>Generate receipts from payment IDs, customer names, dates, amounts, balances, and notes.</p></article>
+                <article class="use-case-card"><h3>Certificates</h3><p>Drop names, course titles, dates, signer names, and awards into a certificate PDF for every person on a list.</p></article>
+                <article class="use-case-card"><h3>Product labels</h3><p>Use SKUs, product names, prices, categories, descriptions, and barcodes from a spreadsheet to prepare label PDFs.</p></article>
+                <article class="use-case-card"><h3>Reports, letters, and forms</h3><p>Fill client reports, letters, internal forms, cover sheets, packing slips, and other repeatable PDFs from structured data.</p></article>
             </div>
         </section>
 
         <section class="quickbooks-section animated-section" id="quickbooks-invoices">
             <div class="quickbooks-panel">
                 <div class="quickbooks-copy">
-                    <div class="eyebrow qb-eyebrow"><span class="bolt">↯</span> QuickBooks to custom invoice PDFs</div>
-                    <h2>Print QuickBooks invoices in your own custom template.</h2>
-                    <p>Export the invoice data you need from QuickBooks—usually as an Excel file, or CSV when that is the file you have—then import it into CSVLink. Map the columns to your branded invoice template once, and generate a clean PDF for every invoice.</p>
-                    <div class="qb-steps" aria-label="How to print QuickBooks invoices with CSVLink">
+                    <div class="eyebrow qb-eyebrow"><span class="bolt">↯</span> QuickBooks, Excel, or CSV</div>
+                    <h2>If your invoice data comes from QuickBooks, you can still use your own PDF template.</h2>
+                    <p>Export the invoice information you need from QuickBooks as Excel or CSV, upload it to CSVLink, and place those columns on your invoice PDF. This is helpful when QuickBooks stores the data, but you want the printed invoice to follow your own layout, language, branding, or format.</p>
+                    <div class="qb-steps" aria-label="How to print QuickBooks invoice data with CSVLink">
                         <div class="qb-step">
                             <span class="qb-step-number">1</span>
-                            <span><strong>Download your QuickBooks data</strong><p>Run an invoice list, sales, or customer report in QuickBooks and export the data to Excel. Save the file somewhere easy to find.</p></span>
+                            <span><strong>Export the data</strong><p>Download an invoice list, sales report, customer report, or the spreadsheet your team already uses.</p></span>
                         </div>
                         <div class="qb-step">
                             <span class="qb-step-number">2</span>
-                            <span><strong>Import the spreadsheet</strong><p>Open CSVLink, upload that Excel or CSV file, and match columns like client, invoice number, due date, line item, and total.</p></span>
+                            <span><strong>Map the columns</strong><p>Match customer, invoice number, date, line item, amount, tax, and total to the places they belong on the PDF.</p></span>
                         </div>
                         <div class="qb-step">
                             <span class="qb-step-number">3</span>
-                            <span><strong>Print your custom invoices</strong><p>Use your own layout, logo, colors, and wording. Export the finished invoices as printable PDFs in a ZIP or one merged file.</p></span>
+                            <span><strong>Print the finished PDFs</strong><p>Download one merged file for printing or a ZIP with individual PDFs for sending and archiving.</p></span>
                         </div>
                     </div>
                     <div class="quickbooks-actions">
                         <a href="/tool" class="btn btn-primary">
                             <svg class="button-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 16V4m0 0 4 4m-4-4-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-                            Import QuickBooks data
+                            Try with your export
                         </a>
                         <a href="/quickbooks-invoice-generator" class="btn btn-secondary">Read QuickBooks guide</a>
                         <a href="/assets/samples/quickbooks-invoice-sample.csv" class="quickbooks-note" download><span class="check-dot">✓</span> Download sample CSV</a>
@@ -1837,9 +2160,9 @@
 
                 <div class="quickbooks-visual" aria-hidden="true">
                     <div class="qb-card qb-export-card">
-                        <div class="qb-card-top"><span>QuickBooks export</span><span class="qb-chip">Excel / CSV</span></div>
+                        <div class="qb-card-top"><span>Spreadsheet export</span><span class="qb-chip">Excel / CSV</span></div>
                         <div class="qb-list">
-                            <div class="qb-list-row"><span>Invoice List</span><span>INV-2048</span></div>
+                            <div class="qb-list-row"><span>Invoice #</span><span>INV-2048</span></div>
                             <div class="qb-list-row"><span>Customer</span><span>Amanda Stone</span></div>
                             <div class="qb-list-row"><span>Balance Due</span><span>$2,450.00</span></div>
                             <div class="qb-list-row"><span>Due Date</span><span>Jun 14, 2026</span></div>
@@ -1847,13 +2170,13 @@
                     </div>
                     <div class="qb-arrow"></div>
                     <div class="qb-card qb-import-card">
-                        <div class="qb-import-title">Map to template</div>
+                        <div class="qb-import-title">Map to PDF</div>
                         <div class="map-row"><span class="map-pill"><span class="check-dot">✓</span> Customer</span><span class="map-arrow">→</span><span class="map-pill output">Bill to</span></div>
                         <div class="map-row"><span class="map-pill"><span class="check-dot">✓</span> Total</span><span class="map-arrow">→</span><span class="map-pill output">Amount</span></div>
                     </div>
                     <div class="qb-card qb-template-card">
                         <div class="qb-template-preview">
-                            <div class="qb-template-head"><span>YOUR LOGO</span><span class="qb-template-badge">INVOICE</span></div>
+                            <div class="qb-template-head"><span>YOUR LOGO</span><span class="qb-template-badge">PDF</span></div>
                             <div class="qb-template-lines"><span class="qb-line medium"></span><span class="qb-line short"></span></div>
                             <div class="qb-template-body"><span class="qb-line"></span><span class="qb-line"></span><span class="qb-line medium"></span><span class="qb-line short"></span></div>
                             <span class="qb-line total"></span>
@@ -1866,146 +2189,77 @@
 
         <section class="section animated-section" id="templates">
             <div class="section-heading">
-                <h2>Start with a ready-made template</h2>
-                <p>Start with an invoice layout, connect it to your QuickBooks, Excel, or CSV data, and reuse the same mapping every billing cycle. The same engine can also power other spreadsheet-based documents later.</p>
+                <h2>Start with a template, or bring your own PDF</h2>
+                <p>Invoices are the obvious starting point, but the template system is flexible enough for other documents your business repeats every week.</p>
             </div>
             <div class="template-grid">
                 <article class="template-card-static active">
                     <span class="popular-badge">Most popular</span>
-                    <div class="template-preview-card preview-invoice" aria-hidden="true">
-                        <div class="preview-paper">
-                            <div class="preview-head"><span class="preview-logo"></span><strong>INVOICE</strong></div>
-                            <div class="preview-row short"></div><div class="preview-row medium"></div>
-                            <div class="preview-table"><span></span><span></span><span></span><span></span><span></span><span></span></div>
-                            <div class="preview-total"><span>Total</span><strong>$1,240</strong></div>
-                        </div>
-                        <span class="preview-chip">CSV → PDF</span>
-                    </div>
-                    <div class="template-card-body"><h3>Invoice from CSV</h3><p>Create invoice PDFs from customer, date, line item, tax, and total columns in your spreadsheet.</p></div>
-                    <div class="template-card-actions"><a class="primary-template-action" href="/tool">Use this template</a><a class="secondary-template-action" href="/tool">Upload CSV sample</a><a href="/csv-to-invoice">Invoice template guide</a></div>
+                    <div class="template-preview-card preview-invoice" aria-hidden="true"><div class="preview-paper"><div class="preview-head"><span class="preview-logo"></span><strong>INVOICE</strong></div><div class="preview-row short"></div><div class="preview-row medium"></div><div class="preview-table"><span></span><span></span><span></span><span></span><span></span><span></span></div><div class="preview-total"><span>Total</span><strong>$1,240</strong></div></div><span class="preview-chip">Excel → PDF</span></div>
+                    <div class="template-card-body"><h3>Invoice from Excel</h3><p>Create invoice PDFs from customer, date, line item, tax, and total columns in your spreadsheet.</p></div>
+                    <div class="template-card-actions"><a class="primary-template-action" href="/tool">Use this template</a><a class="secondary-template-action" href="/excel-to-invoice">Read guide</a><a href="/csv-to-invoice">CSV invoice guide</a></div>
                 </article>
                 <article class="template-card-static">
-                    <div class="template-preview-card preview-quote" aria-hidden="true">
-                        <div class="preview-paper">
-                            <div class="preview-head"><span class="preview-logo"></span><strong>QUOTE</strong></div>
-                            <div class="preview-row medium"></div><div class="preview-row short"></div>
-                            <div class="preview-table quote-lines"><span></span><span></span><span></span><span></span></div>
-                            <div class="preview-total"><span>Valid until</span><strong>Jun 30</strong></div>
-                        </div>
-                        <span class="preview-chip">XLSX → Quote</span>
-                    </div>
-                    <div class="template-card-body"><h3>Quote from spreadsheet</h3><p>Turn rows of customer, item, quantity, price, and expiration data into consistent quote PDFs.</p></div>
-                    <div class="template-card-actions"><a class="primary-template-action" href="/tool">Use this template</a><a class="secondary-template-action" href="/tool">Upload CSV sample</a><a href="/quote-template">Quote template guide</a></div>
+                    <div class="template-preview-card preview-quote" aria-hidden="true"><div class="preview-paper"><div class="preview-head"><span class="preview-logo"></span><strong>QUOTE</strong></div><div class="preview-row medium"></div><div class="preview-row short"></div><div class="preview-table quote-lines"><span></span><span></span><span></span><span></span></div><div class="preview-total"><span>Valid until</span><strong>Jun 30</strong></div></div><span class="preview-chip">Rows → Quotes</span></div>
+                    <div class="template-card-body"><h3>Quotes and proposals</h3><p>Turn customer, item, quantity, price, and expiration columns into consistent quote PDFs.</p></div>
+                    <div class="template-card-actions"><a class="primary-template-action" href="/tool">Use this template</a><a class="secondary-template-action" href="/quote-template">Quote guide</a><a href="/custom-pdf-documents">Custom PDF guide</a></div>
                 </article>
                 <article class="template-card-static">
-                    <div class="template-preview-card preview-labels" aria-hidden="true">
-                        <div class="label-sheet">
-                            <span><strong>SKU-102</strong><em>$24.00</em></span><span><strong>SKU-118</strong><em>$18.50</em></span>
-                            <span><strong>SKU-204</strong><em>$31.99</em></span><span><strong>SKU-311</strong><em>$12.00</em></span>
-                        </div>
-                        <span class="preview-chip">CSV → Labels</span>
-                    </div>
+                    <div class="template-preview-card preview-labels" aria-hidden="true"><div class="label-sheet"><span><strong>SKU-102</strong><em>$24.00</em></span><span><strong>SKU-118</strong><em>$18.50</em></span><span><strong>SKU-204</strong><em>$31.99</em></span><span><strong>SKU-311</strong><em>$12.00</em></span></div><span class="preview-chip">CSV → Labels</span></div>
                     <div class="template-card-body"><h3>Product labels</h3><p>Use product names, SKUs, prices, categories, and descriptions from Excel or CSV to generate label files.</p></div>
-                    <div class="template-card-actions"><a class="primary-template-action" href="/tool">Use this template</a><a class="secondary-template-action" href="/tool">Upload CSV sample</a><a href="/product-label-template">Label template guide</a></div>
+                    <div class="template-card-actions"><a class="primary-template-action" href="/tool">Use this template</a><a class="secondary-template-action" href="/product-label-template">Label guide</a><a href="/custom-pdf-documents">Custom PDF guide</a></div>
                 </article>
                 <article class="template-card-static">
-                    <div class="template-preview-card preview-slip" aria-hidden="true">
-                        <div class="preview-paper narrow">
-                            <div class="preview-head"><span class="preview-logo box"></span><strong>PACKING SLIP</strong></div>
-                            <div class="preview-row medium"></div><div class="preview-row short"></div>
-                            <div class="preview-check-list"><span></span><span></span><span></span></div>
-                            <div class="preview-barcode"></div>
-                        </div>
-                        <span class="preview-chip">Orders → Slips</span>
-                    </div>
+                    <div class="template-preview-card preview-slip" aria-hidden="true"><div class="preview-paper narrow"><div class="preview-head"><span class="preview-logo box"></span><strong>PACKING SLIP</strong></div><div class="preview-row medium"></div><div class="preview-row short"></div><div class="preview-check-list"><span></span><span></span><span></span></div><div class="preview-barcode"></div></div><span class="preview-chip">Orders → Slips</span></div>
                     <div class="template-card-body"><h3>Packing slips</h3><p>Generate packing slips from order IDs, recipients, addresses, item names, quantities, and shipping notes.</p></div>
-                    <div class="template-card-actions"><a class="primary-template-action" href="/tool">Use this template</a><a class="secondary-template-action" href="/tool">Upload CSV sample</a><a href="/packing-slip-template">Packing slip guide</a></div>
+                    <div class="template-card-actions"><a class="primary-template-action" href="/tool">Use this template</a><a class="secondary-template-action" href="/packing-slip-template">Packing slip guide</a><a href="/custom-pdf-documents">Custom PDF guide</a></div>
                 </article>
                 <article class="template-card-static">
-                    <div class="template-preview-card preview-certificate" aria-hidden="true">
-                        <div class="certificate-paper">
-                            <div class="certificate-title">Certificate</div>
-                            <div class="certificate-name">Recipient Name</div>
-                            <div class="certificate-rule"></div>
-                            <div class="certificate-seal">★</div>
-                        </div>
-                        <span class="preview-chip">Rows → Awards</span>
-                    </div>
+                    <div class="template-preview-card preview-certificate" aria-hidden="true"><div class="certificate-paper"><div class="cert-ribbon"></div><h4>Certificate</h4><div class="cert-name"></div><div class="cert-line"></div><div class="cert-sign"></div></div><span class="preview-chip">Names → Certificates</span></div>
                     <div class="template-card-body"><h3>Certificates</h3><p>Create personalized certificates from names, dates, programs, awards, and signer fields in a spreadsheet.</p></div>
-                    <div class="template-card-actions"><a class="primary-template-action" href="/tool">Use this template</a><a class="secondary-template-action" href="/tool">Upload CSV sample</a><a href="/certificate-template">Certificate template guide</a></div>
+                    <div class="template-card-actions"><a class="primary-template-action" href="/tool">Use this template</a><a class="secondary-template-action" href="/certificate-template">Certificate guide</a><a href="/custom-pdf-documents">Custom PDF guide</a></div>
                 </article>
                 <article class="template-card-static">
-                    <div class="template-preview-card preview-receipt" aria-hidden="true">
-                        <div class="preview-paper receipt-paper">
-                            <div class="preview-head"><span class="preview-logo"></span><strong>RECEIPT</strong></div>
-                            <div class="preview-row medium"></div><div class="preview-row medium"></div>
-                            <div class="receipt-total">PAID · $89.00</div>
-                            <div class="preview-barcode small"></div>
-                        </div>
-                        <span class="preview-chip">CSV → Receipts</span>
-                    </div>
-                    <div class="template-card-body"><h3>Receipts</h3><p>Map payment IDs, customer names, dates, items, amounts, and balances into clean receipt PDFs.</p></div>
-                    <div class="template-card-actions"><a class="primary-template-action" href="/tool">Use this template</a><a class="secondary-template-action" href="/tool">Upload CSV sample</a><a href="/receipt-template">Receipt template guide</a></div>
-                </article>
-                <article class="template-card-static">
-                    <div class="template-preview-card preview-report" aria-hidden="true">
-                        <div class="preview-paper report-paper">
-                            <div class="preview-head"><span class="preview-logo"></span><strong>REPORT</strong></div>
-                            <div class="preview-chart"><span style="height:38%"></span><span style="height:64%"></span><span style="height:46%"></span><span style="height:78%"></span></div>
-                            <div class="preview-row medium"></div><div class="preview-row short"></div>
-                        </div>
-                        <span class="preview-chip">Data → Report</span>
-                    </div>
-                    <div class="template-card-body"><h3>Client reports</h3><p>Build repeatable client summaries from spreadsheet fields like client name, period, metrics, notes, and totals.</p></div>
-                    <div class="template-card-actions"><a class="primary-template-action" href="/tool">Use this template</a><a class="secondary-template-action" href="/tool">Upload CSV sample</a><a href="/client-report-template">Client report guide</a></div>
-                </article>
-                <article class="template-card-static">
-                    <div class="template-preview-card preview-custom" aria-hidden="true">
-                        <div class="custom-stack">
-                            <div class="custom-card one"><span></span><span></span><span></span></div>
-                            <div class="custom-card two"><span></span><span></span><span></span></div>
-                        </div>
-                        <span class="preview-chip">Spreadsheet → PDF</span>
-                    </div>
+                    <div class="template-preview-card preview-custom" aria-hidden="true"><div class="custom-stack"><div class="custom-card one"><span></span><span></span><span></span></div><div class="custom-card two"><span></span><span></span><span></span></div></div><span class="preview-chip">Spreadsheet → PDF</span></div>
                     <div class="template-card-body"><h3>Custom PDF documents</h3><p>Design your own layout, connect it to spreadsheet columns, and export one personalized document per row.</p></div>
-                    <div class="template-card-actions"><a class="primary-template-action" href="/tool">Use this template</a><a class="secondary-template-action" href="/tool">Upload CSV sample</a><a href="/custom-pdf-documents">Custom PDF guide</a></div>
+                    <div class="template-card-actions"><a class="primary-template-action" href="/tool">Use this template</a><a class="secondary-template-action" href="/custom-pdf-documents">Custom PDF guide</a><a href="/invoice-template-builder">Template builder</a></div>
                 </article>
             </div>
             <div style="text-align:center"><a href="#template-gallery" class="templates-link">Browse public templates <span>→</span></a></div>
         </section>
 
-        <section class="section animated-section" id="use-cases">
+        <section class="section animated-section" id="benefits">
             <div class="section-heading">
-                <h2>Why invoice workflows work better in CSVLink</h2>
+                <h2>Why this is easier than doing it by hand</h2>
             </div>
             <div class="benefits-grid">
-                <article class="benefit"><span class="benefit-icon blue">ϟ</span><span><h3>Save hours every week</h3><p>Automate repetitive invoice creation and focus on important work.</p></span></article>
-                <article class="benefit"><span class="benefit-icon green">⬟</span><span><h3>Use your own template</h3><p>Keep your brand and layout. Map once and reuse whenever you need.</p></span></article>
-                <article class="benefit"><span class="benefit-icon purple">✓</span><span><h3>Accurate & reliable</h3><p>No copy-paste errors. Every invoice is generated from your real data.</p></span></article>
-                <article class="benefit"><span class="benefit-icon orange">▣</span><span><h3>Secure & private</h3><p>Your files are processed securely and never shared. You're in control.</p></span></article>
+                <article class="benefit"><span class="benefit-icon blue">ϟ</span><span><h3>Less copy-paste</h3><p>Stop opening a PDF, copying a value from Excel, saving, duplicating, and repeating the same work for every row.</p></span></article>
+                <article class="benefit"><span class="benefit-icon green">⬟</span><span><h3>Your layout stays yours</h3><p>Use the exact PDF template your clients, vendors, school, or internal team already recognizes.</p></span></article>
+                <article class="benefit"><span class="benefit-icon purple">✓</span><span><h3>Fewer data mistakes</h3><p>The PDF is filled from your spreadsheet values, so names, dates, invoice numbers, and totals stay consistent.</p></span></article>
+                <article class="benefit"><span class="benefit-icon orange">▣</span><span><h3>Built for repeat jobs</h3><p>Save a mapping once and use it again for the next month, next class, next order run, or next client report batch.</p></span></article>
             </div>
         </section>
 
         <section class="cta-panel animated-section" aria-labelledby="cta-title">
             <div>
-                <span class="cta-eyebrow"><span class="check-dot">✓</span> Start for free</span>
-                <h2 id="cta-title">Test your first QuickBooks or Excel invoice batch—free.</h2>
+                <span class="cta-eyebrow"><span class="check-dot">✓</span> Free to test</span>
+                <h2 id="cta-title">Try it with one PDF template and one spreadsheet.</h2>
                 <div class="cta-checks">
                     <span class="mini-check"><span class="check-dot">✓</span> No credit card</span>
-                    <span class="mini-check"><span class="check-dot">✓</span> No signup</span>
-                    <span class="mini-check"><span class="check-dot">✓</span> Free to test</span>
+                    <span class="mini-check"><span class="check-dot">✓</span> No signup to test</span>
+                    <span class="mini-check"><span class="check-dot">✓</span> Excel, CSV, and PDF</span>
                 </div>
             </div>
             <div class="cta-actions">
                 <a href="/tool" class="btn btn-primary">
                     <svg class="button-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 16V4m0 0 4 4m-4-4-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-                    Import your invoice data
+                    Open the PDF builder
                 </a>
                 <a href="#how-it-works" class="btn btn-secondary">
                     <svg class="button-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="m10 8 6 4-6 4V8Z" fill="currentColor"/></svg>
                     See workflow
                 </a>
-                <div style="color:#7a879b;font-size:12px;font-weight:800;text-align:center;">Works with QuickBooks exports, Excel (.xlsx, .xls), and CSV files</div>
+                <div style="color:#7a879b;font-size:12px;font-weight:800;text-align:center;">Upload PDF + Excel/CSV, then export ZIP or merged PDF</div>
             </div>
             <div class="file-flow" aria-hidden="true">
                 <div class="sparkles">✦✧</div>
@@ -2015,17 +2269,17 @@
             </div>
         </section>
 
-        <section class="trusted" aria-label="Invoice workflows CSVLink supports">
-            Built for practical invoice workflows
+        <section class="trusted" aria-label="PDF workflows CSVLink supports">
+            Built for practical document workflows
             <div class="logo-row">
-                <span>QuickBooks export → invoice PDFs</span><span>Excel rows → branded invoices</span><span>CSV billing data → batch PDF</span><span>Grouped line items</span><span>ZIP or merged PDF output</span><span>No manual copy-paste</span>
+                <span>Excel rows → PDF templates</span><span>CSV data → filled PDFs</span><span>Invoice templates</span><span>Print spreadsheet data</span><span>One PDF per row</span><span>No manual copy-paste</span>
             </div>
         </section>
 
         <section class="template-gallery-block animated-section" id="template-gallery">
             <div class="section-heading">
-                <h2>Start from invoice templates or build your own invoice layout</h2>
-                <p>Open an invoice template, replace the sample branding, link your spreadsheet, and export a full billing run without starting from scratch.</p>
+                <h2>Browse templates or upload your own PDF</h2>
+                <p>Open a template, replace the sample branding, link your spreadsheet, and export a full document run without starting from scratch.</p>
             </div>
             <div class="template-categories">
                 <button class="template-category-btn active" data-category="invoice">Invoice Templates</button>
@@ -2037,55 +2291,68 @@
 
         <section class="pricing-section animated-section" id="pricing">
             <div class="section-heading">
-                <h2>Pricing for invoice teams that need clean batch exports</h2>
-                <p>Start free while you validate your invoice workflow, then upgrade when you need unlimited templates and higher-volume export runs.</p>
+                <h2>Pricing for repeat PDF work</h2>
+                <p>Start free while you test the workflow. Upgrade when you need more saved templates, larger runs, and production exports.</p>
             </div>
             <div class="pricing-grid">
                 <article class="pricing-card">
                     <h3>Starter</h3>
-                    <p>Perfect for early projects and testing your workflow.</p>
+                    <p>Good for testing a real PDF and spreadsheet before committing.</p>
                     <div class="price"><sup>$</sup>0<span>/month</span></div>
-                    <ul><li>Access to the template editor</li><li>Access to AI layout generation</li><li>Up to 5 saved templates</li><li>Export up to 15 files per run</li></ul>
-                    <a href="/tool" class="btn btn-secondary">Get Started</a>
+                    <ul><li>Use the visual template editor</li><li>Upload PDF, Excel, and CSV files</li><li>Up to 5 saved templates</li><li>Export up to 15 files per run</li></ul>
+                    <a href="/tool" class="btn btn-secondary">Start free</a>
                 </article>
                 <article class="pricing-card recommended">
                     <h3>Monthly Pro</h3>
-                    <p>For teams generating high-volume documents.</p>
+                    <p>For businesses that generate documents often.</p>
                     <div class="price"><sup>$</sup>12<span>/month</span></div>
-                    <ul><li>All Starter features included</li><li>Unlimited templates</li><li>API access</li><li>PNG and JPG export options</li><li>Unlimited files per export run</li></ul>
+                    <ul><li>All Starter features included</li><li>Unlimited templates</li><li>Unlimited files per export run</li><li>API access</li><li>PNG and JPG export options</li></ul>
                     <a href="https://csvlink.lemonsqueezy.com/buy/3b3f16ca-17a6-4cc5-9a99-cf5abcbf6a1c" class="btn btn-primary lemonsqueezy-button">Upgrade to Pro</a>
                 </article>
                 <article class="pricing-card">
                     <h3>Annual Pro</h3>
-                    <p>Best value for production usage all year.</p>
+                    <p>Best value if CSVLink becomes part of your normal workflow.</p>
                     <div class="price"><sup>$</sup>130<span>/year</span></div>
-                    <ul><li>All Pro features included</li><li>Yearly billing</li><li>Lower effective monthly cost</li></ul>
-                    <a href="https://csvlink.lemonsqueezy.com/buy/3b3f16ca-17a6-4cc5-9a99-cf5abcbf6a1c" class="btn btn-primary lemonsqueezy-button">Upgrade to Pro (Annual)</a>
+                    <ul><li>Everything in Pro</li><li>Yearly billing</li><li>Lower effective monthly cost</li><li>Best for recurring document runs</li></ul>
+                    <a href="https://csvlink.lemonsqueezy.com/buy/3b3f16ca-17a6-4cc5-9a99-cf5abcbf6a1c" class="btn btn-primary lemonsqueezy-button">Upgrade annually</a>
                 </article>
+            </div>
+        </section>
+
+        <section class="faq-section animated-section" id="faq">
+            <h2>Questions people usually have before trying it</h2>
+            <p>CSVLink is closest to a visual PDF mail merge: your spreadsheet supplies the values, and your PDF supplies the layout.</p>
+            <div class="faq-grid">
+                <article class="faq-item"><h3>Can I create PDFs from Excel?</h3><p>Yes. Upload an Excel file, choose the columns you need, place them on the PDF, and generate one filled PDF per row.</p></article>
+                <article class="faq-item"><h3>Can I use a PDF invoice template?</h3><p>Yes. Upload your own invoice PDF and place fields like customer, date, invoice number, items, tax, and total exactly where you want them.</p></article>
+                <article class="faq-item"><h3>Does it work with CSV files?</h3><p>Yes. CSVLink supports CSV as well as Excel files, so you can use exports from accounting tools, ecommerce platforms, CRMs, or your own spreadsheets.</p></article>
+                <article class="faq-item"><h3>Is this only for invoices?</h3><p>No. Invoices are the most common use case, but any repeatable PDF can work: receipts, certificates, packing slips, labels, letters, forms, and reports.</p></article>
             </div>
         </section>
 
         <section class="resources-section animated-section" id="resources">
             <div class="section-heading">
-                <h2>Resources for invoice automation</h2>
-                <p>Focused pages for the searches your customers are most likely to use.</p>
+                <h2>Guides for the exact job you are trying to do</h2>
+                <p>Use these pages when you need a more specific workflow, like Excel to invoice, CSV to invoice, QuickBooks exports, or custom PDF documents.</p>
             </div>
             <div class="resources-grid">
-                <article class="resource-card"><h3><a href="/quickbooks-invoice-generator">QuickBooks Invoice Generator</a></h3><p>For teams exporting invoice data from QuickBooks and printing it in a custom branded PDF template.</p></article>
-                <article class="resource-card"><h3><a href="/csv-to-invoice">CSV to Invoice Generator</a></h3><p>For teams that export billing data as CSV and need branded PDF invoices from that file.</p></article>
+                <article class="resource-card"><h3><a href="/excel-to-pdf">Excel to PDF</a></h3><p>Use a spreadsheet as the data source and your PDF as the design.</p></article>
                 <article class="resource-card"><h3><a href="/excel-to-invoice">Excel to Invoice</a></h3><p>Turn spreadsheet rows into polished invoices without repetitive copy-paste.</p></article>
-                <article class="resource-card"><h3><a href="/bulk-invoice-generator">Bulk Invoice Generator</a></h3><p>Generate high-volume invoice batches from structured rows.</p></article>
+                <article class="resource-card"><h3><a href="/csv-to-invoice">CSV to Invoice Generator</a></h3><p>Use CSV billing data to generate branded PDF invoices.</p></article>
+                <article class="resource-card"><h3><a href="/bulk-invoice-generator">Bulk Invoice Generator</a></h3><p>Generate a high-volume invoice batch from structured rows.</p></article>
                 <article class="resource-card"><h3><a href="/invoice-template-builder">Invoice Template Builder</a></h3><p>Build or import a reusable invoice layout before mapping spreadsheet fields.</p></article>
+                <article class="resource-card"><h3><a href="/custom-pdf-documents">Custom PDF Documents</a></h3><p>Use the same Excel-to-PDF workflow for documents beyond invoices.</p></article>
+                <article class="resource-card"><h3><a href="/quickbooks-invoice-generator">QuickBooks Invoice Generator</a></h3><p>Export QuickBooks invoice data and print it in your own PDF template.</p></article>
                 <article class="resource-card"><h3><a href="/itemized-invoice-generator">Itemized Invoice Generator</a></h3><p>Map grouped rows into repeated line items for detailed invoices.</p></article>
-                <article class="resource-card"><h3><a href="/blog/create-invoices-from-excel">Excel Invoice Guide</a></h3><p>A practical guide for cleaning data and exporting invoice PDFs.</p></article>
-                <article class="resource-card"><h3><a href="#quickbooks-invoices">QuickBooks invoice printing</a></h3><p>Export invoice data from QuickBooks, import the file, and print invoices in your custom template.</p></article>
+                <article class="resource-card"><h3><a href="/blog/create-invoices-from-excel">Create Invoices from Excel</a></h3><p>A practical guide for cleaning data and exporting invoice PDFs.</p></article>
             </div>
         </section>
     </main>
 
     <footer class="site-footer">
         <div class="footer-links">
-            <a href="/">Overview</a>
+            <a href="/">Home</a>
+            <a href="/excel-to-pdf">Excel to PDF</a>
             <a href="/quickbooks-invoice-generator">QuickBooks Invoice Generator</a>
             <a href="/excel-to-invoice">Excel to Invoice</a>
             <a href="/csv-to-invoice">CSV to Invoice</a>
@@ -2095,7 +2362,7 @@
             <a href="/excel-invoice-automation">Excel Invoice Automation</a>
             <a href="/blog/create-invoices-from-excel">Excel Invoice Guide</a>
             <a href="/blog/bulk-invoice-csv-format">CSV Format Guide</a>
-            <a href="/tool">Open Builder</a>
+            <a href="/tool">Open PDF Builder</a>
             <a href="/privacy">Privacy</a>
             <a href="/terms">Terms</a>
             <a href="/refunds">Refunds</a>
