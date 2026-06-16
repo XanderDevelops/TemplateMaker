@@ -8015,9 +8015,13 @@ async function initializeEditor() {
     }
 
     /* Other UI initialization */
-    if (!localStorage.getItem('hasSeenTour')) startTour();
     initializeLeftPanelTabs();
     renderInvoiceCsvFieldsPanel();
+
+    // The invoice tool has its own first-step onboarding: Upload Invoice Data.
+    // Do not auto-start the generic editor tour here, because its first card
+    // ("How to Structure Your Data") can appear on top of the invoice upload prompt.
+    // Users can still open the tour manually from the help/start-tour button.
     syncInvoiceCsvPromptState({ forceOpen: !hasInvoiceTableStructure() });
 
     // Bind Load Template buttons
