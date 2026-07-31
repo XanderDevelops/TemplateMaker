@@ -508,15 +508,16 @@
         }
 
         .hero-video-stage::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background-image:
-                linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px);
-            background-size: 32px 32px;
-            mask-image: linear-gradient(180deg, rgba(0,0,0,0.9), transparent 90%);
-            pointer-events: none;
+            content: none;
+        }
+
+        .hero-demo-video {
+            width: 100%;
+            height: 100%;
+            display: block;
+            object-fit: cover;
+            border-radius: inherit;
+            background: #071327;
         }
 
         .hero-video-placeholder {
@@ -566,7 +567,7 @@
         .hero-video-label {
             position: absolute;
             left: 18px;
-            bottom: 16px;
+            top: 16px;
             z-index: 2;
             padding: 7px 10px;
             border: 1px solid rgba(255,255,255,0.14);
@@ -2141,7 +2142,7 @@
                     </a>
                     <a href="#product-demo" class="btn btn-secondary">
                         <svg class="button-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="m10 8 6 4-6 4V8Z" fill="currentColor"/></svg>
-                        Watch 40-second demo
+                        Watch demo
                     </a>
                 </div>
                 <a href="/tool" class="hero-upload-link">Have your files ready? Upload my files <span aria-hidden="true">→</span></a>
@@ -2155,15 +2156,11 @@
             <div class="hero-visual">
                 <div class="hero-video-frame" id="product-demo" aria-label="CSVLink product demo video frame">
                     <div class="hero-video-stage">
-                        <!-- Replace this placeholder with the final <video> element when the demo file is ready. -->
-                        <div class="hero-video-placeholder">
-                            <div class="hero-video-play" aria-hidden="true">
-                                <svg viewBox="0 0 24 24" fill="none"><path d="m9 7 8 5-8 5V7Z" fill="currentColor"/></svg>
-                            </div>
-                            <strong>See CSVLink in action</strong>
-                            <span>PDF template + spreadsheet → completed PDFs</span>
-                        </div>
-                        <div class="hero-video-label">40-second product demo</div>
+                        <video class="hero-demo-video" autoplay muted loop playsinline preload="metadata" controls aria-label="CSVLink product demo">
+                            <source src="assets/csvlink-demo.mp4" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                        <div class="hero-video-label">Product demo</div>
                     </div>
                 </div>
             </div>
