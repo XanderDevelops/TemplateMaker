@@ -458,8 +458,8 @@
         .hero-visual {
             position: relative;
             min-width: 0;
-            min-height: 520px;
-            max-width: 680px;
+            min-height: 470px;
+            max-width: 720px;
             z-index: 1;
             display: flex;
             align-items: center;
@@ -472,38 +472,112 @@
         .hero-visual::before {
             content: '';
             position: absolute;
-            width: 500px;
-            height: 350px;
-            top: 74px;
+            width: 520px;
+            height: 360px;
+            top: 54px;
             left: clamp(8px, 2vw, 28px);
-            background: radial-gradient(circle, rgba(37, 99, 235, 0.075), rgba(20, 184, 166, 0.045) 52%, transparent 72%);
-            filter: blur(22px);
+            background: radial-gradient(circle, rgba(37, 99, 235, 0.08), rgba(20, 184, 166, 0.05) 50%, transparent 72%);
+            filter: blur(24px);
             border-radius: 50%;
             z-index: -1;
         }
 
-        .hero-flow-canvas {
+        .hero-video-frame {
             position: relative;
-            width: min(760px, 42vw);
-            max-width: 760px;
-            min-width: 0;
-            height: auto;
-            flex: 0 0 auto;
-            transform: none;
-            transform-origin: left center;
-            filter: none;
+            width: min(720px, 43vw);
+            aspect-ratio: 16 / 9;
+            padding: 9px;
+            border: 1px solid rgba(37, 99, 235, 0.16);
+            border-radius: 24px;
+            background: rgba(37, 99, 235, 0.09);
+            box-shadow: 0 28px 64px rgba(38, 74, 127, 0.16), 0 8px 24px rgba(20, 184, 166, 0.08);
         }
 
-        .hero-flow-canvas::before {
-            content: none;
-        }
-
-        .hero-flow-art {
-            display: block;
+        .hero-video-stage {
+            position: relative;
             width: 100%;
-            height: auto;
-            user-select: none;
-            -webkit-user-drag: none;
+            height: 100%;
+            display: grid;
+            place-items: center;
+            overflow: hidden;
+            border-radius: 17px;
+            background:
+                radial-gradient(circle at 74% 20%, rgba(20, 184, 166, 0.22), transparent 36%),
+                radial-gradient(circle at 18% 82%, rgba(37, 99, 235, 0.26), transparent 42%),
+                linear-gradient(145deg, #0b1731 0%, #10264b 58%, #0c1c36 100%);
+        }
+
+        .hero-video-stage::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px);
+            background-size: 32px 32px;
+            mask-image: linear-gradient(180deg, rgba(0,0,0,0.9), transparent 90%);
+            pointer-events: none;
+        }
+
+        .hero-video-placeholder {
+            position: relative;
+            z-index: 1;
+            width: min(82%, 520px);
+            padding: 34px 30px;
+            text-align: center;
+            color: #fff;
+        }
+
+        .hero-video-play {
+            width: 74px;
+            height: 74px;
+            margin: 0 auto 20px;
+            display: grid;
+            place-items: center;
+            border: 1px solid rgba(255,255,255,0.34);
+            border-radius: 999px;
+            background: rgba(255,255,255,0.14);
+            box-shadow: 0 14px 34px rgba(0,0,0,0.24);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+
+        .hero-video-play svg {
+            width: 30px;
+            height: 30px;
+            margin-left: 4px;
+        }
+
+        .hero-video-placeholder strong {
+            display: block;
+            font-size: clamp(20px, 2vw, 28px);
+            line-height: 1.2;
+            letter-spacing: -0.03em;
+        }
+
+        .hero-video-placeholder span {
+            display: block;
+            margin-top: 10px;
+            color: rgba(255,255,255,0.74);
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .hero-video-label {
+            position: absolute;
+            left: 18px;
+            bottom: 16px;
+            z-index: 2;
+            padding: 7px 10px;
+            border: 1px solid rgba(255,255,255,0.14);
+            border-radius: 999px;
+            color: rgba(255,255,255,0.8);
+            background: rgba(5, 16, 36, 0.42);
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.02em;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
         }
 
         .ui-card {
@@ -1700,17 +1774,52 @@
 
 
 
-        .human-note {
-            margin-top: 18px;
+        .hero-use-cases {
+            margin: 16px 0 0;
             color: #43516a;
             font-size: 14px;
-            font-weight: 700;
-            line-height: 1.65;
-            background: rgba(255, 255, 255, 0.74);
-            border: 1px solid #dce8f7;
-            border-radius: 14px;
-            padding: 14px 16px;
-            box-shadow: 0 10px 24px rgba(36, 67, 111, 0.055);
+            font-weight: 750;
+            line-height: 1.55;
+        }
+
+        .hero-upload-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            margin-top: 17px;
+            color: #2563eb;
+            font-size: 13px;
+            font-weight: 850;
+        }
+
+        .hero-upload-link:hover,
+        .hero-upload-link:focus-visible {
+            color: #1d4ed8;
+            text-decoration: underline;
+            text-underline-offset: 3px;
+        }
+
+        .hero-trust {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px 10px;
+            margin-top: 20px;
+            color: #66748d;
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+        .hero-trust span {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .hero-trust span:not(:last-child)::after {
+            content: '·';
+            margin-left: 2px;
+            color: #a2aec0;
         }
 
         .reality-panel,
@@ -1946,9 +2055,10 @@
             .hero { grid-template-columns: 1fr; min-height: auto; padding-top: 44px; gap: 38px; }
             .hero-copy { text-align: center; margin: 0 auto; }
             .hero h1, .hero p.lede { margin-left: auto; margin-right: auto; }
-            .hero-actions, .hero-points { justify-content: center; }
+            .hero-actions, .hero-trust { justify-content: center; }
+            .hero-upload-link { justify-content: center; }
             .hero-visual { width: min(100%, 900px); max-width: 100%; margin: 0 auto; min-height: 540px; justify-content: center; padding-left: 0; padding-right: 0; }
-            .hero-flow-canvas { width: min(100%, 900px); min-width: 0; transform: none; transform-origin: top center; }
+            .hero-video-frame { width: min(100%, 760px); }
             .template-grid, .benefits-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
             .quickbooks-panel { grid-template-columns: 1fr; padding: 38px 30px; }
             .quickbooks-copy { text-align: center; }
@@ -1972,7 +2082,7 @@
             .hero h1 { font-size: clamp(38px, 12vw, 54px); }
             .hero p.lede { font-size: 16px; }
             .hero-visual { min-height: auto; width: min(100%, 520px); }
-            .hero-flow-canvas { width: min(100%, 520px); min-width: 0; transform: none; transform-origin: top center; }
+            .hero-video-frame { width: min(100%, 520px); }
             .steps-grid, .template-grid, .benefits-grid, .pricing-grid, .resources-grid { grid-template-columns: 1fr; }
             .quickbooks-section { padding: 30px 0 42px; }
             .quickbooks-panel { padding: 28px 18px; border-radius: 16px; }
@@ -2020,31 +2130,41 @@
     <main class="page-shell">
         <section class="hero" aria-labelledby="hero-title">
             <div class="hero-copy">
-                <div class="eyebrow"><span class="bolt">↯</span> Excel / CSV to PDF templates</div>
-                <h1 id="hero-title">Print Excel data onto any PDF template.</h1>
-                <p class="lede">CSVLink is for the copy-paste work that happens after your spreadsheet is ready. Upload a PDF template, import Excel or CSV, drag columns like Date, Customer, Amount, or Invoice # onto the page, and generate one filled PDF for each row.</p>
-                <p class="human-note">Most people use it for invoices, but the same workflow works for receipts, certificates, labels, packing slips, reports, letters, and any document where the layout stays the same but the data changes.</p>
+                <div class="eyebrow"><span class="bolt">↯</span> Excel / CSV to PDF automation</div>
+                <h1 id="hero-title">Generate personalized PDFs from Excel in minutes.</h1>
+                <p class="lede">Upload any PDF template and an Excel or CSV file. Place your spreadsheet fields on the document and generate one completed PDF for every row.</p>
+                <p class="hero-use-cases">Perfect for invoices, certificates, labels, reports and other repeatable documents.</p>
                 <div class="hero-actions">
-                    <a href="/tool" class="btn btn-primary">
-                        <svg class="button-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 16V4m0 0 4 4m-4-4-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-                        Upload PDF and Excel
+                    <a href="#templates" class="btn btn-primary">
+                        <svg class="button-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 4h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="2"/><path d="M8 9h8M8 13h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                        Try it with sample files
                     </a>
-                    <a href="#how-it-works" class="btn btn-secondary">
+                    <a href="#product-demo" class="btn btn-secondary">
                         <svg class="button-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="m10 8 6 4-6 4V8Z" fill="currentColor"/></svg>
-                        See how it works
+                        Watch 40-second demo
                     </a>
                 </div>
-                <ul class="hero-points" aria-label="Key benefits">
-                    <li><span class="check-dot">✓</span> Use your own PDF</li>
-                    <li><span class="check-dot">✓</span> Excel, XLSX, XLS and CSV</li>
-                    <li><span class="check-dot">✓</span> One PDF per row</li>
-                    <li><span class="check-dot">✓</span> ZIP or merged PDF</li>
-                </ul>
+                <a href="/tool" class="hero-upload-link">Have your files ready? Upload my files <span aria-hidden="true">→</span></a>
+                <div class="hero-trust" aria-label="Product assurances">
+                    <span>No credit card required</span>
+                    <span>Keep your existing PDF design</span>
+                    <span>Export as ZIP or merged PDF</span>
+                </div>
             </div>
 
-            <div class="hero-visual" aria-hidden="true">
-                <div class="hero-flow-canvas">
-                    <img class="hero-flow-art" src="assets/images/excel-table-to-pdf-hero.png" alt="" width="1010" height="600" fetchpriority="high" decoding="async">
+            <div class="hero-visual">
+                <div class="hero-video-frame" id="product-demo" aria-label="CSVLink product demo video frame">
+                    <div class="hero-video-stage">
+                        <!-- Replace this placeholder with the final <video> element when the demo file is ready. -->
+                        <div class="hero-video-placeholder">
+                            <div class="hero-video-play" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none"><path d="m9 7 8 5-8 5V7Z" fill="currentColor"/></svg>
+                            </div>
+                            <strong>See CSVLink in action</strong>
+                            <span>PDF template + spreadsheet → completed PDFs</span>
+                        </div>
+                        <div class="hero-video-label">40-second product demo</div>
+                    </div>
                 </div>
             </div>
         </section>
