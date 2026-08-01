@@ -133,6 +133,7 @@ footer { margin-top: 44px; padding: 40px 24px; background: var(--panel); border-
 @media (max-width: 900px) { nav { grid-template-columns: 1fr; height: auto; padding: 12px 18px; gap: 10px; } .logo, .invoice-page-nav, .nav-links { justify-self: center; } .container { padding-top: 148px; } .hero, .panel { padding: 24px 20px; } }
 </style>
     <script defer src="/_vercel/insights/script.js"></script>
+    <link rel="stylesheet" href="/assets/css/landing-video.css">
 </head>
 <body>
     <nav>
@@ -146,13 +147,17 @@ footer { margin-top: 44px; padding: 40px 24px; background: var(--panel); border-
         <div class="nav-links"><a href="/login">Sign in</a><a class="btn primary" href="/tool">Open Tool</a></div>
     </nav>
     <main class="container">
-        <section class="hero">
-            <span class="eyebrow">Product labels</span>
-            <h1>Product label template powered by your spreadsheet.</h1>
-            <p>Generate product label files from Excel or CSV columns like product name, SKU, price, category, and short description using a reusable CSVLink layout.</p>
-            <div class="hero-actions"><a class="btn" href="/tool">Use this template</a><a class="btn ghost" href="/#templates">See all templates</a></div>
-            <div class="tag-row"><span class="tag">Product name</span><span class="tag">SKU</span><span class="tag">Price</span><span class="tag">Category</span><span class="tag">Barcode text</span><span class="tag">Short description</span></div>
-        </section>
+        <section class="hero csvlink-video-hero"><span class="eyebrow">Product labels</span><div class="csvlink-hero-grid"><div class="csvlink-hero-copy"><h1>Product label template powered by your spreadsheet.</h1><p>Generate product label files from Excel or CSV columns like product name, SKU, price, category, and short description using a reusable CSVLink layout.</p><div class="hero-actions"><a class="btn" href="/tool">Use this template</a><a class="btn ghost" href="/#templates">See all templates</a></div><div class="tag-row"><span class="tag">Product name</span><span class="tag">SKU</span><span class="tag">Price</span><span class="tag">Category</span><span class="tag">Barcode text</span><span class="tag">Short description</span></div></div><div class="landing-video-shell">
+<div aria-label="CSVLink product demo video frame" class="hero-video-frame">
+<div class="hero-video-stage">
+<video aria-hidden="true" autoplay="" class="hero-demo-video" disablepictureinpicture="" loop="" muted="" playsinline="" preload="auto" tabindex="-1">
+<source src="/assets/csvlink-demo.mp4" type="video/mp4"/>
+Your browser does not support the video tag.
+</video>
+<div class="hero-video-label">Product demo</div>
+</div>
+</div>
+</div></div></section>
         <section class="panel">
             <h2>What this template is for</h2>
             <p>If your product data already lives in a spreadsheet, you should not have to copy each name, SKU, or price into a label manually. CSVLink helps you map those columns into a repeatable label layout.</p>

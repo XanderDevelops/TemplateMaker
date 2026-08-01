@@ -120,6 +120,7 @@
             .grid, .visual-grid { grid-template-columns: 1fr; }
         }
     </style>
+    <link rel="stylesheet" href="/assets/css/landing-video.css">
 </head>
 <body>
     <nav>
@@ -139,23 +140,20 @@
     </nav>
 
     <main class="container">
-        <section class="hero">
-            <div>
-                <span class="eyebrow">Excel to PDF</span>
-                <h1>Turn Excel rows into filled PDF documents.</h1>
-                <p>CSVLink is a visual way to print spreadsheet data onto a PDF template. Upload your PDF, import Excel or CSV data, drag columns onto the page, and export a finished PDF for every row in the file.</p>
-                <div class="hero-actions">
-                    <a href="/tool" class="btn">Open PDF Builder</a>
-                    <a href="/" class="btn ghost">See overview</a>
-                </div>
-            </div>
-            <div class="visual" aria-hidden="true">
-                <div class="visual-grid">
-                    <div class="columns"><h3>Excel columns</h3><div class="pill"><span>Name</span><span>drag</span></div><div class="pill"><span>Date</span><span>drag</span></div><div class="pill"><span>Amount</span><span>drag</span></div><div class="pill"><span>Invoice #</span><span>drag</span></div></div>
-                    <div class="pdf"><h3>PDF template</h3><div class="page"><span class="field a">{Name}</span><span class="field b">{Date}</span><span class="field c">{Amount}</span></div></div>
-                </div>
-            </div>
-        </section>
+        <section class="hero csvlink-video-hero"><span class="eyebrow">Excel to PDF</span><div class="csvlink-hero-grid"><div class="csvlink-hero-copy"><h1>Turn Excel rows into filled PDF documents.</h1><p>CSVLink is a visual way to print spreadsheet data onto a PDF template. Upload your PDF, import Excel or CSV data, drag columns onto the page, and export a finished PDF for every row in the file.</p><div class="hero-actions">
+<a class="btn" href="/tool">Open PDF Builder</a>
+<a class="btn ghost" href="/">See overview</a>
+</div></div><div class="landing-video-shell">
+<div aria-label="CSVLink product demo video frame" class="hero-video-frame">
+<div class="hero-video-stage">
+<video aria-hidden="true" autoplay="" class="hero-demo-video" disablepictureinpicture="" loop="" muted="" playsinline="" preload="auto" tabindex="-1">
+<source src="/assets/csvlink-demo.mp4" type="video/mp4"/>
+Your browser does not support the video tag.
+</video>
+<div class="hero-video-label">Product demo</div>
+</div>
+</div>
+</div></div></section>
 
         <section class="panel">
             <h2>When Excel to PDF actually makes sense</h2>

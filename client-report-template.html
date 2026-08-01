@@ -133,6 +133,7 @@ footer { margin-top: 44px; padding: 40px 24px; background: var(--panel); border-
 @media (max-width: 900px) { nav { grid-template-columns: 1fr; height: auto; padding: 12px 18px; gap: 10px; } .logo, .invoice-page-nav, .nav-links { justify-self: center; } .container { padding-top: 148px; } .hero, .panel { padding: 24px 20px; } }
 </style>
     <script defer src="/_vercel/insights/script.js"></script>
+    <link rel="stylesheet" href="/assets/css/landing-video.css">
 </head>
 <body>
     <nav>
@@ -146,13 +147,17 @@ footer { margin-top: 44px; padding: 40px 24px; background: var(--panel); border-
         <div class="nav-links"><a href="/login">Sign in</a><a class="btn primary" href="/tool">Open Tool</a></div>
     </nav>
     <main class="container">
-        <section class="hero">
-            <span class="eyebrow">Client reports</span>
-            <h1>Client report template for spreadsheet data.</h1>
-            <p>Turn Excel or CSV rows into client report PDFs by mapping client names, periods, metrics, totals, notes, and recommendations into a reusable template.</p>
-            <div class="hero-actions"><a class="btn" href="/tool">Use this template</a><a class="btn ghost" href="/#templates">See all templates</a></div>
-            <div class="tag-row"><span class="tag">Client name</span><span class="tag">Reporting period</span><span class="tag">Metric</span><span class="tag">Total</span><span class="tag">Notes</span><span class="tag">Recommendation</span></div>
-        </section>
+        <section class="hero csvlink-video-hero"><span class="eyebrow">Client reports</span><div class="csvlink-hero-grid"><div class="csvlink-hero-copy"><h1>Client report template for spreadsheet data.</h1><p>Turn Excel or CSV rows into client report PDFs by mapping client names, periods, metrics, totals, notes, and recommendations into a reusable template.</p><div class="hero-actions"><a class="btn" href="/tool">Use this template</a><a class="btn ghost" href="/#templates">See all templates</a></div><div class="tag-row"><span class="tag">Client name</span><span class="tag">Reporting period</span><span class="tag">Metric</span><span class="tag">Total</span><span class="tag">Notes</span><span class="tag">Recommendation</span></div></div><div class="landing-video-shell">
+<div aria-label="CSVLink product demo video frame" class="hero-video-frame">
+<div class="hero-video-stage">
+<video aria-hidden="true" autoplay="" class="hero-demo-video" disablepictureinpicture="" loop="" muted="" playsinline="" preload="auto" tabindex="-1">
+<source src="/assets/csvlink-demo.mp4" type="video/mp4"/>
+Your browser does not support the video tag.
+</video>
+<div class="hero-video-label">Product demo</div>
+</div>
+</div>
+</div></div></section>
         <section class="panel">
             <h2>What this template is for</h2>
             <p>Client reports are easier to repeat when the design stays fixed and the data comes from a structured sheet. CSVLink helps you connect report fields to spreadsheet columns and export a report for each row.</p>

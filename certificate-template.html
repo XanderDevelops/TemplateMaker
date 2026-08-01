@@ -133,6 +133,7 @@ footer { margin-top: 44px; padding: 40px 24px; background: var(--panel); border-
 @media (max-width: 900px) { nav { grid-template-columns: 1fr; height: auto; padding: 12px 18px; gap: 10px; } .logo, .invoice-page-nav, .nav-links { justify-self: center; } .container { padding-top: 148px; } .hero, .panel { padding: 24px 20px; } }
 </style>
     <script defer src="/_vercel/insights/script.js"></script>
+    <link rel="stylesheet" href="/assets/css/landing-video.css">
 </head>
 <body>
     <nav>
@@ -146,13 +147,17 @@ footer { margin-top: 44px; padding: 40px 24px; background: var(--panel); border-
         <div class="nav-links"><a href="/login">Sign in</a><a class="btn primary" href="/tool">Open Tool</a></div>
     </nav>
     <main class="container">
-        <section class="hero">
-            <span class="eyebrow">Certificates</span>
-            <h1>Certificate template for names, dates, and awards.</h1>
-            <p>Create personalized certificate PDFs from Excel or CSV columns such as recipient name, program, award, completion date, and signer.</p>
-            <div class="hero-actions"><a class="btn" href="/tool">Use this template</a><a class="btn ghost" href="/#templates">See all templates</a></div>
-            <div class="tag-row"><span class="tag">Recipient name</span><span class="tag">Program</span><span class="tag">Award title</span><span class="tag">Completion date</span><span class="tag">Signer</span><span class="tag">Organization</span></div>
-        </section>
+        <section class="hero csvlink-video-hero"><span class="eyebrow">Certificates</span><div class="csvlink-hero-grid"><div class="csvlink-hero-copy"><h1>Certificate template for names, dates, and awards.</h1><p>Create personalized certificate PDFs from Excel or CSV columns such as recipient name, program, award, completion date, and signer.</p><div class="hero-actions"><a class="btn" href="/tool">Use this template</a><a class="btn ghost" href="/#templates">See all templates</a></div><div class="tag-row"><span class="tag">Recipient name</span><span class="tag">Program</span><span class="tag">Award title</span><span class="tag">Completion date</span><span class="tag">Signer</span><span class="tag">Organization</span></div></div><div class="landing-video-shell">
+<div aria-label="CSVLink product demo video frame" class="hero-video-frame">
+<div class="hero-video-stage">
+<video aria-hidden="true" autoplay="" class="hero-demo-video" disablepictureinpicture="" loop="" muted="" playsinline="" preload="auto" tabindex="-1">
+<source src="/assets/csvlink-demo.mp4" type="video/mp4"/>
+Your browser does not support the video tag.
+</video>
+<div class="hero-video-label">Product demo</div>
+</div>
+</div>
+</div></div></section>
         <section class="panel">
             <h2>What this template is for</h2>
             <p>Certificates often share the same design while only the recipient details change. CSVLink lets you connect certificate text fields to spreadsheet columns and export personalized files in bulk.</p>
