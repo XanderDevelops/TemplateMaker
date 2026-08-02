@@ -1,0 +1,57 @@
+
+/* CSVLink localization layer: bundled system fonts work without Google Fonts in mainland China. */
+html.csvlink-i18n-pending body { opacity: 0 !important; }
+html.csvlink-i18n-ready body { opacity: 1; transition: opacity .12s ease; }
+html.csvlink-zh body,
+html.csvlink-zh button,
+html.csvlink-zh input,
+html.csvlink-zh select,
+html.csvlink-zh textarea {
+  font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", "Source Han Sans SC", system-ui, sans-serif !important;
+}
+.csvlink-language-switcher {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 2147483000;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 9px;
+  border: 1px solid rgba(100,116,139,.28);
+  border-radius: 12px;
+  background: rgba(255,255,255,.96);
+  color: #0f172a;
+  box-shadow: 0 8px 28px rgba(15,23,42,.14);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  font: 600 13px/1.2 system-ui, sans-serif;
+}
+.csvlink-language-switcher select {
+  appearance: auto;
+  min-width: 92px;
+  margin: 0;
+  padding: 4px 22px 4px 6px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+}
+.csvlink-language-switcher .sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0,0,0,0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+@media (max-width: 640px) {
+  .csvlink-language-switcher { right: 10px; bottom: 10px; padding: 6px 8px; }
+  .csvlink-language-switcher select { min-width: 82px; }
+}
+@media print { .csvlink-language-switcher { display: none !important; } }

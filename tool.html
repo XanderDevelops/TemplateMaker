@@ -30,6 +30,9 @@
     <link rel="stylesheet" href="tools/tool.css?v=20260522e" />
     <!-- Vercel Web Analytics -->
     <script defer src="/_vercel/insights/script.js"></script>
+    <script id="csvlink-i18n-boot">document.documentElement.classList.add("csvlink-i18n-pending");setTimeout(function(){document.documentElement.classList.remove("csvlink-i18n-pending");document.documentElement.classList.add("csvlink-i18n-ready")},1800);</script>
+    <link rel="stylesheet" href="/assets/css/i18n.css">
+    <script src="/assets/js/i18n.js" defer></script>
 </head>
 
 <body class="light-mode">
@@ -448,7 +451,7 @@
                 <div class="objects-list-container stack"
                     style="border: 1px solid var(--border); border-radius: 12px; padding: 8px; overflow-y: auto;">
                     <h4 style="padding: 0 8px;">Canvas Objects</h4>
-                    <div id="dataLinksObjectsList" class="stack"></div>
+                    <div id="dataLinksObjectsList" data-i18n-skip class="stack"></div>
                 </div>
                 <div class="bindings-editor-container"
                     style="border: 1px solid var(--border); border-radius: 12px; padding: 12px; overflow-y: auto;">
@@ -468,7 +471,7 @@
                 <h3>Link to Column</h3><button id="closeColumnSelectModal" class="btn ghost">&times;</button>
             </div>
             <input id="columnSelectSearch" type="search" placeholder="Search columns..." style="margin: 16px 0 8px 0;">
-            <div id="columnSelectList" class="col-list"></div>
+            <div id="columnSelectList" data-i18n-skip class="col-list"></div>
             <div class="row" style="margin-top:12px; justify-content:flex-end;">
                 <button id="confirmColumnSelect" class="btn">Confirm Link</button>
             </div>
@@ -553,7 +556,7 @@
                 <div class="row" style="gap: 8px; align-items: center;">
                     <label style="font-size: 11px; color: var(--muted); margin: 0; white-space: nowrap;">Grouped Data
                         By:</label>
-                    <select id="csvIdentifierColumnDropdown" style="min-width: 130px; font-size: 12px;">
+                    <select id="csvIdentifierColumnDropdown" data-i18n-skip style="min-width: 130px; font-size: 12px;">
                         <option value="">(None)</option>
                     </select>
                 </div>
@@ -594,7 +597,7 @@
                 <button class="btn" onclick="document.getElementById('csvInput').click()">Browse Files</button>
             </div>
 
-            <div id="csvViewContent"
+            <div id="csvViewContent" data-i18n-skip
                 style="display: none; flex: 1; margin-top:16px; overflow:auto; border:1px solid var(--border); border-radius: var(--radius); position: relative;">
                 <!-- Table will be injected here -->
             </div>
@@ -635,9 +638,9 @@
                 </p>
                 <div class="stack">
                     <label for="identifierColumnSelect">Select column to group data by:</label>
-                    <select id="identifierColumnSelect" class="btn ghost" style="text-align: left;"></select>
+                    <select id="identifierColumnSelect" data-i18n-skip class="btn ghost" style="text-align: left;"></select>
                 </div>
-                <div id="identifierColumnPreview" class="muted"
+                <div id="identifierColumnPreview" data-i18n-skip class="muted"
                     style="font-size: 12px; font-style: italic; min-height: 1.5em;"></div>
             </div>
             <div class="row" style="margin-top: 24px; justify-content: flex-end; gap: 10px;">

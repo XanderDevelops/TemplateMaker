@@ -1,0 +1,229 @@
+{
+  "summary": {
+    "source_strings": 4604,
+    "translated_entries": 2856,
+    "manual_entries": 548,
+    "english_heavy_entries": 15,
+    "html_files_injected": 39
+  },
+  "english_heavy": [
+    {
+      "source": "200 OK Content-Type: application/pdf Content-Disposition: attachment; filename=\"invoice-INV-002.pdf\" (Binary file stream)",
+      "translation": "200 OK Content-Type: 应用程序/pdf 内容-Disposition: 附件; filename=\"发票-INV-002.pdf\" (二进制文件数据流)",
+      "remaining": [
+        "Content",
+        "Type",
+        "Disposition",
+        "filename",
+        "INV"
+      ]
+    },
+    {
+      "source": "Edu NSW ACT Hand Pre",
+      "translation": "Edu NSW ACT 手工 Pre",
+      "remaining": [
+        "Edu",
+        "NSW",
+        "ACT",
+        "Pre"
+      ]
+    },
+    {
+      "source": "IBM Plex Sans Thai Looped",
+      "translation": "IBM Plex 无衬线 Thai Looped",
+      "remaining": [
+        "IBM",
+        "Plex",
+        "Thai",
+        "Looped"
+      ]
+    },
+    {
+      "source": "Noto Sans Old North Arabian",
+      "translation": "Noto 无衬线 Old North Arabian",
+      "remaining": [
+        "Noto",
+        "Old",
+        "North",
+        "Arabian"
+      ]
+    },
+    {
+      "source": "Noto Sans Old South Arabian",
+      "translation": "Noto 无衬线 Old South Arabian",
+      "remaining": [
+        "Noto",
+        "Old",
+        "South",
+        "Arabian"
+      ]
+    },
+    {
+      "source": "Noto Sans Pau Cin Hau",
+      "translation": "Noto 无衬线 Pau Cin Hau",
+      "remaining": [
+        "Noto",
+        "Pau",
+        "Cin",
+        "Hau"
+      ]
+    },
+    {
+      "source": "Noto Serif Khitan Small Script",
+      "translation": "Noto Serif Khitan 小 Script",
+      "remaining": [
+        "Noto",
+        "Serif",
+        "Khitan",
+        "Script"
+      ]
+    },
+    {
+      "source": "This site is optimized with the Yoast SEO plugin v27.3 - https://yoast.com/product/yoast-seo-wordpress/",
+      "translation": "此 site 是已优化使用该 Yoast SEO plugin v27.3 - https://yoast.com/产品/yoast-seo-wordpress/",
+      "remaining": [
+        "site",
+        "Yoast",
+        "SEO",
+        "plugin",
+        "yoast",
+        "yoast",
+        "seo",
+        "wordpress"
+      ]
+    },
+    {
+      "source": "generated 36 seconds ago generated in 1.400 seconds served from batcache in 0.003 seconds expires in 264 seconds",
+      "translation": "已生成 36 秒 ago 已生成在 1.400 秒 served 从 batcache 在 0.003 秒 expires 在 264 秒",
+      "remaining": [
+        "ago",
+        "served",
+        "batcache",
+        "expires"
+      ]
+    },
+    {
+      "source": "import fetch from \"node-fetch\"; import fs from \"fs\"; async function generateInvoice() { const response = await fetch(\"https://www.csvlink.app/api/generate\", { method: \"POST\", headers: { \"Content-Type\": \"application/json\", \"Authorization\": \"Bearer YOUR_API_KEY\" }, body: JSON.stringify({ templateId: \"6dec5f4c-a31b-416e-acf5-9debb9e56906\", data: { customerName: \"Jane Smith\", invoiceNumber: \"INV-002\" } }) }); if (!response.ok) { const error = await response.json(); throw new Error(`API Error: ${error.error}`); } const buffer = await response.arrayBuffer(); fs.writeFileSync(\"invoice.pdf\", Buffer.from(buffer)); console.log(\"Invoice saved to invoice.pdf\"); } generateInvoice().catch(console.error);",
+      "translation": "导入获取从 \"node-获取\"; 导入 fs 从 \"fs\"; async function generateInvoice() { const 响应 = await 获取(\"https://www.csvlink.应用/API/生成\", { method: \"POST\", 标头: { \"Content-Type\": \"应用程序/json\", \"授权\": \"Bearer 您的_API_密钥\" }, 正文: json.stringify({ templateId: \"6dec5f4c-31b-416e-acf5-9debb9e56906\", 数据: { customerName: \"Jane Smith\", invoiceNumber: \"INV-002\" } }) }); 如果 (！响应.ok) { const 错误 = await 响应.json(); throw 新错误(`API 错误: ${错误.错误}`); } const buffer = await 响应.arrayBuffer(); fs.writeFileSync(\"发票.pdf\", Buffer.从(buffer)); console.log(\"发票已保存到发票.pdf\"); } generateInvoice().catch(console.错误);",
+      "remaining": [
+        "node",
+        "async",
+        "function",
+        "generateInvoice",
+        "const",
+        "await",
+        "method",
+        "Content",
+        "Type",
+        "stringify",
+        "templateId",
+        "dec",
+        "acf",
+        "debb",
+        "customerName",
+        "Jane",
+        "Smith",
+        "invoiceNumber",
+        "INV",
+        "const",
+        "await",
+        "throw",
+        "const",
+        "buffer",
+        "await",
+        "arrayBuffer",
+        "writeFileSync",
+        "Buffer",
+        "buffer",
+        "console",
+        "log",
+        "generateInvoice",
+        "catch",
+        "console"
+      ]
+    },
+    {
+      "source": "import requests api_key = \"YOUR_API_KEY\" api_url = \"https://www.csvlink.app/api/generate\" headers = { \"Authorization\": f\"Bearer {api_key}\", \"Content-Type\": \"application/json\" } payload = { \"templateId\": \"6dec5f4c-a31b-416e-acf5-9debb9e56906\", \"data\": { \"customerName\": \"Jane Smith\", \"invoiceNumber\": \"INV-002\" } } try: res = requests.post(api_url, headers=headers, json=payload) res.raise_for_status() # Raises an exception for 4xx/5xx errors with open(\"invoice.pdf\", \"wb\") as f: f.write(res.content) print(\"Invoice saved to invoice.pdf\") except requests.exceptions.HTTPError as err: print(f\"HTTP Error: {err.response.status_code} - {err.response.text}\") except requests.exceptions.RequestException as e: print(f\"Request failed: {e}\")",
+      "translation": "导入请求 api_密钥 = \"您的_api_密钥\" api_url = \"https://www.csvlink.应用/api/生成\" 标头 = { \"授权\": f\"Bearer {api_密钥}\", \"Content-Type\": \"应用程序/json\" } 载荷 = { \"templateId\": \"6dec5f4c-31b-416e-acf5-9debb9e56906\", \"数据\": { \"customerName\": \"Jane Smith\", \"invoiceNumber\": \"INV-002\" } } 试用: res = 请求.post(api_url, 标头=标头, json=载荷) res.raise_用于_状态() # Raises exception 用于 4xx/5xx errors 使用打开(\"发票.pdf\", \"wb\") 作为 f: f.write(res.内容) 打印(\"发票已保存到发票.pdf\") except 请求.exceptions.HTTPError 作为 err: 打印(f\"HTTP 错误: {err.响应.状态_代码} - {err.响应.文本}\") except 请求.exceptions.RequestException 作为 e: 打印(f\"请求失败: {e}\")",
+      "remaining": [
+        "url",
+        "Content",
+        "Type",
+        "templateId",
+        "dec",
+        "acf",
+        "debb",
+        "customerName",
+        "Jane",
+        "Smith",
+        "invoiceNumber",
+        "INV",
+        "res",
+        "url",
+        "res",
+        "raise",
+        "Raises",
+        "exception",
+        "errors",
+        "write",
+        "res",
+        "except",
+        "exceptions",
+        "HTTPError",
+        "err",
+        "err",
+        "err",
+        "except",
+        "exceptions",
+        "RequestException"
+      ]
+    },
+    {
+      "source": "{ \"success\": true, \"url\": \"https://cdn.csvlink.app/files/invoice-INV-002.pdf\", \"message\": \"PDF generated successfully.\" }",
+      "translation": "{ \"成功\": true, \"url\": \"https://cdn.csvlink.应用/文件/发票-INV-002.PDF\", \"消息\": \"PDF 已生成 successfully.\" }",
+      "remaining": [
+        "true",
+        "url",
+        "cdn",
+        "INV",
+        "successfully"
+      ]
+    },
+    {
+      "source": "{ \"templateId\": \"6dec5f4c-a31b-416e-acf5-9debb9e56906\" }",
+      "translation": "{ \"templateId\": \"6dec5f4c-31b-416e-acf5-9debb9e56906\" }",
+      "remaining": [
+        "templateId",
+        "dec",
+        "acf",
+        "debb"
+      ]
+    },
+    {
+      "source": "{ \"templateId\": \"6dec5f4c-a31b-416e-acf5-9debb9e56906\", \"data\": { \"customerName\": \"Jane Smith\", \"invoiceNumber\": \"INV-002\", \"date\": \"2025-08-24\", \"amount\": \"250.00\" }, \"options\": { \"format\": \"pdf\", // \"pdf\" | \"png\" | \"jpg\" \"delivery\": \"download\" // \"download\" | \"url\" } }",
+      "translation": "{ \"templateId\": \"6dec5f4c-31b-416e-acf5-9debb9e56906\", \"数据\": { \"customerName\": \"Jane Smith\", \"invoiceNumber\": \"INV-002\", \"日期\": \"2025-08-24\", \"金额\": \"250.00\" }, \"选项\": { \"格式\": \"pdf\", // \"pdf\" | \"png\" | \"jpg\" \"交付\": \"下载\" // \"下载\" | \"url\" } }",
+      "remaining": [
+        "templateId",
+        "dec",
+        "acf",
+        "debb",
+        "customerName",
+        "Jane",
+        "Smith",
+        "invoiceNumber",
+        "INV",
+        "url"
+      ]
+    },
+    {
+      "source": "{ \"templates\": [ { \"id\": \"6dec5f4c-a31b-416e-acf5-9debb9e56906\", \"name\": \"Default Invoice\", \"description\": \"Basic invoice layout\", \"createdAt\": \"2025-08-20T12:00:00Z\" } ] }",
+      "translation": "{ \"模板\": [ { \"id\": \"6dec5f4c-31b-416e-acf5-9debb9e56906\", \"姓名\": \"默认发票\", \"说明\": \"基础发票版式\", \"createdAt\": \"2025-08-20T12:00:00Z\" } ] }",
+      "remaining": [
+        "dec",
+        "acf",
+        "debb",
+        "createdAt"
+      ]
+    }
+  ]
+}
