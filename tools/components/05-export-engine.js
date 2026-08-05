@@ -851,17 +851,132 @@ async function recordDownloadAndRequestFeedback(downloadMeta = {}) {
 
 ensureDownloadFeedbackUI();
 
+const FREE_EXPORT_DOCUMENT_LIMIT = 10;
+const FREE_EXPORT_BROWSER_ID_KEY = 'csvlink-free-export-browser-id';
+
+function getFreeExportBrowserId() {
+    try {
+        let browserId = localStorage.getItem(FREE_EXPORT_BROWSER_ID_KEY);
+        if (!browserId) {
+            browserId = globalThis.crypto?.randomUUID
+                ? globalThis.crypto.randomUUID()
+                : `${Date.now()}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`;
+            localStorage.setItem(FREE_EXPORT_BROWSER_ID_KEY, browserId);
+        }
+        return browserId;
+    } catch (error) {
+        return 'storage-unavailable';
+    }
+}
+
+function buildFreeExportFingerprint() {
+    const screenInfo = typeof screen !== 'undefined'
+        ? `${screen.width || 0}x${screen.height || 0}x${screen.colorDepth || 0}`
+        : 'screen-unavailable';
+    const timezone = (() => {
+        try {
+            return Intl.DateTimeFormat().resolvedOptions().timeZone || 'timezone-unavailable';
+        } catch (error) {
+            return 'timezone-unavailable';
+        }
+    })();
+
+    return [
+        navigator.userAgent || '',
+        navigator.platform || '',
+        Array.isArray(navigator.languages) ? navigator.languages.join(',') : (navigator.language || ''),
+        screenInfo,
+        timezone,
+        navigator.hardwareConcurrency || 0,
+        navigator.deviceMemory || 0,
+        navigator.maxTouchPoints || 0
+    ].join('|');
+}
+
+function setFreeExportModalMessage(title, message) {
+    if (!proLimitModal) return;
+    const heading = proLimitModal.querySelector('h3');
+    const paragraphs = proLimitModal.querySelectorAll('.stack p');
+    if (heading) heading.textContent = title || 'Free export limit';
+    if (paragraphs[0]) paragraphs[0].textContent = message || 'Free users can export up to 10 documents once per day.';
+    if (paragraphs[1]) paragraphs[1].textContent = 'Upgrade to Pro for unlimited exports, API access, and more.';
+    proLimitModal.style.display = 'flex';
+}
+
+async function claimFreeExportAccess({ outputCount = 1, exportType = 'document_export' } = {}) {
+    if (userRole === 'pro' || userRole === 'admin') {
+        return { allowed: true, paid: true };
+    }
+
+    const safeOutputCount = Math.max(1, Math.min(Number(outputCount) || 1, FREE_EXPORT_DOCUMENT_LIMIT));
+    let accessToken = null;
+    try {
+        const { data: { session } = {} } = await supabase.auth.getSession();
+        accessToken = session?.access_token || null;
+    } catch (error) {
+        console.warn('Could not read the current session before export:', error);
+    }
+
+    const headers = { 'Content-Type': 'application/json' };
+    if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
+
+    let response;
+    try {
+        response = await fetch('/api/free-export', {
+            method: 'POST',
+            headers,
+            credentials: 'same-origin',
+            body: JSON.stringify({
+                browserId: getFreeExportBrowserId(),
+                fingerprint: buildFreeExportFingerprint(),
+                outputCount: safeOutputCount,
+                exportType
+            })
+        });
+    } catch (error) {
+        console.error('Free export verification failed:', error);
+        showNotification('CSVLink could not verify today\'s free export. Please try again.', 'error', 4200);
+        return { allowed: false, reason: 'verification_unavailable' };
+    }
+
+    let result = null;
+    try {
+        result = await response.json();
+    } catch (error) {
+        result = null;
+    }
+
+    if (response.ok && result?.allowed) return result;
+
+    if (response.status === 429 || result?.reason === 'daily_limit_reached') {
+        setFreeExportModalMessage(
+            'Today\'s free export was already used',
+            'The free plan includes one export of up to 10 documents per day. This browser, device, network, or account has already used today\'s export.'
+        );
+        return { allowed: false, reason: 'daily_limit_reached' };
+    }
+
+    const message = result?.error || 'CSVLink could not verify today\'s free export. Please try again.';
+    showNotification(message, 'error', 4200);
+    return { allowed: false, reason: result?.reason || 'verification_failed' };
+}
+
+function showFreeBatchTruncatedMessage() {
+    setFreeExportModalMessage(
+        '10-document free limit',
+        'CSVLink exported the first 10 documents. The free plan includes one batch of up to 10 documents per day.'
+    );
+}
+
 // Main handler for the primary export button
 async function handleExport() {
     syncCurrentPageStateFromCanvas();
     const format = exportFormatSelect.value;
     const hasData = dataRows.length > 0;
-    const totalRows = dataRows.length;
     const title = ($('#titleInput').value || 'Untitled_Template').trim();
     const isFreeUser = userRole !== 'pro' && userRole !== 'admin';
 
-    // 2. Apply freemium limit
-    // If identifier column is set, deduplicate rows by identifier for export
+    // If identifier column is set, deduplicate rows by identifier for export.
     let exportRows;
     if (hasData && identifierColumn && headers.includes(identifierColumn)) {
         const seen = new Set();
@@ -874,13 +989,8 @@ async function handleExport() {
     } else {
         exportRows = hasData ? dataRows : [null];
     }
-    const rowsToProcess = hasData
-        ? (isFreeUser ? exportRows.slice(0, 15) : exportRows)
-        : [null];
 
-    const zip = new JSZip();
-
-    // Handle JSON export separately
+    // Template JSON remains available because it does not generate finished documents.
     if (format === 'json') {
         const exportPayload = {
             version: 'csvlink-template-v2',
@@ -893,12 +1003,23 @@ async function handleExport() {
             exportFormat: 'json',
             exportType: 'template_json',
             fileName: `${title}.json`,
-            rowCount: hasData ? rowsToProcess.length : 0,
+            rowCount: hasData ? exportRows.length : 0,
             selectedPageIndexes: [currentPageIndex]
         });
         return;
     }
 
+    const totalRows = exportRows.length;
+    const rowsToProcess = isFreeUser ? exportRows.slice(0, FREE_EXPORT_DOCUMENT_LIMIT) : exportRows;
+    if (isFreeUser) {
+        const claim = await claimFreeExportAccess({
+            outputCount: hasData ? rowsToProcess.length : 1,
+            exportType: hasData ? 'batch_zip' : 'single_document'
+        });
+        if (!claim.allowed) return;
+    }
+
+    const zip = new JSZip();
     for (let i = 0; i < rowsToProcess.length; i++) {
         const row = rowsToProcess[i];
         const originalStates = row ? applyDataBindingsForRow(row) : new Map();
@@ -925,12 +1046,11 @@ async function handleExport() {
             }
         }
 
-        // Restore original states
         restoreDataBindingsState(originalStates);
     }
 
     if (hasData) {
-        const content = await zip.generateAsync({ type: "blob" });
+        const content = await zip.generateAsync({ type: 'blob' });
         saveAs(content, `${title}.zip`);
     }
 
@@ -942,11 +1062,9 @@ async function handleExport() {
         selectedPageIndexes: [currentPageIndex]
     });
 
-    // 2. Show pro modal AFTER export if limit was hit
-    if (isFreeUser && totalRows > 15) {
-        proLimitModal.style.display = 'flex';
-    }
+    if (isFreeUser && totalRows > FREE_EXPORT_DOCUMENT_LIMIT) showFreeBatchTruncatedMessage();
 }
+
 // Handle the "Single PDF" export button
 async function handleSinglePdfExport() {
     syncCurrentPageStateFromCanvas();
@@ -965,8 +1083,19 @@ async function handleSinglePdfExport() {
     } else {
         singlePdfExportRows = dataRows;
     }
+
     const totalRows = singlePdfExportRows.length;
-    const rowsToProcess = isFreeUser ? singlePdfExportRows.slice(0, 15) : singlePdfExportRows;
+    const rowsToProcess = isFreeUser
+        ? singlePdfExportRows.slice(0, FREE_EXPORT_DOCUMENT_LIMIT)
+        : singlePdfExportRows;
+
+    if (isFreeUser) {
+        const claim = await claimFreeExportAccess({
+            outputCount: rowsToProcess.length,
+            exportType: 'single_pdf'
+        });
+        if (!claim.allowed) return;
+    }
 
     const title = ($('#titleInput').value || 'Untitled_Template').trim();
     if (!pageRect) { alert('Page object not found.'); return; }
@@ -976,12 +1105,10 @@ async function handleSinglePdfExport() {
 
     for (const row of rowsToProcess) {
         const originalStates = applyDataBindingsForRow(row);
-
         const dataURL = await generateCanvasDataURL('jpeg');
         if (!firstPage) pdf.addPage([pageW, pageH]);
         pdf.addImage(dataURL, 'JPEG', 0, 0, pageW, pageH);
         firstPage = false;
-
         restoreDataBindingsState(originalStates);
     }
 
@@ -994,9 +1121,7 @@ async function handleSinglePdfExport() {
         selectedPageIndexes: [currentPageIndex]
     });
 
-    if (isFreeUser && totalRows > 15) {
-        proLimitModal.style.display = 'flex';
-    }
+    if (isFreeUser && totalRows > FREE_EXPORT_DOCUMENT_LIMIT) showFreeBatchTruncatedMessage();
 }
 
 async function handleExportAllCanvases() {
@@ -1005,15 +1130,16 @@ async function handleExportAllCanvases() {
 
     const title = ($('#titleInput').value || 'Untitled_Template').trim();
     const format = exportFormatSelect?.value || 'pdf';
-    const selectedPageIndexes = getSelectedExportPageIndexes();
-    if (!selectedPageIndexes.length) {
+    const requestedPageIndexes = getSelectedExportPageIndexes();
+    if (!requestedPageIndexes.length) {
         showNotification('Select at least one page to export.', 'info', 2200);
         return;
     }
 
+    // Template JSON remains available because it does not generate finished documents.
     if (format === 'json') {
         const payload = buildTemplatePayload();
-        const selectedPages = selectedPageIndexes
+        const selectedPages = requestedPageIndexes
             .map(index => deepClone(payload.pages?.[index]))
             .filter(Boolean);
         if (!selectedPages.length) {
@@ -1043,9 +1169,22 @@ async function handleExportAllCanvases() {
             exportType: 'pages_json',
             fileName: `${title}_pages.json`,
             rowCount: 0,
-            selectedPageIndexes
+            selectedPageIndexes: requestedPageIndexes
         });
         return;
+    }
+
+    const isFreeUser = userRole !== 'pro' && userRole !== 'admin';
+    const selectedPageIndexes = isFreeUser
+        ? requestedPageIndexes.slice(0, FREE_EXPORT_DOCUMENT_LIMIT)
+        : requestedPageIndexes;
+
+    if (isFreeUser) {
+        const claim = await claimFreeExportAccess({
+            outputCount: selectedPageIndexes.length,
+            exportType: format === 'pdf' ? 'pages_pdf' : 'pages_image'
+        });
+        if (!claim.allowed) return;
     }
 
     if (format === 'pdf') {
@@ -1071,6 +1210,7 @@ async function handleExportAllCanvases() {
             rowCount: 0,
             selectedPageIndexes
         });
+        if (isFreeUser && requestedPageIndexes.length > FREE_EXPORT_DOCUMENT_LIMIT) showFreeBatchTruncatedMessage();
         return;
     }
 
@@ -1108,7 +1248,9 @@ async function handleExportAllCanvases() {
         rowCount: 0,
         selectedPageIndexes
     });
+    if (isFreeUser && requestedPageIndexes.length > FREE_EXPORT_DOCUMENT_LIMIT) showFreeBatchTruncatedMessage();
 }
+
 
 // Event Listeners for Export
 exportBtn.addEventListener('click', trackDownloadErrors(handleExport, () => getExportFailureMeta('primary_export')));
