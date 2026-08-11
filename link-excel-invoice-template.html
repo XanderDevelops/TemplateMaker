@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Link your Excel table with an invoice template and preview how spreadsheet columns map to invoice fields with CSVLink.">
+  <meta name="robots" content="index,follow,max-image-preview:large">
+  <link rel="icon" href="/assets/images/android-chrome-192x192.png" type="image/png">
+  <link rel="canonical" href="https://csvlink.app/link-excel-invoice-template">
+  <title>Link Excel to an Invoice Template | CSVLink</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/css/link-excel-invoice-template.css">
+  <script src="https://cdn.jsdelivr.net/npm/fabric@5.3.0/dist/fabric.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="CSVLink home">
+      <img src="/assets/images/android-chrome-512x512.png" alt="CSVLink">
+      <span>CSVLink</span>
+    </a>
+    <div class="topbar-status" aria-label="Workflow">
+      <span class="status-dot"></span>
+      Excel → template linking
+    </div>
+    <div class="top-actions">
+      <a class="top-link" href="/login">Sign in</a>
+      <a class="top-button" href="/tool">Open editor</a>
+    </div>
+  </header>
+
+  <main class="landing-shell">
+    <section class="hero-copy" aria-labelledby="hero-title">
+      <div>
+        <p class="eyebrow">Template automation</p>
+        <h1 id="hero-title">Link your Excel table with your invoice template.</h1>
+        <p class="hero-subtitle">Choose a document template, upload your spreadsheet, and connect each Excel column to the field it should fill.</p>
+      </div>
+      <div class="hero-tip">
+        <span class="tip-icon" aria-hidden="true">↗</span>
+        <span>Select a column, then click a field on the invoice to link it.</span>
+      </div>
+    </section>
+
+    <section class="workspace" aria-label="CSVLink template linking demo">
+      <aside class="document-sidebar" aria-label="Document types">
+        <div class="sidebar-heading">Documents</div>
+        <nav id="documentTypes" class="document-types">
+          <button class="document-type active" data-document="invoices">
+            <span class="doc-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M7 3h8l4 4v14H7z"></path><path d="M15 3v5h5"></path><path d="M10 12h6M10 16h6"></path></svg>
+            </span>
+            <span>Invoices</span>
+          </button>
+          <button class="document-type" data-document="quotes">
+            <span class="doc-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M6 4h12v16H6z"></path><path d="M9 8h6M9 12h6M9 16h3"></path></svg>
+            </span>
+            <span>Quotes</span>
+          </button>
+          <button class="document-type" data-document="receipts">
+            <span class="doc-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M7 3h10v18l-2-1.5L13 21l-2-1.5L9 21l-2-1.5z"></path><path d="M10 8h4M10 12h4"></path></svg>
+            </span>
+            <span>Receipts</span>
+          </button>
+          <button class="document-type" data-document="packing-slips">
+            <span class="doc-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M4 7l8-4 8 4-8 4z"></path><path d="M4 7v10l8 4 8-4V7"></path><path d="M12 11v10"></path></svg>
+            </span>
+            <span>Packing slips</span>
+          </button>
+          <button class="document-type" data-document="certificates">
+            <span class="doc-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="9" r="5"></circle><path d="M9 14l-1 7 4-2 4 2-1-7"></path></svg>
+            </span>
+            <span>Certificates</span>
+          </button>
+          <button class="document-type" data-document="labels">
+            <span class="doc-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M4 4h8l8 8-8 8-8-8z"></path><circle cx="9" cy="9" r="1.4"></circle></svg>
+            </span>
+            <span>Labels</span>
+          </button>
+        </nav>
+      </aside>
+
+      <aside class="template-sidebar" aria-label="Templates">
+        <div class="panel-title-row">
+          <div>
+            <span class="panel-kicker" id="templateCategoryLabel">Invoices</span>
+            <h2>Templates</h2>
+          </div>
+          <span class="template-count" id="templateCount">1</span>
+        </div>
+        <div id="templateList" class="template-list">
+          <button class="template-card active" data-template="invoice-template-3">
+            <div class="template-thumb-wrap">
+              <canvas id="templateThumbnail" width="116" height="154" aria-hidden="true"></canvas>
+            </div>
+            <div class="template-card-copy">
+              <strong>Classic Invoice</strong>
+              <span>Clean, itemized invoice</span>
+            </div>
+            <span class="template-check" aria-label="Selected">
+              <svg viewBox="0 0 24 24"><path d="M6 12.5l4 4L18 8"></path></svg>
+            </span>
+          </button>
+        </div>
+        <div id="templateEmpty" class="template-empty" hidden>
+          <div class="empty-icon">+</div>
+          <strong>More templates coming soon</strong>
+          <span>This document type will appear here when templates are available.</span>
+        </div>
+      </aside>
+
+      <section class="preview-panel" aria-label="Invoice template preview">
+        <div class="preview-toolbar">
+          <div>
+            <span class="preview-label">Preview</span>
+            <strong id="activeTemplateName">Classic Invoice</strong>
+          </div>
+          <div class="preview-help" id="previewHelp">
+            <span class="preview-help-dot"></span>
+            Click a column to start linking
+          </div>
+        </div>
+        <div class="canvas-stage" id="canvasStage">
+          <div class="canvas-page-shell" id="canvasPageShell">
+            <canvas id="invoiceCanvas" width="768" height="1024"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <aside class="data-panel" aria-label="Excel upload and columns">
+        <div class="upload-card" id="dropZone">
+          <input id="excelInput" type="file" accept=".xlsx,.xls,.csv" hidden>
+          <div class="upload-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M12 16V4"></path><path d="M7 9l5-5 5 5"></path><path d="M5 14v5h14v-5"></path></svg>
+          </div>
+          <strong>Drag and drop your Excel file</strong>
+          <span>.xlsx, .xls or .csv</span>
+          <button type="button" id="uploadButton">Upload file</button>
+          <div class="file-pill" id="filePill" hidden>
+            <span class="file-pill-icon">X</span>
+            <span class="file-pill-name" id="fileName"></span>
+            <button type="button" id="clearFile" aria-label="Remove uploaded file">×</button>
+          </div>
+        </div>
+
+        <div class="columns-card">
+          <div class="columns-heading">
+            <div>
+              <span class="panel-kicker">Excel table</span>
+              <h2>Columns</h2>
+            </div>
+            <span class="columns-count" id="columnsCount">8</span>
+          </div>
+          <p class="columns-instruction" id="columnsInstruction">Example columns are loaded so you can try the linking flow.</p>
+          <div class="columns-list" id="columnsList" aria-live="polite"></div>
+          <div class="columns-footer">
+            <span><i class="legend-dot linked"></i><span id="linkedCount">0</span> linked</span>
+            <span><i class="legend-dot open"></i><span id="openCount">0</span> available</span>
+          </div>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="/assets/js/link-excel-invoice-template.js"></script>
+</body>
+</html>

@@ -239,6 +239,11 @@
       "source": "/quickbooks-invoice-generator.html",
       "destination": "/quickbooks-invoice-generator",
       "permanent": true
+    },
+    {
+      "source": "/link-excel-invoice-template.html",
+      "destination": "/link-excel-invoice-template",
+      "permanent": true
     }
   ],
   "rewrites": [
@@ -377,6 +382,10 @@
     {
       "source": "/quickbooks-invoice-generator",
       "destination": "/quickbooks-invoice-generator.html"
+    },
+    {
+      "source": "/link-excel-invoice-template",
+      "destination": "/link-excel-invoice-template.html"
     }
   ]
 }
