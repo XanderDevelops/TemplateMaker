@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 const FREE_EXPORT_LIMIT = 10;
 const DEVICE_COOKIE_NAME = 'csvlink_free_device';
 const DEVICE_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
+const LIMIT_DIMENSIONS = new Set(['rows', 'pages', 'documents']);
 
 function firstHeader(value) {
     return Array.isArray(value) ? value[0] : (value || '');
@@ -84,6 +85,29 @@ function getNextUtcDayIso() {
     )).toISOString();
 }
 
+async function recordDownloadLimitAttempt(supabase, payload) {
+    if (!payload || payload.requested_output_count <= FREE_EXPORT_LIMIT) return null;
+
+    try {
+        const { data, error } = await supabase
+            .from('download_limit_attempts')
+            .insert(payload)
+            .select('id')
+            .single();
+
+        if (error) {
+            // Tracking must never block a legitimate export if the migration has not
+            // been applied yet or Supabase analytics is temporarily unavailable.
+            console.error('Could not record download limit attempt:', error);
+            return null;
+        }
+        return data?.id || null;
+    } catch (error) {
+        console.error('Could not record download limit attempt:', error);
+        return null;
+    }
+}
+
 export default async function handler(req, res) {
     res.setHeader('Cache-Control', 'private, no-store, max-age=0');
 
@@ -141,6 +165,13 @@ export default async function handler(req, res) {
         });
     }
 
+    const parsedRequestedOutputCount = Number.parseInt(req.body?.requestedOutputCount, 10);
+    const requestedOutputCount = Number.isFinite(parsedRequestedOutputCount)
+        ? Math.max(outputCount, Math.min(parsedRequestedOutputCount, 1000000))
+        : outputCount;
+    const limitDimensionRaw = normalizeText(req.body?.limitDimension || 'documents', 40).toLowerCase();
+    const limitDimension = LIMIT_DIMENSIONS.has(limitDimensionRaw) ? limitDimensionRaw : 'documents';
+
     let deviceToken = readSignedDeviceToken(req, hashSecret);
     if (!deviceToken) {
         deviceToken = randomBytes(24).toString('hex');
@@ -153,40 +184,88 @@ export default async function handler(req, res) {
     const effectiveBrowserId = browserId.length >= 12 ? browserId : `cookie:${deviceToken}`;
     const effectiveFingerprint = fingerprint.length >= 20 ? fingerprint : `browser:${effectiveBrowserId}`;
 
-    const claim = {
+    const identity = {
         user_id: user?.id || null,
+        anonymous_session_id: browserId.length >= 12 ? browserId : null,
         device_hash: hmac(`device:${deviceToken}`, hashSecret),
         browser_hash: hmac(`browser:${effectiveBrowserId}`, hashSecret),
         fingerprint_hash: hmac(`fingerprint:${effectiveFingerprint}`, hashSecret),
         ip_hash: hmac(`ip:${ip}`, hashSecret),
-        fingerprint_ip_hash: hmac(`fingerprint-ip:${effectiveFingerprint}|${ip}`, hashSecret),
-        export_type: normalizeText(req.body?.exportType || 'document_export', 80) || 'document_export',
+        fingerprint_ip_hash: hmac(`fingerprint-ip:${effectiveFingerprint}|${ip}`, hashSecret)
+    };
+
+    const exportType = normalizeText(req.body?.exportType || 'document_export', 80) || 'document_export';
+    const templateTitle = normalizeText(req.body?.templateTitle || 'Untitled_Template', 300) || 'Untitled_Template';
+
+    const claim = {
+        user_id: identity.user_id,
+        device_hash: identity.device_hash,
+        browser_hash: identity.browser_hash,
+        fingerprint_hash: identity.fingerprint_hash,
+        ip_hash: identity.ip_hash,
+        fingerprint_ip_hash: identity.fingerprint_ip_hash,
+        export_type: exportType,
         output_count: outputCount
     };
+
+    const limitAttemptBase = requestedOutputCount > FREE_EXPORT_LIMIT
+        ? {
+            ...identity,
+            template_title: templateTitle,
+            export_type: exportType,
+            limit_dimension: limitDimension,
+            requested_output_count: requestedOutputCount,
+            free_limit: FREE_EXPORT_LIMIT,
+            blocked_output_count: Math.max(0, requestedOutputCount - outputCount)
+        }
+        : null;
 
     const { error } = await supabase.from('free_export_claims').insert(claim);
     if (error) {
         if (error.code === '23505') {
+            const limitAttemptId = await recordDownloadLimitAttempt(supabase, limitAttemptBase && {
+                ...limitAttemptBase,
+                allowed_output_count: 0,
+                blocked_output_count: requestedOutputCount,
+                outcome: 'daily_limit_reached'
+            });
+
             return res.status(429).json({
                 allowed: false,
                 reason: 'daily_limit_reached',
                 limit: FREE_EXPORT_LIMIT,
+                limitAttemptId,
                 nextAvailableAt: getNextUtcDayIso()
             });
         }
+
+        const limitAttemptId = await recordDownloadLimitAttempt(supabase, limitAttemptBase && {
+            ...limitAttemptBase,
+            allowed_output_count: 0,
+            blocked_output_count: requestedOutputCount,
+            outcome: 'claim_failed'
+        });
 
         console.error('Could not record free export claim:', error);
         return res.status(503).json({
             allowed: false,
             reason: 'claim_failed',
+            limitAttemptId,
             error: 'CSVLink could not verify today\'s free export. Please try again.'
         });
     }
+
+    const limitAttemptId = await recordDownloadLimitAttempt(supabase, limitAttemptBase && {
+        ...limitAttemptBase,
+        allowed_output_count: outputCount,
+        outcome: 'partial_export_granted'
+    });
 
     return res.status(200).json({
         allowed: true,
         paid: false,
         limit: FREE_EXPORT_LIMIT,
+        limitAttemptId,
         remainingToday: 0,
         nextAvailableAt: getNextUtcDayIso()
     });

@@ -13953,16 +13953,20 @@ ensureDownloadFeedbackUI();
 
 const FREE_EXPORT_DOCUMENT_LIMIT = 10;
 const FREE_EXPORT_BROWSER_ID_KEY = 'csvlink-free-export-browser-id';
+const CSVLINK_ACTIVITY_ANONYMOUS_SESSION_KEY = 'csvlink-anonymous-session-id';
 
 function getFreeExportBrowserId() {
     try {
-        let browserId = localStorage.getItem(FREE_EXPORT_BROWSER_ID_KEY);
+        let browserId = localStorage.getItem(CSVLINK_ACTIVITY_ANONYMOUS_SESSION_KEY)
+            || localStorage.getItem(FREE_EXPORT_BROWSER_ID_KEY);
         if (!browserId) {
             browserId = globalThis.crypto?.randomUUID
                 ? globalThis.crypto.randomUUID()
                 : `${Date.now()}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`;
-            localStorage.setItem(FREE_EXPORT_BROWSER_ID_KEY, browserId);
         }
+        // Keep download-limit analytics and activity_logs on the same anonymous identity.
+        localStorage.setItem(CSVLINK_ACTIVITY_ANONYMOUS_SESSION_KEY, browserId);
+        localStorage.setItem(FREE_EXPORT_BROWSER_ID_KEY, browserId);
         return browserId;
     } catch (error) {
         return 'storage-unavailable';
@@ -14003,12 +14007,14 @@ function setFreeExportModalMessage(title, message) {
     proLimitModal.style.display = 'flex';
 }
 
-async function claimFreeExportAccess({ outputCount = 1, exportType = 'document_export' } = {}) {
+async function claimFreeExportAccess({ outputCount = 1, requestedOutputCount = outputCount, exportType = 'document_export', limitDimension = 'documents' } = {}) {
     if (userRole === 'pro' || userRole === 'admin') {
         return { allowed: true, paid: true };
     }
 
     const safeOutputCount = Math.max(1, Math.min(Number(outputCount) || 1, FREE_EXPORT_DOCUMENT_LIMIT));
+    const safeRequestedOutputCount = Math.max(safeOutputCount, Math.floor(Number(requestedOutputCount) || safeOutputCount));
+    const safeLimitDimension = ['rows', 'pages', 'documents'].includes(limitDimension) ? limitDimension : 'documents';
     let accessToken = null;
     try {
         const { data: { session } = {} } = await supabase.auth.getSession();
@@ -14030,7 +14036,10 @@ async function claimFreeExportAccess({ outputCount = 1, exportType = 'document_e
                 browserId: getFreeExportBrowserId(),
                 fingerprint: buildFreeExportFingerprint(),
                 outputCount: safeOutputCount,
-                exportType
+                requestedOutputCount: safeRequestedOutputCount,
+                exportType,
+                limitDimension: safeLimitDimension,
+                templateTitle: ($('#titleInput')?.value || 'Untitled_Template').trim()
             })
         });
     } catch (error) {
@@ -14114,7 +14123,9 @@ async function handleExport() {
     if (isFreeUser) {
         const claim = await claimFreeExportAccess({
             outputCount: hasData ? rowsToProcess.length : 1,
-            exportType: hasData ? 'batch_zip' : 'single_document'
+            requestedOutputCount: hasData ? totalRows : 1,
+            exportType: hasData ? 'batch_zip' : 'single_document',
+            limitDimension: hasData ? 'rows' : 'documents'
         });
         if (!claim.allowed) return;
     }
@@ -14192,7 +14203,9 @@ async function handleSinglePdfExport() {
     if (isFreeUser) {
         const claim = await claimFreeExportAccess({
             outputCount: rowsToProcess.length,
-            exportType: 'single_pdf'
+            requestedOutputCount: totalRows,
+            exportType: 'single_pdf',
+            limitDimension: 'rows'
         });
         if (!claim.allowed) return;
     }
@@ -14282,7 +14295,9 @@ async function handleExportAllCanvases() {
     if (isFreeUser) {
         const claim = await claimFreeExportAccess({
             outputCount: selectedPageIndexes.length,
-            exportType: format === 'pdf' ? 'pages_pdf' : 'pages_image'
+            requestedOutputCount: requestedPageIndexes.length,
+            exportType: format === 'pdf' ? 'pages_pdf' : 'pages_image',
+            limitDimension: 'pages'
         });
         if (!claim.allowed) return;
     }
@@ -14379,6 +14394,19 @@ document.addEventListener('click', (event) => {
 });
 syncExportPageSelectorUI();
 on('#closeProLimitModal', 'click', () => proLimitModal.style.display = 'none');
+const proLimitUpgradeLink = proLimitModal?.querySelector('a[href="/#pricing"]');
+if (proLimitUpgradeLink) {
+    proLimitUpgradeLink.addEventListener('click', async (event) => {
+        event.preventDefault();
+        const destination = proLimitUpgradeLink.href;
+        await logCsvlinkActivity('download_limit_upgrade_clicked', {
+            free_limit: FREE_EXPORT_DOCUMENT_LIMIT,
+            loaded_row_count: Array.isArray(dataRows) ? dataRows.length : 0,
+            modal_title: proLimitModal?.querySelector('h3')?.textContent || null
+        }, { status: 'info' });
+        window.location.href = destination;
+    });
+}
 
 // Binding logic
 function applyBinding(o, prop, val, binding = null) {
