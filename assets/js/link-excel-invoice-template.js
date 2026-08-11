@@ -57,11 +57,13 @@
     templateEmpty: document.getElementById('templateEmpty'),
     templateCount: document.getElementById('templateCount'),
     templateCategoryLabel: document.getElementById('templateCategoryLabel'),
+    templateAddButton: document.getElementById('templateAddButton'),
     invoiceCanvas: document.getElementById('invoiceCanvas'),
     templateThumbnail: document.getElementById('templateThumbnail'),
     canvasPageShell: document.getElementById('canvasPageShell'),
     fieldLinkOverlays: document.getElementById('fieldLinkOverlays'),
     previewHelp: document.getElementById('previewHelp'),
+    previewLinkedBadge: document.getElementById('previewLinkedBadge'),
     dropZone: document.getElementById('dropZone'),
     uploadButton: document.getElementById('uploadButton'),
     excelInput: document.getElementById('excelInput'),
@@ -73,6 +75,7 @@
     columnsList: document.getElementById('columnsList'),
     columnsCount: document.getElementById('columnsCount'),
     columnsInstruction: document.getElementById('columnsInstruction'),
+    calculatedColumnButton: document.getElementById('calculatedColumnButton'),
     linkedCount: document.getElementById('linkedCount'),
     openCount: document.getElementById('openCount'),
     toast: document.getElementById('toast')
@@ -168,6 +171,7 @@
     els.columnsCount.textContent = state.columns.length;
     els.linkedCount.textContent = linked;
     els.openCount.textContent = Math.max(0, state.columns.length - linked);
+    if (els.previewLinkedBadge) els.previewLinkedBadge.hidden = linked === 0;
     renderFieldLinkIndicators();
   }
 
@@ -185,11 +189,11 @@
     if (state.selectedColumn) {
       els.canvasPageShell.classList.add('linking');
       els.previewHelp.classList.add('active');
-      els.previewHelp.lastChild.textContent = ` Click a field to link “${state.selectedColumn}”`;
+      els.previewHelp.lastChild.textContent = ' Click a field to link';
     } else {
       els.canvasPageShell.classList.remove('linking');
       els.previewHelp.classList.remove('active');
-      els.previewHelp.lastChild.textContent = ' Click a column to start linking';
+      els.previewHelp.lastChild.textContent = ' Click a field to link';
     }
   }
 
@@ -344,6 +348,11 @@
     const sampleRows = template.data?.rows || [];
     const sampleRow = sampleRows[0] || {};
     setColumns(sampleHeaders, sampleRow, { autoLink: true, rows: sampleRows });
+    state.fileName = 'invoice_data.xlsx';
+    els.fileName.textContent = state.fileName;
+    els.fileMeta.textContent = `${sampleHeaders.length} columns · ${sampleRows.length} ${sampleRows.length === 1 ? 'row' : 'rows'}`;
+    els.filePill.hidden = false;
+    els.columnsInstruction.textContent = 'Select a column to link to the invoice.';
   }
 
   function handleDocumentType(button) {
@@ -391,7 +400,7 @@
       els.fileMeta.textContent = `${result.headers.length} columns · ${result.rowCount} ${result.rowCount === 1 ? 'row' : 'rows'}`;
       els.filePill.hidden = false;
       els.dropZone.classList.add('has-file');
-      els.columnsInstruction.textContent = 'Columns from your file. Linked fields are marked automatically when CSVLink finds a clear match.';
+      els.columnsInstruction.textContent = 'Select a column to link to the invoice.';
       showToast(`Loaded ${result.headers.length} columns and ${result.rowCount} rows from ${file.name}.`);
     } catch (error) {
       console.error(error);
@@ -407,7 +416,7 @@
     els.dropZone.classList.remove('has-file');
     els.fileName.textContent = '';
     els.fileMeta.textContent = '';
-    els.columnsInstruction.textContent = 'Example columns are loaded so you can try the linking flow.';
+    els.columnsInstruction.textContent = 'Select a column to link to the invoice.';
     const sampleRows = state.template.data?.rows || [];
     setColumns(state.template.data?.headers || [], sampleRows[0] || {}, { autoLink: true, rows: sampleRows });
     showToast('Example columns restored.');
@@ -490,6 +499,9 @@
 
   function setupEvents() {
     els.openEditorButton?.addEventListener('click', openEditorWithCurrentState);
+
+    els.templateAddButton?.addEventListener('click', () => showToast('More templates are coming soon.'));
+    els.calculatedColumnButton?.addEventListener('click', () => showToast('Calculated columns are available in the editor.'));
 
     els.documentTypes.addEventListener('click', event => {
       const button = event.target.closest('.document-type');

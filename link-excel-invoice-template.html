@@ -10,8 +10,8 @@
   <title>Link Excel to an Invoice Template | CSVLink</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/assets/css/link-excel-invoice-template.css?v=20260811c">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/css/link-excel-invoice-template.css?v=20260811d">
   <script src="https://cdn.jsdelivr.net/npm/fabric@5.3.0/dist/fabric.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
@@ -30,8 +30,12 @@
       <a href="/custom-pdf-documents">Custom PDFs</a>
     </nav>
     <div class="top-actions">
+      <a class="help-button" href="/invoice-how-it-works" aria-label="Help">?</a>
       <a class="top-link" href="/login">Sign in</a>
-      <a class="top-button" id="openEditorButton" href="/tool">Open editor</a>
+      <a class="top-button" id="openEditorButton" href="/tool">
+        <span>Open editor</span>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 5h5v5"></path><path d="M19 5l-8 8"></path><path d="M18 13v5a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"></path></svg>
+      </a>
     </div>
   </header>
 
@@ -42,9 +46,21 @@
         <h1 id="hero-title">Link your Excel table with your invoice template.</h1>
         <p class="hero-subtitle">Choose a document template, upload your spreadsheet, and connect each Excel column to the field it should fill.</p>
       </div>
-      <div class="hero-tip">
-        <span class="tip-icon" aria-hidden="true">↗</span>
-        <span>Select a column, then click a field on the invoice to link it.</span>
+      <div class="hero-steps" aria-label="How linking works">
+        <div class="hero-step active">
+          <span class="step-number">1</span>
+          <span class="step-copy"><strong>Select a column</strong><small>from your Excel file</small></span>
+        </div>
+        <span class="step-chevron" aria-hidden="true">›</span>
+        <div class="hero-step">
+          <span class="step-number">2</span>
+          <span class="step-copy"><strong>Click a field</strong><small>on the invoice</small></span>
+        </div>
+        <span class="step-chevron" aria-hidden="true">›</span>
+        <div class="hero-step">
+          <span class="step-number">3</span>
+          <span class="step-copy"><strong>Review &amp; export</strong><small>your linked template</small></span>
+        </div>
       </div>
     </section>
 
@@ -89,15 +105,20 @@
             <span>Labels</span>
           </button>
         </nav>
+        <a class="sidebar-help" href="/invoice-how-it-works">
+          <span class="sidebar-help-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M3 9l9-5 9 5-9 5z"></path><path d="M7 12v5c3 2 7 2 10 0v-5"></path><path d="M21 9v6"></path></svg>
+          </span>
+          <span class="sidebar-help-copy"><strong>Need help getting started?</strong><small>Check out our quick start guide ›</small></span>
+        </a>
       </aside>
 
       <aside class="template-sidebar" aria-label="Templates">
         <div class="panel-title-row">
-          <div>
-            <span class="panel-kicker" id="templateCategoryLabel">Invoices</span>
-            <h2>Templates</h2>
-          </div>
-          <span class="template-count" id="templateCount">1</span>
+          <h2>Templates</h2>
+          <button class="template-add" type="button" id="templateAddButton" aria-label="Add template">+</button>
+          <span class="template-count" id="templateCount" hidden>1</span>
+          <span class="panel-kicker" id="templateCategoryLabel" hidden>Invoices</span>
         </div>
         <div id="templateList" class="template-list">
           <button class="template-card active" data-template="invoice-template-3">
@@ -125,10 +146,11 @@
           <div>
             <span class="preview-label">Preview</span>
             <strong id="activeTemplateName">Classic Invoice</strong>
+            <span class="preview-linked-badge" id="previewLinkedBadge">Linked</span>
           </div>
           <div class="preview-help" id="previewHelp">
             <span class="preview-help-dot"></span>
-            Click a column to start linking
+            Click a field to link
           </div>
         </div>
         <div class="canvas-stage" id="canvasStage">
@@ -140,47 +162,50 @@
       </section>
 
       <aside class="data-panel" aria-label="Excel upload and columns">
-        <div class="upload-card" id="dropZone">
-          <input id="excelInput" type="file" accept=".xlsx,.xls,.csv" hidden>
-          <div class="upload-empty" id="uploadEmpty">
-            <div class="upload-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24"><path d="M12 16V4"></path><path d="M7 9l5-5 5 5"></path><path d="M5 14v5h14v-5"></path></svg>
+        <section class="data-section upload-section">
+          <div class="data-section-heading">1. Upload Excel file</div>
+          <div class="upload-card" id="dropZone">
+            <input id="excelInput" type="file" accept=".xlsx,.xls,.csv" hidden>
+            <div class="upload-empty" id="uploadEmpty">
+              <div class="upload-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M12 16V4"></path><path d="M7 9l5-5 5 5"></path><path d="M5 14v5h14v-5"></path></svg>
+              </div>
+              <strong>Drag &amp; drop your Excel file here</strong>
+              <span>.xlsx, .xls or .csv</span>
+              <button type="button" id="uploadButton">Browse files</button>
             </div>
-            <strong>Drag and drop your Excel file</strong>
-            <span>.xlsx, .xls or .csv</span>
-            <button type="button" id="uploadButton">Upload file</button>
           </div>
           <div class="file-pill" id="filePill" hidden>
-            <span class="file-pill-icon">X</span>
+            <span class="file-pill-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"></path><path d="M15 3v5h5"></path><path d="M9 11h7M9 14h7M9 17h7"></path></svg>
+            </span>
             <span class="file-pill-copy">
               <strong class="file-pill-name" id="fileName"></strong>
               <span class="file-pill-meta" id="fileMeta"></span>
             </span>
             <button type="button" id="clearFile" aria-label="Remove uploaded file">×</button>
           </div>
-        </div>
+        </section>
 
-        <div class="columns-card">
+        <section class="columns-card">
           <div class="columns-heading">
-            <div>
-              <span class="panel-kicker">Excel table</span>
-              <h2>Columns</h2>
-            </div>
+            <h2>2. Excel columns</h2>
             <span class="columns-count" id="columnsCount">8</span>
           </div>
-          <p class="columns-instruction" id="columnsInstruction">Example columns are loaded so you can try the linking flow.</p>
+          <p class="columns-instruction" id="columnsInstruction">Select a column to link to the invoice.</p>
           <div class="columns-list" id="columnsList" aria-live="polite"></div>
-          <div class="columns-footer">
+          <button class="calculated-column-button" id="calculatedColumnButton" type="button"><span>＋</span> Add calculated column</button>
+          <div class="columns-footer" aria-hidden="true">
             <span><i class="legend-dot linked"></i><span id="linkedCount">0</span> linked</span>
             <span><i class="legend-dot open"></i><span id="openCount">0</span> available</span>
           </div>
-        </div>
+        </section>
       </aside>
     </section>
   </main>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-  <script src="/assets/js/link-excel-invoice-template.js?v=20260811b"></script>
+  <script src="/assets/js/link-excel-invoice-template.js?v=20260811c"></script>
 </body>
 </html>
