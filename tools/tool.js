@@ -7348,6 +7348,74 @@ function closeCsvView() { $('#csvViewModal').style.display = 'none'; }
 // components/02-auth-and-session.js
 
 ﻿// --- AUTH & DATA LOADING ---
+const EDITOR_HANDOFF_STORAGE_KEY = 'csvlink-editor-handoff';
+
+function readEditorHandoff() {
+    try {
+        const raw = localStorage.getItem(EDITOR_HANDOFF_STORAGE_KEY);
+        if (!raw) return null;
+        const handoff = JSON.parse(raw);
+        const createdAt = Number(handoff?.createdAt || 0);
+        if (!handoff?.template || (createdAt && Date.now() - createdAt > 30 * 60 * 1000)) {
+            localStorage.removeItem(EDITOR_HANDOFF_STORAGE_KEY);
+            return null;
+        }
+        return handoff;
+    } catch (error) {
+        console.warn('Failed to read landing-page editor handoff:', error);
+        localStorage.removeItem(EDITOR_HANDOFF_STORAGE_KEY);
+        return null;
+    }
+}
+
+async function restoreEditorHandoff(handoff) {
+    if (!handoff?.template) return false;
+    const template = handoff.template;
+    const handoffHeaders = handoff.data?.headers || template.data?.headers || [];
+    const handoffRows = handoff.data?.rows || template.data?.rows || [];
+
+    headers = Array.isArray(handoffHeaders) ? handoffHeaders : [];
+    dataRows = Array.isArray(handoffRows) ? handoffRows : [];
+    identifierColumn = '';
+    workbook = null;
+    worksheet = null;
+    currentTemplateId = null;
+
+    $('#titleInput').value = template.page?.title || template.title || 'Invoice Template';
+    await setDocumentPagesFromTemplate(template, { fitView: true, selectedIndex: template.currentPageIndex });
+    bindings = new Map(documentPages[currentPageIndex]?.bindings || template.bindings || []);
+
+    const restoredFileName = handoff.fileName || 'Landing page data';
+    $('#fileName').textContent = restoredFileName;
+    $('#unloadDataBtn').style.display = headers.length ? 'inline' : 'none';
+    $('#csvViewBtn').style.display = headers.length ? 'inline-flex' : 'none';
+    refreshIdentifierDropdown();
+    renderCsvView();
+    updateExportUI();
+    updateFloatingLinker(canvas.getActiveObject());
+
+    try {
+        localStorage.setItem('cachedFileName', restoredFileName);
+        localStorage.setItem('cachedHeaders', JSON.stringify(headers));
+        localStorage.setItem('cachedDataRows', JSON.stringify(dataRows));
+        localStorage.removeItem('cachedIdentifierColumn');
+        localStorage.removeItem(EDITOR_HANDOFF_STORAGE_KEY);
+    } catch (error) {
+        console.warn('Failed to persist restored handoff data:', error);
+    }
+
+    const csvModal = $('#csvViewModal');
+    if (csvModal) csvModal.style.display = 'none';
+    const identifierModal = $('#identifierColumnModal');
+    if (identifierModal) identifierModal.style.display = 'none';
+
+    historyStack = [];
+    historyIndex = -1;
+    lastHistorySig = null;
+    saveStatusEl.textContent = currentUser ? 'Opened from landing page.' : 'Log in to save your work.';
+    return true;
+}
+
 async function initializeEditor() {
     applyTheme(localStorage.getItem('csvlink-theme') || 'light');
     const { data: { session } } = await supabase.auth.getSession();
@@ -7378,12 +7446,13 @@ async function initializeEditor() {
 
     const urlParams = new URLSearchParams(window.location.search);
     const templateId = urlParams.get('id');
+    const editorHandoff = urlParams.get('handoff') === '1' ? readEditorHandoff() : null;
 
     initializeCanvas();
     updateHistoryButtons();
     initializeVisualCropper();
     renderPageInspector();
-    await loadCachedData();
+    if (!editorHandoff) await loadCachedData();
 
     const guestTemplate = localStorage.getItem('csvlink-guest-template');
 
@@ -7393,7 +7462,21 @@ async function initializeEditor() {
         centerAndFitPage();
     }
 
-    /* 2) User logged in â†’ try restore guest work */
+    /* 2) Landing page handoff → keep the same template, data, and bindings */
+    else if (editorHandoff) {
+        const restored = await restoreEditorHandoff(editorHandoff);
+        if (restored) {
+            if (!currentUser) {
+                showGuestWarning();
+                setInterval(saveGuestTemplate, 10000);
+            } else {
+                requestSaveState();
+            }
+            centerAndFitPage();
+        }
+    }
+
+    /* 3) User logged in â†’ try restore guest work */
     else if (currentUser && guestTemplate) {
         try {
             const template = JSON.parse(guestTemplate);
@@ -7416,20 +7499,20 @@ async function initializeEditor() {
         }
     }
 
-    /* 3) Guest user with no templateId â†’ autosave guest mode */
+    /* 4) Guest user with no templateId → autosave guest mode */
     else if (!currentUser) {
         showGuestWarning();
         centerAndFitPage();
         setInterval(saveGuestTemplate, 10000);
     }
 
-    /* 4) Logged in user, blank editor */
+    /* 5) Logged in user, blank editor */
     else {
         centerAndFitPage();
     }
 
     /* Other UI initialization */
-    if (!localStorage.getItem('hasSeenTour')) startTour();
+    if (!editorHandoff && !localStorage.getItem('hasSeenTour')) startTour();
     initializeLeftPanelTabs();
 
     // Bind Load Template buttons

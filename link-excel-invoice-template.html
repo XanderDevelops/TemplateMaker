@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/assets/css/link-excel-invoice-template.css">
+  <link rel="stylesheet" href="/assets/css/link-excel-invoice-template.css?v=20260811b">
   <script src="https://cdn.jsdelivr.net/npm/fabric@5.3.0/dist/fabric.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
@@ -21,13 +21,17 @@
       <img src="/assets/images/android-chrome-512x512.png" alt="CSVLink">
       <span>CSVLink</span>
     </a>
-    <div class="topbar-status" aria-label="Workflow">
-      <span class="status-dot"></span>
-      Excel → template linking
-    </div>
+    <nav class="landing-nav" aria-label="CSVLink pages">
+      <a href="/">Home</a>
+      <a href="/excel-to-pdf">Excel to PDF</a>
+      <a href="/excel-to-invoice" class="is-active">Excel to Invoice</a>
+      <a href="/csv-to-invoice">CSV to Invoice</a>
+      <a href="/bulk-invoice-generator">Bulk Invoices</a>
+      <a href="/custom-pdf-documents">Custom PDFs</a>
+    </nav>
     <div class="top-actions">
       <a class="top-link" href="/login">Sign in</a>
-      <a class="top-button" href="/tool">Open editor</a>
+      <a class="top-button" id="openEditorButton" href="/tool">Open editor</a>
     </div>
   </header>
 
@@ -130,6 +134,7 @@
         <div class="canvas-stage" id="canvasStage">
           <div class="canvas-page-shell" id="canvasPageShell">
             <canvas id="invoiceCanvas" width="768" height="1024"></canvas>
+            <div class="field-link-overlays" id="fieldLinkOverlays" aria-hidden="true"></div>
           </div>
         </div>
       </section>
@@ -137,15 +142,20 @@
       <aside class="data-panel" aria-label="Excel upload and columns">
         <div class="upload-card" id="dropZone">
           <input id="excelInput" type="file" accept=".xlsx,.xls,.csv" hidden>
-          <div class="upload-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24"><path d="M12 16V4"></path><path d="M7 9l5-5 5 5"></path><path d="M5 14v5h14v-5"></path></svg>
+          <div class="upload-empty" id="uploadEmpty">
+            <div class="upload-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M12 16V4"></path><path d="M7 9l5-5 5 5"></path><path d="M5 14v5h14v-5"></path></svg>
+            </div>
+            <strong>Drag and drop your Excel file</strong>
+            <span>.xlsx, .xls or .csv</span>
+            <button type="button" id="uploadButton">Upload file</button>
           </div>
-          <strong>Drag and drop your Excel file</strong>
-          <span>.xlsx, .xls or .csv</span>
-          <button type="button" id="uploadButton">Upload file</button>
           <div class="file-pill" id="filePill" hidden>
             <span class="file-pill-icon">X</span>
-            <span class="file-pill-name" id="fileName"></span>
+            <span class="file-pill-copy">
+              <strong class="file-pill-name" id="fileName"></strong>
+              <span class="file-pill-meta" id="fileMeta"></span>
+            </span>
             <button type="button" id="clearFile" aria-label="Remove uploaded file">×</button>
           </div>
         </div>
@@ -171,6 +181,6 @@
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-  <script src="/assets/js/link-excel-invoice-template.js"></script>
+  <script src="/assets/js/link-excel-invoice-template.js?v=20260811b"></script>
 </body>
 </html>

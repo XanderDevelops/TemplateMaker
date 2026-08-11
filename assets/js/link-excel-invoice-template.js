@@ -41,7 +41,9 @@
     canvas: null,
     thumbnail: null,
     columns: [],
+    rows: [],
     firstRow: {},
+    fileName: null,
     links: new Map(),
     originalText: new Map(),
     selectedColumn: null,
@@ -58,13 +60,16 @@
     invoiceCanvas: document.getElementById('invoiceCanvas'),
     templateThumbnail: document.getElementById('templateThumbnail'),
     canvasPageShell: document.getElementById('canvasPageShell'),
+    fieldLinkOverlays: document.getElementById('fieldLinkOverlays'),
     previewHelp: document.getElementById('previewHelp'),
     dropZone: document.getElementById('dropZone'),
     uploadButton: document.getElementById('uploadButton'),
     excelInput: document.getElementById('excelInput'),
     filePill: document.getElementById('filePill'),
     fileName: document.getElementById('fileName'),
+    fileMeta: document.getElementById('fileMeta'),
     clearFile: document.getElementById('clearFile'),
+    openEditorButton: document.getElementById('openEditorButton'),
     columnsList: document.getElementById('columnsList'),
     columnsCount: document.getElementById('columnsCount'),
     columnsInstruction: document.getElementById('columnsInstruction'),
@@ -107,9 +112,10 @@
     return null;
   }
 
-  function setColumns(headers, firstRow = {}, { autoLink = true } = {}) {
+  function setColumns(headers, firstRow = {}, { autoLink = true, rows = null } = {}) {
     state.columns = headers.filter(Boolean).map(h => String(h).trim()).filter(Boolean);
-    state.firstRow = firstRow || {};
+    state.rows = Array.isArray(rows) ? rows : (firstRow && Object.keys(firstRow).length ? [firstRow] : []);
+    state.firstRow = firstRow || state.rows[0] || {};
     state.links.clear();
     state.selectedColumn = null;
     restoreTemplateText();
@@ -128,6 +134,7 @@
 
     renderColumns();
     updateLinkingPrompt();
+    renderFieldLinkIndicators();
   }
 
   function renderColumns() {
@@ -161,6 +168,7 @@
     els.columnsCount.textContent = state.columns.length;
     els.linkedCount.textContent = linked;
     els.openCount.textContent = Math.max(0, state.columns.length - linked);
+    renderFieldLinkIndicators();
   }
 
   function selectColumn(column) {
@@ -205,6 +213,28 @@
     state.canvas.requestRenderAll();
   }
 
+  function renderFieldLinkIndicators() {
+    if (!els.fieldLinkOverlays) return;
+    els.fieldLinkOverlays.innerHTML = '';
+    if (!state.canvas || !state.template || !state.links.size) return;
+
+    const pageWidth = state.template.page?.width || 768;
+    const scale = els.canvasPageShell.clientWidth / pageWidth;
+    const linkedTargets = [...new Set(state.links.values())];
+
+    linkedTargets.forEach(targetOid => {
+      const obj = state.canvas.getObjects().find(o => o.oid === targetOid);
+      if (!obj) return;
+      const rect = obj.getBoundingRect(true, true);
+      const indicator = document.createElement('span');
+      indicator.className = 'field-link-indicator';
+      indicator.innerHTML = linkIcon;
+      indicator.style.left = `${(rect.left + rect.width) * scale + 6}px`;
+      indicator.style.top = `${(rect.top + rect.height / 2) * scale}px`;
+      els.fieldLinkOverlays.appendChild(indicator);
+    });
+  }
+
   function linkSelectedColumn(targetOid) {
     const column = state.selectedColumn;
     if (!column || !targetOid || !LINKABLE_FIELDS.has(targetOid)) return;
@@ -221,6 +251,7 @@
     state.selectedColumn = null;
     renderColumns();
     updateLinkingPrompt();
+    renderFieldLinkIndicators();
     showToast(`Linked “${column}” to the selected invoice field.`);
   }
 
@@ -260,6 +291,7 @@
     els.canvasPageShell.style.height = `${shellHeight}px`;
     state.canvas.calcOffset();
     state.canvas.requestRenderAll();
+    renderFieldLinkIndicators();
   }
 
   function renderThumbnail(template) {
@@ -309,8 +341,9 @@
     resizeCanvasToShell();
 
     const sampleHeaders = template.data?.headers || [];
-    const sampleRow = template.data?.rows?.[0] || {};
-    setColumns(sampleHeaders, sampleRow, { autoLink: true });
+    const sampleRows = template.data?.rows || [];
+    const sampleRow = sampleRows[0] || {};
+    setColumns(sampleHeaders, sampleRow, { autoLink: true, rows: sampleRows });
   }
 
   function handleDocumentType(button) {
@@ -339,7 +372,7 @@
       headers = (matrix[0] || []).map(v => String(v).trim()).filter(Boolean);
     }
     if (!headers.length) throw new Error('No column headers were found in this file.');
-    return { headers, firstRow: rows[0] || {}, fileName };
+    return { headers, rows, firstRow: rows[0] || {}, fileName, rowCount: rows.length };
   }
 
   async function loadSpreadsheet(file) {
@@ -352,11 +385,14 @@
     try {
       const buffer = await file.arrayBuffer();
       const result = parseWorkbook(buffer, file.name);
-      setColumns(result.headers, result.firstRow, { autoLink: true });
+      state.fileName = file.name;
+      setColumns(result.headers, result.firstRow, { autoLink: true, rows: result.rows });
       els.fileName.textContent = file.name;
+      els.fileMeta.textContent = `${result.headers.length} columns · ${result.rowCount} ${result.rowCount === 1 ? 'row' : 'rows'}`;
       els.filePill.hidden = false;
+      els.dropZone.classList.add('has-file');
       els.columnsInstruction.textContent = 'Columns from your file. Linked fields are marked automatically when CSVLink finds a clear match.';
-      showToast(`Loaded ${result.headers.length} columns from ${file.name}.`);
+      showToast(`Loaded ${result.headers.length} columns and ${result.rowCount} rows from ${file.name}.`);
     } catch (error) {
       console.error(error);
       showToast(error.message || 'CSVLink could not read this file.');
@@ -366,14 +402,95 @@
   function resetToSampleData() {
     if (!state.template) return;
     els.excelInput.value = '';
+    state.fileName = null;
     els.filePill.hidden = true;
+    els.dropZone.classList.remove('has-file');
     els.fileName.textContent = '';
+    els.fileMeta.textContent = '';
     els.columnsInstruction.textContent = 'Example columns are loaded so you can try the linking flow.';
-    setColumns(state.template.data?.headers || [], state.template.data?.rows?.[0] || {}, { autoLink: true });
+    const sampleRows = state.template.data?.rows || [];
+    setColumns(state.template.data?.headers || [], sampleRows[0] || {}, { autoLink: true, rows: sampleRows });
     showToast('Example columns restored.');
   }
 
+  function updateBindingsList(rawBindings = []) {
+    const linkByOid = new Map();
+    for (const [column, oid] of state.links.entries()) {
+      linkByOid.set(oid, [{ column, property: 'Text Content' }]);
+    }
+
+    const seen = new Set();
+    const next = (Array.isArray(rawBindings) ? rawBindings : []).map(entry => {
+      const oid = Array.isArray(entry) ? String(entry[0] || '') : '';
+      if (!oid) return entry;
+      seen.add(oid);
+      return [oid, linkByOid.get(oid) || []];
+    });
+
+    linkByOid.forEach((bindingList, oid) => {
+      if (!seen.has(oid)) next.push([oid, bindingList]);
+    });
+    return next;
+  }
+
+  function updateCanvasTextsForHandoff(canvasJson) {
+    if (!canvasJson || !Array.isArray(canvasJson.objects)) return;
+    const columnByOid = new Map([...state.links.entries()].map(([column, oid]) => [oid, column]));
+    canvasJson.objects.forEach(obj => {
+      const column = columnByOid.get(obj?.oid);
+      if (!column || !('text' in obj)) return;
+      const value = state.firstRow?.[column];
+      if (value !== undefined && value !== null && String(value).trim() !== '') obj.text = String(value).trim();
+    });
+  }
+
+  function buildEditorHandoffTemplate() {
+    const template = JSON.parse(JSON.stringify(state.template || {}));
+    template.data = {
+      ...(template.data || {}),
+      headers: [...state.columns],
+      rows: state.rows.map(row => ({ ...row }))
+    };
+    template.bindings = updateBindingsList(template.bindings);
+    updateCanvasTextsForHandoff(template.canvas);
+
+    if (Array.isArray(template.pages) && template.pages.length) {
+      template.pages = template.pages.map((page, index) => {
+        if (index !== 0) return page;
+        const nextPage = { ...page, bindings: updateBindingsList(page.bindings) };
+        updateCanvasTextsForHandoff(nextPage.canvas);
+        return nextPage;
+      });
+    }
+    return template;
+  }
+
+  function openEditorWithCurrentState(event) {
+    if (!state.template) return;
+    if (event) event.preventDefault();
+    const template = buildEditorHandoffTemplate();
+    const handoff = {
+      version: 1,
+      createdAt: Date.now(),
+      fileName: state.fileName || 'Landing page data',
+      template,
+      data: { headers: [...state.columns], rows: state.rows.map(row => ({ ...row })) }
+    };
+    try {
+      localStorage.setItem('csvlink-editor-handoff', JSON.stringify(handoff));
+      localStorage.setItem('cachedFileName', handoff.fileName);
+      localStorage.setItem('cachedHeaders', JSON.stringify(handoff.data.headers));
+      localStorage.setItem('cachedDataRows', JSON.stringify(handoff.data.rows));
+      localStorage.removeItem('cachedIdentifierColumn');
+    } catch (error) {
+      console.warn('Could not cache editor handoff:', error);
+    }
+    window.location.href = '/tool?handoff=1';
+  }
+
   function setupEvents() {
+    els.openEditorButton?.addEventListener('click', openEditorWithCurrentState);
+
     els.documentTypes.addEventListener('click', event => {
       const button = event.target.closest('.document-type');
       if (button) handleDocumentType(button);
