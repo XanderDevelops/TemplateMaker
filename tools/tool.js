@@ -12569,17 +12569,31 @@ async function submitDownloadFeedback() {
         return;
     }
 
-    const { error } = await supabase
-        .from('downloads')
-        .update({
-            feedback_rating: selectedDownloadFeedbackRating,
-            feedback_text: feedbackText || null,
-            feedback_submitted_at: new Date().toISOString()
-        })
-        .eq('id', downloadRecord.id);
+    let feedbackError = null;
+    if (currentUser?.id) {
+        const { error } = await supabase
+            .from('downloads')
+            .update({
+                feedback_rating: selectedDownloadFeedbackRating,
+                feedback_text: feedbackText || null,
+                feedback_submitted_at: new Date().toISOString()
+            })
+            .eq('id', downloadRecord.id);
+        feedbackError = error;
+    } else {
+        try {
+            await postAnonymousDownloadTracking('feedback', {
+                download_id: downloadRecord.id,
+                feedback_rating: selectedDownloadFeedbackRating,
+                feedback_text: feedbackText || null
+            });
+        } catch (error) {
+            feedbackError = error;
+        }
+    }
 
-    if (error) {
-        console.error('Error saving download feedback:', error);
+    if (feedbackError) {
+        console.error('Error saving download feedback:', feedbackError);
         showNotification('Could not save feedback. Please try again.', 'error', 3200);
         if (button) {
             button.disabled = false;
@@ -12617,22 +12631,35 @@ function showDownloadDiscoverySurvey(downloadRecord) {
 }
 
 async function submitDownloadDiscoverySource(downloadRecord, source, button) {
-    if (!currentUser?.id || !downloadRecord?.id || !source) return;
+    if (!downloadRecord?.id || !source) return;
     if (button) {
         button.disabled = true;
         button.textContent = 'Saving...';
     }
 
-    const { error } = await supabase
-        .from('surveys')
-        .insert({
-            user_id: currentUser.id,
-            download_id: downloadRecord.id,
-            source
-        });
+    let discoveryError = null;
+    if (currentUser?.id) {
+        const { error } = await supabase
+            .from('surveys')
+            .insert({
+                user_id: currentUser.id,
+                download_id: downloadRecord.id,
+                source
+            });
+        discoveryError = error;
+    } else {
+        try {
+            await postAnonymousDownloadTracking('discovery', {
+                download_id: downloadRecord.id,
+                source
+            });
+        } catch (error) {
+            discoveryError = error;
+        }
+    }
 
-    if (error) {
-        console.error('Error saving discovery source:', error);
+    if (discoveryError) {
+        console.error('Error saving discovery source:', discoveryError);
         showNotification('Could not save the answer. Please try again.', 'error', 3200);
         if (button) {
             const option = DOWNLOAD_FEEDBACK_SOURCE_OPTIONS.find(item => item.value === source);
@@ -12646,9 +12673,32 @@ async function submitDownloadDiscoverySource(downloadRecord, source, button) {
     showNotification('Thank you — your feedback was sent.', 'success', 3000);
 }
 
-async function createDownloadSnapshot(downloadMeta = {}) {
-    if (!currentUser?.id) return null;
+async function postAnonymousDownloadTracking(action, payload = {}) {
+    const response = await fetch('/api/download-track', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            action,
+            anonymous_session_id: getFreeExportBrowserId(),
+            ...payload
+        })
+    });
 
+    let result = {};
+    try {
+        result = await response.json();
+    } catch (error) {
+        result = {};
+    }
+
+    if (!response.ok) {
+        throw new Error(result?.error || `Download tracking failed (${response.status}).`);
+    }
+
+    return result;
+}
+
+async function createDownloadSnapshot(downloadMeta = {}) {
     const payload = buildTemplatePayload();
     const hasContent = Array.isArray(payload.pages)
         ? payload.pages.some(page => pageHasRenderableObjects(page))
@@ -12656,9 +12706,25 @@ async function createDownloadSnapshot(downloadMeta = {}) {
 
     if (!hasContent) return null;
 
+    const title = ($('#titleInput')?.value || payload.page?.title || 'Untitled_Template').trim();
+
+    if (!currentUser?.id) {
+        try {
+            const result = await postAnonymousDownloadTracking('create', {
+                title,
+                template_data: payload
+            });
+            return result?.download || null;
+        } catch (error) {
+            console.error('Error creating anonymous download snapshot:', error);
+            showNotification('Download saved, but the feedback tracker is not ready yet.', 'info', 3200);
+            return null;
+        }
+    }
+
     const insertPayload = {
         user_id: currentUser.id,
-        title: ($('#titleInput')?.value || payload.page?.title || 'Untitled_Template').trim(),
+        title,
         template_data: payload,
         preview_url: null
     };
