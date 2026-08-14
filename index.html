@@ -2114,387 +2114,691 @@
     <script id="csvlink-i18n-boot">document.documentElement.classList.add("csvlink-i18n-pending");setTimeout(function(){document.documentElement.classList.remove("csvlink-i18n-pending");document.documentElement.classList.add("csvlink-i18n-ready")},1800);</script>
     <link rel="stylesheet" href="/assets/css/i18n.css">
     <script src="/assets/js/i18n.js" defer></script>
+
+<style id="structacad-inspired-csvlink">
+    :root {
+        --sc-bg: #07111f;
+        --sc-bg-2: #0a1626;
+        --sc-panel: #0d1b2d;
+        --sc-panel-soft: #102238;
+        --sc-border: rgba(148, 163, 184, 0.18);
+        --sc-border-strong: rgba(148, 163, 184, 0.30);
+        --sc-text: #f5f8fc;
+        --sc-muted: #a8b5c7;
+        --sc-muted-2: #7f90a8;
+        --sc-accent: #2f6df6;
+        --sc-accent-2: #5590ff;
+        --sc-green: #29c787;
+        --sc-shell: min(1180px, calc(100% - 44px));
+    }
+
+    html { scroll-behavior: smooth; }
+    body {
+        margin: 0;
+        color: var(--sc-text);
+        background:
+            linear-gradient(rgba(121, 148, 178, .055) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(121, 148, 178, .055) 1px, transparent 1px),
+            radial-gradient(circle at 12% 8%, rgba(54, 104, 190, .17), transparent 32%),
+            var(--sc-bg);
+        background-size: 38px 38px, 38px 38px, auto, auto;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        background: linear-gradient(180deg, rgba(5, 13, 24, .08), rgba(5, 13, 24, .46));
+        z-index: -1;
+    }
+
+    a { color: inherit; }
+    .page-shell { max-width: none; width: 100%; padding: 0; }
+    .section-shell { width: var(--sc-shell); margin: 0 auto; }
+
+    .site-header {
+        position: sticky;
+        top: 0;
+        z-index: 80;
+        border-bottom: 1px solid var(--sc-border);
+        background: rgba(7, 17, 31, .90);
+        backdrop-filter: blur(18px);
+        box-shadow: none;
+    }
+    .nav-inner {
+        width: var(--sc-shell);
+        min-height: 78px;
+        margin: 0 auto;
+        padding: 0;
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        align-items: center;
+        gap: 34px;
+    }
+    .brand { gap: 11px; text-decoration: none; font-weight: 900; font-size: 18px; }
+    .brand img { width: 34px; height: 34px; border-radius: 8px; }
+    .brand-copy { display: flex; flex-direction: column; line-height: 1.1; }
+    .brand-copy strong { font-size: 17px; letter-spacing: -.01em; }
+    .brand-copy small { margin-top: 5px; font-size: 11px; color: var(--sc-muted); font-weight: 650; letter-spacing: .01em; }
+    .primary-nav { justify-content: center; gap: 27px; }
+    .primary-nav a, .nav-links > a:not(.nav-try) {
+        color: #c5d0df;
+        font-size: 13px;
+        font-weight: 750;
+        text-decoration: none;
+    }
+    .primary-nav a:hover, .nav-links > a:not(.nav-try):hover { color: white; }
+    .nav-links { display: flex; align-items: center; gap: 12px; }
+    .nav-try {
+        min-height: 42px;
+        border: 1px solid var(--sc-border-strong) !important;
+        border-radius: 14px !important;
+        padding: 0 18px !important;
+        background: rgba(255,255,255,.035) !important;
+        color: white !important;
+        font-weight: 800 !important;
+        box-shadow: none !important;
+    }
+    .nav-try:hover { background: rgba(255,255,255,.075) !important; transform: none !important; }
+
+    .hero-process-strip {
+        width: var(--sc-shell);
+        margin: 0 auto;
+        min-height: 82px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 15px;
+        color: #8fb4ff;
+        font-size: 12px;
+        font-weight: 850;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+        border-bottom: 1px solid rgba(148,163,184,.10);
+    }
+    .hero-process-strip .process-arrow { color: #4e627c; font-size: 16px; letter-spacing: 0; }
+    .hero-process-strip .process-step { white-space: nowrap; }
+
+    .hero {
+        width: var(--sc-shell);
+        margin: 0 auto;
+        padding: 66px 0 70px;
+        min-height: 680px;
+        display: grid;
+        grid-template-columns: minmax(0, .9fr) minmax(520px, 1.1fr);
+        align-items: center;
+        gap: 64px;
+        background: none;
+    }
+    .hero::before, .hero::after { display: none; }
+    .hero-copy { max-width: 540px; padding: 0; }
+    .eyebrow, .section-kicker {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin: 0 0 24px;
+        color: #8fb4ff;
+        background: none;
+        border: 0;
+        padding: 0;
+        font-size: 12px;
+        font-weight: 900;
+        letter-spacing: .095em;
+        text-transform: uppercase;
+    }
+    .eyebrow .bolt { display: none; }
+    .hero h1 {
+        margin: 0;
+        max-width: 550px;
+        color: var(--sc-text);
+        font-size: clamp(50px, 5.1vw, 72px);
+        line-height: 1.09;
+        letter-spacing: -.055em;
+        font-weight: 900;
+        text-wrap: balance;
+    }
+    .hero p.lede {
+        max-width: 540px;
+        margin: 28px 0 0;
+        color: #d4ddea;
+        font-size: 17px;
+        line-height: 1.7;
+        font-weight: 500;
+    }
+    .hero-support {
+        max-width: 520px;
+        margin: 14px 0 0;
+        color: var(--sc-muted);
+        font-size: 14px;
+        line-height: 1.65;
+    }
+    .hero-actions { margin-top: 30px; display: flex; gap: 12px; flex-wrap: wrap; }
+    .btn {
+        min-height: 48px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 9px;
+        border-radius: 12px;
+        padding: 0 19px;
+        font-size: 13px;
+        font-weight: 850;
+        text-decoration: none;
+        transition: .18s ease;
+    }
+    .btn-primary {
+        border: 1px solid #3e79ff;
+        background: linear-gradient(180deg, #3978ff, #275fd8);
+        color: #fff;
+        box-shadow: 0 12px 28px rgba(32, 91, 215, .23);
+    }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 16px 34px rgba(32, 91, 215, .30); }
+    .btn-secondary {
+        border: 1px solid var(--sc-border-strong);
+        background: rgba(255,255,255,.035);
+        color: #eef4fc;
+        box-shadow: none;
+    }
+    .btn-secondary:hover { transform: translateY(-1px); background: rgba(255,255,255,.075); }
+    .button-icon { width: 17px; height: 17px; }
+    .hero-trust {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 9px;
+        margin-top: 22px;
+    }
+    .hero-trust span {
+        padding: 8px 11px;
+        border: 1px solid var(--sc-border);
+        border-radius: 999px;
+        color: #b8c5d6;
+        background: rgba(255,255,255,.025);
+        font-size: 11px;
+        font-weight: 750;
+    }
+    .hero-trust span:not(:last-child)::after { display: none; }
+    .hero-upload-link { margin-top: 17px; color: #8fb4ff; font-size: 13px; font-weight: 800; text-decoration: none; }
+
+    .hero-visual { min-height: auto; width: 100%; padding: 0; display: block; }
+    .hero-video-frame {
+        width: 100%;
+        padding: 18px 18px 22px;
+        border-radius: 27px;
+        border: 1px solid rgba(203, 216, 232, .38);
+        background: linear-gradient(180deg, #eef4fb 0, #dce6f2 100%);
+        box-shadow: 0 34px 90px rgba(0, 0, 0, .34), 0 0 0 1px rgba(255,255,255,.05);
+        transform: none;
+    }
+    .hero-video-frame::before {
+        content: "CSVLink workflow";
+        display: block;
+        height: 25px;
+        padding-left: 72px;
+        margin-bottom: 13px;
+        color: #41556f;
+        font-size: 12px;
+        font-weight: 850;
+        line-height: 25px;
+        background:
+            radial-gradient(circle at 10px 12px, #9fb3cc 0 4px, transparent 4.5px),
+            radial-gradient(circle at 29px 12px, #afbed1 0 4px, transparent 4.5px),
+            radial-gradient(circle at 48px 12px, #bfcbda 0 4px, transparent 4.5px);
+    }
+    .hero-video-stage {
+        position: relative;
+        aspect-ratio: 16 / 9;
+        border-radius: 18px;
+        overflow: hidden;
+        background: #07111f;
+        border: 8px solid #0a1524;
+        box-shadow: inset 0 0 0 1px rgba(255,255,255,.06);
+    }
+    .hero-demo-video { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .hero-video-label { display: none; }
+    .hero-demo-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 15px; }
+    .hero-demo-tags span {
+        border: 1px solid var(--sc-border-strong);
+        border-radius: 999px;
+        padding: 7px 10px;
+        color: #c4cfdd;
+        background: rgba(255,255,255,.025);
+        font-size: 11px;
+        font-weight: 750;
+    }
+
+    .landing-section { padding: 82px 0; border-top: 1px solid rgba(148,163,184,.105); }
+    .landing-section.alt { background: rgba(4, 12, 23, .38); }
+    .section-intro { max-width: 720px; margin-bottom: 34px; }
+    .section-intro.center { margin-left: auto; margin-right: auto; text-align: center; }
+    .section-intro.center .section-kicker { justify-content: center; }
+    .section-intro h2 {
+        margin: 0;
+        color: var(--sc-text);
+        font-size: clamp(34px, 4vw, 50px);
+        line-height: 1.12;
+        letter-spacing: -.045em;
+        font-weight: 900;
+    }
+    .section-intro p:not(.section-kicker) { margin: 16px 0 0; color: var(--sc-muted); font-size: 16px; line-height: 1.7; }
+
+    .output-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.35fr) minmax(290px, .65fr);
+        gap: 22px;
+        align-items: stretch;
+    }
+    .output-showcase, .dark-card, .precision-card, .start-card, .workflow-step, .use-case-card, .pricing-card, .faq-item, .resource-card, .template-gallery-block {
+        border: 1px solid var(--sc-border);
+        background: linear-gradient(180deg, rgba(16, 34, 56, .86), rgba(10, 25, 43, .88));
+        box-shadow: 0 18px 40px rgba(0,0,0,.12);
+    }
+    .output-showcase { border-radius: 22px; overflow: hidden; padding: 18px; }
+    .output-showcase img { width: 100%; height: 100%; min-height: 430px; object-fit: cover; border-radius: 15px; display: block; background: #f6f9fd; }
+    .output-stack { display: grid; grid-template-rows: repeat(3, 1fr); gap: 14px; }
+    .dark-card { border-radius: 18px; padding: 22px; }
+    .dark-card .card-tag { color: #8fb4ff; font-size: 11px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
+    .dark-card h3 { margin: 10px 0 8px; font-size: 19px; letter-spacing: -.02em; }
+    .dark-card p { margin: 0; color: var(--sc-muted); line-height: 1.6; font-size: 13px; }
+
+    .precision-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+    .precision-card { border-radius: 18px; padding: 24px 22px; min-height: 175px; }
+    .precision-icon {
+        width: 42px; height: 42px; display: grid; place-items: center; margin-bottom: 18px;
+        border-radius: 12px; background: rgba(47,109,246,.13); color: #78a3ff; font-size: 19px; font-weight: 900;
+    }
+    .precision-card h3 { margin: 0 0 8px; font-size: 17px; }
+    .precision-card p { margin: 0; color: var(--sc-muted); font-size: 13px; line-height: 1.6; }
+
+    .start-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+    .start-card { border-radius: 20px; padding: 28px; }
+    .start-card-badge { display: inline-flex; padding: 7px 10px; border-radius: 999px; color: #8fb4ff; background: rgba(47,109,246,.10); border: 1px solid rgba(95,142,245,.19); font-size: 11px; font-weight: 850; }
+    .start-card h3 { margin: 16px 0 10px; font-size: 25px; letter-spacing: -.03em; }
+    .start-card p { color: var(--sc-muted); line-height: 1.65; }
+    .clean-list { list-style: none; padding: 0; margin: 20px 0 0; display: grid; gap: 10px; }
+    .clean-list li { position: relative; padding-left: 22px; color: #c5d0de; font-size: 13px; line-height: 1.55; }
+    .clean-list li::before { content: "✓"; position: absolute; left: 0; color: var(--sc-green); font-weight: 900; }
+
+    .workflow-grid { position: relative; display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+    .workflow-step { position: relative; border-radius: 18px; padding: 24px; }
+    .workflow-step-number { width: 32px; height: 32px; border-radius: 10px; display: grid; place-items: center; margin-bottom: 24px; background: #2f6df6; color: white; font-size: 12px; font-weight: 900; }
+    .workflow-step h3 { margin: 0 0 9px; font-size: 17px; }
+    .workflow-step p { margin: 0; color: var(--sc-muted); font-size: 13px; line-height: 1.6; }
+
+    .template-gallery-block, .pricing-section, .resources-section, .plain-panel, .reality-panel, .faq-section { width: var(--sc-shell); margin: 0 auto; }
+    .template-gallery-block { padding: 34px; border-radius: 22px; }
+    .template-gallery-block .section-heading, .pricing-section .section-heading, .resources-section .section-heading { text-align: left; max-width: 720px; }
+    .section-heading h2, .faq-section > h2 { color: var(--sc-text); font-size: 36px; letter-spacing: -.035em; }
+    .section-heading p, .faq-section > p { color: var(--sc-muted); }
+    .template-category-btn { background: rgba(255,255,255,.04); color: #cbd5e1; border: 1px solid var(--sc-border); }
+    .template-category-btn.active { background: #2f6df6; color: white; border-color: #2f6df6; }
+
+    .use-case-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; }
+    .use-case-card { border-radius: 17px; padding: 22px; }
+    .use-case-card h3 { color: var(--sc-text); margin: 0 0 8px; }
+    .use-case-card p { color: var(--sc-muted); margin: 0; line-height: 1.6; }
+
+    .pricing-section { padding: 0; border: 0; background: none; }
+    .pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .pricing-card { border-radius: 20px; padding: 26px; color: var(--sc-text); }
+    .pricing-card.recommended { border-color: rgba(74,129,255,.72); box-shadow: 0 0 0 1px rgba(47,109,246,.12), 0 22px 55px rgba(24,72,172,.18); }
+    .pricing-card h3 { color: var(--sc-text); }
+    .pricing-card p, .pricing-card li { color: var(--sc-muted); }
+    .price { color: white; }
+
+    .faq-section { padding: 0; border: 0; background: none; }
+    .faq-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .faq-item { border-radius: 17px; padding: 22px; }
+    .faq-item h3 { color: var(--sc-text); }
+    .faq-item p { color: var(--sc-muted); }
+
+    .resources-section { padding: 0; border: 0; background: none; }
+    .resources-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+    .resource-card { border-radius: 16px; padding: 19px; }
+    .resource-card h3 a { color: var(--sc-text); }
+    .resource-card p { color: var(--sc-muted); }
+
+    .final-cta-card {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        align-items: center;
+        gap: 28px;
+        padding: 38px;
+        border-radius: 24px;
+        border: 1px solid rgba(75, 127, 244, .38);
+        background: radial-gradient(circle at 15% 20%, rgba(47,109,246,.18), transparent 42%), linear-gradient(180deg, #10233c, #0b1a2c);
+    }
+    .final-cta-card h2 { margin: 0; font-size: 36px; letter-spacing: -.04em; }
+    .final-cta-card p { max-width: 700px; margin: 12px 0 0; color: var(--sc-muted); line-height: 1.65; }
+    .final-cta-actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+
+    .site-footer {
+        margin-top: 0;
+        border-top: 1px solid var(--sc-border);
+        background: rgba(4, 11, 20, .72);
+        color: #b9c5d4;
+    }
+    .footer-main { width: var(--sc-shell); margin: 0 auto; padding: 52px 0 28px; display: grid; grid-template-columns: 1.5fr 1fr 1fr; gap: 44px; }
+    .footer-brand p { max-width: 420px; color: var(--sc-muted); line-height: 1.6; font-size: 13px; }
+    .footer-column { display: grid; gap: 9px; align-content: start; }
+    .footer-column h3 { margin: 0 0 7px; color: white; font-size: 13px; }
+    .footer-column a { color: var(--sc-muted); text-decoration: none; font-size: 12px; }
+    .footer-column a:hover { color: white; }
+    .copyright { border-top: 1px solid rgba(148,163,184,.10); padding: 20px 22px; text-align: center; color: #71839a; font-size: 12px; }
+
+    .animated-section { opacity: 1 !important; transform: none !important; }
+
+    @media (max-width: 1020px) {
+        .primary-nav { display: none; }
+        .nav-inner { grid-template-columns: 1fr auto; }
+        .hero { grid-template-columns: 1fr; min-height: 0; gap: 42px; padding-top: 54px; }
+        .hero-copy { max-width: 760px; }
+        .hero h1 { max-width: 780px; }
+        .hero-visual { max-width: 820px; }
+        .output-grid { grid-template-columns: 1fr; }
+        .output-stack { grid-template-columns: repeat(3, 1fr); grid-template-rows: none; }
+        .precision-grid, .workflow-grid { grid-template-columns: repeat(2,1fr); }
+        .resources-grid { grid-template-columns: repeat(2,1fr); }
+    }
+
+    @media (max-width: 720px) {
+        :root { --sc-shell: min(100% - 28px, 1180px); }
+        .nav-inner { min-height: 66px; gap: 14px; }
+        .brand-copy small, .nav-links > a:not(.nav-try) { display: none; }
+        .hero-process-strip { justify-content: flex-start; overflow-x: auto; min-height: 66px; padding: 0 2px; scrollbar-width: none; }
+        .hero-process-strip::-webkit-scrollbar { display: none; }
+        .hero { padding: 42px 0 52px; gap: 32px; }
+        .hero h1 { font-size: clamp(40px, 13vw, 58px); }
+        .hero p.lede { font-size: 15px; }
+        .hero-video-frame { padding: 12px 12px 16px; border-radius: 20px; }
+        .hero-video-frame::before { margin-bottom: 8px; }
+        .landing-section { padding: 62px 0; }
+        .section-intro h2 { font-size: 36px; }
+        .precision-grid, .workflow-grid, .start-grid, .use-case-grid, .pricing-grid, .faq-grid, .resources-grid, .output-stack { grid-template-columns: 1fr; }
+        .output-showcase img { min-height: 280px; }
+        .final-cta-card { grid-template-columns: 1fr; padding: 28px; }
+        .final-cta-actions { justify-content: flex-start; }
+        .footer-main { grid-template-columns: 1fr; gap: 28px; }
+        .template-gallery-block { padding: 24px 18px; }
+    }
+</style>
+
 </head>
 <body>
     <header class="site-header">
         <div class="nav-inner">
             <a href="/" class="brand" aria-label="CSVLink home">
                 <img src="assets/images/android-chrome-512x512.png" alt="CSVLink Logo">
-                <span>CSVLink</span>
+                <span class="brand-copy"><strong>CSVLink</strong><small>PDF document automation</small></span>
             </a>
-            <div class="primary-nav" role="navigation" aria-label="Main navigation">
-                <a href="#how-it-works">How it works</a>
-                <a href="#use-cases">Use cases</a>
+            <nav class="primary-nav" aria-label="Main navigation">
+                <a href="#process">Process</a>
+                <a href="#output">Output</a>
                 <a href="#templates">Templates</a>
+                <a href="#use-cases">Use cases</a>
                 <a href="#pricing">Pricing</a>
-                <a href="#resources">Guides</a>
-            </div>
+                <a href="#faq">FAQ</a>
+            </nav>
             <div class="nav-links" id="nav-links" data-nav-mode="landing">
                 <a href="/login">Login</a>
-                <a href="/tool" class="nav-try btn">Try it free</a>
+                <a href="/tool" class="nav-try btn">Open editor</a>
             </div>
         </div>
     </header>
 
     <main class="page-shell">
+        <div class="hero-process-strip" aria-label="CSVLink workflow">
+            <span class="process-step">PDF template + Excel / CSV</span>
+            <span class="process-arrow">→</span>
+            <span class="process-step">Map fields</span>
+            <span class="process-arrow">→</span>
+            <span class="process-step">Generate documents</span>
+            <span class="process-arrow">→</span>
+            <span class="process-step">Export PDFs</span>
+        </div>
+
         <section class="hero" aria-labelledby="hero-title">
             <div class="hero-copy">
-                <div class="eyebrow"><span class="bolt">↯</span> Excel / CSV to PDF automation</div>
-                <h1 id="hero-title">Generate personalized PDFs invoices from Excel in minutes.</h1>
-                <p class="lede">Upload any PDF template and an Excel or CSV file. Place your spreadsheet fields on the document and generate one completed PDF for every row.</p>
+                <div class="eyebrow">Excel / CSV → your PDF template → personalized documents</div>
+                <h1 id="hero-title">Link your spreadsheet data to any PDF template.</h1>
+                <p class="lede">Upload the PDF you already use and an Excel or CSV file. Place each spreadsheet column exactly where it belongs, then generate one personalized PDF for every row.</p>
+                <p class="hero-support">Built for invoices, certificates, receipts, packing slips, labels, forms, reports, and any document whose layout stays the same while the data changes.</p>
                 <div class="hero-actions">
-                    <a href="#templates" class="btn btn-primary">
+                    <a href="/tool" class="btn btn-primary">
                         <svg class="button-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 4h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="2"/><path d="M8 9h8M8 13h5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-                        Try it with sample files
+                        Open PDF builder
                     </a>
-                    <a href="#product-demo" class="btn btn-secondary">
+                    <a href="#process" class="btn btn-secondary">
                         <svg class="button-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="m10 8 6 4-6 4V8Z" fill="currentColor"/></svg>
-                        Watch demo
+                        See the process
                     </a>
                 </div>
-                <a href="/tool" class="hero-upload-link">Have your files ready? Upload my files <span aria-hidden="true">→</span></a>
                 <div class="hero-trust" aria-label="Product assurances">
                     <span>No credit card required</span>
                     <span>Keep your existing PDF design</span>
-                    <span>Export as ZIP or merged PDF</span>
+                    <span>Excel and CSV supported</span>
                 </div>
+                <a href="/tool" class="hero-upload-link">Have your files ready? Upload them now <span aria-hidden="true">→</span></a>
             </div>
 
             <div class="hero-visual">
-                <div class="hero-video-frame" id="product-demo" aria-label="CSVLink product demo video frame">
+                <div class="hero-video-frame" id="product-demo" aria-label="CSVLink product demo">
                     <div class="hero-video-stage">
                         <video class="hero-demo-video" autoplay muted loop playsinline preload="auto" disablepictureinpicture tabindex="-1" aria-hidden="true">
                             <source src="/assets/CSVLink.mp4" type="video/mp4">
                             Your browser does not support the video tag.
                         </video>
-                        <div class="hero-video-label">Product demo</div>
+                    </div>
+                </div>
+                <div class="hero-demo-tags" aria-label="Workflow highlights">
+                    <span>Upload PDF</span><span>Import Excel / CSV</span><span>Drag fields</span><span>Generate batch</span><span>Export ZIP / merged PDF</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="landing-section alt" id="output">
+            <div class="section-shell">
+                <div class="section-intro">
+                    <p class="section-kicker">Generated output</p>
+                    <h2>Personalized PDF documents generated from the data you already have.</h2>
+                    <p>CSVLink keeps the PDF as the visual source of truth and uses your spreadsheet only for the values that change from document to document.</p>
+                </div>
+                <div class="output-grid">
+                    <div class="output-showcase">
+                        <img src="/assets/images/invoice-hero-flow-target.png" alt="Excel data mapped to a personalized invoice PDF">
+                    </div>
+                    <div class="output-stack">
+                        <article class="dark-card"><span class="card-tag">Invoices</span><h3>Use your own branded invoice.</h3><p>Customer, date, invoice number, totals, addresses, and other spreadsheet fields stay aligned to your existing PDF design.</p></article>
+                        <article class="dark-card"><span class="card-tag">Repeatable documents</span><h3>The same workflow works beyond invoices.</h3><p>Certificates, forms, packing slips, receipts, labels, letters, and reports can all reuse the same visual mapping process.</p></article>
+                        <article class="dark-card"><span class="card-tag">Batch export</span><h3>One row becomes one finished document.</h3><p>Generate a complete run at once and export the result as individual files, a ZIP package, or a merged PDF.</p></article>
                     </div>
                 </div>
             </div>
         </section>
 
-        <section class="section animated-section" id="how-it-works">
-            <div class="section-heading">
-                <h2>How it works</h2>
-                <p>No code, no Word mail merge, and no copying the same values into a PDF over and over.</p>
-            </div>
-            <div class="steps-grid">
-                <article class="step-card">
-                    <div class="step-number">1</div>
-                    <div class="step-art"><div class="doc-icon"><span class="doc-label pdf">PDF</span></div><div class="big-arrow"></div><div class="mini-page-icon"></div></div>
-                    <h3>Upload the PDF you already use</h3>
-                    <p>Start with your invoice template, certificate, form, label sheet, or any PDF layout that needs repeated data.</p>
-                    <span class="mini-tag">Your own template</span>
-                </article>
-                <article class="step-card">
-                    <div class="step-number">2</div>
-                    <div class="step-art field-map-art">
-                        <div><span class="map-pill"><span class="check-dot">✓</span> Date</span><span class="map-pill"><span class="check-dot">✓</span> Total</span></div>
-                        <div class="connector-lines">⌁</div>
-                        <div><span class="map-pill output">PDF field</span><span class="map-pill output">Amount</span></div>
-                    </div>
-                    <h3>Place spreadsheet columns on the page</h3>
-                    <p>CSVLink lists the columns from your Excel or CSV file. Drag each column to the exact place it should print.</p>
-                    <span class="mini-tag">Visual mapping</span>
-                </article>
-                <article class="step-card">
-                    <div class="step-number">3</div>
-                    <div class="step-art"><div class="doc-icon"><span class="doc-label xls">XLSX</span></div><div class="big-arrow"></div><div class="mini-page-icon"></div></div>
-                    <h3>Generate the full batch</h3>
-                    <p>If your file has 10 rows, you get 10 finished pages. If it has 500 rows, you generate the whole set at once.</p>
-                    <span class="mini-tag">Ready to print or send</span>
-                </article>
-            </div>
-        </section>
-
-        <section class="reality-panel animated-section" id="excel-to-pdf">
-            <div class="reality-copy">
-                <div class="eyebrow"><span class="bolt">↯</span> Built around real spreadsheet work</div>
-                <h2>For the moment when Excel has the data, but the PDF needs to look professional.</h2>
-                <p>You may already have the perfect spreadsheet: customer names, invoice numbers, prices, dates, addresses, order IDs, or certificate names. The painful part is getting that data into a clean PDF layout without rebuilding every document by hand. CSVLink turns that spreadsheet into printable PDF documents while keeping your layout intact.</p>
-                <div class="plain-list">
-                    <div class="plain-list-item"><span class="check-dot">✓</span><span><strong>Keep the PDF layout you already trust</strong>Upload your existing invoice template or business form instead of forcing your data into a generic design.</span></div>
-                    <div class="plain-list-item"><span class="check-dot">✓</span><span><strong>Use readable spreadsheet columns</strong>Columns like Client, Date, Invoice Number, Service, Quantity, Price, and Total become draggable fields.</span></div>
-                    <div class="plain-list-item"><span class="check-dot">✓</span><span><strong>Repeat the job whenever you need</strong>Once the template is mapped, reuse it for the next billing run, class list, order export, or report batch.</span></div>
+        <section class="landing-section" id="precision">
+            <div class="section-shell">
+                <div class="section-intro center">
+                    <p class="section-kicker">Document precision</p>
+                    <h2>Keep the layout. Automate the repetitive part.</h2>
+                    <p>CSVLink is designed around exact placement, repeatable output, and a simple visual workflow instead of rebuilding your documents in another editor.</p>
                 </div>
-            </div>
-            <div class="mini-workspace" aria-hidden="true">
-                <div class="mini-source">
-                    <div class="mini-source-title">Spreadsheet columns</div>
-                    <div class="column-pill"><span>Customer</span><em>drag</em></div>
-                    <div class="column-pill"><span>Invoice #</span><em>drag</em></div>
-                    <div class="column-pill"><span>Date</span><em>drag</em></div>
-                    <div class="column-pill"><span>Total Due</span><em>drag</em></div>
-                </div>
-                <div class="mini-pdf">
-                    <div class="mini-pdf-title">PDF template</div>
-                    <div class="mini-pdf-page">
-                        <span class="drop-field one">{Customer}</span>
-                        <span class="drop-field two">{Invoice #}</span>
-                        <span class="drop-field three">{Total Due}</span>
-                    </div>
+                <div class="precision-grid">
+                    <article class="precision-card"><div class="precision-icon">⌖</div><h3>Exact field placement</h3><p>Drag spreadsheet fields to the exact position where they should print on your PDF.</p></article>
+                    <article class="precision-card"><div class="precision-icon">▤</div><h3>Your existing template</h3><p>Keep the visual document your clients already recognize instead of switching to a generic layout.</p></article>
+                    <article class="precision-card"><div class="precision-icon">↻</div><h3>Reusable mappings</h3><p>Save the template once and use it again for the next spreadsheet or recurring document run.</p></article>
+                    <article class="precision-card"><div class="precision-icon">✓</div><h3>Consistent batches</h3><p>Every generated page follows the same placement rules, reducing repetitive copy-and-paste errors.</p></article>
                 </div>
             </div>
         </section>
 
-        <section class="plain-panel animated-section" id="use-cases">
-            <div class="section-heading">
-                <h2>Useful for more than invoices</h2>
-                <p>The best use cases are documents where the format stays the same and the values change from row to row.</p>
-            </div>
-            <div class="use-case-grid">
-                <article class="use-case-card"><h3>Invoices from Excel</h3><p>Turn customer, date, item, tax, and total columns into clean PDF invoices without entering the same data twice.</p></article>
-                <article class="use-case-card"><h3>Invoice templates</h3><p>Bring your own branded invoice PDF, place fields once, and use it every time you need to print a billing run.</p></article>
-                <article class="use-case-card"><h3>Receipts and payment records</h3><p>Generate receipts from payment IDs, customer names, dates, amounts, balances, and notes.</p></article>
-                <article class="use-case-card"><h3>Certificates</h3><p>Drop names, course titles, dates, signer names, and awards into a certificate PDF for every person on a list.</p></article>
-                <article class="use-case-card"><h3>Product labels</h3><p>Use SKUs, product names, prices, categories, descriptions, and barcodes from a spreadsheet to prepare label PDFs.</p></article>
-                <article class="use-case-card"><h3>Reports, letters, and forms</h3><p>Fill client reports, letters, internal forms, cover sheets, packing slips, and other repeatable PDFs from structured data.</p></article>
-            </div>
-        </section>
-
-        <section class="quickbooks-section animated-section" id="quickbooks-invoices">
-            <div class="quickbooks-panel">
-                <div class="quickbooks-copy">
-                    <div class="eyebrow qb-eyebrow"><span class="bolt">↯</span> QuickBooks, Excel, or CSV</div>
-                    <h2>If your invoice data comes from QuickBooks, you can still use your own PDF template.</h2>
-                    <p>Export the invoice information you need from QuickBooks as Excel or CSV, upload it to CSVLink, and place those columns on your invoice PDF. This is helpful when QuickBooks stores the data, but you want the printed invoice to follow your own layout, language, branding, or format.</p>
-                    <div class="qb-steps" aria-label="How to print QuickBooks invoice data with CSVLink">
-                        <div class="qb-step">
-                            <span class="qb-step-number">1</span>
-                            <span><strong>Export the data</strong><p>Download an invoice list, sales report, customer report, or the spreadsheet your team already uses.</p></span>
-                        </div>
-                        <div class="qb-step">
-                            <span class="qb-step-number">2</span>
-                            <span><strong>Map the columns</strong><p>Match customer, invoice number, date, line item, amount, tax, and total to the places they belong on the PDF.</p></span>
-                        </div>
-                        <div class="qb-step">
-                            <span class="qb-step-number">3</span>
-                            <span><strong>Print the finished PDFs</strong><p>Download one merged file for printing or a ZIP with individual PDFs for sending and archiving.</p></span>
-                        </div>
-                    </div>
-                    <div class="quickbooks-actions">
-                        <a href="/tool" class="btn btn-primary">
-                            <svg class="button-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 16V4m0 0 4 4m-4-4-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-                            Try with your export
-                        </a>
-                        <a href="/quickbooks-invoice-generator" class="btn btn-secondary">Read QuickBooks guide</a>
-                        <a href="/assets/samples/quickbooks-invoice-sample.csv" class="quickbooks-note" download><span class="check-dot">✓</span> Download sample CSV</a>
-                    </div>
+        <section class="landing-section alt" id="start">
+            <div class="section-shell">
+                <div class="section-intro center">
+                    <p class="section-kicker">Two ways to start</p>
+                    <h2>Try the workflow first or use your own files immediately.</h2>
+                    <p>The editor is the same in both cases, so you can learn the process with sample files and then move directly to real document production.</p>
                 </div>
-
-                <div class="quickbooks-visual" aria-hidden="true">
-                    <div class="qb-card qb-export-card">
-                        <div class="qb-card-top"><span>Spreadsheet export</span><span class="qb-chip">Excel / CSV</span></div>
-                        <div class="qb-list">
-                            <div class="qb-list-row"><span>Invoice #</span><span>INV-2048</span></div>
-                            <div class="qb-list-row"><span>Customer</span><span>Amanda Stone</span></div>
-                            <div class="qb-list-row"><span>Balance Due</span><span>$2,450.00</span></div>
-                            <div class="qb-list-row"><span>Due Date</span><span>Jun 14, 2026</span></div>
-                        </div>
-                    </div>
-                    <div class="qb-arrow"></div>
-                    <div class="qb-card qb-import-card">
-                        <div class="qb-import-title">Map to PDF</div>
-                        <div class="map-row"><span class="map-pill"><span class="check-dot">✓</span> Customer</span><span class="map-arrow">→</span><span class="map-pill output">Bill to</span></div>
-                        <div class="map-row"><span class="map-pill"><span class="check-dot">✓</span> Total</span><span class="map-arrow">→</span><span class="map-pill output">Amount</span></div>
-                    </div>
-                    <div class="qb-card qb-template-card">
-                        <div class="qb-template-preview">
-                            <div class="qb-template-head"><span>YOUR LOGO</span><span class="qb-template-badge">PDF</span></div>
-                            <div class="qb-template-lines"><span class="qb-line medium"></span><span class="qb-line short"></span></div>
-                            <div class="qb-template-body"><span class="qb-line"></span><span class="qb-line"></span><span class="qb-line medium"></span><span class="qb-line short"></span></div>
-                            <span class="qb-line total"></span>
-                        </div>
-                    </div>
-                    <div class="qb-card qb-print-chip"><span class="check-dot">✓</span> Ready to print</div>
+                <div class="start-grid">
+                    <article class="start-card">
+                        <span class="start-card-badge">Explore with samples</span>
+                        <h3>See how the mapping works before uploading anything.</h3>
+                        <p>Open the builder with sample content and test the full spreadsheet-to-PDF process.</p>
+                        <ul class="clean-list"><li>Learn the editor visually</li><li>See how spreadsheet columns become draggable fields</li><li>Generate a sample batch before using production files</li></ul>
+                        <div class="hero-actions"><a href="#templates" class="btn btn-secondary">Try sample files</a></div>
+                    </article>
+                    <article class="start-card">
+                        <span class="start-card-badge">Start with your files</span>
+                        <h3>Upload the PDF and spreadsheet you already use.</h3>
+                        <p>Go straight to your own invoice, certificate, form, or document layout and build a reusable mapping.</p>
+                        <ul class="clean-list"><li>PDF template upload</li><li>Excel or CSV data source</li><li>Export a full personalized document run</li></ul>
+                        <div class="hero-actions"><a href="/tool" class="btn btn-primary">Upload my files</a></div>
+                    </article>
                 </div>
             </div>
         </section>
 
-        <section class="section animated-section" id="templates">
-            <div class="section-heading">
-                <h2>Start with a template, or bring your own PDF</h2>
-                <p>Invoices are the obvious starting point, but the template system is flexible enough for other documents your business repeats every week.</p>
-            </div>
-            <div class="template-grid">
-                <article class="template-card-static active">
-                    <span class="popular-badge">Most popular</span>
-                    <div class="template-preview-card preview-invoice" aria-hidden="true"><div class="preview-paper"><div class="preview-head"><span class="preview-logo"></span><strong>INVOICE</strong></div><div class="preview-row short"></div><div class="preview-row medium"></div><div class="preview-table"><span></span><span></span><span></span><span></span><span></span><span></span></div><div class="preview-total"><span>Total</span><strong>$1,240</strong></div></div><span class="preview-chip">Excel → PDF</span></div>
-                    <div class="template-card-body"><h3>Invoice from Excel</h3><p>Create invoice PDFs from customer, date, line item, tax, and total columns in your spreadsheet.</p></div>
-                    <div class="template-card-actions"><a class="primary-template-action" href="/tool">Use this template</a><a class="secondary-template-action" href="/excel-to-invoice">Read guide</a><a href="/csv-to-invoice">CSV invoice guide</a></div>
-                </article>
-                <article class="template-card-static">
-                    <div class="template-preview-card preview-quote" aria-hidden="true"><div class="preview-paper"><div class="preview-head"><span class="preview-logo"></span><strong>QUOTE</strong></div><div class="preview-row medium"></div><div class="preview-row short"></div><div class="preview-table quote-lines"><span></span><span></span><span></span><span></span></div><div class="preview-total"><span>Valid until</span><strong>Jun 30</strong></div></div><span class="preview-chip">Rows → Quotes</span></div>
-                    <div class="template-card-body"><h3>Quotes and proposals</h3><p>Turn customer, item, quantity, price, and expiration columns into consistent quote PDFs.</p></div>
-                    <div class="template-card-actions"><a class="primary-template-action" href="/tool">Use this template</a><a class="secondary-template-action" href="/quote-template">Quote guide</a><a href="/custom-pdf-documents">Custom PDF guide</a></div>
-                </article>
-                <article class="template-card-static">
-                    <div class="template-preview-card preview-labels" aria-hidden="true"><div class="label-sheet"><span><strong>SKU-102</strong><em>$24.00</em></span><span><strong>SKU-118</strong><em>$18.50</em></span><span><strong>SKU-204</strong><em>$31.99</em></span><span><strong>SKU-311</strong><em>$12.00</em></span></div><span class="preview-chip">CSV → Labels</span></div>
-                    <div class="template-card-body"><h3>Product labels</h3><p>Use product names, SKUs, prices, categories, and descriptions from Excel or CSV to generate label files.</p></div>
-                    <div class="template-card-actions"><a class="primary-template-action" href="/tool">Use this template</a><a class="secondary-template-action" href="/product-label-template">Label guide</a><a href="/custom-pdf-documents">Custom PDF guide</a></div>
-                </article>
-                <article class="template-card-static">
-                    <div class="template-preview-card preview-slip" aria-hidden="true"><div class="preview-paper narrow"><div class="preview-head"><span class="preview-logo box"></span><strong>PACKING SLIP</strong></div><div class="preview-row medium"></div><div class="preview-row short"></div><div class="preview-check-list"><span></span><span></span><span></span></div><div class="preview-barcode"></div></div><span class="preview-chip">Orders → Slips</span></div>
-                    <div class="template-card-body"><h3>Packing slips</h3><p>Generate packing slips from order IDs, recipients, addresses, item names, quantities, and shipping notes.</p></div>
-                    <div class="template-card-actions"><a class="primary-template-action" href="/tool">Use this template</a><a class="secondary-template-action" href="/packing-slip-template">Packing slip guide</a><a href="/custom-pdf-documents">Custom PDF guide</a></div>
-                </article>
-                <article class="template-card-static">
-                    <div class="template-preview-card preview-certificate" aria-hidden="true"><div class="certificate-paper"><div class="cert-ribbon"></div><h4>Certificate</h4><div class="cert-name"></div><div class="cert-line"></div><div class="cert-sign"></div></div><span class="preview-chip">Names → Certificates</span></div>
-                    <div class="template-card-body"><h3>Certificates</h3><p>Create personalized certificates from names, dates, programs, awards, and signer fields in a spreadsheet.</p></div>
-                    <div class="template-card-actions"><a class="primary-template-action" href="/tool">Use this template</a><a class="secondary-template-action" href="/certificate-template">Certificate guide</a><a href="/custom-pdf-documents">Custom PDF guide</a></div>
-                </article>
-                <article class="template-card-static">
-                    <div class="template-preview-card preview-custom" aria-hidden="true"><div class="custom-stack"><div class="custom-card one"><span></span><span></span><span></span></div><div class="custom-card two"><span></span><span></span><span></span></div></div><span class="preview-chip">Spreadsheet → PDF</span></div>
-                    <div class="template-card-body"><h3>Custom PDF documents</h3><p>Design your own layout, connect it to spreadsheet columns, and export one personalized document per row.</p></div>
-                    <div class="template-card-actions"><a class="primary-template-action" href="/tool">Use this template</a><a class="secondary-template-action" href="/custom-pdf-documents">Custom PDF guide</a><a href="/invoice-template-builder">Template builder</a></div>
-                </article>
-            </div>
-            <div style="text-align:center"><a href="#template-gallery" class="templates-link">Browse public templates <span>→</span></a></div>
-        </section>
-
-        <section class="section animated-section" id="benefits">
-            <div class="section-heading">
-                <h2>Why this is easier than doing it by hand</h2>
-            </div>
-            <div class="benefits-grid">
-                <article class="benefit"><span class="benefit-icon blue">ϟ</span><span><h3>Less copy-paste</h3><p>Stop opening a PDF, copying a value from Excel, saving, duplicating, and repeating the same work for every row.</p></span></article>
-                <article class="benefit"><span class="benefit-icon green">⬟</span><span><h3>Your layout stays yours</h3><p>Use the exact PDF template your clients, vendors, school, or internal team already recognizes.</p></span></article>
-                <article class="benefit"><span class="benefit-icon purple">✓</span><span><h3>Fewer data mistakes</h3><p>The PDF is filled from your spreadsheet values, so names, dates, invoice numbers, and totals stay consistent.</p></span></article>
-                <article class="benefit"><span class="benefit-icon orange">▣</span><span><h3>Built for repeat jobs</h3><p>Save a mapping once and use it again for the next month, next class, next order run, or next client report batch.</p></span></article>
-            </div>
-        </section>
-
-        <section class="cta-panel animated-section" aria-labelledby="cta-title">
-            <div>
-                <span class="cta-eyebrow"><span class="check-dot">✓</span> Free to test</span>
-                <h2 id="cta-title">Try it with one PDF template and one spreadsheet.</h2>
-                <div class="cta-checks">
-                    <span class="mini-check"><span class="check-dot">✓</span> No credit card</span>
-                    <span class="mini-check"><span class="check-dot">✓</span> No signup to test</span>
-                    <span class="mini-check"><span class="check-dot">✓</span> Excel, CSV, and PDF</span>
+        <section class="landing-section" id="process">
+            <div class="section-shell">
+                <div class="section-intro center">
+                    <p class="section-kicker">Process</p>
+                    <h2>One visual workflow from spreadsheet to finished PDFs.</h2>
+                    <p>No Word mail merge and no copying values into a PDF one document at a time.</p>
+                </div>
+                <div class="workflow-grid">
+                    <article class="workflow-step"><span class="workflow-step-number">1</span><h3>Upload your PDF</h3><p>Start with the invoice, certificate, form, label, or report design you already use.</p></article>
+                    <article class="workflow-step"><span class="workflow-step-number">2</span><h3>Import Excel or CSV</h3><p>CSVLink reads your spreadsheet columns and makes them available as data fields.</p></article>
+                    <article class="workflow-step"><span class="workflow-step-number">3</span><h3>Place the fields</h3><p>Drag each column to the exact place where that value should appear in the final document.</p></article>
+                    <article class="workflow-step"><span class="workflow-step-number">4</span><h3>Generate the batch</h3><p>Create one personalized PDF per row, then download the result in the format you need.</p></article>
                 </div>
             </div>
-            <div class="cta-actions">
-                <a href="/tool" class="btn btn-primary">
-                    <svg class="button-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 16V4m0 0 4 4m-4-4-4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-                    Open the PDF builder
-                </a>
-                <a href="#how-it-works" class="btn btn-secondary">
-                    <svg class="button-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="m10 8 6 4-6 4V8Z" fill="currentColor"/></svg>
-                    See workflow
-                </a>
-                <div style="color:#7a879b;font-size:12px;font-weight:800;text-align:center;">Upload PDF + Excel/CSV, then export ZIP or merged PDF</div>
-            </div>
-            <div class="file-flow" aria-hidden="true">
-                <div class="sparkles">✦✧</div>
-                <div class="file-stack"><div class="file-doc"><span class="doc-label xls">XLSX</span></div><div class="file-doc"><span class="doc-label csv">CSV</span></div></div>
-                <div class="flow-dash"></div>
-                <div class="zip-pdf"><div class="file-doc"><span class="doc-label" style="background:#ff9e46;">ZIP</span></div><div class="file-doc"><span class="doc-label pdf">PDF</span></div></div>
+        </section>
+
+        <section class="landing-section alt" id="templates">
+            <div class="template-gallery-block animated-section">
+                <div class="section-heading">
+                    <h2>Start from an invoice template</h2>
+                    <p>Pick a template, connect it to your spreadsheet, and export a full document run without starting from scratch.</p>
+                </div>
+                <div class="template-categories">
+                    <button class="template-category-btn active" data-category="invoice">Invoice Templates</button>
+                </div>
+                <div class="template-carousel-container"><div class="template-carousel-track"></div></div>
             </div>
         </section>
 
-        <section class="trusted" aria-label="PDF workflows CSVLink supports">
-            Built for practical document workflows
-            <div class="logo-row">
-                <span>Excel rows → PDF templates</span><span>CSV data → filled PDFs</span><span>Invoice templates</span><span>Print spreadsheet data</span><span>One PDF per row</span><span>No manual copy-paste</span>
+        <section class="landing-section" id="use-cases">
+            <div class="section-shell">
+                <div class="section-intro">
+                    <p class="section-kicker">Use cases</p>
+                    <h2>Best for documents where the layout stays fixed and the data changes.</h2>
+                    <p>Use the same workflow for recurring business documents instead of rebuilding or copy-pasting each one manually.</p>
+                </div>
+                <div class="use-case-grid">
+                    <article class="use-case-card"><h3>Invoices from Excel</h3><p>Turn customer, date, item, tax, and total columns into branded invoice PDFs.</p></article>
+                    <article class="use-case-card"><h3>Certificates</h3><p>Generate certificates from a roster with names, dates, courses, IDs, and completion data.</p></article>
+                    <article class="use-case-card"><h3>Packing slips</h3><p>Map order exports into a consistent packing slip or fulfillment document.</p></article>
+                    <article class="use-case-card"><h3>Receipts</h3><p>Create repeatable receipt PDFs from transaction data stored in a spreadsheet.</p></article>
+                    <article class="use-case-card"><h3>Labels and forms</h3><p>Populate repeatable labels, forms, and fixed-layout pages without retyping values.</p></article>
+                    <article class="use-case-card"><h3>QuickBooks exports</h3><p>Export the billing information you need and print it in the PDF format your business prefers.</p></article>
+                </div>
             </div>
         </section>
 
-        <section class="template-gallery-block animated-section" id="template-gallery">
-            <div class="section-heading">
-                <h2>Browse templates or upload your own PDF</h2>
-                <p>Open a template, replace the sample branding, link your spreadsheet, and export a full document run without starting from scratch.</p>
-            </div>
-            <div class="template-categories">
-                <button class="template-category-btn active" data-category="invoice">Invoice Templates</button>
-            </div>
-            <div class="template-carousel-container">
-                <div class="template-carousel-track"></div>
-            </div>
-        </section>
-
-        <section class="pricing-section animated-section" id="pricing">
-            <div class="section-heading">
-                <h2>Pricing for repeat PDF work</h2>
-                <p>Start free while you test the workflow. Upgrade when you need more saved templates, larger runs, and production exports.</p>
-            </div>
-            <div class="pricing-grid">
-                <article class="pricing-card">
-                    <h3>Starter</h3>
-                    <p>Good for testing a real PDF and spreadsheet before committing.</p>
-                    <div class="price"><sup>$</sup>0<span>/month</span></div>
-                    <ul><li>Use the visual template editor</li><li>Upload PDF, Excel, and CSV files</li><li>Up to 5 saved templates</li><li>Export up to 15 files per run</li></ul>
-                    <a href="/tool" class="btn btn-secondary">Start free</a>
-                </article>
-                <article class="pricing-card recommended">
-                    <h3>Monthly Pro</h3>
-                    <p>For businesses that generate documents often.</p>
-                    <div class="price"><sup>$</sup>12<span>/month</span></div>
-                    <ul><li>All Starter features included</li><li>Unlimited templates</li><li>Unlimited files per export run</li><li>API access</li><li>PNG and JPG export options</li></ul>
-                    <a href="https://csvlink.lemonsqueezy.com/buy/3b3f16ca-17a6-4cc5-9a99-cf5abcbf6a1c" class="btn btn-primary lemonsqueezy-button">Upgrade to Pro</a>
-                </article>
-                <article class="pricing-card">
-                    <h3>Annual Pro</h3>
-                    <p>Best value if CSVLink becomes part of your normal workflow.</p>
-                    <div class="price"><sup>$</sup>130<span>/year</span></div>
-                    <ul><li>Everything in Pro</li><li>Yearly billing</li><li>Lower effective monthly cost</li><li>Best for recurring document runs</li></ul>
-                    <a href="https://csvlink.lemonsqueezy.com/buy/3b3f16ca-17a6-4cc5-9a99-cf5abcbf6a1c" class="btn btn-primary lemonsqueezy-button">Upgrade annually</a>
-                </article>
+        <section class="landing-section alt" id="pricing">
+            <div class="pricing-section animated-section">
+                <div class="section-heading">
+                    <h2>Pricing for repeat PDF work</h2>
+                    <p>Start free while you test the workflow. Upgrade when you need more saved templates, larger runs, and production exports.</p>
+                </div>
+                <div class="pricing-grid">
+                    <article class="pricing-card">
+                        <h3>Starter</h3><p>Good for testing a real PDF and spreadsheet before committing.</p>
+                        <div class="price"><sup>$</sup>0<span>/month</span></div>
+                        <ul><li>Use the visual template editor</li><li>Upload PDF, Excel, and CSV files</li><li>Up to 5 saved templates</li><li>Export up to 15 files per run</li></ul>
+                        <a href="/tool" class="btn btn-secondary">Start free</a>
+                    </article>
+                    <article class="pricing-card recommended">
+                        <h3>Monthly Pro</h3><p>For businesses that generate documents often.</p>
+                        <div class="price"><sup>$</sup>12<span>/month</span></div>
+                        <ul><li>All Starter features included</li><li>Unlimited templates</li><li>Unlimited files per export run</li><li>API access</li><li>PNG and JPG export options</li></ul>
+                        <a href="https://csvlink.lemonsqueezy.com/buy/3b3f16ca-17a6-4cc5-9a99-cf5abcbf6a1c" class="btn btn-primary lemonsqueezy-button">Upgrade to Pro</a>
+                    </article>
+                    <article class="pricing-card">
+                        <h3>Annual Pro</h3><p>Best value if CSVLink becomes part of your normal workflow.</p>
+                        <div class="price"><sup>$</sup>130<span>/year</span></div>
+                        <ul><li>Everything in Pro</li><li>Yearly billing</li><li>Lower effective monthly cost</li><li>Best for recurring document runs</li></ul>
+                        <a href="https://csvlink.lemonsqueezy.com/buy/3b3f16ca-17a6-4cc5-9a99-cf5abcbf6a1c" class="btn btn-primary lemonsqueezy-button">Upgrade annually</a>
+                    </article>
+                </div>
             </div>
         </section>
 
-        <section class="faq-section animated-section" id="faq">
-            <h2>Questions people usually have before trying it</h2>
-            <p>CSVLink is closest to a visual PDF mail merge: your spreadsheet supplies the values, and your PDF supplies the layout.</p>
-            <div class="faq-grid">
-                <article class="faq-item"><h3>Can I create PDFs from Excel?</h3><p>Yes. Upload an Excel file, choose the columns you need, place them on the PDF, and generate one filled PDF per row.</p></article>
-                <article class="faq-item"><h3>Can I use a PDF invoice template?</h3><p>Yes. Upload your own invoice PDF and place fields like customer, date, invoice number, items, tax, and total exactly where you want them.</p></article>
-                <article class="faq-item"><h3>Does it work with CSV files?</h3><p>Yes. CSVLink supports CSV as well as Excel files, so you can use exports from accounting tools, ecommerce platforms, CRMs, or your own spreadsheets.</p></article>
-                <article class="faq-item"><h3>Is this only for invoices?</h3><p>No. Invoices are the most common use case, but any repeatable PDF can work: receipts, certificates, packing slips, labels, letters, forms, and reports.</p></article>
+        <section class="landing-section" id="faq">
+            <div class="faq-section animated-section">
+                <h2>Questions people usually have before trying it</h2>
+                <p>CSVLink works like a visual PDF mail merge: your spreadsheet supplies the values, and your PDF supplies the layout.</p>
+                <div class="faq-grid">
+                    <article class="faq-item"><h3>Can I create PDFs from Excel?</h3><p>Yes. Upload an Excel file, choose the columns you need, place them on the PDF, and generate one filled PDF per row.</p></article>
+                    <article class="faq-item"><h3>Can I use my own PDF invoice template?</h3><p>Yes. Upload your own invoice PDF and place customer, date, invoice number, items, tax, total, and other fields exactly where you want them.</p></article>
+                    <article class="faq-item"><h3>Does it work with CSV files?</h3><p>Yes. CSVLink supports CSV as well as Excel files, including exports from accounting tools, ecommerce platforms, CRMs, and custom spreadsheets.</p></article>
+                    <article class="faq-item"><h3>Is this only for invoices?</h3><p>No. Any repeatable PDF can work: receipts, certificates, packing slips, labels, letters, forms, reports, and more.</p></article>
+                </div>
             </div>
         </section>
 
-        <section class="resources-section animated-section" id="resources">
-            <div class="section-heading">
-                <h2>Guides for the exact job you are trying to do</h2>
-                <p>Use these pages when you need a more specific workflow, like Excel to invoice, CSV to invoice, QuickBooks exports, or custom PDF documents.</p>
+        <section class="landing-section alt" id="resources">
+            <div class="resources-section animated-section">
+                <div class="section-heading">
+                    <h2>Guides for the exact job you are trying to do</h2>
+                    <p>Go deeper into Excel-to-PDF, invoice generation, QuickBooks exports, and custom PDF document workflows.</p>
+                </div>
+                <div class="resources-grid">
+                    <article class="resource-card"><h3><a href="/excel-to-pdf">Excel to PDF</a></h3><p>Use a spreadsheet as the data source and your PDF as the design.</p></article>
+                    <article class="resource-card"><h3><a href="/excel-to-invoice">Excel to Invoice</a></h3><p>Turn spreadsheet rows into polished invoices without repetitive copy-paste.</p></article>
+                    <article class="resource-card"><h3><a href="/csv-to-invoice">CSV to Invoice</a></h3><p>Use CSV billing data to generate branded PDF invoices.</p></article>
+                    <article class="resource-card"><h3><a href="/quickbooks-invoice-generator">QuickBooks Invoice Generator</a></h3><p>Export QuickBooks invoice data and print it in your own PDF template.</p></article>
+                    <article class="resource-card"><h3><a href="/bulk-invoice-generator">Bulk Invoice Generator</a></h3><p>Generate a high-volume invoice batch from structured rows.</p></article>
+                    <article class="resource-card"><h3><a href="/custom-pdf-documents">Custom PDF Documents</a></h3><p>Use the same spreadsheet-to-PDF workflow for documents beyond invoices.</p></article>
+                </div>
             </div>
-            <div class="resources-grid">
-                <article class="resource-card"><h3><a href="/excel-to-pdf">Excel to PDF</a></h3><p>Use a spreadsheet as the data source and your PDF as the design.</p></article>
-                <article class="resource-card"><h3><a href="/excel-to-invoice">Excel to Invoice</a></h3><p>Turn spreadsheet rows into polished invoices without repetitive copy-paste.</p></article>
-                <article class="resource-card"><h3><a href="/csv-to-invoice">CSV to Invoice Generator</a></h3><p>Use CSV billing data to generate branded PDF invoices.</p></article>
-                <article class="resource-card"><h3><a href="/bulk-invoice-generator">Bulk Invoice Generator</a></h3><p>Generate a high-volume invoice batch from structured rows.</p></article>
-                <article class="resource-card"><h3><a href="/invoice-template-builder">Invoice Template Builder</a></h3><p>Build or import a reusable invoice layout before mapping spreadsheet fields.</p></article>
-                <article class="resource-card"><h3><a href="/custom-pdf-documents">Custom PDF Documents</a></h3><p>Use the same Excel-to-PDF workflow for documents beyond invoices.</p></article>
-                <article class="resource-card"><h3><a href="/quickbooks-invoice-generator">QuickBooks Invoice Generator</a></h3><p>Export QuickBooks invoice data and print it in your own PDF template.</p></article>
-                <article class="resource-card"><h3><a href="/itemized-invoice-generator">Itemized Invoice Generator</a></h3><p>Map grouped rows into repeated line items for detailed invoices.</p></article>
-                <article class="resource-card"><h3><a href="/blog/create-invoices-from-excel">Create Invoices from Excel</a></h3><p>A practical guide for cleaning data and exporting invoice PDFs.</p></article>
+        </section>
+
+        <section class="landing-section" id="contact">
+            <div class="section-shell">
+                <div class="final-cta-card">
+                    <div>
+                        <p class="section-kicker">Ready to use your own files?</p>
+                        <h2>Keep your PDF. Connect your spreadsheet. Generate the full batch.</h2>
+                        <p>Open CSVLink, upload the files you already use, place the fields once, and turn every spreadsheet row into a finished document.</p>
+                    </div>
+                    <div class="final-cta-actions">
+                        <a href="/tool" class="btn btn-primary">Open PDF builder</a>
+                        <a href="#product-demo" class="btn btn-secondary">Watch demo</a>
+                    </div>
+                </div>
             </div>
         </section>
     </main>
 
     <footer class="site-footer">
-        <div class="footer-links">
-            <a href="/">Home</a>
-            <a href="/excel-to-pdf">Excel to PDF</a>
-            <a href="/quickbooks-invoice-generator">QuickBooks Invoice Generator</a>
-            <a href="/excel-to-invoice">Excel to Invoice</a>
-            <a href="/csv-to-invoice">CSV to Invoice</a>
-            <a href="/bulk-invoice-generator">Bulk Invoice Generator</a>
-            <a href="/invoice-template-builder">Template Builder</a>
-            <a href="/itemized-invoice-generator">Itemized Invoices</a>
-            <a href="/excel-invoice-automation">Excel Invoice Automation</a>
-            <a href="/blog/create-invoices-from-excel">Excel Invoice Guide</a>
-            <a href="/blog/bulk-invoice-csv-format">CSV Format Guide</a>
-            <a href="/tool">Open PDF Builder</a>
-            <a href="/privacy">Privacy</a>
-            <a href="/terms">Terms</a>
-            <a href="/refunds">Refunds</a>
+        <div class="footer-main">
+            <div class="footer-brand">
+                <a href="/" class="brand" aria-label="CSVLink home"><img src="assets/images/android-chrome-512x512.png" alt="CSVLink Logo"><span class="brand-copy"><strong>CSVLink</strong><small>PDF document automation</small></span></a>
+                <p>Connect Excel or CSV data to the PDF layout you already use and generate personalized document batches without repetitive copy-and-paste.</p>
+            </div>
+            <nav class="footer-column" aria-label="Product links">
+                <h3>Product</h3><a href="#process">Process</a><a href="#output">Output</a><a href="#templates">Templates</a><a href="#pricing">Pricing</a><a href="/tool">Open PDF Builder</a>
+            </nav>
+            <nav class="footer-column" aria-label="Company and legal links">
+                <h3>Resources & legal</h3><a href="/excel-to-pdf">Excel to PDF</a><a href="/quickbooks-invoice-generator">QuickBooks</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/refunds">Refunds</a>
+            </nav>
         </div>
         <div class="copyright"><p>&copy; 2026 CSVLink. All Rights Reserved.</p></div>
     </footer>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script type="module" src="assets/js/supabase-client.js?v=20260525c"></script>
     <script type="module" src="assets/js/auth.js?v=20260525c"></script>
     <script src="/assets/js/landing-tracking.js?v=20260608a" defer></script>
@@ -2613,5 +2917,6 @@
             await fetchPublicTemplates();
         });
     </script>
+
 </body>
 </html>
